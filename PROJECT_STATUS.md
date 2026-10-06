@@ -24,7 +24,8 @@ Initial local functional development build. NOT a finished release and NOT publi
 
 ## Broken / blockers
 - Sites source helper cannot connect to git.chatgpt-team.site:443 in this restricted environment. No remote source read or deployment succeeded.
-- GitHub connector has no repository-create operation and shell has no gh. Must create PRIVATE GitHub through authenticated browser or user action; never reuse unrelated MonkWOW repository.
+- GitHub connector has no repository-create operation and shell has no gh. Browser security rejected https://github.com/new because permission was declined. Do not bypass this rejection. User must enable access or create the PRIVATE repository. Never reuse unrelated MonkWOW repository.
+- Browser security also rejected localhost preview. Visual QA not performed; code/API tests are not a substitute for desktop/mobile browser QA.
 - Need original guild logo file; attachment download has repeatedly failed in this session.
 - Discord app secrets/IDs and private recruitment webhook not supplied. Never ask for passwords or paste secrets into Git.
 
@@ -35,8 +36,8 @@ Node.js 24 native HTTP + SQLite WAL, browser ES modules, backend RBAC, adapter b
 Configured: local SQLite, local application. Pending: GitHub private, Sites/Cloudflare runtime, Discord, Raid-Helper, Warcraft Logs/Forever support verification. `.env.example` lists PORT, HOST, APP_ORIGIN, DATABASE_PATH, DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET, DISCORD_GUILD_ID, DISCORD_ROLE_MAP, DISCORD_LEADER_ID, DISCORD_RECRUITMENT_WEBHOOK.
 
 ## Next task
-1. Run security tests/build and fix concrete issues; browser-check home/mobile if supported.
-2. Commit verified source. Create private GitHub if browser authenticated, otherwise request login only after preserving all work.
+1. Ask user to enable GitHub/preview browser access or supply a private repository. Existing browser rejection must be respected.
+2. Push existing commits to authorized PRIVATE GitHub, then desktop/mobile visual QA once allowed. Do not recreate the source or restart analysis.
 3. Resolve cloud source access, implement D1 adapter and configure public hosting without ChatGPT login for members.
 4. Complete remaining phases in order. Don't mistake empty-state UI or schema tables for completed integrations.
 
@@ -44,4 +45,4 @@ Configured: local SQLite, local application. Pending: GitHub private, Sites/Clou
 `node src/server.mjs`; http://localhost:3000. `node --test tests/*.test.mjs`; `node scripts/build.mjs`. README documents backup/restore. Cloud deployment pending adapter and network access.
 
 ## Last stable commit / validation
-Initial commit pending validation. This section must be updated before ending the batch.
+Last verified feature commit: b156747 (all 9 security suites passed; build syntax verification passed). Foundation commit: 08de4b0. Documentation checkpoint follows; use `git log -3 --oneline` for its hash. Local server started successfully at http://localhost:3000; will be stopped at session teardown. No browser QA or live OAuth/deployment has been verified. Workflow for Node 24 CI supplied but not run on GitHub. No production release claimed.
