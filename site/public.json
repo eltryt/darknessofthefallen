@@ -1,0 +1,19 @@
+{
+  "settings": {
+    "name": "Darkness of the Fallen",
+    "description": "Una hermandad para quedarnos. Progresión PvE, compañerismo y noches en Azeroth.",
+    "faction": "Alianza",
+    "region": "Europa",
+    "server": "Por confirmar",
+    "ruleset": "Por confirmar",
+    "raidStart": "23:00",
+    "raidEnd": "01:00",
+    "timezone": "Europe/Madrid",
+    "about": "Compartimos una idea: construir una hermandad estable, disfrutar del camino y progresar juntos. El PvE es nuestro punto de encuentro; el PvP, una aventura secundaria.",
+    "discordUrl": "",
+    "raidDays": [],
+    "recruitmentOpen": false
+  },
+  "characters": [],
+  "raids": []
+}

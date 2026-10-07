@@ -1,0 +1,17 @@
+PRAGMA foreign_keys=ON;
+CREATE TABLE IF NOT EXISTS schema_migrations(version INTEGER PRIMARY KEY);
+CREATE TABLE IF NOT EXISTS settings(id INTEGER PRIMARY KEY CHECK(id=1), data TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY, display_name TEXT NOT NULL, rank TEXT NOT NULL CHECK(rank IN ('visitor','member','raider','raid_leader','officer','leader')), updated_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS sessions(hash TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), csrf TEXT NOT NULL, expires INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS oauth_states(hash TEXT PRIMARY KEY, expires INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS characters(id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), name TEXT NOT NULL, surname TEXT NOT NULL DEFAULT '', class TEXT NOT NULL, role TEXT NOT NULL, spec TEXT NOT NULL DEFAULT '', professions TEXT NOT NULL DEFAULT '', availability TEXT NOT NULL DEFAULT '', notes TEXT NOT NULL DEFAULT '', is_main INTEGER NOT NULL DEFAULT 0 CHECK(is_main IN (0,1)), source TEXT NOT NULL DEFAULT 'manual', external_id TEXT, created_at TEXT NOT NULL);
+CREATE UNIQUE INDEX IF NOT EXISTS one_main_per_user ON characters(user_id) WHERE is_main=1;
+CREATE TABLE IF NOT EXISTS applications(id TEXT PRIMARY KEY, data TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'Nuevo', notes TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS raids(id TEXT PRIMARY KEY, title TEXT NOT NULL, starts_at TEXT NOT NULL, source TEXT NOT NULL DEFAULT 'manual', external_id TEXT, UNIQUE(source,external_id));
+CREATE TABLE IF NOT EXISTS attendance(id TEXT PRIMARY KEY, raid_id TEXT NOT NULL REFERENCES raids(id), user_id TEXT NOT NULL REFERENCES users(id), character_id TEXT REFERENCES characters(id), status TEXT NOT NULL, UNIQUE(raid_id,user_id));
+CREATE TABLE IF NOT EXISTS loot(id TEXT PRIMARY KEY, data TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS wishlists(id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), data TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS progress(id TEXT PRIMARY KEY, data TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS audit(id INTEGER PRIMARY KEY AUTOINCREMENT, actor_id TEXT NOT NULL, action TEXT NOT NULL, target TEXT NOT NULL, changes TEXT NOT NULL, created_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS outbox(id TEXT PRIMARY KEY, application_id TEXT NOT NULL REFERENCES applications(id), attempts INTEGER NOT NULL DEFAULT 0, delivered_at TEXT);
+INSERT OR IGNORE INTO schema_migrations(version) VALUES(1);
