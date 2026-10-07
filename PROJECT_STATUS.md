@@ -19,7 +19,11 @@
 
 ## Publicación
 
+Migración subida a `main` y verificada mediante lectura del remoto: commit `93a90d2` (incluye el historial original y la configuración de Pages).
+
 El build y las pruebas locales están verificados. La API de GitHub responde `Forbidden` desde este entorno: no se ha podido consultar o activar Pages ni verificar ejecuciones remotas de Actions. En GitHub, seleccionar **Settings → Pages → Source: GitHub Actions** y ejecutar **Deploy public website to GitHub Pages** en `main`. Consultar la ejecución para confirmar la publicación; la URL prevista es `https://eltryt.github.io/darknessofthefallen/`.
+
+La URL prevista de Pages también devuelve un bloqueo de red, por lo que no se afirma que el sitio esté publicado.
 
 La web de referencia de ChatGPT Sites tampoco se pudo consultar por un bloqueo de red; la migración utiliza el checkpoint proporcionado. No se modifica la visibilidad del repositorio ni se contratan servicios.
 
@@ -40,3 +44,7 @@ OAuth Discord y sesiones, RBAC de seis rangos, personajes con un único Main, ro
 ## Comandos
 
 `npm test`, `npm run build`, `npm run preview` para Pages; `npm start` o `npm run dev` para el backend. Consultar README y `docs/BACKEND.md`. No hay dependencias externas de ejecución.
+
+## Entorno en la nube
+
+Guardados en el borrador del entorno `install_script` (build con Node 24+) y `start_skill` (validación, preview y backend), junto con los dominios necesarios para consultar GitHub API, Pages y la referencia de Sites. Este guardado no aplica la red ni publica la instantánea del entorno: requiere revisar/guardar los ajustes y publicar el entorno en el producto. El script guardado y los comandos de arranque se han ejecutado localmente.
