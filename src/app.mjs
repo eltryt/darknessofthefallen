@@ -4,10 +4,11 @@ import {settings,transaction,audit} from './db.mjs';
 import {can,HttpError,text,choice,classes,combatRoles,characterInput,publicCharacter,attendanceMetrics} from './domain.mjs';
 import {currentSession,startOAuth,finishOAuth,cookie,cookies,hash,oauthReady} from './auth.mjs';
 import {deliverRecruitment} from './integrations.mjs';
+import {operations,publicProgress} from './operations.mjs';
 const date=()=>new Date().toISOString();
-const files={'/runtime-config.js':['runtime-config.js','text/javascript'],'/routing.js':['routing.js','text/javascript'],'/style.css':['style.css','text/css'],'/app.js':['app.js','text/javascript']};
+const files={'/assets/guild-logo.png':['assets/guild-logo.png','image/png'],'/branding.css':['branding.css','text/css'],'/operations.css':['operations.css','text/css'],'/operations-ui.js':['operations-ui.js','text/javascript'],'/character-editor.js':['character-editor.js','text/javascript'],'/style.css':['style.css','text/css'],'/app.js':['app.js','text/javascript']};
 const pages=new Set(['/','/nosotros','/progreso','/roster','/reclutamiento','/raids','/contacto','/login','/perfil','/panel']);
-async function body(req){let raw='';for await(const chunk of req){raw+=chunk;if(Buffer.byteLength(raw)>32768)throw new HttpError(413,'El formulario es demasiado grande.');}try{return JSON.parse(raw);}catch{throw new HttpError(400,'JSON no válido.');}}
+async function body(req){let raw='';for await(const chunk of req){raw+=chunk;if(Buffer.byteLength(raw)>32768)throw new HttpError(413,'El formulario es demasiado grande.');}try{const result=JSON.parse(raw);if(!result||typeof result!=='object'||Array.isArray(result))throw new Error();return result;}catch{throw new HttpError(400,'JSON no válido.');}}
 export function createApp(db,env){
   env={APP_ORIGIN:'http://localhost:3000',...env};
   const limits=new Map();
@@ -28,23 +29,43 @@ export function createApp(db,env){
         throttle(req,path);
       }
       if(path==='/api/health')return send(200,{ok:true,version:'0.1.0'});
-      if(path==='/api/public'&&method==='GET')return send(200,{settings:s,characters:db.prepare('SELECT name,surname,class,role FROM characters ORDER BY name').all().map(publicCharacter),progress:db.prepare('SELECT data FROM progress').all().map(r=>JSON.parse(r.data)),raids:db.prepare('SELECT id,title,starts_at,source FROM raids ORDER BY starts_at DESC LIMIT 100').all(),authConfigured:oauthReady(env)});
+      if(path==='/api/public'&&method==='GET')return send(200,{settings:s,characters:db.prepare('SELECT name,surname,class,role FROM characters WHERE archived_at IS NULL ORDER BY name').all().map(publicCharacter),progress:publicProgress(db),raids:db.prepare('SELECT id,title,starts_at,source FROM raids WHERE starts_at>=? ORDER BY starts_at LIMIT 100').all(date()),authConfigured:oauthReady(env)});
+      const sendText=(status,value,type,extra={})=>{res.writeHead(status,{...headers,'Content-Type':type,...extra});res.end(value);};
+      if(await operations({db,user,s,path,method,url,body:()=>body(req),send,sendText,requireUser,requirePermission}))return;
       if(path==='/api/me'&&method==='GET')return send(200,{user:user?{id:user.id,name:user.display_name,rank:user.rank}:null,csrf:user?.csrf,permissions:Object.keys((await import('./domain.mjs')).permissions).filter(p=>can(user,p))});
       if(path==='/auth/discord'&&method==='GET'){throttle(req,path);const auth=startOAuth(db,env);res.writeHead(302,{...headers,Location:auth.url,'Set-Cookie':cookie('oauth_state',auth.state,env,600)});return res.end();}
       if(path==='/auth/discord/callback'&&method==='GET'){const session=await finishOAuth(db,req,url,env);res.writeHead(302,{...headers,Location:'/perfil','Set-Cookie':[cookie('session',session.raw,env,1800),cookie('oauth_state','',env,0)]});return res.end();}
       if(path==='/api/logout'&&method==='POST'){requireUser();db.prepare('DELETE FROM sessions WHERE hash=?').run(hash(cookies(req).session));return send(200,{ok:true},{'Set-Cookie':cookie('session','',env,0)});}
       if(path==='/api/characters'){
         requireUser();
-        if(method==='GET')return send(200,db.prepare('SELECT * FROM characters WHERE user_id=? ORDER BY is_main DESC,name').all(user.id));
+        if(method==='GET')return send(200,db.prepare('SELECT * FROM characters WHERE user_id=? AND archived_at IS NULL ORDER BY is_main DESC,name').all(user.id));
         if(method==='POST'){
           requirePermission('character.write');const v=characterInput(await body(req)),id=randomUUID();
-          transaction(db,()=>{const count=db.prepare('SELECT count(*) AS n FROM characters WHERE user_id=?').get(user.id).n;if(count>=30)throw new HttpError(400,'Límite de 30 personajes por usuario.');if(v.isMain||!count)db.prepare('UPDATE characters SET is_main=0 WHERE user_id=?').run(user.id);db.prepare('INSERT INTO characters(id,user_id,name,surname,class,role,spec,professions,availability,notes,is_main,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)').run(id,user.id,v.name,v.surname,v.class,v.role,v.spec,v.professions,v.availability,v.notes,v.isMain||!count?1:0,date());audit(db,user.id,'character.created',id,{name:v.name});});return send(201,{id});
+          transaction(db,()=>{const count=db.prepare('SELECT count(*) AS n FROM characters WHERE user_id=? AND archived_at IS NULL').get(user.id).n;if(count>=30)throw new HttpError(400,'Límite de 30 personajes por usuario.');if(v.isMain||!count)db.prepare('UPDATE characters SET is_main=0 WHERE user_id=?').run(user.id);db.prepare('INSERT INTO characters(id,user_id,name,surname,class,role,spec,professions,availability,notes,is_main,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)').run(id,user.id,v.name,v.surname,v.class,v.role,v.spec,v.professions,v.availability,v.notes,v.isMain||!count?1:0,date());audit(db,user.id,'character.created',id,{name:v.name});});return send(201,{id});
         }
       }
-      if(/^\/api\/characters\/[^/]+\/main$/.test(path)&&method==='POST'){
-        requirePermission('character.write');const id=path.split('/')[3];const c=db.prepare('SELECT * FROM characters WHERE id=? AND user_id=?').get(id,user.id);if(!c)throw new HttpError(404,'Personaje no encontrado.');transaction(db,()=>{db.prepare('UPDATE characters SET is_main=0 WHERE user_id=?').run(user.id);db.prepare('UPDATE characters SET is_main=1 WHERE id=?').run(id);audit(db,user.id,'character.main',id,{});});return send(200,{ok:true});
+      if(/^\/api\/characters\/[^/]+$/.test(path)&&method==='PATCH'){
+        requirePermission('character.write');
+        const id=path.split('/')[3];
+        const previous=db.prepare('SELECT * FROM characters WHERE id=? AND user_id=? AND archived_at IS NULL').get(id,user.id);
+        if(!previous)throw new HttpError(404,'Personaje no encontrado.');
+        const input=await body(req);
+        const v=characterInput({...previous,...input});
+        // Main changes use the dedicated atomic endpoint. Ignore client ownership/source fields.
+        transaction(db,()=>{
+          db.prepare('UPDATE characters SET name=?,surname=?,class=?,role=?,spec=?,professions=?,availability=?,notes=? WHERE id=? AND user_id=?').run(v.name,v.surname,v.class,v.role,v.spec,v.professions,v.availability,v.notes,id,user.id);
+          const before={},after={};
+          for(const key of ['name','surname','class','role','spec','professions','availability','notes']){
+            if(previous[key]!==v[key]){before[key]=previous[key];after[key]=v[key];}
+          }
+          audit(db,user.id,'character.updated',id,{before,after});
+        });
+        return send(200,{id});
       }
-      if(path==='/api/roster'&&method==='GET'){requirePermission('roster.read');return send(200,db.prepare('SELECT c.*,u.display_name,u.rank FROM characters c JOIN users u ON u.id=c.user_id ORDER BY c.is_main DESC,c.name').all());}
+      if(/^\/api\/characters\/[^/]+\/main$/.test(path)&&method==='POST'){
+        requirePermission('character.write');const id=path.split('/')[3];const c=db.prepare('SELECT * FROM characters WHERE id=? AND user_id=? AND archived_at IS NULL').get(id,user.id);if(!c)throw new HttpError(404,'Personaje no encontrado.');transaction(db,()=>{db.prepare('UPDATE characters SET is_main=0 WHERE user_id=?').run(user.id);db.prepare('UPDATE characters SET is_main=1 WHERE id=?').run(id);audit(db,user.id,'character.main',id,{});});return send(200,{ok:true});
+      }
+      if(path==='/api/roster'&&method==='GET'){requirePermission('roster.read');return send(200,db.prepare('SELECT c.*,u.display_name,u.rank FROM characters c JOIN users u ON u.id=c.user_id WHERE c.archived_at IS NULL ORDER BY c.is_main DESC,c.name').all());}
       if(path==='/api/applications'&&method==='POST'){
         if(!s.recruitmentOpen)throw new HttpError(409,'El reclutamiento todavía no está abierto.');const v=await body(req);if(v.website)throw new HttpError(400,'Formulario no válido.');
         const a={name:text(v.name,'nombre',80),discord:text(v.discord,'Discord',80),character:text(v.character,'personaje',80),class:choice(v.class,classes,'clase'),role:choice(v.role,combatRoles,'rol'),experience:text(v.experience,'experiencia',2000),availability:text(v.availability,'disponibilidad',1000),reason:text(v.reason,'motivación',2000),additional:text(v.additional??'','información adicional',2000,false)};
@@ -64,9 +85,8 @@ export function createApp(db,env){
         if('lootMethod'in v)next.lootMethod=choice(v.lootMethod,['Loot Council','Roll','Soft Reserve','DKP','Híbrido'],'loot');
         transaction(db,()=>{db.prepare('UPDATE settings SET data=? WHERE id=1').run(JSON.stringify(next));audit(db,user.id,'settings.updated','guild',{before:s,after:next});});return send(200,next);
       }
-      if(path==='/api/attendance'&&method==='GET'){requireUser();const all=can(user,'attendance.manage'),rows=all?db.prepare('SELECT * FROM attendance').all():db.prepare('SELECT * FROM attendance WHERE user_id=?').all(user.id);return send(200,{rows,metrics:attendanceMetrics(rows)});}
       if(path==='/api/audit'&&method==='GET'){requirePermission('audit.read');return send(200,db.prepare('SELECT * FROM audit ORDER BY id DESC LIMIT 200').all());}
-      if(path==='/api/export'&&method==='GET'){requirePermission('backup.export');const data={schemaVersion:1,exportedAt:date(),settings:s};for(const table of ['users','characters','applications','raids','attendance','loot','wishlists','progress','audit'])data[table]=db.prepare(`SELECT * FROM ${table}`).all();audit(db,user.id,'data.exported','guild',{});return send(200,data,{'Content-Disposition':'attachment; filename="darkness-export.json"'});}
+      if(path==='/api/export'&&method==='GET'){requirePermission('backup.export');const data={schemaVersion:1,exportedAt:date(),settings:s};for(const table of ['users','characters','applications','raids','attendance','loot','wishlists','progress','council_members','audit'])data[table]=db.prepare(`SELECT * FROM ${table}`).all();audit(db,user.id,'data.exported','guild',{});return send(200,data,{'Content-Disposition':'attachment; filename="darkness-export.json"'});}
       if(path==='/api/notifications/retry'&&method==='POST'){requirePermission('recruitment.manage');await deliverRecruitment(db,env);return send(200,{ok:true});}
       if(path.startsWith('/api/'))throw new HttpError(404,'Endpoint no encontrado.');
       if(!['GET','HEAD'].includes(method))throw new HttpError(405,'Método no permitido.');

@@ -2,6 +2,7 @@ export const ranks = ['visitor','member','raider','raid_leader','officer','leade
 export const classes = ['Guerrero','Paladín','Cazador','Pícaro','Sacerdote','Chamán','Mago','Brujo','Druida'];
 export const combatRoles = ['Tanque','Sanador','DPS melee','DPS distancia'];
 export const permissions = {
+  'community.read':'member',
   'character.write':'member','roster.read':'raid_leader','attendance.manage':'raid_leader',
   'loot.manage':'raid_leader','progress.manage':'raid_leader','recruitment.manage':'officer',
   'members.manage':'officer','audit.read':'officer','settings.manage':'leader','backup.export':'leader'
@@ -24,4 +25,4 @@ export function characterInput(v) {
   return {name:text(v.name,'nombre',40),surname:text(v.surname??'','apellido',40,false),class:choice(v.class,classes,'clase'),role:choice(v.role,combatRoles,'rol'),spec:text(v.spec??'','especialización',80,false),professions:text(v.professions??'','profesiones',160,false),availability:text(v.availability??'','disponibilidad',500,false),notes:text(v.notes??'','notas',2000,false),isMain:v.isMain===true};
 }
 export function publicCharacter(c){return {name:[c.name,c.surname].filter(Boolean).join(' '),class:c.class,role:c.role};}
-export function attendanceMetrics(rows){const result={raids:rows.length,attended:0,absent:0,reserve:0,late:0};for(const r of rows){if(r.status==='Asistió')result.attended++;if(r.status==='Ausente')result.absent++;if(r.status==='Reserva')result.reserve++;if(r.status==='Llegó tarde')result.late++;}result.percentage=result.raids?Math.round((result.attended+result.late)/result.raids*100):0;return result;}
+export function attendanceMetrics(rows){const result={raids:rows.length,attended:0,absent:0,reserve:0,late:0};for(const r of rows){if(r.status==='Asistió')result.attended++;if(r.status==='Ausente')result.absent++;if(r.status==='Reserva')result.reserve++;if(r.status==='Llegó tarde')result.late++;}result.percentage=result.raids?Math.round((result.attended+result.late)/result.raids*100):0;return {...result,formula:'(Asistió + Llegó tarde) / registros',policy:'Indicador descriptivo; no determina prioridad de loot.'};}

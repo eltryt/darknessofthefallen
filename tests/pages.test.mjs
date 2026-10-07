@@ -4,10 +4,10 @@ import {readFileSync, readdirSync, existsSync} from 'node:fs';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {publicData} from '../scripts/public-data.mjs';
-import {currentPage, pagePath} from '../public/routing.js';
+import {defaults} from '../src/db.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
-const content = () => JSON.parse(readFileSync(new URL('../site/public.json', import.meta.url)));
+const content = () => structuredClone({settings: defaults, characters: [], raids: [], progress: [], authConfigured: false});
 
 test('Pages exposes only public fields, with no authentication or submission capability', () => {
   const input = content();
@@ -26,19 +26,21 @@ test('Pages exposes only public fields, with no authentication or submission cap
   assert.throws(() => publicData(input), /Discord/);
 });
 
-test('Pages links and route detection support project and root deployments', () => {
-  for (const base of ['/', '/darknessofthefallen/']) {
-    assert.equal(pagePath('/', base, true), base);
-    const link = pagePath('/roster', base, true);
-    assert.equal(link, `${base}roster/`);
-    assert.equal(currentPage(link, base), '/roster');
-    assert.equal(currentPage(link.slice(0, -1), base), '/roster');
-    assert.equal(currentPage(`${base}index.html`, base), '/');
-    assert.equal(pagePath('https://discord.gg/example', base, true), 'https://discord.gg/example');
-    assert.equal(pagePath('#content', base, true), '#content');
+test('Pages uses the current published website with its logo, branding and confirmed schedule', () => {
+  const source = new URL('../public/', import.meta.url);
+  const snapshot = content();
+  assert.deepEqual(snapshot, publicData(snapshot));
+  assert.equal(snapshot.settings.ruleset, 'PvP');
+  assert.deepEqual(snapshot.settings.raidDays, ['Martes', 'Miércoles', 'Jueves']);
+  for (const file of ['branding.css', 'operations.css', 'operations-ui.js', 'character-editor.js', 'assets/guild-logo.png']) {
+    assert.ok(existsSync(new URL(file, source)), file);
   }
-  assert.equal(currentPage('/another-site/roster/', '/darknessofthefallen/'), null);
-  assert.equal(pagePath('/roster', '/', false), '/roster');
+  const html = readFileSync(new URL('index.html', source), 'utf8');
+  assert.match(html, /class="brand-logo"/);
+  assert.match(html, /branding\.css/);
+  const app = readFileSync(new URL('app.js', source), 'utf8');
+  assert.match(app, /function weekSchedule/);
+  assert.match(app, /function publicLayout/);
 });
 
 test('Pages builds complete, repeatable artifacts at both base paths and rejects invalid paths', () => {
@@ -56,16 +58,31 @@ test('Pages builds complete, repeatable artifacts at both base paths and rejects
     for (const forbidden of ['.env', 'src', 'data', 'backups', 'history.bundle', 'guild.sqlite']) {
       assert.ok(!files.some(file => file.split('/').includes(forbidden)), forbidden);
     }
-    const config = readFileSync(new URL('runtime-config.js', dist), 'utf8');
-    assert.ok(config.includes('"mode":"static"'));
-    assert.ok(config.includes(`"basePath":"${base}"`));
-    for (const route of ['', 'nosotros/', 'roster/', 'raids/', 'progreso/', 'reclutamiento/', 'contacto/', 'login/', 'perfil/', 'panel/']) {
+    const config = JSON.parse(readFileSync(new URL('build-info.json', dist), 'utf8'));
+    assert.equal(config.basePath, base);
+    // Public assets come from the current full project, never an older snapshot.
+    for (const file of ['style.css', 'operations.css', 'assets/guild-logo.png']) {
+      assert.deepEqual(readFileSync(new URL(file, dist)), readFileSync(new URL(`../public/${file}`, import.meta.url)), file);
+    }
+    const branding = readFileSync(new URL('branding.css', dist), 'utf8');
+    assert.ok(branding.startsWith(readFileSync(new URL('../public/branding.css', import.meta.url), 'utf8')));
+    assert.match(branding, /showcase-notice/);
+    assert.deepEqual(JSON.parse(readFileSync(new URL('site-data.json', dist), 'utf8')), content());
+    const app = readFileSync(new URL('app.js', dist), 'utf8');
+    assert.ok(app.includes(`from '${base}character-editor.js'`));
+    assert.ok(app.includes(`from '${base}operations-ui.js'`));
+    assert.ok(app.includes(`fetch('${base}site-data.json')`));
+    assert.ok(app.includes('path=pagesPath(location.pathname)'));
+    assert.ok(app.includes('pagesPath(a.pathname)'));
+    for (const route of ['', 'nosotros/', 'roster/', 'raids/', 'progreso/', 'reclutamiento/', 'contacto/', 'login/']) {
       const html = readFileSync(new URL(`${route}index.html`, dist), 'utf8');
+      assert.ok(!html.includes('https://darkness-of-the-fallen.borclagonher.chatgpt.site'));
+      assert.ok(html.includes(`https://eltryt.github.io${base}`));
       for (const [, attr, url] of html.matchAll(/(href|src)="([^"]+)"/g)) {
-        if (url.startsWith('#')) continue;
+        if (url.startsWith('#') || url.startsWith('https:')) continue;
         assert.ok(url.startsWith(base), `${attr}=${url}`);
         const relative = url.slice(base.length);
-        assert.ok(existsSync(new URL(relative.endsWith('/') || !relative ? `${relative}index.html` : relative, dist)), url);
+        assert.ok(existsSync(new URL(!relative ? 'index.html' : relative.endsWith('/') ? `${relative}index.html` : relative.includes('.') ? relative : `${relative}/index.html`, dist)), url);
       }
     }
     assert.ok(existsSync(new URL('404.html', dist)));

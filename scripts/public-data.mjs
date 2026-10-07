@@ -2,7 +2,7 @@
 // Never point the build at a database or a leader-only JSON export.
 export function publicData(input) {
   const settings = {};
-  for (const key of ['name', 'description', 'faction', 'region', 'server', 'ruleset', 'raidStart', 'raidEnd', 'timezone', 'about', 'discordUrl']) {
+  for (const key of ['name', 'description', 'faction', 'region', 'server', 'ruleset', 'raidStart', 'raidEnd', 'timezone', 'about', 'discordUrl', 'lootMethod']) {
     if (typeof input.settings?.[key] !== 'string') throw new Error(`Missing public setting: ${key}`);
     settings[key] = input.settings[key];
   }
@@ -13,6 +13,18 @@ export function publicData(input) {
     throw new Error('raidDays must be an array of strings.');
   }
   settings.raidDays = input.settings.raidDays;
+  for (const key of ['attendanceStates', 'soughtClasses', 'soughtRoles']) {
+    if (!Array.isArray(input.settings[key]) || input.settings[key].some(value => typeof value !== 'string')) {
+      throw new Error(`${key} must be an array of strings.`);
+    }
+    settings[key] = input.settings[key];
+  }
+  settings.rosterTargets = {};
+  for (const key of ['tanks', 'healers', 'dps']) {
+    const value = input.settings.rosterTargets?.[key];
+    if (!Number.isInteger(value) || value < 0) throw new Error(`Invalid rosterTargets.${key}`);
+    settings.rosterTargets[key] = value;
+  }
   settings.recruitmentOpen = false;
   function project(rows, keys, label) {
     if (!Array.isArray(rows)) throw new Error(`${label} must be an array.`);

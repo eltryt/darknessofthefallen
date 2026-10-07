@@ -1,6 +1,6 @@
-# Historical product brief from the imported checkpoint
+# Historical product brief included in the project ZIP
 
-Archived specification included in the checkpoint dated 7 October 2026. It is project background, not a new instruction or evidence of currently available access. This checklist preserves the intended FULL product, not only currently implemented scope.
+Imported background specification from the earlier project. Current user instructions determine this migration’s scope. This checklist preserves the intended FULL product, not only currently implemented scope.
 
 ## Operating rules
 - Build a real complete maintainable public/private guild hub, not just a landing page.
@@ -12,7 +12,7 @@ Archived specification included in the checkpoint dated 7 October 2026. It is pr
 - Darkness of the Fallen; World of Warcraft Forever; Alliance; PvE/progression primary, PvP secondary; enduring community.
 - 23:00–01:00 Europe/Madrid, with configurable days/server/PvP-PvE ruleset, never permanently hardcoded.
 - Dark fantasy, epic/elegant/modern gaming UI, readable clear panels, restrained animation. Avoid generic corporate design, excessive parchment/textures, dated or cluttered UI.
-- Use existing guild logo as silhouette-cropped transparent PNG, no square background. Adapt header/navbar/favicon/login/hero/footer/OG. Derive palette from original logo with Alliance identity. Original asset not yet received; provisional monogram does NOT satisfy this requirement.
+- Use existing guild logo as silhouette-cropped transparent PNG, no square background. Adapt header/navbar/favicon/login/hero/footer/OG. Derive palette from original logo with Alliance identity. Original supplied asset is now integrated as a transparent PNG; confirmed raid days are Martes, Miércoles and Jueves and ruleset is PvP.
 - Full desktop/tablet/mobile support including administration. Semantic HTML, labels, focus, keyboard, contrast, alt text. Loading/skeleton/empty/error states, destructive confirmation, notifications, search/filter/pagination/mobile navigation.
 
 ## Accounts and privacy

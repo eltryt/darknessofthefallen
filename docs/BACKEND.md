@@ -1,6 +1,6 @@
 # Backend Node.js y SQLite
 
-Estas funciones requieren ejecutar `npm start` en un servidor con almacenamiento persistente. GitHub Pages solo publica el contenido estático.
+Estas funciones requieren ejecutar `npm start` en un servidor con almacenamiento persistente. GitHub Pages solo publica el contenido estático. El código actual proviene de darkness-of-the-fallen-proyecto.zip e incluye las operaciones de raids, asistencia, loot, wishlist, consejo y progreso, con migración SQL 002.
 
 ## Discord configuration
 

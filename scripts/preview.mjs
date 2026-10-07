@@ -2,7 +2,7 @@ import {createServer} from 'node:http';
 import {readFile, stat} from 'node:fs/promises';
 import {resolve, extname, sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {runtime} from '../dist/runtime-config.js';
+const runtime = JSON.parse(await readFile(new URL('../dist/build-info.json', import.meta.url), 'utf8'));
 
 const root = fileURLToPath(new URL('../dist/', import.meta.url)).replace(/\/$/, '');
 const types = {'.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8'};

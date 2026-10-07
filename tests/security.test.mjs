@@ -1,4 +1,20 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {createServer} from 'node:http';
+test('character editing preserves ownership and main status and rejects cross-account edits',async()=>{
+  const f=await fixture();
+  try{
+    const created=await f.request('/api/characters','member','POST',{name:'Urco',class:'Brujo',role:'DPS distancia'});
+    const path=`/api/characters/${created.body.id}`;
+    assert.equal((await f.request(path,'raider','PATCH',{name:'Intruso'})).status,404);
+    assert.equal((await f.request(path,'visitor','PATCH',{name:'Intruso'})).status,403);
+    assert.equal((await f.request(path,'member','PATCH',{class:'invalid'})).status,400);
+    assert.equal((await f.request(path,'member','PATCH',{name:'Ronsel',availability:'Noches',user_id:'leader',is_main:0})).status,200);
+    const character=(await f.request('/api/characters','member')).body[0];
+    assert.equal(character.name,'Ronsel');assert.equal(character.user_id,'member');assert.equal(character.is_main,1);
+    assert.equal(character.availability,'Noches');
+    const log=f.db.prepare("SELECT changes FROM audit WHERE action='character.updated'").get();
+    assert.equal(JSON.parse(log.changes).before.name,'Urco');assert.equal(JSON.parse(log.changes).after.name,'Ronsel');
+  }finally{await f.close();}
+});
 import {openDatabase} from '../src/db.mjs';import {createApp} from '../src/app.mjs';import {issueSession,finishOAuth,hash} from '../src/auth.mjs';import {ranks,can,roleFromDiscord} from '../src/domain.mjs';
 async function fixture(){const db=openDatabase(':memory:');const server=createServer(createApp(db,{APP_ORIGIN:'http://localhost:3000'}));await new Promise(r=>server.listen(0,'127.0.0.1',r));const base=`http://127.0.0.1:${server.address().port}`;const sessions={};for(const rank of ranks){db.prepare('INSERT INTO users VALUES(?,?,?,?)').run(rank,rank,rank,new Date().toISOString());sessions[rank]=issueSession(db,rank);}return {db,server,sessions,async close(){await new Promise(r=>server.close(r));db.close();},async request(path,rank,method='GET',body,headers={}){const session=sessions[rank];const r=await fetch(base+path,{method,headers:{Origin:'http://localhost:3000','Content-Type':'application/json',...(session?{Cookie:`session=${session.raw}`,'X-CSRF-Token':session.csrf}:{}),...headers},...(body!==undefined?{body:JSON.stringify(body)}:{})});return {status:r.status,body:await r.json(),headers:r.headers};}};}
 test('all six roles are checked against server endpoints and direct panel URLs',async()=>{const f=await fixture();try{for(const rank of ranks){for(const [path,minimum]of [['/api/roster','raid_leader'],['/api/applications','officer'],['/api/audit','officer'],['/api/export','leader']]){const r=await f.request(path,rank);assert.equal(r.status,ranks.indexOf(rank)>=ranks.indexOf(minimum)?200:403,rank+path);}const res=await fetch(`http://127.0.0.1:${f.server.address().port}/panel`,{headers:{Cookie:`session=${f.sessions[rank].raw}`}});assert.equal(res.status,ranks.indexOf(rank)>=3?200:403);}assert.equal((await f.request('/api/export')).status,401);}finally{await f.close();}});

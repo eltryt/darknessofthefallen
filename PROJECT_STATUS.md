@@ -1,50 +1,42 @@
 # Estado del proyecto — 8 de octubre de 2026
 
-## Migración y GitHub Pages
+## Fuente de esta migración
 
-- Fuente: `Darkness-of-the-Fallen-checkpoint.zip`; los archivos del ZIP coinciden con su historial Git incluido en `history.bundle`.
-- Destino único: `eltryt/darknessofthefallen`.
-- Historial recuperado: `08de4b0`, `b156747` y `d7689cd`, unido al commit inicial del repositorio de destino sin reescribirlo.
-- Frontend adaptado para Pages bajo `/darknessofthefallen/`. Build con HTML para cada ruta, CSS, módulos JavaScript, datos públicos y `.nojekyll`.
-- Workflow `.github/workflows/pages.yml`: prueba, genera y despliega `dist/` al hacer push a `main` o mediante ejecución manual.
-- Contenido público editable en `site/public.json`; no se exportan la base de datos, candidaturas, sesiones ni información privada.
-- Backend Node 24/SQLite conservado. Las funciones que dependen de él muestran un estado pendiente en Pages.
+El usuario proporcionó `darkness-of-the-fallen-proyecto.zip` y `darkness-of-the-fallen-web-publica.zip`. Ambos se han inspeccionado e integrado en `eltryt/darknessofthefallen`. El proyecto completo genera la exportación pública entregada; solo había diferencias CRLF/LF en dos archivos. `docs/SITE_IMPORT.json` registra los hashes y la comparación.
 
-## Validación local
+Esta actualización reemplaza el código antiguo de la primera migración (`93a90d2`/`1a361b0`) con la aplicación completa entregada. El historial existente se conserva. La recuperación parcial de la web realizada antes de recibir estos ZIP no se usa como fuente del build.
 
-- 12 pruebas pasan: 9 de seguridad del backend y 3 de Pages (proyección pública, rutas y builds repetibles con prefijos raíz/proyecto).
-- Chromium en escritorio (1440 px) y móvil (390 px): 10 rutas, recargas directas, navegación y menú móvil sin errores JavaScript, solicitudes API ni desbordamiento horizontal; filtro del roster comprobado.
-- Servidor Node iniciado, `/api/health` responde correctamente e inicio/roster/login funcionan en navegador.
-- No se ha verificado OAuth real, envío de webhooks ni proveedores de raids/logs: el checkpoint no incluye sus credenciales.
+## Código incorporado
 
-## Publicación
+- Frontend completo en `public/`, con logo real, identidad visual actual, calendario, páginas ampliadas, filtros, preguntas desplegables y módulos de operaciones/personajes.
+- Backend actual en `src/`, incluida `operations.mjs`, y migración SQL 002.
+- Raids manuales, asistencia, wishlist, loot, snapshots del consejo, progreso público, archivado de personajes, auditoría y CSV, además de los módulos existentes de Discord y candidaturas.
+- Los tests de seguridad/operaciones entregados, scripts de exportación y QA, y documentación técnica del proyecto.
+- Adaptador de Pages, preview y pruebas de integración. Una única fuente de frontend: `public/`.
 
-Migración subida a `main` y verificada mediante lectura del remoto: commit `93a90d2` (incluye el historial original y la configuración de Pages).
+## Verificación local de esta actualización
 
-El build y las pruebas locales están verificados. La API de GitHub responde `Forbidden` desde este entorno: no se ha podido consultar o activar Pages ni verificar ejecuciones remotas de Actions. En GitHub, seleccionar **Settings → Pages → Source: GitHub Actions** y ejecutar **Deploy public website to GitHub Pages** en `main`. Consultar la ejecución para confirmar la publicación; la URL prevista es `https://eltryt.github.io/darknessofthefallen/`.
+- 22/22 pruebas pasan: 19 del proyecto entregado y 3 de Pages.
+- Build correcto y repetible bajo `/` y `/darknessofthefallen/`.
+- 8 páginas públicas comparadas con el ZIP público a 1440 y 390 px: capturas idénticas, textos/títulos, logo y calendario coincidentes.
+- Recargas directas, navegación activa, menú móvil/Escape, filtros/limpieza de roster y preguntas desplegables funcionan, sin errores JavaScript ni desbordamiento horizontal.
+- Backend arrancado: health y 8 páginas públicas correctas.
+- QA aislada en memoria: 11 pestañas del panel de líder y perfil de miembro comprobados en móvil, sin errores de API/interfaz. No se utilizan esas sesiones o datos en Pages ni en producción.
 
-La URL prevista de Pages también devuelve un bloqueo de red, por lo que no se afirma que el sitio esté publicado.
+## GitHub Pages
 
-La web de referencia de ChatGPT Sites tampoco se pudo consultar por un bloqueo de red; la migración utiliza el checkpoint proporcionado. No se modifica la visibilidad del repositorio ni se contratan servicios.
+La fuente de Pages está configurada como GitHub Actions. El workflow publica `dist/` tras cada push a `main`. URL: https://eltryt.github.io/darknessofthefallen/.
 
-## Funciones conservadas del backend
+El resultado remoto de esta actualización se comprueba después del push. Las verificaciones locales anteriores no son una afirmación de publicación ya completada. El acceso actual a la API de GitHub permite comprobar Actions directamente.
 
-OAuth Discord y sesiones, RBAC de seis rangos, personajes con un único Main, roster privado, candidaturas con notas/auditoría, outbox, configuración de la hermandad, exportación y backup SQLite. Las pruebas automatizadas validan permisos y datos; no sustituyen pruebas con proveedores reales.
+## Límites y trabajo posterior
 
-## Pendientes del producto completo
+- Pages mantiene el modo de presentación del ZIP público. El backend completo está en GitHub, pero necesita alojamiento Node/SQLite persistente para prestar servicios a los miembros.
+- Discord OAuth real, webhook privado y sincronización de proveedores no se han configurado ni probado con credenciales reales. El OAuth simulado está cubierto por tests.
+- El calendario confirmado es martes, miércoles y jueves, 23:00–01:00, Europe/Madrid; servidor PvP. La invitación de Discord y el nombre concreto del servidor siguen pendientes en los datos entregados.
+- No se ha contratado ningún servicio, cambiado la visibilidad del repositorio ni usado otros repositorios como destino.
+- Los documentos importados reflejan antecedentes, no autorizaciones nuevas ni pruebas de esta ejecución.
 
-- Alojamiento persistente del backend y configuración real de Discord; sincronización continua de roles (el checkpoint sincroniza al iniciar sesión y las sesiones duran 30 minutos).
-- Logo original, invitación oficial de Discord, servidor y días de raid confirmados.
-- Edición/eliminación de personajes y datos de equipamiento; permisos y gestión de miembros más detallados.
-- Retención de candidaturas, campos configurables, menciones al equipo y gestión de entregas fallidas.
-- Escritura/importación de raids, edición de asistencia, loot/wishlist/consejo, progreso y logs: el checkpoint contiene esquemas y límites de integración, no módulos completos.
-- CSV, importación JSON, copias externas cifradas y ensayo de restauración.
-- El port de Cloudflare Workers/D1 era una propuesta anterior; no forma parte de este despliegue estático. Node DatabaseSync requiere un servidor compatible.
+## Uso
 
-## Comandos
-
-`npm test`, `npm run build`, `npm run preview` para Pages; `npm start` o `npm run dev` para el backend. Consultar README y `docs/BACKEND.md`. No hay dependencias externas de ejecución.
-
-## Entorno en la nube
-
-Guardados en el borrador del entorno `install_script` (build con Node 24+) y `start_skill` (validación, preview y backend), junto con los dominios necesarios para consultar GitHub API, Pages y la referencia de Sites. Este guardado no aplica la red ni publica la instantánea del entorno: requiere revisar/guardar los ajustes y publicar el entorno en el producto. El script guardado y los comandos de arranque se han ejecutado localmente.
+Node 24+, sin instalación de dependencias. `npm test`, `npm run build`, `npm run preview` para Pages. `npm start`/`npm run dev` para la aplicación completa. Ver README y docs/BACKEND.md para configuración y backups. Los procesos deben reiniciarse en una tarea nueva.
