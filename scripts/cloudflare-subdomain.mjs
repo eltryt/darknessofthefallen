@@ -1,4 +1,5 @@
 import {pathToFileURL} from 'node:url';
+import {appendFileSync} from 'node:fs';
 
 export async function ensureSubdomain(env = process.env, fetcher = fetch) {
   const account = env.CLOUDFLARE_ACCOUNT_ID;
@@ -26,5 +27,8 @@ export async function ensureSubdomain(env = process.env, fetcher = fetch) {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  console.log(`Cloudflare subdomain ready: ${await ensureSubdomain()}.workers.dev`);
+  const subdomain = await ensureSubdomain();
+  if (!/^[a-z0-9-]+$/.test(subdomain)) throw new Error('Unexpected Cloudflare subdomain.');
+  console.log(`Cloudflare subdomain ready: ${subdomain}.workers.dev`);
+  if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `url=https://darknessofthefallen-backend.${subdomain}.workers.dev\n`);
 }
