@@ -5,11 +5,12 @@ import {durableDatabase} from './cloudflare-database.mjs';
 import {deliverRecruitment} from './integrations.mjs';
 import initialSchema from '../migrations/001_initial.sql';
 import operationsSchema from '../migrations/002_operations.sql';
+import invitationSchema from '../migrations/003_discord_invite.sql';
 
 export class Guild extends DurableObject {
   constructor(ctx, env) {
     super(ctx, env);
-    this.db = durableDatabase(ctx.storage, initialSchema, operationsSchema);
+    this.db = durableDatabase(ctx.storage, initialSchema, operationsSchema, invitationSchema);
   }
 
   async fetch(request) {

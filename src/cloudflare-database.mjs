@@ -2,7 +2,7 @@ import {defaults} from './database-core.mjs';
 
 // The existing domain code uses synchronous prepared statements. Durable
 // Objects' SQLite API provides the same model, with platform transactions.
-export function durableDatabase(storage, initialSchema, operationsSchema) {
+export function durableDatabase(storage, initialSchema, operationsSchema, invitationSchema) {
   const execute = (sql, parameters = []) => storage.sql.exec(sql, ...parameters);
   const db = {
     exec(sql) { execute(sql).toArray(); },
@@ -23,6 +23,7 @@ export function durableDatabase(storage, initialSchema, operationsSchema) {
     db.exec(initialSchema);
     if (!db.prepare('SELECT version FROM schema_migrations WHERE version=2').get()) db.exec(operationsSchema);
     db.prepare('INSERT OR IGNORE INTO settings(id,data) VALUES(1,?)').run(JSON.stringify(defaults));
+    if (!db.prepare('SELECT version FROM schema_migrations WHERE version=3').get()) db.exec(invitationSchema);
   });
   return db;
 }
