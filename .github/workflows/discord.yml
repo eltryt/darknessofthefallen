@@ -27,6 +27,7 @@ jobs:
           DISCORD_CLIENT_SECRET: ${{ secrets.DISCORD_CLIENT_SECRET }}
           DISCORD_GUILD_ID: ${{ secrets.DISCORD_GUILD_ID }}
           DISCORD_LEADER_ID: ${{ secrets.DISCORD_LEADER_ID }}
-          DISCORD_ROLE_MAP: ${{ secrets.DISCORD_ROLE_MAP }}
+          # Public role IDs confirmed by the guild owner; credentials remain in Secrets.
+          DISCORD_ROLE_MAP: '{"1550998252449435662":"member","1550998241917534248":"raider","1550998186162782218":"raid_leader","1550998307801927802":"officer"}'
       - name: Verify live Discord authorization redirect
         run: node scripts/check-discord.mjs

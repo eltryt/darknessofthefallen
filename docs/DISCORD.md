@@ -33,18 +33,22 @@
 
 ## Rangos del resto de miembros
 
-Opcionalmente crear `DISCORD_ROLE_MAP` como secreto con un objeto JSON que mapee
-IDs de roles de Discord a `member`, `raider`, `raid_leader`, `officer` o `leader`.
-Ejemplo de estructura (sustituir el ID por el real):
+Los roles confirmados están versionados en `.github/workflows/discord.yml`,
+en la variable `DISCORD_ROLE_MAP`. Son IDs públicos, no credenciales. El flujo
+los instala en Cloudflare junto a las credenciales guardadas en GitHub Secrets.
 
-```json
-{"123456789012345678":"member"}
-```
+| Rol de Discord | ID | Rango web |
+| --- | --- | --- |
+| Miembro | `1550998252449435662` | `member` |
+| Raider | `1550998241917534248` | `raider` |
+| Raid Leader | `1550998186162782218` | `raid_leader` |
+| Oficial | `1550998307801927802` | `officer` |
 
+Para cambiar la asignación, editar ese mapa y ejecutar **Configure Discord login**.
+Este flujo usa el mapa versionado, no un secreto `DISCORD_ROLE_MAP` de GitHub.
+Si alguien tiene varios roles, recibe el mayor rango de los asignados.
 Sin coincidencia, se asigna `visitor`; no se promociona automáticamente al primer
-usuario. El usuario de `DISCORD_LEADER_ID` recibe el rango líder explícitamente.
-Omitir el mapa en GitHub conserva el mapa remoto existente. Para vaciarlo de forma
-intencional, guardar `{}` y ejecutar de nuevo el flujo. Los rangos se actualizan
-al iniciar sesión otra vez con Discord.
+usuario. El usuario de `DISCORD_LEADER_ID` mantiene su rango líder explícito.
+Los rangos se actualizan al cerrar sesión e iniciar sesión otra vez con Discord.
 
 El webhook privado de candidaturas es una integración independiente y opcional.
