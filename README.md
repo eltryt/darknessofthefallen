@@ -10,14 +10,14 @@ Web pública: https://eltryt.github.io/darknessofthefallen/.
 - `src/`: servidor Node.js, Discord OAuth, permisos, API y operaciones de la hermandad.
 - `migrations/`: esquema SQLite y migración de operaciones, consejo y archivado de personajes.
 - `tests/`: 19 pruebas del proyecto entregado, 3 de la integración de Pages y 6 del calendario.
-- `scripts/export-showcase.mjs`: genera la presentación pública desde el mismo frontend y los valores públicos de `src/db.mjs`.
+- `scripts/export-showcase.mjs`: genera la presentación pública desde el mismo frontend y los valores públicos de `src/database-core.mjs`.
 - `scripts/build.mjs`: exporta la presentación y adapta su copia a GitHub Pages.
 
 La importación inicial generaba la misma web que el ZIP público; las únicas diferencias originales detectadas fueron saltos de línea CRLF/LF. Las mejoras posteriores se describen a continuación. La procedencia y hashes de los archivos entregados están en [docs/SITE_IMPORT.json](docs/SITE_IMPORT.json).
 
 ## Desarrollo
 
-Requiere **Node.js 24+**. No hay dependencias externas que instalar.
+Requiere **Node.js 24+**. Instalar las herramientas de Cloudflare con `npm ci`.
 
 ```sh
 npm test
@@ -25,7 +25,7 @@ npm run build
 npm run preview
 ```
 
-`preview` sirve la versión de Pages en `127.0.0.1:4173`, ruta `/darknessofthefallen/`. `PORT` permite cambiar el puerto. Editar `public/` y recompilar actualiza la presentación; la identidad y horarios públicos iniciales están en `src/db.mjs`.
+`preview` sirve la versión de Pages en `127.0.0.1:4173`, ruta `/darknessofthefallen/`. `PORT` permite cambiar el puerto. Editar `public/` y recompilar actualiza la presentación; la identidad y horarios públicos iniciales están en `src/database-core.mjs`.
 
 Para ejecutar la aplicación completa con su API y SQLite:
 
@@ -57,7 +57,7 @@ PAGES_BASE_PATH=/ PAGES_ORIGIN=https://eltryt.github.io npm run build
 
 La exportación usa solo los valores públicos iniciales y recursos de la aplicación. No consulta una base de datos ni exporta sesiones, candidaturas o información privada. El build valida el JSON y excluye el servidor y las herramientas de pruebas del artefacto.
 
-**Pages aloja la presentación pública.** Discord OAuth, candidaturas y las herramientas de miembros/oficiales requieren desplegar el servidor Node.js con almacenamiento persistente y configurar Discord. El código completo está en este repositorio; esas funciones no se ejecutan dentro de GitHub Pages.
+**Pages aloja la presentación pública.** Discord OAuth, candidaturas y las herramientas de miembros/oficiales requieren desplegar el backend con almacenamiento persistente y configurar Discord. El código completo está en este repositorio; esas funciones no se ejecutan dentro de GitHub Pages.
 
 ## Horarios y calendario
 
@@ -82,3 +82,7 @@ Ver [docs/BACKEND.md](docs/BACKEND.md) para configuración, privacidad y backups
 - Backend arrancado y sus 8 páginas públicas comprobadas; 11 pestañas del panel de líder y perfil de miembro verificados en móvil mediante datos sintéticos locales.
 
 Ver [PROJECT_STATUS.md](PROJECT_STATUS.md) para publicación y límites. Los documentos de `docs/imported/` son antecedentes conservados del ZIP; sus referencias a repositorios o permisos anteriores no describen este despliegue.
+
+## Backend Cloudflare
+
+Preparado para Workers con SQLite persistente en Durable Objects. Ejecutar `npm run dev:backend` para desarrollo y `npm run test:backend` para comprobar el runtime. [Guía de publicación y configuración de Discord](docs/CLOUDFLARE.md). El workflow manual **Deploy backend to Cloudflare** publica la aplicación completa cuando están configuradas las credenciales de la cuenta.

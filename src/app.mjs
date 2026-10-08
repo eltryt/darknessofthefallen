@@ -1,6 +1,7 @@
 import {randomUUID} from 'node:crypto';
-import {readFileSync} from 'node:fs';
-import {settings,transaction,audit} from './db.mjs';
+import {Buffer} from 'node:buffer';
+async function readLocalAsset(file){const {readFile}=await import('node:fs/promises');return readFile(new URL(`../public/${file}`,import.meta.url));}
+import {settings,transaction,audit} from './database-core.mjs';
 import {can,HttpError,text,choice,classes,combatRoles,characterInput,publicCharacter,attendanceMetrics} from './domain.mjs';
 import {currentSession,startOAuth,finishOAuth,cookie,cookies,hash,oauthReady} from './auth.mjs';
 import {deliverRecruitment} from './integrations.mjs';
@@ -9,7 +10,7 @@ const date=()=>new Date().toISOString();
 const files={'/schedule.js':['schedule.js','text/javascript'],'/schedule-ui.js':['schedule-ui.js','text/javascript'],'/assets/guild-logo.png':['assets/guild-logo.png','image/png'],'/branding.css':['branding.css','text/css'],'/operations.css':['operations.css','text/css'],'/operations-ui.js':['operations-ui.js','text/javascript'],'/character-editor.js':['character-editor.js','text/javascript'],'/style.css':['style.css','text/css'],'/app.js':['app.js','text/javascript']};
 const pages=new Set(['/','/nosotros','/progreso','/roster','/reclutamiento','/raids','/contacto','/login','/perfil','/panel']);
 async function body(req){let raw='';for await(const chunk of req){raw+=chunk;if(Buffer.byteLength(raw)>32768)throw new HttpError(413,'El formulario es demasiado grande.');}try{const result=JSON.parse(raw);if(!result||typeof result!=='object'||Array.isArray(result))throw new Error();return result;}catch{throw new HttpError(400,'JSON no válido.');}}
-export function createApp(db,env){
+export function createApp(db,env,{readAsset=readLocalAsset}={}){
   env={APP_ORIGIN:'http://localhost:3000',...env};
   const limits=new Map();
   function throttle(req,route){const key=`${req.socket.remoteAddress}:${route}`,now=Date.now();let item=limits.get(key);if(!item||item.until<now)item={count:0,until:now+60000};if(++item.count>15)throw new HttpError(429,'Demasiados intentos. Espera un minuto.');limits.set(key,item);if(limits.size>10000)for(const [k,v]of limits)if(v.until<now)limits.delete(k);}
@@ -92,7 +93,7 @@ export function createApp(db,env){
       if(!['GET','HEAD'].includes(method))throw new HttpError(405,'Método no permitido.');
       if(path==='/panel'){requireUser();if(!can(user,'roster.read'))throw new HttpError(403,'Tu rango no permite entrar al panel.');}
       if(path==='/perfil')requireUser();
-      if(files[path]||pages.has(path)){const [file,type]=files[path]||['index.html','text/html'];res.writeHead(200,{...headers,'Content-Type':`${type}; charset=utf-8`});return res.end(method==='HEAD'?'':readFileSync(new URL(`../public/${file}`,import.meta.url)));}
+      if(files[path]||pages.has(path)){const [file,type]=files[path]||['index.html','text/html'];res.writeHead(200,{...headers,'Content-Type':`${type}; charset=utf-8`});return res.end(method==='HEAD'?'':await readAsset(file));}
       throw new HttpError(404,'Página no encontrada.');
     }catch(e){send(e.status||500,{error:e.status?e.message:'No se pudo completar la operación. Inténtalo de nuevo.'});}
   };

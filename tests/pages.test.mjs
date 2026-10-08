@@ -4,7 +4,7 @@ import {readFileSync, readdirSync, existsSync} from 'node:fs';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {publicData} from '../scripts/public-data.mjs';
-import {defaults} from '../src/db.mjs';
+import {defaults} from '../src/database-core.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const content = () => structuredClone({settings: defaults, characters: [], raids: [], progress: [], authConfigured: false});

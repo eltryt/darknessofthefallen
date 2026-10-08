@@ -20,11 +20,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
+      - run: npm ci
       - run: npm test
       - name: Build public site
         run: npm run build
         env:
           PAGES_BASE_PATH: /darknessofthefallen/
+          MEMBER_APP_URL: ${{ vars.MEMBER_APP_URL }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

@@ -1,9 +1,14 @@
 import {mkdirSync,readFileSync,writeFileSync,copyFileSync} from 'node:fs';
 import {resolve,join} from 'node:path';
-import {defaults} from '../src/db.mjs';
+import {defaults} from '../src/database-core.mjs';
 
 // Only approved public defaults and public assets: never export a database or sessions.
 const destination=resolve(process.argv[2]||'dist/showcase');
+const memberApp = process.env.MEMBER_APP_URL || '';
+if (memberApp) {
+  const url = new URL(memberApp);
+  if (url.protocol !== 'https:' || url.origin !== memberApp || url.username || url.password) throw Error('MEMBER_APP_URL must be an HTTPS origin without a path.');
+}
 mkdirSync(join(destination,'assets'),{recursive:true});
 const source=new URL('../public/',import.meta.url);
 for(const file of ['schedule.js','schedule-ui.js','style.css','operations.css','branding.css','character-editor.js','operations-ui.js','assets/guild-logo.png'])copyFileSync(new URL(file,source),join(destination,file));
@@ -15,6 +20,7 @@ writeFileSync(join(destination,'app.js'),app);
 writeFileSync(join(destination,'site-data.json'),JSON.stringify({settings:defaults,characters:[],raids:[],progress:[],authConfigured:false}));
 let html=readFileSync(new URL('index.html',source),'utf8');
 html=html.replace('<main id="content"','<aside class="showcase-notice">Versión de presentación · El acceso de miembros con Discord estará disponible próximamente.</aside><main id="content"');
+if (memberApp) html=html.replace('Versión de presentación · El acceso de miembros con Discord estará disponible próximamente.', `Visita la aplicación de la hermandad para consultar los datos actuales. <a href="${memberApp}/login">Abrir el área de miembros</a>`);
 html=html.replace('</head>','<meta name="robots" content="noindex,follow"></head>');
 const origin='https://darkness-of-the-fallen.borclagonher.chatgpt.site';
 const escapeMeta=value=>String(value).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));

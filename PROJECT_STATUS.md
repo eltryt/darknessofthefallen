@@ -39,7 +39,7 @@ La importación completa `fde6e82` se publicó correctamente: workflow Pages 376
 
 ## Límites y trabajo posterior
 
-- Pages mantiene el modo de presentación del ZIP público. El backend completo está en GitHub, pero necesita alojamiento Node/SQLite persistente para prestar servicios a los miembros.
+- Pages mantiene el modo de presentación del ZIP público. El backend completo está en GitHub, pero necesita activar el alojamiento persistente de Cloudflare para prestar servicios a los miembros.
 - La revisión actual no encontró credenciales de Discord ni una cuenta de alojamiento del backend configurada. Discord OAuth real, webhook privado y sincronización de proveedores no se han configurado ni probado con credenciales reales. El OAuth simulado está cubierto por tests.
 - El calendario confirmado es martes, miércoles y jueves, 23:00–01:00, Europe/Madrid; servidor PvP. La invitación de Discord y el nombre concreto del servidor siguen pendientes en los datos entregados.
 - No se ha contratado ningún servicio, cambiado la visibilidad del repositorio ni usado otros repositorios como destino.
@@ -48,3 +48,11 @@ La importación completa `fde6e82` se publicó correctamente: workflow Pages 376
 ## Uso
 
 Node 24+, sin instalación de dependencias. `npm test`, `npm run build`, `npm run preview` para Pages. `npm start`/`npm run dev` para la aplicación completa. Ver README y docs/BACKEND.md para configuración y backups. Los procesos deben reiniciarse en una tarea nueva.
+
+## Alojamiento Cloudflare preparado
+
+- Worker de producción y Durable Object SQLite, con migraciones existentes, alarmas para notificaciones y frontend en el mismo origen.
+- Prueba real en workerd: acceso privado, CSRF/origen, cookies OAuth, límites de entrada, rollback y persistencia tras reiniciar. Las 28 pruebas existentes siguen pasando.
+- Herramientas fijadas en package-lock.json; CI instala con npm ci. Workflow manual de despliegue del backend y enlace opcional desde Pages mediante MEMBER_APP_URL.
+- Publicación remota y Discord real requieren credenciales verificadas; consultar el resultado del workflow antes de afirmar que el backend está alojado.
+- Instrucciones en docs/CLOUDFLARE.md. Ninguna credencial, fixture o base local se incluye en el despliegue.

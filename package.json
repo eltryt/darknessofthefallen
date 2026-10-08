@@ -13,6 +13,14 @@
     "build": "node scripts/build.mjs",
     "backup": "node scripts/backup.mjs",
     "preview": "node scripts/preview.mjs",
-    "export:showcase": "node scripts/export-showcase.mjs"
+    "export:showcase": "node scripts/export-showcase.mjs",
+    "dev:backend": "wrangler dev --local",
+    "build:backend": "wrangler deploy --dry-run --outdir .wrangler/build",
+    "deploy:backend": "wrangler deploy",
+    "test:backend": "node --test tests/cloudflare/*.test.mjs"
+  },
+  "devDependencies": {
+    "miniflare": "5.20261006.0-alpha",
+    "wrangler": "4.148.0"
   }
 }

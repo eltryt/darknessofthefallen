@@ -7,3 +7,6 @@ backups/
 dist/
 *.zip
 .sites/
+.wrangler/
+.dev.vars
+.dev.vars.*

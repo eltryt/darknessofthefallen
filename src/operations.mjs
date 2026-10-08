@@ -1,5 +1,5 @@
 import {randomUUID} from 'node:crypto';
-import {audit,transaction} from './db.mjs';
+import {audit,transaction} from './database-core.mjs';
 import {HttpError,text,choice,can,attendanceMetrics} from './domain.mjs';
 
 const now=()=>new Date().toISOString();
