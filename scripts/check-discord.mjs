@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+const origin = 'https://darknessofthefallen-backend.eltryt-darknessofthefallen.workers.dev';
+const response = await fetch(origin + '/auth/discord', {redirect: 'manual', signal: AbortSignal.timeout(20000)});
+assert.equal(response.status, 302, 'Discord authorization must be enabled');
+const target = new URL(response.headers.get('location'));
+assert.equal(target.origin, 'https://discord.com');
+assert.equal(target.pathname, '/oauth2/authorize');
+assert.equal(target.searchParams.get('redirect_uri'), origin + '/auth/discord/callback');
+assert.equal(target.searchParams.get('scope'), 'identify guilds.members.read');
+const cookie = response.headers.get('set-cookie');
+assert.match(cookie, /HttpOnly/); assert.match(cookie, /Secure/); assert.match(cookie, /SameSite=Lax/);
+console.log('Live Discord authorization redirect verified. User consent and role mapping require a real sign-in.');
