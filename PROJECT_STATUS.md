@@ -6,6 +6,14 @@ El usuario proporcionó `darkness-of-the-fallen-proyecto.zip` y `darkness-of-the
 
 Esta actualización reemplaza el código antiguo de la primera migración (`93a90d2`/`1a361b0`) con la aplicación completa entregada. El historial existente se conserva. La recuperación parcial de la web realizada antes de recibir estos ZIP no se usa como fuente del build.
 
+## Nueva tanda: horarios y acceso pendiente
+
+- Planificador público en Inicio, Hermandad y Raids: próxima franja habitual, cuenta atrás, siguientes fechas y selector Madrid/zona local del navegador.
+- Descarga `.ics` de 12 semanas, con eventos orientativos, instantes UTC y tratamiento de medianoche/cambios de hora. No crea convocatorias ni inscripciones.
+- Acceso pendiente con navegación útil a próximas raids y presentación de la hermandad. Etiqueta del menú adaptada cuando Discord está sin configurar.
+- 28/28 pruebas correctas. Prueba de navegador a 1440/390/320 px en Madrid/Nueva York/Tokio; descarga real validada con un parser iCalendar, 36 eventos en la ventana de prueba, fechas y zona correctas.
+- Módulos del calendario comprobados también en el servidor Node. No hay desbordamiento horizontal, errores JavaScript o llamadas API desde Pages en esta prueba.
+
 ## Código incorporado
 
 - Frontend completo en `public/`, con logo real, identidad visual actual, calendario, páginas ampliadas, filtros, preguntas desplegables y módulos de operaciones/personajes.
@@ -14,7 +22,7 @@ Esta actualización reemplaza el código antiguo de la primera migración (`93a9
 - Los tests de seguridad/operaciones entregados, scripts de exportación y QA, y documentación técnica del proyecto.
 - Adaptador de Pages, preview y pruebas de integración. Una única fuente de frontend: `public/`.
 
-## Verificación local de esta actualización
+## Verificación de la importación completa anterior
 
 - 22/22 pruebas pasan: 19 del proyecto entregado y 3 de Pages.
 - Build correcto y repetible bajo `/` y `/darknessofthefallen/`.
@@ -27,12 +35,12 @@ Esta actualización reemplaza el código antiguo de la primera migración (`93a9
 
 La fuente de Pages está configurada como GitHub Actions. El workflow publica `dist/` tras cada push a `main`. URL: https://eltryt.github.io/darknessofthefallen/.
 
-El resultado remoto de esta actualización se comprueba después del push. Las verificaciones locales anteriores no son una afirmación de publicación ya completada. El acceso actual a la API de GitHub permite comprobar Actions directamente.
+La importación completa `fde6e82` se publicó correctamente: workflow Pages 37699826653 y CI 37699826652, ambos correctos; HTML y datos públicos comprobados por HTTPS. La nueva tanda de calendario se publica con el siguiente push y su resultado se verifica en Actions.
 
 ## Límites y trabajo posterior
 
 - Pages mantiene el modo de presentación del ZIP público. El backend completo está en GitHub, pero necesita alojamiento Node/SQLite persistente para prestar servicios a los miembros.
-- Discord OAuth real, webhook privado y sincronización de proveedores no se han configurado ni probado con credenciales reales. El OAuth simulado está cubierto por tests.
+- La revisión actual no encontró credenciales de Discord ni una cuenta de alojamiento del backend configurada. Discord OAuth real, webhook privado y sincronización de proveedores no se han configurado ni probado con credenciales reales. El OAuth simulado está cubierto por tests.
 - El calendario confirmado es martes, miércoles y jueves, 23:00–01:00, Europe/Madrid; servidor PvP. La invitación de Discord y el nombre concreto del servidor siguen pendientes en los datos entregados.
 - No se ha contratado ningún servicio, cambiado la visibilidad del repositorio ni usado otros repositorios como destino.
 - Los documentos importados reflejan antecedentes, no autorizaciones nuevas ni pruebas de esta ejecución.

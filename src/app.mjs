@@ -6,7 +6,7 @@ import {currentSession,startOAuth,finishOAuth,cookie,cookies,hash,oauthReady} fr
 import {deliverRecruitment} from './integrations.mjs';
 import {operations,publicProgress} from './operations.mjs';
 const date=()=>new Date().toISOString();
-const files={'/assets/guild-logo.png':['assets/guild-logo.png','image/png'],'/branding.css':['branding.css','text/css'],'/operations.css':['operations.css','text/css'],'/operations-ui.js':['operations-ui.js','text/javascript'],'/character-editor.js':['character-editor.js','text/javascript'],'/style.css':['style.css','text/css'],'/app.js':['app.js','text/javascript']};
+const files={'/schedule.js':['schedule.js','text/javascript'],'/schedule-ui.js':['schedule-ui.js','text/javascript'],'/assets/guild-logo.png':['assets/guild-logo.png','image/png'],'/branding.css':['branding.css','text/css'],'/operations.css':['operations.css','text/css'],'/operations-ui.js':['operations-ui.js','text/javascript'],'/character-editor.js':['character-editor.js','text/javascript'],'/style.css':['style.css','text/css'],'/app.js':['app.js','text/javascript']};
 const pages=new Set(['/','/nosotros','/progreso','/roster','/reclutamiento','/raids','/contacto','/login','/perfil','/panel']);
 async function body(req){let raw='';for await(const chunk of req){raw+=chunk;if(Buffer.byteLength(raw)>32768)throw new HttpError(413,'El formulario es demasiado grande.');}try{const result=JSON.parse(raw);if(!result||typeof result!=='object'||Array.isArray(result))throw new Error();return result;}catch{throw new HttpError(400,'JSON no válido.');}}
 export function createApp(db,env){

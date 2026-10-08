@@ -32,7 +32,7 @@ test('Pages uses the current published website with its logo, branding and confi
   assert.deepEqual(snapshot, publicData(snapshot));
   assert.equal(snapshot.settings.ruleset, 'PvP');
   assert.deepEqual(snapshot.settings.raidDays, ['Martes', 'Miércoles', 'Jueves']);
-  for (const file of ['branding.css', 'operations.css', 'operations-ui.js', 'character-editor.js', 'assets/guild-logo.png']) {
+  for (const file of ['schedule.js', 'schedule-ui.js', 'branding.css', 'operations.css', 'operations-ui.js', 'character-editor.js', 'assets/guild-logo.png']) {
     assert.ok(existsSync(new URL(file, source)), file);
   }
   const html = readFileSync(new URL('index.html', source), 'utf8');
@@ -70,6 +70,7 @@ test('Pages builds complete, repeatable artifacts at both base paths and rejects
     assert.deepEqual(JSON.parse(readFileSync(new URL('site-data.json', dist), 'utf8')), content());
     const app = readFileSync(new URL('app.js', dist), 'utf8');
     assert.ok(app.includes(`from '${base}character-editor.js'`));
+    assert.ok(app.includes(`from '${base}schedule-ui.js'`));
     assert.ok(app.includes(`from '${base}operations-ui.js'`));
     assert.ok(app.includes(`fetch('${base}site-data.json')`));
     assert.ok(app.includes('path=pagesPath(location.pathname)'));

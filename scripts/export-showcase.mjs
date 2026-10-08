@@ -6,7 +6,7 @@ import {defaults} from '../src/db.mjs';
 const destination=resolve(process.argv[2]||'dist/showcase');
 mkdirSync(join(destination,'assets'),{recursive:true});
 const source=new URL('../public/',import.meta.url);
-for(const file of ['style.css','operations.css','branding.css','character-editor.js','operations-ui.js','assets/guild-logo.png'])copyFileSync(new URL(file,source),join(destination,file));
+for(const file of ['schedule.js','schedule-ui.js','style.css','operations.css','branding.css','character-editor.js','operations-ui.js','assets/guild-logo.png'])copyFileSync(new URL(file,source),join(destination,file));
 let app=readFileSync(new URL('app.js',source),'utf8');
 const start=app.indexOf('async function api('),end=app.indexOf('\nfunction field(',start);
 if(start<0||end<0)throw Error('Public application structure changed; review showcase export.');

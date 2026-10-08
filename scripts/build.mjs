@@ -34,7 +34,7 @@ const snapshot = JSON.parse(readFileSync(resolve(exported, 'site-data.json'), 'u
 assert.deepEqual(snapshot, publicData(snapshot), 'The export must contain only supported public fields; authentication and submissions must remain disabled.');
 
 const routes = ['', 'nosotros', 'progreso', 'roster', 'raids', 'reclutamiento', 'contacto', 'login'];
-const assets = ['app.js', 'character-editor.js', 'operations-ui.js', 'style.css', 'operations.css', 'branding.css', 'assets/guild-logo.png', 'site-data.json'];
+const assets = ['schedule.js', 'schedule-ui.js', 'app.js', 'character-editor.js', 'operations-ui.js', 'style.css', 'operations.css', 'branding.css', 'assets/guild-logo.png', 'site-data.json'];
 const sourceOrigin = 'https://darkness-of-the-fallen.borclagonher.chatgpt.site';
 function adapt(text) {
   return text
