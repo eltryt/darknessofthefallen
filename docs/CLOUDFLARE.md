@@ -1,5 +1,10 @@
 # Backend en Cloudflare
 
+Publicado: https://darknessofthefallen-backend.eltryt-darknessofthefallen.workers.dev/
+
+Comprobación remota correcta: Actions 37827710593 (HTTPS, páginas, API pública,
+rechazo de accesos privados y origen no autorizado). Discord aún sin configurar.
+
 El Worker sirve la aplicación completa, las API y los recursos públicos. Un
 Durable Object con SQLite conserva los datos de la hermandad. GitHub Pages
 continúa ofreciendo la presentación pública. El navegador usa las API en el
@@ -20,6 +25,9 @@ tras reiniciar el runtime. La entrada de producción es siempre
 ## Publicación
 
 El flujo **Deploy backend to Cloudflare** se ejecuta manualmente desde Actions.
+Si la cuenta no tiene subdominio workers.dev, registra
+`eltryt-darknessofthefallen`; conserva cualquier subdominio existente. Después
+del despliegue comprueba la aplicación por HTTPS antes de declarar éxito.
 Necesita el secreto de Actions `CLOUDFLARE_API_TOKEN` con permisos para desplegar
 Workers/Durable Objects en la cuenta elegida, y `CLOUDFLARE_ACCOUNT_ID` como
 secreto o variable de Actions. El complemento de Cloudflare y las credenciales
@@ -53,8 +61,9 @@ fijarse `APP_ORIGIN`; debe coincidir exactamente con el origen HTTPS de acceso.
 Usar siempre ese dominio también en el callback de Discord. Las notificaciones
 pendientes se entregan mediante alarmas persistentes del Durable Object.
 
-Con el backend comprobado, configurar `MEMBER_APP_URL` como variable de Actions
-con su origen HTTPS y volver a ejecutar el despliegue de Pages. La presentación
+Pages enlaza por defecto con el backend publicado. Para cambiarlo, configurar
+`MEMBER_APP_URL` como variable de Actions con su origen HTTPS y volver a ejecutar
+el despliegue de Pages. La presentación
 mostrará un enlace a la aplicación alojada; las sesiones se gestionan allí.
 
 El líder puede descargar la exportación JSON desde el panel. `npm run backup`

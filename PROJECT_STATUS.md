@@ -56,3 +56,11 @@ Node 24+, sin instalación de dependencias. `npm test`, `npm run build`, `npm ru
 - Herramientas fijadas en package-lock.json; CI instala con npm ci. Workflow manual de despliegue del backend y enlace opcional desde Pages mediante MEMBER_APP_URL.
 - Publicación remota y Discord real requieren credenciales verificadas; consultar el resultado del workflow antes de afirmar que el backend está alojado.
 - Instrucciones en docs/CLOUDFLARE.md. Ninguna credencial, fixture o base local se incluye en el despliegue.
+
+## Backend publicado — 8 de octubre de 2026
+
+- URL: https://darknessofthefallen-backend.eltryt-darknessofthefallen.workers.dev/
+- GitHub ya dispone de las credenciales Cloudflare. Se ha registrado el subdominio gratuito y publicado el Worker con SQLite Durable Objects.
+- Actions 37827710593 completado: 30 pruebas Node, integración workerd, build, despliegue y comprobación remota HTTPS de páginas/API y controles de acceso.
+- Pages enlaza con el backend desde el menú de acceso y el aviso de presentación. Su variable MEMBER_APP_URL permite cambiar el destino.
+- Discord real todavía no configurado (authConfigured=false); no se ha habilitado ningún acceso ficticio.

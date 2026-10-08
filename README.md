@@ -4,6 +4,8 @@ Proyecto completo de la hermandad Alianza de WoW Forever, importado de **darknes
 
 Web pública: https://eltryt.github.io/darknessofthefallen/.
 
+Aplicación y backend alojados: https://darknessofthefallen-backend.eltryt-darknessofthefallen.workers.dev/ (Discord pendiente de configuración).
+
 ## Código actual
 
 - `public/`: frontend actual, logo original, estilos, páginas y módulos de personajes y operaciones.

@@ -20,7 +20,7 @@ writeFileSync(join(destination,'app.js'),app);
 writeFileSync(join(destination,'site-data.json'),JSON.stringify({settings:defaults,characters:[],raids:[],progress:[],authConfigured:false}));
 let html=readFileSync(new URL('index.html',source),'utf8');
 html=html.replace('<main id="content"','<aside class="showcase-notice">Versión de presentación · El acceso de miembros con Discord estará disponible próximamente.</aside><main id="content"');
-if (memberApp) html=html.replace('Versión de presentación · El acceso de miembros con Discord estará disponible próximamente.', `Visita la aplicación de la hermandad para consultar los datos actuales. <a href="${memberApp}/login">Abrir el área de miembros</a>`);
+if (memberApp) html=html.replaceAll('href="/login"', `href="${memberApp}/login"`).replace('Versión de presentación · El acceso de miembros con Discord estará disponible próximamente.', `Visita la aplicación de la hermandad para consultar los datos actuales. <a href="${memberApp}/login">Abrir el área de miembros</a>`);
 html=html.replace('</head>','<meta name="robots" content="noindex,follow"></head>');
 const origin='https://darkness-of-the-fallen.borclagonher.chatgpt.site';
 const escapeMeta=value=>String(value).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
