@@ -82,6 +82,10 @@ export function createApp(db,env,{readAsset=readLocalAsset}={}){
         if('raidDays'in v){if(!Array.isArray(v.raidDays)||v.raidDays.length>7)throw new HttpError(400,'Días no válidos.');next.raidDays=[...new Set(v.raidDays.map(d=>choice(d,['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'],'día')))];}
         if('discordUrl'in v){if(v.discordUrl&&!/^https:\/\/(discord\.gg\/|discord\.com\/invite\/)[\w-]+$/.test(v.discordUrl))throw new HttpError(400,'Invitación Discord no válida.');next.discordUrl=v.discordUrl;}
         if('recruitmentOpen'in v){if(typeof v.recruitmentOpen!=='boolean')throw new HttpError(400,'Estado no válido.');next.recruitmentOpen=v.recruitmentOpen;}
+        for(const [key,allowed] of [['soughtClasses',classes],['soughtRoles',combatRoles]])if(key in v){
+          if(!Array.isArray(v[key])||v[key].length>allowed.length)throw new HttpError(400,'Necesidades de reclutamiento no válidas.');
+          next[key]=[...new Set(v[key].map(value=>choice(value,allowed,'necesidad de reclutamiento')))];
+        }
         if('rosterTargets'in v){next.rosterTargets={};for(const k of ['tanks','healers','dps']){const n=v.rosterTargets[k];if(!Number.isInteger(n)||n<0||n>100)throw new HttpError(400,'Objetivo no válido.');next.rosterTargets[k]=n;}}
         if('lootMethod'in v)next.lootMethod=choice(v.lootMethod,['Loot Council','Roll','Soft Reserve','DKP','Híbrido'],'loot');
         transaction(db,()=>{db.prepare('UPDATE settings SET data=? WHERE id=1').run(JSON.stringify(next));audit(db,user.id,'settings.updated','guild',{before:s,after:next});});return send(200,next);

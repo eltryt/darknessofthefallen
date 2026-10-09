@@ -1,4 +1,18 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {createServer} from 'node:http';
+test('only leaders change recruitment priorities; validation is atomic and changes are audited',async()=>{
+  const f=await fixture();
+  try{
+    const choices={soughtClasses:['Mago','Sacerdote'],soughtRoles:['Sanador'],about:'Nuestra hermandad'};
+    for(const rank of ['member','raider','raid_leader','officer'])assert.equal((await f.request('/api/settings',rank,'PUT',choices)).status,403);
+    assert.equal((await f.request('/api/settings','leader','PUT',choices)).status,200);
+    for(const bad of [{soughtClasses:'Mago'},{soughtClasses:['Inventada']},{soughtRoles:['leader']},{soughtRoles:null}])assert.equal((await f.request('/api/settings','leader','PUT',{about:'Do not save',...bad})).status,400);
+    const actual=(await f.request('/api/public')).body.settings;
+    assert.deepEqual(actual.soughtClasses,choices.soughtClasses);assert.deepEqual(actual.soughtRoles,choices.soughtRoles);assert.equal(actual.about,choices.about);
+    assert.ok(f.db.prepare("SELECT 1 FROM audit WHERE action='settings.updated'").get());
+    assert.equal((await f.request('/api/settings','leader','PUT',{soughtClasses:[],soughtRoles:[]})).status,200);
+    assert.deepEqual((await f.request('/api/public')).body.settings.soughtRoles,[]);
+  }finally{await f.close();}
+});
 test('character editing preserves ownership and main status and rejects cross-account edits',async()=>{
   const f=await fixture();
   try{

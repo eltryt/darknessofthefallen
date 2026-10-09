@@ -1,66 +1,66 @@
-# Estado del proyecto — 8 de octubre de 2026
+# Darkness of the Fallen — estado actual
 
-## Fuente de esta migración
+Actualizado el 9 de octubre de 2026. Fuente de requisitos: `docs/REQUIREMENTS.md`;
+prevalecen las instrucciones posteriores del propietario. Único repositorio de
+trabajo: `eltryt/darknessofthefallen`. Los documentos de `docs/imported/` son históricos.
 
-El usuario proporcionó `darkness-of-the-fallen-proyecto.zip` y `darkness-of-the-fallen-web-publica.zip`. Ambos se han inspeccionado e integrado en `eltryt/darknessofthefallen`. El proyecto completo genera la exportación pública entregada; solo había diferencias CRLF/LF en dos archivos. `docs/SITE_IMPORT.json` registra los hashes y la comparación.
+## Publicación y arquitectura
 
-Esta actualización reemplaza el código antiguo de la primera migración (`93a90d2`/`1a361b0`) con la aplicación completa entregada. El historial existente se conserva. La recuperación parcial de la web realizada antes de recibir estos ZIP no se usa como fuente del build.
+- Aplicación completa: https://darknessofthefallen-backend.eltryt-darknessofthefallen.workers.dev/
+- Presentación pública: https://eltryt.github.io/darknessofthefallen/
+- Cloudflare Workers con Durable Object SQLite persistente; mismo origen para frontend/API/sesiones.
+- Pages publica solo recursos y datos editoriales; acceso de miembros y candidaturas enlazan al backend.
+- Node 24 + SQLite sigue disponible para desarrollo local. Herramientas fijadas en package-lock.json.
+- Última base de despliegue verificada antes de esta tanda: `469a5b4`; backend Actions 37885020075, Pages 37885019855. Consultar Actions del commit actual para comprobar nuevas publicaciones.
 
-## Nueva tanda: horarios y acceso pendiente
+## Decisiones confirmadas por el propietario
 
-- Planificador público en Inicio, Hermandad y Raids: próxima franja habitual, cuenta atrás, siguientes fechas y selector Madrid/zona local del navegador.
-- Descarga `.ics` de 12 semanas, con eventos orientativos, instantes UTC y tratamiento de medianoche/cambios de hora. No crea convocatorias ni inscripciones.
-- Acceso pendiente con navegación útil a próximas raids y presentación de la hermandad. Etiqueta del menú adaptada cuando Discord está sin configurar.
-- 28/28 pruebas correctas. Prueba de navegador a 1440/390/320 px en Madrid/Nueva York/Tokio; descarga real validada con un parser iCalendar, 36 eventos en la ventana de prueba, fechas y zona correctas.
-- Módulos del calendario comprobados también en el servidor Node. No hay desbordamiento horizontal, errores JavaScript o llamadas API desde Pages en esta prueba.
+- WoW Forever Realmless, Alianza, «Servidor PvP» sin nombre de reino.
+- Martes, miércoles y jueves, 23:00–01:00 Europe/Madrid.
+- Invitación oficial: https://discord.gg/4PTrHVYUNT
+- Reclutamiento abierto a todas las clases y roles. No seleccionar prioridades por cuenta propia.
+- Sin avisos a Discord por ahora. No crear bot ni activar webhooks automáticamente.
+- No contratar planes ni dominios de pago. No cambiar la visibilidad del repositorio como efecto lateral de otro trabajo.
 
-## Código incorporado
+## Implementado y comprobado
 
-- Frontend completo en `public/`, con logo real, identidad visual actual, calendario, páginas ampliadas, filtros, preguntas desplegables y módulos de operaciones/personajes.
-- Backend actual en `src/`, incluida `operations.mjs`, y migración SQL 002.
-- Raids manuales, asistencia, wishlist, loot, snapshots del consejo, progreso público, archivado de personajes, auditoría y CSV, además de los módulos existentes de Discord y candidaturas.
-- Los tests de seguridad/operaciones entregados, scripts de exportación y QA, y documentación técnica del proyecto.
-- Adaptador de Pages, preview y pruebas de integración. Una única fuente de frontend: `public/`.
+- Sitio público con logo original, diseño adaptable, calendario de horarios e iCalendar.
+- Discord OAuth publicado; primer acceso real confirmado por el propietario. Líder por ID explícito y cuatro roles mapeados en `.github/workflows/discord.yml`.
+- Permisos backend, sesiones de 30 minutos, cookies seguras, origen/CSRF, validación y auditoría. Cambios de rol o salida de Discord no invalidan instantáneamente una sesión existente.
+- Personajes, Main/Alters, edición propia, archivado, roster público limitado a nombre/clase/rol.
+- Raids manuales, asistencia, wishlist, loot, consejo y progreso con permisos y pruebas locales. No equivalen a integraciones activas con proveedores.
+- Candidaturas públicas persistentes, referencia, consentimiento y revisión privada para Líder/Oficiales; filtros, estados y notas. La migración 004 abrió el formulario una vez y respeta posteriores cierres desde el panel.
+- Envíos sin avisos ni cola de notificaciones con la configuración actual. Requieren opt-in explícito para futuras integraciones.
+- Configuración del líder: identidad, horarios, invitación, loot, composición y apertura del reclutamiento.
+- Esta tanda completa edición del texto «Sobre la hermandad» y selección/limpieza de clases y roles buscados, con validación, auditoría y publicación en la aplicación. Las prioridades son informativas; no rechazan otras clases.
+- Exportaciones JSON/CSV y auditoría; backup SQLite para Node local.
 
-## Verificación de la importación completa anterior
+## Verificación de esta tanda
 
-- 22/22 pruebas pasan: 19 del proyecto entregado y 3 de Pages.
-- Build correcto y repetible bajo `/` y `/darknessofthefallen/`.
-- 8 páginas públicas comparadas con el ZIP público a 1440 y 390 px: capturas idénticas, textos/títulos, logo y calendario coincidentes.
-- Recargas directas, navegación activa, menú móvil/Escape, filtros/limpieza de roster y preguntas desplegables funcionan, sin errores JavaScript ni desbordamiento horizontal.
-- Backend arrancado: health y 8 páginas públicas correctas.
-- QA aislada en memoria: 11 pestañas del panel de líder y perfil de miembro comprobados en móvil, sin errores de API/interfaz. No se utilizan esas sesiones o datos en Pages ni en producción.
+- 33 pruebas Node correctas: permisos de los seis rangos, validación, operaciones, OAuth simulado, Pages y calendario.
+- Integración workerd correcta: datos y candidaturas conservados tras reiniciar, cierre del formulario persistente, rollback, CSRF, origen y controles privados.
+- Prueba de navegador local: guardar y limpiar prioridades, editar texto de hermandad, recargar, mostrar cambios al público, conservar todas las opciones de candidatura y diseño móvil.
+- No se guardan preferencias ficticias ni candidatos de pruebas en producción.
+- Estado observado en producción antes de publicar esta tanda: reclutamiento abierto y listas de prioridades vacías.
 
-## GitHub Pages
+## Pendiente del prompt maestro
 
-La fuente de Pages está configurada como GitHub Actions. El workflow publica `dist/` tras cada push a `main`. URL: https://eltryt.github.io/darknessofthefallen/.
+1. Roster avanzado: resumen de composición frente a objetivos y filtros de disponibilidad/Main-Alter/rango/asistencia coherentes con los datos existentes.
+2. Revisión completa de flujos manuales de raids/asistencia/loot/progreso con usuarios reales y corrección de vacíos de interfaz.
+3. Estrategia y ensayo de recuperación de SQLite remoto. El JSON exportado no tiene restauración implementada; `npm run backup` solo cubre Node local.
+4. Integraciones Raid-Helper/Warcraft Logs/Forever: comprobar APIs oficiales y compatibilidad antes de implementar; no fabricar datos ni usar scraping frágil.
+5. Avisos privados de candidaturas: aplazados explícitamente por el propietario.
+6. Auditoría de accesibilidad, rendimiento y revisión final de seguridad antes de declarar terminada la versión completa.
 
-La importación completa `fde6e82` se publicó correctamente: workflow Pages 37699826653 y CI 37699826652, ambos correctos; HTML y datos públicos comprobados por HTTPS. La nueva tanda de calendario se publica con el siguiente push y su resultado se verifica en Actions.
+## Desarrollo y despliegue
 
-## Límites y trabajo posterior
+`npm ci`, `npm test`, `npm run test:backend`, `npm run build`, `npm run build:backend`.
+`npm run dev:backend` para Cloudflare local; `npm start` para Node; `npm run preview`
+para Pages. Los procesos deben reiniciarse en nuevas sesiones. No crear worktrees
+ni sobrescribir secretos o trabajo ajeno. QA solo local y desechable.
 
-- Pages mantiene el modo de presentación del ZIP público. El backend completo está en GitHub, pero necesita activar el alojamiento persistente de Cloudflare para prestar servicios a los miembros.
-- La revisión actual no encontró credenciales de Discord ni una cuenta de alojamiento del backend configurada. Discord OAuth real, webhook privado y sincronización de proveedores no se han configurado ni probado con credenciales reales. El OAuth simulado está cubierto por tests.
-- El calendario confirmado es martes, miércoles y jueves, 23:00–01:00, Europe/Madrid; servidor PvP. La invitación de Discord y el nombre concreto del servidor siguen pendientes en los datos entregados.
-- No se ha contratado ningún servicio, cambiado la visibilidad del repositorio ni usado otros repositorios como destino.
-- Los documentos importados reflejan antecedentes, no autorizaciones nuevas ni pruebas de esta ejecución.
-
-## Uso
-
-Node 24+, sin instalación de dependencias. `npm test`, `npm run build`, `npm run preview` para Pages. `npm start`/`npm run dev` para la aplicación completa. Ver README y docs/BACKEND.md para configuración y backups. Los procesos deben reiniciarse en una tarea nueva.
-
-## Alojamiento Cloudflare preparado
-
-- Worker de producción y Durable Object SQLite, con migraciones existentes, alarmas para notificaciones y frontend en el mismo origen.
-- Prueba real en workerd: acceso privado, CSRF/origen, cookies OAuth, límites de entrada, rollback y persistencia tras reiniciar. Las 28 pruebas existentes siguen pasando.
-- Herramientas fijadas en package-lock.json; CI instala con npm ci. Workflow manual de despliegue del backend y enlace opcional desde Pages mediante MEMBER_APP_URL.
-- Publicación remota y Discord real requieren credenciales verificadas; consultar el resultado del workflow antes de afirmar que el backend está alojado.
-- Instrucciones en docs/CLOUDFLARE.md. Ninguna credencial, fixture o base local se incluye en el despliegue.
-
-## Backend publicado — 8 de octubre de 2026
-
-- URL: https://darknessofthefallen-backend.eltryt-darknessofthefallen.workers.dev/
-- GitHub ya dispone de las credenciales Cloudflare. Se ha registrado el subdominio gratuito y publicado el Worker con SQLite Durable Objects.
-- Actions 37827710593 completado: 30 pruebas Node, integración workerd, build, despliegue y comprobación remota HTTPS de páginas/API y controles de acceso.
-- Pages enlaza con el backend desde el menú de acceso y el aviso de presentación. Su variable MEMBER_APP_URL permite cambiar el destino.
-- Discord real todavía no configurado (authConfigured=false); no se ha habilitado ningún acceso ficticio.
+Pages se publica al hacer push a main. El backend utiliza el workflow manual
+**Deploy backend to Cloudflare**; comprobar su resultado y la URL pública.
+**Configure Discord login** instala credenciales y roles desde GitHub. Nunca
+publicar valores de secretos ni bases. Ver `docs/CLOUDFLARE.md`, `docs/DISCORD.md`
+y `docs/RECRUITMENT.md`.

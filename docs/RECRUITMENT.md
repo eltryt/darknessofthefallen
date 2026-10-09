@@ -28,3 +28,12 @@ Verificación: pruebas de permisos y validación; envío y revisión conservados
 reiniciar workerd; cierre del formulario conservado tras reiniciar; recorrido de
 navegador en entorno local desechable, con envío anónimo, referencia, revisión,
 filtros, notas y permisos. No se insertan candidatos ficticios en producción.
+
+## Prioridades opcionales
+
+Actualmente se recluta a todas las clases y roles. En **Panel → Configuración**,
+el Líder puede marcar clases y roles buscados, o desmarcarlos todos para volver a
+no señalar prioridades. Las elecciones se muestran en Reclutamiento de la
+aplicación y quedan auditadas. No impiden enviar candidaturas de otras clases.
+El texto «Sobre la hermandad» también se edita desde ese panel. Pages es una
+presentación estática: enlaza a la aplicación para consultar el reclutamiento actual.

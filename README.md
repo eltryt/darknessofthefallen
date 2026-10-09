@@ -4,14 +4,14 @@ Proyecto completo de la hermandad Alianza de WoW Forever, importado de **darknes
 
 Web pública: https://eltryt.github.io/darknessofthefallen/.
 
-Aplicación y backend alojados: https://darknessofthefallen-backend.eltryt-darknessofthefallen.workers.dev/ (Discord pendiente de configuración).
+Aplicación y backend alojados: https://darknessofthefallen-backend.eltryt-darknessofthefallen.workers.dev/ (acceso con Discord operativo).
 
 ## Código actual
 
 - `public/`: frontend actual, logo original, estilos, páginas y módulos de personajes y operaciones.
 - `src/`: servidor Node.js, Discord OAuth, permisos, API y operaciones de la hermandad.
 - `migrations/`: esquema SQLite y migración de operaciones, consejo y archivado de personajes.
-- `tests/`: 19 pruebas del proyecto entregado, 3 de la integración de Pages y 6 del calendario.
+- `tests/`: pruebas de seguridad, configuración, operaciones, Pages, calendario y runtime Cloudflare.
 - `scripts/export-showcase.mjs`: genera la presentación pública desde el mismo frontend y los valores públicos de `src/database-core.mjs`.
 - `scripts/build.mjs`: exporta la presentación y adapta su copia a GitHub Pages.
 
@@ -59,7 +59,7 @@ PAGES_BASE_PATH=/ PAGES_ORIGIN=https://eltryt.github.io npm run build
 
 La exportación usa solo los valores públicos iniciales y recursos de la aplicación. No consulta una base de datos ni exporta sesiones, candidaturas o información privada. El build valida el JSON y excluye el servidor y las herramientas de pruebas del artefacto.
 
-**Pages aloja la presentación pública.** Discord OAuth, candidaturas y las herramientas de miembros/oficiales requieren desplegar el backend con almacenamiento persistente y configurar Discord. El código completo está en este repositorio; esas funciones no se ejecutan dentro de GitHub Pages.
+**Pages aloja la presentación pública.** Discord OAuth, candidaturas y las herramientas de miembros/oficiales se ejecutan en el backend Cloudflare ya publicado. El código completo está en este repositorio; esas funciones no se ejecutan dentro de GitHub Pages.
 
 ## Horarios y calendario
 
@@ -71,13 +71,13 @@ La pantalla de acceso pendiente ofrece enlaces a estas funciones. El botón del 
 
 ## Backend e integraciones
 
-El proyecto entregado incluye personajes/Main/Alters, permisos por rango, raids, asistencia, wishlist, loot, consejo, progreso, candidaturas, auditoría y exportaciones JSON/CSV. Las pruebas validan flujos locales y un intercambio OAuth simulado; no acreditan una conexión real con Discord.
+El proyecto entregado incluye personajes/Main/Alters, permisos por rango, raids, asistencia, wishlist, loot, consejo, progreso, candidaturas, auditoría y exportaciones JSON/CSV. Las pruebas automáticas validan flujos locales y un intercambio OAuth simulado. Además, el propietario confirmó el acceso real con Discord en la aplicación publicada.
 
 Ver [docs/BACKEND.md](docs/BACKEND.md) para configuración, privacidad y backups. `npm run backup` utiliza la API consistente de SQLite. `scripts/qa-preview.mjs` es una herramienta aislada de pruebas con datos sintéticos en memoria; no es un punto de entrada de producción.
 
 ## Verificación
 
-- 28 pruebas automatizadas correctas y build repetible, incluidos cambios de hora, sesiones tras medianoche y exportación iCalendar.
+- 33 pruebas Node y una integración workerd correctas y build repetible, incluidos cambios de hora, sesiones tras medianoche y exportación iCalendar.
 - En la importación se compararon las 8 páginas con el ZIP a 1440 y 390 px. Después se añadieron el planificador y los enlaces de acceso pendiente, manteniendo la identidad visual.
 - Navegación, recargas, menú móvil/Escape, filtro/limpieza del roster y preguntas desplegables comprobados, sin errores JavaScript ni peticiones a una API en Pages.
 - Descarga `.ics` real y lectura con un parser iCalendar comprobadas a 1440, 390 y 320 px, con zonas Madrid, Nueva York y Tokio.
@@ -87,7 +87,7 @@ Ver [PROJECT_STATUS.md](PROJECT_STATUS.md) para publicación y límites. Los doc
 
 ## Backend Cloudflare
 
-Preparado para Workers con SQLite persistente en Durable Objects. Ejecutar `npm run dev:backend` para desarrollo y `npm run test:backend` para comprobar el runtime. [Guía de publicación y configuración de Discord](docs/CLOUDFLARE.md). El workflow manual **Deploy backend to Cloudflare** publica la aplicación completa cuando están configuradas las credenciales de la cuenta.
+Publicado en Workers con SQLite persistente en Durable Objects. Ejecutar `npm run dev:backend` para desarrollo y `npm run test:backend` para comprobar el runtime. [Guía de publicación y configuración de Discord](docs/CLOUDFLARE.md). El workflow manual **Deploy backend to Cloudflare** publica la aplicación completa cuando están configuradas las credenciales de la cuenta.
 
 ## Candidaturas
 
