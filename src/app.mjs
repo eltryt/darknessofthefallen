@@ -5,9 +5,10 @@ import {settings,transaction,audit} from './database-core.mjs';
 import {can,HttpError,text,choice,classes,combatRoles,characterInput,publicCharacter,attendanceMetrics} from './domain.mjs';
 import {currentSession,startOAuth,finishOAuth,cookie,cookies,hash,oauthReady} from './auth.mjs';
 import {deliverRecruitment} from './integrations.mjs';
+import {raidEventsApi} from './raid-events.mjs';
 import {operations,publicProgress} from './operations.mjs';
 const date=()=>new Date().toISOString();
-const files={'/recruitment-ui.js':['recruitment-ui.js','text/javascript'],'/schedule.js':['schedule.js','text/javascript'],'/schedule-ui.js':['schedule-ui.js','text/javascript'],'/assets/guild-logo.png':['assets/guild-logo.png','image/png'],'/branding.css':['branding.css','text/css'],'/operations.css':['operations.css','text/css'],'/operations-ui.js':['operations-ui.js','text/javascript'],'/character-editor.js':['character-editor.js','text/javascript'],'/style.css':['style.css','text/css'],'/app.js':['app.js','text/javascript']};
+const files={'/raid-events-ui.js':['raid-events-ui.js','text/javascript'],'/recruitment-ui.js':['recruitment-ui.js','text/javascript'],'/schedule.js':['schedule.js','text/javascript'],'/schedule-ui.js':['schedule-ui.js','text/javascript'],'/assets/guild-logo.png':['assets/guild-logo.png','image/png'],'/branding.css':['branding.css','text/css'],'/operations.css':['operations.css','text/css'],'/operations-ui.js':['operations-ui.js','text/javascript'],'/character-editor.js':['character-editor.js','text/javascript'],'/style.css':['style.css','text/css'],'/app.js':['app.js','text/javascript']};
 const pages=new Set(['/','/nosotros','/progreso','/roster','/reclutamiento','/raids','/contacto','/login','/perfil','/panel']);
 async function body(req){let raw='';for await(const chunk of req){raw+=chunk;if(Buffer.byteLength(raw)>32768)throw new HttpError(413,'El formulario es demasiado grande.');}try{const result=JSON.parse(raw);if(!result||typeof result!=='object'||Array.isArray(result))throw new Error();return result;}catch{throw new HttpError(400,'JSON no válido.');}}
 export function createApp(db,env,{readAsset=readLocalAsset}={}){
@@ -30,8 +31,9 @@ export function createApp(db,env,{readAsset=readLocalAsset}={}){
         throttle(req,path);
       }
       if(path==='/api/health')return send(200,{ok:true,version:'0.1.0'});
-      if(path==='/api/public'&&method==='GET')return send(200,{settings:s,characters:db.prepare('SELECT name,surname,class,role FROM characters WHERE archived_at IS NULL ORDER BY name').all().map(publicCharacter),progress:publicProgress(db),raids:db.prepare('SELECT id,title,starts_at,source FROM raids WHERE starts_at>=? ORDER BY starts_at LIMIT 100').all(date()),authConfigured:oauthReady(env)});
+      if(path==='/api/public'&&method==='GET')return send(200,{settings:s,characters:db.prepare('SELECT name,surname,class,role FROM characters WHERE archived_at IS NULL ORDER BY name').all().map(publicCharacter),progress:publicProgress(db),raids:db.prepare("SELECT r.id,r.title,r.starts_at,r.source FROM raids r LEFT JOIN raid_events e ON e.id=r.id WHERE r.starts_at>=? AND (e.id IS NULL OR (e.public=1 AND e.state='Abierta')) ORDER BY r.starts_at LIMIT 100").all(date()),authConfigured:oauthReady(env)});
       const sendText=(status,value,type,extra={})=>{res.writeHead(status,{...headers,'Content-Type':type,...extra});res.end(value);};
+      if(await raidEventsApi({db,user,path,method,url,body:()=>body(req),send,env,requirePermission,requireUser}))return;
       if(await operations({db,user,s,path,method,url,body:()=>body(req),send,sendText,requireUser,requirePermission}))return;
       if(path==='/api/me'&&method==='GET')return send(200,{user:user?{id:user.id,name:user.display_name,rank:user.rank}:null,csrf:user?.csrf,permissions:Object.keys((await import('./domain.mjs')).permissions).filter(p=>can(user,p))});
       if(path==='/auth/discord'&&method==='GET'){throttle(req,path);const auth=startOAuth(db,env);res.writeHead(302,{...headers,Location:auth.url,'Set-Cookie':cookie('oauth_state',auth.state,env,600)});return res.end();}
@@ -91,7 +93,7 @@ export function createApp(db,env,{readAsset=readLocalAsset}={}){
         transaction(db,()=>{db.prepare('UPDATE settings SET data=? WHERE id=1').run(JSON.stringify(next));audit(db,user.id,'settings.updated','guild',{before:s,after:next});});return send(200,next);
       }
       if(path==='/api/audit'&&method==='GET'){requirePermission('audit.read');return send(200,db.prepare('SELECT * FROM audit ORDER BY id DESC LIMIT 200').all());}
-      if(path==='/api/export'&&method==='GET'){requirePermission('backup.export');const data={schemaVersion:1,exportedAt:date(),settings:s};for(const table of ['users','characters','applications','raids','attendance','loot','wishlists','progress','council_members','audit'])data[table]=db.prepare(`SELECT * FROM ${table}`).all();audit(db,user.id,'data.exported','guild',{});return send(200,data,{'Content-Disposition':'attachment; filename="darkness-export.json"'});}
+      if(path==='/api/export'&&method==='GET'){requirePermission('backup.export');const data={schemaVersion:1,exportedAt:date(),settings:s};for(const table of ['users','characters','applications','raids','attendance','loot','wishlists','progress','council_members','audit','raid_events','raid_character_links','raid_signup_cancellations','raid_jobs','raid_sync'])data[table]=db.prepare(`SELECT * FROM ${table}`).all();audit(db,user.id,'data.exported','guild',{});return send(200,data,{'Content-Disposition':'attachment; filename="darkness-export.json"'});}
       if(path==='/api/notifications/retry'&&method==='POST'){requirePermission('recruitment.manage');await deliverRecruitment(db,env);return send(200,{ok:true});}
       if(path.startsWith('/api/'))throw new HttpError(404,'Endpoint no encontrado.');
       if(!['GET','HEAD'].includes(method))throw new HttpError(405,'Método no permitido.');

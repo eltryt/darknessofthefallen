@@ -93,3 +93,25 @@ y `docs/RECRUITMENT.md`.
 - Endpoint DELETE protegido por rango, origen y CSRF; borrado y auditoría en una misma transacción. No cambia Discord, los datos existentes ni las facultades de anulación de otros responsables.
 - Validación local: 36 pruebas Node, integración SQLite de Cloudflare, builds de Pages/backend y prueba Chromium de cancelación, borrado activo/anulado, recarga y lista vacía en móvil/escritorio. Pruebas con datos sintéticos; no se han borrado objetos reales.
 - Publicación mediante los workflows existentes del commit de esta tanda; consultar Actions para el resultado del despliegue.
+
+## Convocatorias con Raid-Helper — 10 de octubre de 2026
+
+- Nueva decisión: reutilizar API oficial Raid-Helper v3/v4. Detalles, fuentes, costes,
+  seguridad, limitaciones y despliegue en `docs/RAID_EVENTS.md`. Sin bot nuevo ni Premium.
+- Canal confirmado por el propietario: `1550997172982382723`; indicó haber guardado
+  `RAID_HELPER_API_KEY` en GitHub. Pendiente de comprobar acceso real en el workflow.
+- Migración 005 aditiva en SQLite existente: convocatorias, vínculo de personajes,
+  historial de bajas, cola idempotente y estado de sincronización. Conserva loot/asistencia.
+- Panel y `/raids`: creación, edición de horario/capacidad/roles, clasificación/roster
+  libre, visibilidad, filtros, inscripciones con personajes y cancelaciones. Perfil:
+  próximas inscripciones. Los borradores de Raid-Helper aún no publicados no se importan.
+- Fuente de verdad remota para fechas e inscripciones; local para clasificación y
+  vínculos. Polling por alarmas, errores visibles, reintentos 429 y reconciliación de
+  respuestas perdidas sin repetir creaciones ambiguas. Casos inciertos pueden requerir
+  revisión técnica. La API no documenta CAS: ventana residual de carrera GET/PATCH.
+- Calendario confirmado más reciente: miércoles raid 20, jueves raid 40, martes
+  continuación/alternativo; 23:00–01:00 Europe/Madrid. Sustituye el antiguo «día de 40 pendiente».
+- Pruebas iniciales: 43 Node + integración workerd aprobadas; Chromium local comprueba
+  rangos y móvil/escritorio. Falta aceptación externa real; no confundir mocks con Discord.
+- Pendiente antes del cierre: desplegar y comprobar lectura autenticada/sincronización
+  real, verificar eventos reales y registrar el alcance de aceptación externo.

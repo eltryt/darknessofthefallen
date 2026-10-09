@@ -11,7 +11,7 @@ if (memberApp) {
 }
 mkdirSync(join(destination,'assets'),{recursive:true});
 const source=new URL('../public/',import.meta.url);
-for(const file of ['recruitment-ui.js','schedule.js','schedule-ui.js','style.css','operations.css','branding.css','character-editor.js','operations-ui.js','assets/guild-logo.png'])copyFileSync(new URL(file,source),join(destination,file));
+for(const file of ['raid-events-ui.js','recruitment-ui.js','schedule.js','schedule-ui.js','style.css','operations.css','branding.css','character-editor.js','operations-ui.js','assets/guild-logo.png'])copyFileSync(new URL(file,source),join(destination,file));
 let app=readFileSync(new URL('app.js',source),'utf8');
 const start=app.indexOf('async function api('),end=app.indexOf('\nfunction field(',start);
 if(start<0||end<0)throw Error('Public application structure changed; review showcase export.');
@@ -22,6 +22,7 @@ writeFileSync(join(destination,'site-data.json'),JSON.stringify({settings:defaul
 let html=readFileSync(new URL('index.html',source),'utf8');
 html=html.replace('<main id="content"','<aside class="showcase-notice">Versión de presentación · El acceso de miembros con Discord estará disponible próximamente.</aside><main id="content"');
 if (memberApp) html=html.replace('<body>', `<body data-application-url="${memberApp}/reclutamiento">`).replaceAll('href="/reclutamiento"', `href="${memberApp}/reclutamiento"`).replaceAll('href="/login"', `href="${memberApp}/login"`).replace('Versión de presentación · El acceso de miembros con Discord estará disponible próximamente.', `Visita la aplicación de la hermandad para consultar los datos actuales. <a href="${memberApp}/login">Abrir el área de miembros</a>`);
+html=html.replace('<body','<body data-showcase="true"');
 html=html.replace('</head>','<meta name="robots" content="noindex,follow"></head>');
 const origin='https://darkness-of-the-fallen.borclagonher.chatgpt.site';
 const escapeMeta=value=>String(value).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));

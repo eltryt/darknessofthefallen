@@ -45,6 +45,19 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || vars.CLOUDFLARE_ACCOUNT_ID }}
+      - name: Configure Raid-Helper when its secret is present
+        shell: bash
+        run: |
+          if [ -n "$RAID_HELPER_API_KEY" ]; then
+            node scripts/configure-raid-helper.mjs
+          else
+            echo 'Raid-Helper secret not configured; existing remote settings are preserved.'
+          fi
+        env:
+          RAID_HELPER_API_KEY: ${{ secrets.RAID_HELPER_API_KEY }}
+          DISCORD_GUILD_ID: ${{ secrets.DISCORD_GUILD_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || vars.CLOUDFLARE_ACCOUNT_ID }}
       - name: Deploy persistent backend and application assets
         run: npm run deploy:backend
         env:

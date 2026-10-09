@@ -1,3 +1,4 @@
+import {mountRaidEvents} from './raid-events-ui.js';
 const rankLabel=rank=>({visitor:'Visitante',member:'Miembro',raider:'Raider',raid_leader:'Raid Leader',officer:'Oficial',leader:'Líder'})[rank]||rank;
 const states=['No intentado','En progreso','Derrotado'];
 const lootMethods=['Loot Council','Roll','Soft Reserve','DKP','Híbrido'];
@@ -95,4 +96,5 @@ export async function attachMemberOperations({rows,refresh,...ctx}){
   host.querySelectorAll('[data-remove-wish]').forEach(b=>b.onclick=async()=>{if(!confirm('¿Retirar este objeto de tu wishlist?'))return;try{await api('/api/wishlists/'+b.dataset.removeWish,'DELETE',{});await refresh();}catch(error){toast(error.message);}});
   host.querySelectorAll('[data-member-tab]').forEach(b=>b.onclick=async()=>{try{host.querySelectorAll('[data-member-tab]').forEach(x=>{x.classList.toggle('active',x===b);x.setAttribute('aria-pressed',String(x===b));});await operationTab(b.dataset.memberTab,host.querySelector('#member-loot'),{...ctx,me:{...me,permissions:me.permissions.filter(p=>!['loot.manage','loot.delete','settings.manage'].includes(p))}});}catch(error){toast(error.message);}});
   await operationTab('loot',host.querySelector('#member-loot'),{...ctx,me:{...me,permissions:me.permissions.filter(p=>!['loot.manage','loot.delete'].includes(p))}});
+  const events=document.createElement('section');events.className='section';host.append(events);await mountRaidEvents(events,ctx,{mine:true});
 }

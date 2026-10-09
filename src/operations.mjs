@@ -68,6 +68,7 @@ export async function operations(ctx){
   const raidMatch=path.match(/^\/api\/raids\/([^/]+)$/);
   if(raidMatch&&['PATCH','DELETE'].includes(method)){
     requirePermission('attendance.manage');const id=raidMatch[1],previous=requireRecord(db.prepare('SELECT * FROM raids WHERE id=?').get(id));
+    if(previous.source==='raid-helper')throw new HttpError(409,'Gestiona esta convocatoria en la sección de convocatorias sincronizadas.');
     if(method==='DELETE'){
       if(db.prepare('SELECT 1 FROM attendance WHERE raid_id=? LIMIT 1').get(id)||db.prepare("SELECT 1 FROM loot WHERE json_extract(data,'$.raidId')=? LIMIT 1").get(id))throw new HttpError(409,'La raid tiene asistencia o loot; conserva su historial y corrige sus datos.');
       transaction(db,()=>{db.prepare('DELETE FROM raids WHERE id=?').run(id);log('raid.deleted',id,previous,null);});send(200,{ok:true});return true;

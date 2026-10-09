@@ -7,11 +7,14 @@ import initialSchema from '../migrations/001_initial.sql';
 import operationsSchema from '../migrations/002_operations.sql';
 import invitationSchema from '../migrations/003_discord_invite.sql';
 import recruitmentSchema from '../migrations/004_open_recruitment.sql';
+import raidEventsSchema from '../migrations/005_raid_events.sql';
+import {syncRaidEvents} from './raid-sync.mjs';
+import {raidHelperReady} from './raid-helper.mjs';
 
 export class Guild extends DurableObject {
   constructor(ctx, env) {
     super(ctx, env);
-    this.db = durableDatabase(ctx.storage, initialSchema, operationsSchema, invitationSchema, recruitmentSchema);
+    this.db = durableDatabase(ctx.storage, initialSchema, operationsSchema, invitationSchema, recruitmentSchema, raidEventsSchema);
   }
 
   async fetch(request) {
@@ -60,6 +63,11 @@ export class Guild extends DurableObject {
   }
 
   async scheduleNotifications() {
+    if(raidHelperReady(this.env)){
+      const sync=this.db.prepare('SELECT next_at FROM raid_sync WHERE id=1').get(),job=this.db.prepare("SELECT MIN(next_at) due FROM raid_jobs WHERE status='pending'").get();
+      const due=Math.max(Date.now()+15000,Math.min(sync.next_at,job.due??Infinity));
+      const alarm=await this.ctx.storage.getAlarm();if(alarm===null||alarm>due)await this.ctx.storage.setAlarm(due);
+    }
     if (this.env.RECRUITMENT_NOTIFICATIONS_ENABLED !== 'true') return;
     const webhook = this.env.DISCORD_RECRUITMENT_WEBHOOK;
     if (!webhook || !/^https:\/\/discord\.com\/api\/webhooks\/\d+\/[\w-]+$/.test(webhook)) return;
@@ -70,7 +78,7 @@ export class Guild extends DurableObject {
   async alarm() {
     const origin = this.env.APP_ORIGIN || await this.ctx.storage.get('application-origin');
     if (origin) await deliverRecruitment(this.db, {...this.env, APP_ORIGIN: origin});
-    await this.scheduleNotifications();
+    try{await syncRaidEvents(this.db,this.env);}finally{await this.scheduleNotifications();}
   }
 }
 

@@ -6,7 +6,7 @@
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": true,
   "preview_urls": false,
-  "vars": {"APP_ORIGIN": "https://darknessofthefallen.eltryt-darknessofthefallen.workers.dev"},
+  "vars": {"RAID_HELPER_CHANNEL_ID": "1550997172982382723", "RAID_HELPER_TEMPLATE_ID": "1552931206847266847", "APP_ORIGIN": "https://darknessofthefallen.eltryt-darknessofthefallen.workers.dev"},
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",

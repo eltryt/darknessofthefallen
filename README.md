@@ -92,3 +92,8 @@ Publicado en Workers con SQLite persistente en Durable Objects. Ejecutar `npm ru
 ## Candidaturas
 
 [Formulario público y revisión privada](docs/RECRUITMENT.md): solicitudes persistentes, referencia de envío, estados y notas para Líder/Oficiales. Sin avisos automáticos a Discord.
+
+Convocatorias integradas con Raid-Helper: configuración, permisos, API oficial,
+fuentes de verdad y límites de sincronización en [docs/RAID_EVENTS.md](docs/RAID_EVENTS.md).
+La clave `RAID_HELPER_API_KEY` se guarda en GitHub Actions Secrets; el despliegue
+existente la instala en el Worker sin modificar el login Discord.
