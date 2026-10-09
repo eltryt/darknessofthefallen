@@ -22,7 +22,16 @@ for (let attempt = 1; attempt <= 24; attempt++) {
 }
 assert.ok(healthy, 'Backend did not pass its public HTTPS health check.');
 for (const path of ['/', '/login', '/raids', '/reclutamiento', '/app.js', '/recruitment-ui.js', '/api/public']) {
-  const response = await request(path);
+  let response;
+  // A healthy old version can respond while a new asset is still propagating.
+  // Keep the final assertion strict; retry only transient missing/unavailable assets.
+  for (let attempt = 1; attempt <= 6; attempt++) {
+    response = await request(path);
+    if (![404, 502, 503, 504].includes(response.status) || attempt === 6) break;
+    await response.body?.cancel();
+    console.log(`Waiting for public resource ${path} (${attempt}/6).`);
+    await setTimeout(10000);
+  }
   assert.equal(response.status, 200, path);
   assert.ok(response.headers.get('content-security-policy'), path);
   if (path === '/api/public') {
