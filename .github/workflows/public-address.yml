@@ -4,7 +4,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: cloudflare-public-address
+  group: cloudflare-backend
   cancel-in-progress: false
 jobs:
   deploy:

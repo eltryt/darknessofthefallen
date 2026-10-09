@@ -14,7 +14,7 @@
     "backup": "node scripts/backup.mjs",
     "preview": "node scripts/preview.mjs",
     "export:showcase": "node scripts/export-showcase.mjs",
-    "dev:backend": "wrangler dev --local",
+    "dev:backend": "wrangler dev --local --var APP_ORIGIN:http://localhost:8787",
     "build:backend": "wrangler deploy --dry-run --outdir .wrangler/build",
     "deploy:backend": "wrangler deploy",
     "test:backend": "node --test tests/cloudflare/*.test.mjs"

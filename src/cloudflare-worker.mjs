@@ -76,6 +76,12 @@ export class Guild extends DurableObject {
 
 export default {
   async fetch(request, env) {
+    if (env.APP_ORIGIN && new URL(request.url).origin !== env.APP_ORIGIN) {
+      if (!['GET','HEAD'].includes(request.method)) return Response.json({error:'La dirección de la web ha cambiado. Abre la nueva dirección y vuelve a enviar el formulario.'},{status:409});
+      const original = new URL(request.url), target = new URL(env.APP_ORIGIN);
+      target.pathname = original.pathname; target.search = original.search;
+      return new Response(null,{status:302,headers:{Location:target.href,'Cache-Control':'no-store'}});
+    }
     // One persistent database per guild. Keep this name stable across deploys.
     const id = env.GUILD.idFromName('darknessofthefallen');
     return env.GUILD.get(id).fetch(request);

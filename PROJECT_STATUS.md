@@ -6,7 +6,7 @@ trabajo: `eltryt/darknessofthefallen`. Los documentos de `docs/imported/` son hi
 
 ## Publicación y arquitectura
 
-- Aplicación completa: https://darknessofthefallen-backend.eltryt-darknessofthefallen.workers.dev/
+- Aplicación completa: https://darknessofthefallen.eltryt-darknessofthefallen.workers.dev/
 - Presentación pública: https://eltryt.github.io/darknessofthefallen/
 - Cloudflare Workers con Durable Object SQLite persistente; mismo origen para frontend/API/sesiones.
 - Pages publica solo recursos y datos editoriales; acceso de miembros y candidaturas enlazan al backend.
@@ -75,12 +75,13 @@ y `docs/RECRUITMENT.md`.
 - Esta tanda es editorial: no modifica OAuth, permisos, sesiones, datos de producción, lógica de loot ni generación de calendarios. Reutiliza las tarjetas y secciones existentes.
 - Verificado: 33 pruebas Node, build de Pages y navegador a 1440/768/390/320 px en Inicio, Hermandad, Raids y Reclutamiento; un H1 por página, sin errores JavaScript ni desbordamiento, preguntas desplegables operativas. Publicación mediante los workflows existentes de Pages y Cloudflare; consultar Actions del commit de esta tanda.
 
-## Dirección pública sin «backend» — transición
+## Dirección pública sin «backend» — activación
 
-- Worker de entrada independiente: `darknessofthefallen`, configuración `wrangler.public.jsonc`.
-- URL prevista: https://darknessofthefallen.eltryt-darknessofthefallen.workers.dev/
-- En esta fase redirige temporalmente a la aplicación existente, conserva rutas y no almacena datos ni sesiones. No se renombra el Worker propietario de SQLite.
-- Workflow manual: **Publish clean public address**. Pruebas de destino fijo, rutas y rechazo de escrituras; build independiente.
-- Pendiente externo: añadir en Discord OAuth2 el callback `https://darknessofthefallen.eltryt-darknessofthefallen.workers.dev/auth/discord/callback`, conservando el actual.
-- Después de confirmarlo, convertir la entrada en proxy mediante un Service Binding al Worker original, fijar el nuevo APP_ORIGIN, redirigir la dirección antigua y actualizar enlaces/comprobaciones. Mantener el mismo Durable Object y su identificador; no crear otra base ni copiar credenciales a la entrada.
-- Hasta completar ese cambio, la barra del navegador seguirá mostrando la dirección original después de la redirección. No presentar el alias como una migración de origen terminada.
+- URL principal: https://darknessofthefallen.eltryt-darknessofthefallen.workers.dev/
+- El propietario confirmó el registro del nuevo callback OAuth en Discord.
+- Worker público `darknessofthefallen` conectado mediante Service Binding al Worker original `darknessofthefallen-backend`. La entrada no almacena secretos ni crea otra base de datos.
+- Se conservan la clase Guild, la migración v1 y el identificador darknessofthefallen del Durable Object original. APP_ORIGIN cambia al dominio público.
+- Las navegaciones por la dirección antigua se redirigen a la nueva; los formularios antiguos piden recargar en la dirección nueva en lugar de reenviar escrituras automáticamente.
+- Las cookies siguen siendo HttpOnly/Secure y limitadas al dominio actual; los usuarios deberán iniciar sesión de nuevo en la dirección nueva. No se transfieren tokens en enlaces.
+- El workflow de backend publica primero la entrada y luego el backend; comprueba HTTPS, permisos privados y el callback OAuth nuevo. La entrada contempla temporalmente la propagación de versiones antiguas.
+- Pages y documentación activa enlazan al nuevo origen. Conservar ambos callbacks durante la transición.

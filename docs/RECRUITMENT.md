@@ -1,6 +1,6 @@
 # Candidaturas de la hermandad
 
-Formulario público: https://darknessofthefallen-backend.eltryt-darknessofthefallen.workers.dev/reclutamiento
+Formulario público: https://darknessofthefallen.eltryt-darknessofthefallen.workers.dev/reclutamiento
 
 Se puede solicitar entrada sin iniciar sesión y sin pertenecer todavía a Discord.
 El formulario pide alias, usuario de Discord, personaje, clase, rol, disponibilidad,

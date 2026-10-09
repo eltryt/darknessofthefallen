@@ -40,6 +40,11 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || vars.CLOUDFLARE_ACCOUNT_ID }}
+      - name: Deploy public gateway preserving existing storage
+        run: npx wrangler deploy --config wrangler.public.jsonc
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || vars.CLOUDFLARE_ACCOUNT_ID }}
       - name: Deploy persistent backend and application assets
         run: npm run deploy:backend
         env:
@@ -48,4 +53,6 @@ jobs:
       - name: Verify public HTTPS application and access controls
         run: node scripts/check-backend.mjs
         env:
-          BACKEND_URL: ${{ steps.subdomain.outputs.url }}
+          BACKEND_URL: https://darknessofthefallen.eltryt-darknessofthefallen.workers.dev
+      - name: Verify Discord uses the public callback
+        run: node scripts/check-discord.mjs

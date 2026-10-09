@@ -26,7 +26,7 @@ jobs:
         run: npm run build
         env:
           PAGES_BASE_PATH: /darknessofthefallen/
-          MEMBER_APP_URL: ${{ vars.MEMBER_APP_URL || 'https://darknessofthefallen-backend.eltryt-darknessofthefallen.workers.dev' }}
+          MEMBER_APP_URL: ${{ vars.MEMBER_APP_URL || 'https://darknessofthefallen.eltryt-darknessofthefallen.workers.dev' }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

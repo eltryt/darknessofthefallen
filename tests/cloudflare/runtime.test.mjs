@@ -30,6 +30,10 @@ test('Cloudflare SQLite: permissions, writes, rollback, assets and persistence a
     runtime = new Miniflare(convertV4MiniflareOptions(options));
     const request = (path, options) => runtime.dispatchFetch('https://guild.example' + path, options);
     assert.equal((await request('/api/health')).status, 200);
+    const oldAddress = await runtime.dispatchFetch('https://old.example/raids?view=next',{redirect:'manual'});
+    assert.equal(oldAddress.status,302);
+    assert.equal(oldAddress.headers.get('location'),'https://guild.example/raids?view=next');
+    assert.equal((await runtime.dispatchFetch('https://old.example/api/settings',{method:'PUT',body:'{}'})).status,409);
     assert.equal((await request('/panel')).status, 401);
     assert.equal((await request('/perfil')).status, 401);
     assert.equal((await request('/api/export')).status, 401);

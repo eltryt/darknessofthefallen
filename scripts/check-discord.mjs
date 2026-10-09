@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-const origin = 'https://darknessofthefallen-backend.eltryt-darknessofthefallen.workers.dev';
+const origin = 'https://darknessofthefallen.eltryt-darknessofthefallen.workers.dev';
 const response = await fetch(origin + '/auth/discord', {redirect: 'manual', signal: AbortSignal.timeout(20000)});
 assert.equal(response.status, 302, 'Discord authorization must be enabled');
 const target = new URL(response.headers.get('location'));

@@ -6,7 +6,7 @@
 2. En **OAuth2 → Redirects**, añadir y guardar exactamente:
 
    ```text
-   https://darknessofthefallen-backend.eltryt-darknessofthefallen.workers.dev/auth/discord/callback
+   https://darknessofthefallen.eltryt-darknessofthefallen.workers.dev/auth/discord/callback
    ```
 
 3. En los [secretos de Actions](https://github.com/eltryt/darknessofthefallen/settings/secrets/actions),
@@ -26,7 +26,7 @@
 4. Ejecutar **Actions → Configure Discord login → Run workflow**. El flujo
    instala las credenciales en el Worker existente y comprueba el redirect OAuth
    por HTTPS. No cambia los datos de la hermandad ni publica secretos en Pages.
-5. Abrir https://darknessofthefallen-backend.eltryt-darknessofthefallen.workers.dev/login
+5. Abrir https://darknessofthefallen.eltryt-darknessofthefallen.workers.dev/login
    y autorizar con tu cuenta. Debes pertenecer al servidor configurado.
    Comprobar el acceso al perfil y al panel con el rango líder. El consentimiento
    y la pertenencia real no se pueden verificar mediante una prueba simulada.
