@@ -11,7 +11,7 @@ trabajo: `eltryt/darknessofthefallen`. Los documentos de `docs/imported/` son hi
 - Cloudflare Workers con Durable Object SQLite persistente; mismo origen para frontend/API/sesiones.
 - Pages publica solo recursos y datos editoriales; acceso de miembros y candidaturas enlazan al backend.
 - Node 24 + SQLite sigue disponible para desarrollo local. Herramientas fijadas en package-lock.json.
-- Última base de despliegue verificada antes de esta tanda: `469a5b4`; backend Actions 37885020075, Pages 37885019855. Consultar Actions del commit actual para comprobar nuevas publicaciones.
+- Última base de despliegue verificada antes de esta tanda: `bea2d19`; backend Actions 37885504841, Pages 37885504249. Consultar Actions del commit actual para comprobar nuevas publicaciones.
 
 ## Decisiones confirmadas por el propietario
 
@@ -64,3 +64,13 @@ Pages se publica al hacer push a main. El backend utiliza el workflow manual
 **Configure Discord login** instala credenciales y roles desde GitHub. Nunca
 publicar valores de secretos ni bases. Ver `docs/CLOUDFLARE.md`, `docs/DISCORD.md`
 y `docs/RECRUITMENT.md`.
+
+## Textos de organización y loot — 9 de octubre de 2026
+
+- Inicio, Hermandad, Raids y preguntas de Reclutamiento explican comunidad estable, compañerismo, progreso conjunto y transparencia.
+- Horario base configurable (actualmente 23:00–01:00 peninsular); raid de 40 con día específico todavía por concretar. No se asigna a ningún día del calendario.
+- Dos rosters potenciales de 20 preferentemente en horario base; 22:00–00:00 solo como ejemplo de alternativa si hay demanda. Raids de 10 con mayor flexibilidad.
+- Convocatorias oficiales y extraordinarias fuera de los días habituales: coordinadas con el Líder o personas designadas, adicionales y no obligatorias.
+- Loot Council de tres personas por grupo, no necesariamente oficiales; criterios objetivos y transparentes pendientes de definición colectiva y normas comunes para todos los rosters y tipos de raid.
+- Esta tanda es editorial: no modifica OAuth, permisos, sesiones, datos de producción, lógica de loot ni generación de calendarios. Reutiliza las tarjetas y secciones existentes.
+- Verificado: 33 pruebas Node, build de Pages y navegador a 1440/768/390/320 px en Inicio, Hermandad, Raids y Reclutamiento; un H1 por página, sin errores JavaScript ni desbordamiento, preguntas desplegables operativas. Publicación mediante los workflows existentes de Pages y Cloudflare; consultar Actions del commit de esta tanda.
