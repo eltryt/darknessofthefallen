@@ -10,5 +10,6 @@ export function openDatabase(path='data/guild.sqlite'){
   if(!db.prepare('SELECT version FROM schema_migrations WHERE version=2').get())transaction(db,()=>db.exec(readFileSync(new URL('../migrations/002_operations.sql',import.meta.url),'utf8')));
   db.prepare('INSERT OR IGNORE INTO settings(id,data) VALUES(1,?)').run(JSON.stringify(defaults));
   if(!db.prepare('SELECT version FROM schema_migrations WHERE version=3').get())transaction(db,()=>db.exec(readFileSync(new URL('../migrations/003_discord_invite.sql',import.meta.url),'utf8')));
+  if(!db.prepare('SELECT version FROM schema_migrations WHERE version=4').get())transaction(db,()=>db.exec(readFileSync(new URL('../migrations/004_open_recruitment.sql',import.meta.url),'utf8')));
   return db;
 }

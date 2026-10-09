@@ -52,7 +52,8 @@ Después de obtener la URL del Worker, registrar en Discord el callback exacto
 `wrangler secret put NOMBRE` los valores `DISCORD_CLIENT_ID`,
 `DISCORD_CLIENT_SECRET`, `DISCORD_GUILD_ID`, `DISCORD_LEADER_ID` y
 `DISCORD_ROLE_MAP` siguiendo `.env.example`. El webhook de reclutamiento es
-opcional: `DISCORD_RECRUITMENT_WEBHOOK`. No hace falta exponer estos valores al
+opcional: `DISCORD_RECRUITMENT_WEBHOOK`. Los avisos permanecen desactivados
+salvo que se configure también `RECRUITMENT_NOTIFICATIONS_ENABLED=true`. No hace falta exponer estos valores al
 frontend. Sin configuración Discord, el backend funciona pero el inicio de
 sesión indica que está pendiente.
 

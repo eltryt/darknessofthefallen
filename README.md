@@ -88,3 +88,7 @@ Ver [PROJECT_STATUS.md](PROJECT_STATUS.md) para publicación y límites. Los doc
 ## Backend Cloudflare
 
 Preparado para Workers con SQLite persistente en Durable Objects. Ejecutar `npm run dev:backend` para desarrollo y `npm run test:backend` para comprobar el runtime. [Guía de publicación y configuración de Discord](docs/CLOUDFLARE.md). El workflow manual **Deploy backend to Cloudflare** publica la aplicación completa cuando están configuradas las credenciales de la cuenta.
+
+## Candidaturas
+
+[Formulario público y revisión privada](docs/RECRUITMENT.md): solicitudes persistentes, referencia de envío, estados y notas para Líder/Oficiales. Sin avisos automáticos a Discord.

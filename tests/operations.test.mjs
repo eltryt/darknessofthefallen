@@ -126,7 +126,7 @@ test('CSV exports are leader-only and neutralize spreadsheet formula injection',
 
 test('migration runs once and preserves existing records on reopening',()=>{
   const dir=mkdtempSync(join(tmpdir(),'darkness-migration-')),file=join(dir,'test.sqlite');let db;
-  try{db=openDatabase(file);db.prepare('INSERT INTO users VALUES(?,?,?,?)').run('id','Miembro','member','2026-10-07');db.close();db=openDatabase(file);assert.equal(db.prepare('SELECT count(*) n FROM schema_migrations').get().n,3);assert.equal(db.prepare('SELECT display_name FROM users WHERE id=?').get('id').display_name,'Miembro');}finally{db?.close();rmSync(dir,{recursive:true,force:true});}
+  try{db=openDatabase(file);db.prepare('INSERT INTO users VALUES(?,?,?,?)').run('id','Miembro','member','2026-10-07');db.close();db=openDatabase(file);assert.equal(db.prepare('SELECT count(*) n FROM schema_migrations').get().n,4);assert.equal(db.prepare('SELECT display_name FROM users WHERE id=?').get('id').display_name,'Miembro');}finally{db?.close();rmSync(dir,{recursive:true,force:true});}
 });
 
 test('Discord OAuth success maps guild roles and prevents replay without leaking access tokens',async()=>{

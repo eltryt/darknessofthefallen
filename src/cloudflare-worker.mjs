@@ -6,11 +6,12 @@ import {deliverRecruitment} from './integrations.mjs';
 import initialSchema from '../migrations/001_initial.sql';
 import operationsSchema from '../migrations/002_operations.sql';
 import invitationSchema from '../migrations/003_discord_invite.sql';
+import recruitmentSchema from '../migrations/004_open_recruitment.sql';
 
 export class Guild extends DurableObject {
   constructor(ctx, env) {
     super(ctx, env);
-    this.db = durableDatabase(ctx.storage, initialSchema, operationsSchema, invitationSchema);
+    this.db = durableDatabase(ctx.storage, initialSchema, operationsSchema, invitationSchema, recruitmentSchema);
   }
 
   async fetch(request) {
@@ -59,6 +60,7 @@ export class Guild extends DurableObject {
   }
 
   async scheduleNotifications() {
+    if (this.env.RECRUITMENT_NOTIFICATIONS_ENABLED !== 'true') return;
     const webhook = this.env.DISCORD_RECRUITMENT_WEBHOOK;
     if (!webhook || !/^https:\/\/discord\.com\/api\/webhooks\/\d+\/[\w-]+$/.test(webhook)) return;
     const pending = this.db.prepare('SELECT 1 FROM outbox WHERE delivered_at IS NULL AND attempts<5 LIMIT 1').get();

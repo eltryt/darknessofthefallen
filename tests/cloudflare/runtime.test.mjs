@@ -36,6 +36,19 @@ test('Cloudflare SQLite: permissions, writes, rollback, assets and persistence a
     for (const path of ['/', '/reclutamiento', '/app.js', '/assets/guild-logo.png']) assert.equal((await request(path)).status, 200);
     const sessions = await (await request('/__test/seed')).json();
     const headers = rank => ({cookie: 'session=' + sessions[rank].raw, origin: 'https://guild.example', 'content-type': 'application/json', 'x-csrf-token': sessions[rank].csrf});
+    const candidate = {name:'Applicant',discord:'private-discord-handle',character:'Test character',class:'Mago',role:'DPS distancia',availability:'Noches',experience:'Classic',reason:'Jugar en equipo',additional:'private-detail',consent:true};
+    const submit = value => ({method:'POST',headers:{origin:'https://guild.example','content-type':'application/json'},body:JSON.stringify(value)});
+    assert.equal((await request('/api/applications', submit({...candidate,consent:false}))).status,400);
+    const sent = await request('/api/applications', submit(candidate));
+    assert.equal(sent.status,201);
+    const application = await sent.json();
+    assert.equal((await request('/api/applications')).status,401);
+    assert.equal((await request('/api/applications',{headers:headers('member')})).status,403);
+    assert.equal((await request('/api/applications/'+application.id,{method:'PATCH',headers:headers('leader'),body:JSON.stringify({status:'Contactado',notes:'private-review'})})).status,200);
+    const projection = await (await request('/api/public')).text();
+    assert.ok(!projection.includes('private-'));
+    await request('/api/settings',{method:'PUT',headers:headers('leader'),body:JSON.stringify({recruitmentOpen:false})});
+    assert.equal((await request('/api/applications', submit(candidate))).status,409);
     assert.equal((await request('/api/export', {headers: headers('member')})).status, 403);
     const update = {method: 'PUT', headers: headers('leader'), body: JSON.stringify({server: 'Persistence test'})};
     assert.equal((await request('/api/settings', {...update, headers: {...update.headers, origin: 'https://attacker.example'}})).status, 403);
@@ -50,6 +63,13 @@ test('Cloudflare SQLite: permissions, writes, rollback, assets and persistence a
     await runtime.dispose(); runtime = new Miniflare(convertV4MiniflareOptions(options));
     assert.equal((await (await request('/api/public')).json()).settings.server, 'Persistence test');
     assert.equal((await (await request('/api/me', {headers: headers('leader')})).json()).user.rank, 'leader');
+    const persisted = await (await request('/api/applications',{headers:headers('leader')})).json();
+    assert.equal(persisted.length,1);
+    assert.equal(persisted[0].id,application.id);
+    assert.equal(persisted[0].status,'Contactado');
+    assert.equal(persisted[0].notes,'private-review');
+    assert.equal(persisted[0].data.discord,candidate.discord);
+    assert.equal((await (await request('/api/public')).json()).settings.recruitmentOpen,false);
     assert.equal((await request('/api/export', {headers: headers('leader')})).status, 200);
   } finally {
     await runtime?.dispose();

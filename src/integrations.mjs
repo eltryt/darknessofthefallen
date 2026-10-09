@@ -5,7 +5,7 @@ export class RaidProvider {async listEvents(){return {events:[],status:'not_conf
 export class LogsProvider {async guildProgress(){return {raids:[],status:'not_configured'};}}
 export async function deliverRecruitment(db,env){
   const endpoint=env.DISCORD_RECRUITMENT_WEBHOOK;
-  if(!endpoint)return;
+  if(env.RECRUITMENT_NOTIFICATIONS_ENABLED!=='true'||!endpoint)return;
   if(!/^https:\/\/discord\.com\/api\/webhooks\/\d+\/[\w-]+$/.test(endpoint))throw new Error('Invalid webhook destination');
   for(const row of db.prepare('SELECT o.id,o.application_id,a.data FROM outbox o JOIN applications a ON a.id=o.application_id WHERE o.delivered_at IS NULL AND o.attempts<5 LIMIT 5').all()){
     db.prepare('UPDATE outbox SET attempts=attempts+1 WHERE id=?').run(row.id);
