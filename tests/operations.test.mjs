@@ -14,7 +14,7 @@ async function fixture(){
   const db=openDatabase(':memory:'),sessions={};
   for(const rank of ranks){db.prepare('INSERT INTO users VALUES(?,?,?,?)').run(rank,`Nombre ${rank}`,rank,new Date().toISOString());sessions[rank]=issueSession(db,rank);}
   const server=createServer(createApp(db,{APP_ORIGIN:'http://localhost:3000'}));await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
-  const request=async(path,rank,method='GET',value)=>{const session=sessions[rank],r=await fetch(`http://127.0.0.1:${server.address().port}${path}`,{method,headers:{Origin:'http://localhost:3000','Content-Type':'application/json',...(session?{Cookie:`session=${session.raw}`,'X-CSRF-Token':session.csrf}:{})},...(value===undefined?{}:{body:JSON.stringify(value)})});return {status:r.status,body:r.headers.get('content-type')?.includes('application/json')?await r.json():await r.text(),headers:r.headers};};
+  const request=async(path,rank,method='GET',value,headers={})=>{const session=sessions[rank],r=await fetch(`http://127.0.0.1:${server.address().port}${path}`,{method,headers:{Origin:'http://localhost:3000','Content-Type':'application/json',...(session?{Cookie:`session=${session.raw}`,'X-CSRF-Token':session.csrf}:{}),...headers},...(value===undefined?{}:{body:JSON.stringify(value)})});return {status:r.status,body:r.headers.get('content-type')?.includes('application/json')?await r.json():await r.text(),headers:r.headers};};
   const character=async(rank,name='Personaje')=>{const r=await request('/api/characters',rank,'POST',{name,class:'Mago',role:'DPS distancia'});assert.equal(r.status,201);return r.body.id;};
   const raid=async()=>{const r=await request('/api/raids','raid_leader','POST',{title:'Raid de prueba',starts_at:'2026-10-01T23:00:00+02:00'});assert.equal(r.status,201);return r.body.id;};
   return {db,request,character,raid,close:async()=>{await new Promise(resolve=>server.close(resolve));db.close();}};
@@ -136,4 +136,35 @@ test('Discord OAuth success maps guild roles and prevents replay without leaking
     const session=await finishOAuth(db,req,url,env,fetcher);assert.ok(session.raw);assert.equal(db.prepare('SELECT rank FROM users').get().rank,'officer');assert.equal(calls,3);
     await assert.rejects(()=>finishOAuth(db,req,url,env,fetcher),e=>e.status===400);assert.equal(calls,3);assert.ok(!JSON.stringify(db.prepare('SELECT * FROM sessions').all()).includes('PRIVATE_ACCESS_TOKEN'));
   }finally{db.close();}
+});
+
+test('only the leader can delete active or voided loot, with CSRF protection and atomic audit',async()=>{
+  const f=await fixture();try{
+    const raid=await f.raid(),character=await f.character('member');
+    const data={raidId:raid,item:'Objeto de prueba',boss:'Encuentro',recipientCharacterId:character,candidateIds:[character],date:'2026-10-01T23:00:00Z',reason:'Prueba',method:'Roll'};
+    const first=await f.request('/api/loot','raid_leader','POST',data);assert.equal(first.status,201);
+    const second=await f.request('/api/loot','raid_leader','POST',data);assert.equal(second.status,201);
+    const route='/api/loot/'+first.body.id;
+    for(const rank of [undefined,...ranks.filter(r=>r!=='leader')]){
+      assert.equal((await f.request(route,rank,'DELETE',{})).status,rank?403:401);
+    }
+    assert.equal((await f.request(route,'leader','DELETE',{}, {'X-CSRF-Token':'invalid'})).status,403);
+    assert.equal((await f.request(route,'leader','DELETE',{}, {Origin:'https://other.example'})).status,403);
+    assert.equal((await f.request('/api/loot','leader')).body.length,2);
+    assert.equal((await f.request('/api/me','leader')).body.permissions.includes('loot.delete'),true);
+    assert.equal((await f.request('/api/me','officer')).body.permissions.includes('loot.delete'),false);
+    f.db.exec("CREATE TRIGGER reject_loot_audit BEFORE INSERT ON audit WHEN NEW.action='loot.deleted' BEGIN SELECT RAISE(ABORT,'test rollback'); END");
+    assert.equal((await f.request(route,'leader','DELETE',{})).status,500);
+    assert.ok(f.db.prepare('SELECT id FROM loot WHERE id=?').get(first.body.id));
+    f.db.exec('DROP TRIGGER reject_loot_audit');
+    assert.equal((await f.request(route,'leader','DELETE',{})).status,200);
+    assert.deepEqual((await f.request('/api/loot','member')).body.map(r=>r.id),[second.body.id]);
+    const entry=f.db.prepare("SELECT * FROM audit WHERE action='loot.deleted' AND target=?").get(first.body.id);
+    assert.equal(entry.actor_id,'leader');assert.equal(JSON.parse(entry.changes).before.item,data.item);
+    assert.equal((await f.request(route,'leader','DELETE',{})).status,404);
+    await f.request('/api/loot/'+second.body.id+'/void','officer','POST',{reason:'Prueba anulada'});
+    assert.equal((await f.request('/api/loot/'+second.body.id,'leader','DELETE',{})).status,200);
+    assert.equal((await f.request('/api/loot','member')).body.length,0);
+    assert.equal(f.db.prepare("SELECT count(*) n FROM audit WHERE action='loot.deleted'").get().n,2);
+  }finally{await f.close();}
 });

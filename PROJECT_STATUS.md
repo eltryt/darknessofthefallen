@@ -85,3 +85,11 @@ y `docs/RECRUITMENT.md`.
 - Las cookies siguen siendo HttpOnly/Secure y limitadas al dominio actual; los usuarios deberán iniciar sesión de nuevo en la dirección nueva. No se transfieren tokens en enlaces.
 - El workflow de backend publica primero la entrada y luego el backend; comprueba HTTPS, permisos privados y el callback OAuth nuevo. La entrada contempla temporalmente la propagación de versiones antiguas.
 - Pages y documentación activa enlazan al nuevo origen. Conservar ambos callbacks durante la transición.
+
+## Borrado de loot solicitado por el líder — 9 de octubre de 2026
+
+- Panel → Loot: botón «Borrar» por asignación, incluidas las anuladas, exclusivo del permiso `loot.delete` (rango Líder).
+- Confirmación con nombre del objeto; elimina el registro del historial y conserva la copia anterior y el actor en Auditoría (`loot.deleted`). No hay restauración desde el panel.
+- Endpoint DELETE protegido por rango, origen y CSRF; borrado y auditoría en una misma transacción. No cambia Discord, los datos existentes ni las facultades de anulación de otros responsables.
+- Validación local: 36 pruebas Node, integración SQLite de Cloudflare, builds de Pages/backend y prueba Chromium de cancelación, borrado activo/anulado, recarga y lista vacía en móvil/escritorio. Pruebas con datos sintéticos; no se han borrado objetos reales.
+- Publicación mediante los workflows existentes del commit de esta tanda; consultar Actions para el resultado del despliegue.

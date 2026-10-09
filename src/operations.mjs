@@ -153,6 +153,11 @@ export async function operations(ctx){
       const id=randomUUID();transaction(db,()=>{db.prepare('INSERT INTO loot(id,data,created_at) VALUES(?,?,?)').run(id,JSON.stringify(record),now());log('loot.assigned',id,null,record);});send(201,{id});return true;
     }
   }
+  const deleteLootMatch=path.match(/^\/api\/loot\/([^/]+)$/);
+  if(deleteLootMatch&&method==='DELETE'){
+    requirePermission('loot.delete');const id=deleteLootMatch[1],row=requireRecord(db.prepare('SELECT data FROM loot WHERE id=?').get(id)),previous=JSON.parse(row.data);
+    transaction(db,()=>{db.prepare('DELETE FROM loot WHERE id=?').run(id);log('loot.deleted',id,previous,null);});send(200,{ok:true});return true;
+  }
   const voidMatch=path.match(/^\/api\/loot\/([^/]+)\/void$/);
   if(voidMatch&&method==='POST'){
     requirePermission('loot.manage');const id=voidMatch[1],row=requireRecord(db.prepare('SELECT data FROM loot WHERE id=?').get(id)),previous=JSON.parse(row.data),v=await body();

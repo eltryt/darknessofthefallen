@@ -4,7 +4,7 @@ export const combatRoles = ['Tanque','Sanador','DPS melee','DPS distancia'];
 export const permissions = {
   'community.read':'member',
   'character.write':'member','roster.read':'raid_leader','attendance.manage':'raid_leader',
-  'loot.manage':'raid_leader','progress.manage':'raid_leader','recruitment.manage':'officer',
+  'loot.delete':'leader','loot.manage':'raid_leader','progress.manage':'raid_leader','recruitment.manage':'officer',
   'members.manage':'officer','audit.read':'officer','settings.manage':'leader','backup.export':'leader'
 };
 export function can(user, permission) {
