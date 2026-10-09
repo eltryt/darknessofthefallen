@@ -1,3 +1,4 @@
+import {mayView} from './raid-events.mjs';
 import {randomUUID} from 'node:crypto';
 import {audit,transaction} from './database-core.mjs';
 import {HttpError,text,choice,can,attendanceMetrics} from './domain.mjs';
@@ -57,7 +58,7 @@ export async function operations(ctx){
 
   if(path==='/api/raids'){
     requirePermission('community.read');
-    if(method==='GET'){send(200,db.prepare('SELECT * FROM raids ORDER BY starts_at DESC LIMIT 500').all());return true;}
+    if(method==='GET'){send(200,db.prepare('SELECT * FROM raids ORDER BY starts_at DESC LIMIT 500').all().filter(row=>{const event=db.prepare('SELECT * FROM raid_events WHERE id=?').get(row.id);return !event||mayView(user,event);}));return true;}
     if(method==='POST'){
       requirePermission('attendance.manage');const v=await body(),id=randomUUID();
       const title=text(v.title,'nombre de raid',120),starts=timestamp(v.starts_at,'Fecha de raid');

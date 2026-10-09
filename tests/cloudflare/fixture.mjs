@@ -11,6 +11,7 @@ export class Guild extends ProductionGuild {
         this.db.prepare('INSERT OR IGNORE INTO users VALUES(?,?,?,?)').run(rank, rank, rank, new Date().toISOString());
         sessions[rank] = issueSession(this.db, rank);
       }
+      this.db.prepare("INSERT OR IGNORE INTO raid_events(id,channel_id,organizer_id,title,starts_at,ends_at,updated_at) VALUES('runtime-event','test-channel','leader','Private runtime raid','2030-01-01T22:00:00Z','2030-01-02T00:00:00Z','2026-10-10T00:00:00Z')").run();
       return Response.json(sessions);
     }
     if (path === '/__test/rollback') {

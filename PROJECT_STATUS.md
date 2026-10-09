@@ -96,7 +96,7 @@ y `docs/RECRUITMENT.md`.
 
 ## Convocatorias con Raid-Helper — 10 de octubre de 2026
 
-- Nueva decisión: reutilizar API oficial Raid-Helper v3/v4. Detalles, fuentes, costes,
+- Nueva decisión: reutilizar API oficial Raid-Helper v4. Detalles, fuentes, costes,
   seguridad, limitaciones y despliegue en `docs/RAID_EVENTS.md`. Sin bot nuevo ni Premium.
 - Canal confirmado por el propietario: `1550997172982382723`; indicó haber guardado
   `RAID_HELPER_API_KEY` en GitHub. Pendiente de comprobar acceso real en el workflow.
@@ -115,3 +115,8 @@ y `docs/RECRUITMENT.md`.
   rangos y móvil/escritorio. Falta aceptación externa real; no confundir mocks con Discord.
 - Pendiente antes del cierre: desplegar y comprobar lectura autenticada/sincronización
   real, verificar eventos reales y registrar el alcance de aceptación externo.
+- Primera comprobación remota: fallo 404 del listado. Causa identificada: el renderizador
+  de la documentación transforma la versión histórica a v4. Corregido el listado a
+  `/api/v4/servers/{server}/events`; no se atribuyó el fallo a la clave del propietario.
+- Se añade workflow manual de aceptación real con un evento temporal identificado;
+  limpieza limitada a ese evento. Resultado pendiente de ejecución.

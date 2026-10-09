@@ -21,7 +21,7 @@ for (let attempt = 1; attempt <= 24; attempt++) {
   }
 }
 assert.ok(healthy, 'Backend did not pass its public HTTPS health check.');
-for (const path of ['/', '/login', '/raids', '/reclutamiento', '/app.js', '/recruitment-ui.js', '/api/public']) {
+for (const path of ['/', '/login', '/raids', '/reclutamiento', '/app.js', '/recruitment-ui.js', '/raid-events-ui.js', '/api/events', '/api/public']) {
   let response;
   // A healthy old version can respond while a new asset is still propagating.
   // Keep the final assertion strict; retry only transient missing/unavailable assets.

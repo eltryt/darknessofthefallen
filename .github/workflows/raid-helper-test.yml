@@ -1,0 +1,23 @@
+name: Verify Raid-Helper real integration
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: cloudflare-backend
+  cancel-in-progress: false
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Exercise official API with one disposable labelled test event
+        run: node scripts/check-raid-helper-live.mjs
+        env:
+          RAID_HELPER_API_KEY: ${{ secrets.RAID_HELPER_API_KEY }}
+          DISCORD_GUILD_ID: ${{ secrets.DISCORD_GUILD_ID }}
+          DISCORD_LEADER_ID: ${{ secrets.DISCORD_LEADER_ID }}

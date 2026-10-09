@@ -15,7 +15,7 @@ export function raidHelper(env,transport=fetch){
   return {
     async list(){
       const events=[];for(let page=1;page<=10;page++){
-        const data=await call(`v3/servers/${id(env.DISCORD_GUILD_ID)}/events`,'GET',undefined,{Page:String(page),ChannelFilter:env.RAID_HELPER_CHANNEL_ID});
+        const data=await call(`v4/servers/${id(env.DISCORD_GUILD_ID)}/events`,'GET',undefined,{Page:String(page),ChannelFilter:env.RAID_HELPER_CHANNEL_ID});
         if(!Array.isArray(data.postedEvents)||!Number.isInteger(data.pages)||data.pages>10)throw new ProviderError(502);
         events.push(...data.postedEvents);if(page>=data.pages)return events;
       }throw new ProviderError(502);

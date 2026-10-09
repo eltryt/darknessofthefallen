@@ -19,8 +19,8 @@ una prueba real del esquema de vuestro servidor.
 
 | Capacidad | API documentada |
 | --- | --- |
-| Listar eventos publicados del servidor | GET `/api/v3/servers/{server}/events` |
-| Listar eventos programados aún no publicados | GET `/api/v3/servers/{server}/scheduledevents` (no importados en esta tanda) |
+| Listar eventos publicados del servidor | GET `/api/v4/servers/{server}/events` |
+| Listar eventos programados aún no publicados | GET `/api/v4/servers/{server}/scheduledevents` (no importados en esta tanda) |
 | Detalle con clases, specs, roles e inscripciones | GET `/api/v4/events/{id}` |
 | Crear convocatoria/mensaje interactivo | POST `/api/v4/servers/{server}/channels/{channel}/event` |
 | Modificar / eliminar convocatoria | PATCH / DELETE `/api/v4/events/{id}` |
@@ -161,3 +161,10 @@ Chromium local: creación y clasificación, inscripción de miembro, controles p
 ancho 1440/768/390/320. Estos resultados **no equivalen** a pruebas reales en Discord.
 Registrar en PROJECT_STATUS los resultados reales de conexión y las pruebas externas
 que falten antes de considerar completamente aceptada la integración.
+
+El workflow manual **Verify Raid-Helper real integration** ejecuta los handlers web
+con una base efímera y la API real: crea un único mensaje marcado PRUEBA TÉCNICA,
+prueba cambios/inscripciones y lo elimina en `finally`. Solo usa el ID del propietario
+para un participante de prueba y personajes registrados explícitamente en esa base
+local desechable; no crea perfiles ni sesiones en producción. No sustituye probar
+los botones de Discord con una sesión real del usuario. No se ejecuta en cada deploy.

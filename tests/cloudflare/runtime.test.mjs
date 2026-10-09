@@ -40,6 +40,10 @@ test('Cloudflare SQLite: permissions, writes, rollback, assets and persistence a
     for (const path of ['/', '/reclutamiento', '/app.js', '/assets/guild-logo.png']) assert.equal((await request(path)).status, 200);
     const sessions = await (await request('/__test/seed')).json();
     const headers = rank => ({cookie: 'session=' + sessions[rank].raw, origin: 'https://guild.example', 'content-type': 'application/json', 'x-csrf-token': sessions[rank].csrf});
+    assert.equal((await (await request('/api/events')).json()).events.length,0);
+    const eventList=await (await request('/api/events',{headers:headers('leader')})).json();
+    assert.equal(eventList.events[0].title,'Private runtime raid');
+    assert.equal((await request('/api/events/runtime-event/metadata',{method:'PATCH',headers:headers('member'),body:JSON.stringify({category:'Oficial',roster:'Grupo 1',public:true,revision:eventList.events[0].revision})})).status,403);
     const candidate = {name:'Applicant',discord:'private-discord-handle',character:'Test character',class:'Mago',role:'DPS distancia',availability:'Noches',experience:'Classic',reason:'Jugar en equipo',additional:'private-detail',consent:true};
     const submit = value => ({method:'POST',headers:{origin:'https://guild.example','content-type':'application/json'},body:JSON.stringify(value)});
     assert.equal((await request('/api/applications', submit({...candidate,consent:false}))).status,400);
