@@ -74,3 +74,13 @@ y `docs/RECRUITMENT.md`.
 - Loot Council de tres personas por grupo, no necesariamente oficiales; criterios objetivos y transparentes pendientes de definición colectiva y normas comunes para todos los rosters y tipos de raid.
 - Esta tanda es editorial: no modifica OAuth, permisos, sesiones, datos de producción, lógica de loot ni generación de calendarios. Reutiliza las tarjetas y secciones existentes.
 - Verificado: 33 pruebas Node, build de Pages y navegador a 1440/768/390/320 px en Inicio, Hermandad, Raids y Reclutamiento; un H1 por página, sin errores JavaScript ni desbordamiento, preguntas desplegables operativas. Publicación mediante los workflows existentes de Pages y Cloudflare; consultar Actions del commit de esta tanda.
+
+## Dirección pública sin «backend» — transición
+
+- Worker de entrada independiente: `darknessofthefallen`, configuración `wrangler.public.jsonc`.
+- URL prevista: https://darknessofthefallen.eltryt-darknessofthefallen.workers.dev/
+- En esta fase redirige temporalmente a la aplicación existente, conserva rutas y no almacena datos ni sesiones. No se renombra el Worker propietario de SQLite.
+- Workflow manual: **Publish clean public address**. Pruebas de destino fijo, rutas y rechazo de escrituras; build independiente.
+- Pendiente externo: añadir en Discord OAuth2 el callback `https://darknessofthefallen.eltryt-darknessofthefallen.workers.dev/auth/discord/callback`, conservando el actual.
+- Después de confirmarlo, convertir la entrada en proxy mediante un Service Binding al Worker original, fijar el nuevo APP_ORIGIN, redirigir la dirección antigua y actualizar enlaces/comprobaciones. Mantener el mismo Durable Object y su identificador; no crear otra base ni copiar credenciales a la entrada.
+- Hasta completar ese cambio, la barra del navegador seguirá mostrando la dirección original después de la redirección. No presentar el alias como una migración de origen terminada.
