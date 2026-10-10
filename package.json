@@ -17,7 +17,8 @@
     "dev:backend": "wrangler dev --local --var APP_ORIGIN:http://localhost:8787",
     "build:backend": "wrangler deploy --dry-run --outdir .wrangler/build",
     "deploy:backend": "wrangler deploy",
-    "test:backend": "node --test tests/cloudflare/*.test.mjs"
+    "test:backend": "node --test tests/cloudflare/*.test.mjs",
+    "restore": "node scripts/restore.mjs"
   },
   "devDependencies": {
     "miniflare": "5.20261006.0-alpha",

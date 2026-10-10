@@ -1,3 +1,4 @@
+import {exportRecovery} from './recovery.mjs';
 import {randomUUID} from 'node:crypto';
 import {Buffer} from 'node:buffer';
 async function readLocalAsset(file){const {readFile}=await import('node:fs/promises');return readFile(new URL(`../public/${file}`,import.meta.url));}
@@ -93,7 +94,7 @@ export function createApp(db,env,{readAsset=readLocalAsset}={}){
         transaction(db,()=>{db.prepare('UPDATE settings SET data=? WHERE id=1').run(JSON.stringify(next));audit(db,user.id,'settings.updated','guild',{before:s,after:next});});return send(200,next);
       }
       if(path==='/api/audit'&&method==='GET'){requirePermission('audit.read');return send(200,db.prepare('SELECT * FROM audit ORDER BY id DESC LIMIT 200').all());}
-      if(path==='/api/export'&&method==='GET'){requirePermission('backup.export');const data={schemaVersion:1,exportedAt:date(),settings:s};for(const table of ['users','characters','applications','raids','attendance','loot','wishlists','progress','council_members','audit','raid_events','raid_character_links','raid_signup_cancellations','raid_jobs','raid_sync'])data[table]=db.prepare(`SELECT * FROM ${table}`).all();audit(db,user.id,'data.exported','guild',{});return send(200,data,{'Content-Disposition':'attachment; filename="darkness-export.json"'});}
+      if(path==='/api/export'&&method==='GET'){requirePermission('backup.export');const data=exportRecovery(db);audit(db,user.id,'data.exported','guild',{});return send(200,data,{'Content-Disposition':'attachment; filename="darkness-export.json"'});}
       if(path==='/api/notifications/retry'&&method==='POST'){requirePermission('recruitment.manage');await deliverRecruitment(db,env);return send(200,{ok:true});}
       if(path.startsWith('/api/'))throw new HttpError(404,'Endpoint no encontrado.');
       if(!['GET','HEAD'].includes(method))throw new HttpError(405,'Método no permitido.');

@@ -131,3 +131,24 @@ y `docs/RECRUITMENT.md`.
   No se han activado webhooks Premium ni definido nuevas normas de composición.
 - Siguiente paso recomendado: usar una convocatoria normal en el canal configurado
   y comprobar el resultado en Panel → Raids tras el siguiente ciclo de sincronización.
+
+
+## Copias y recuperación — 11 de octubre de 2026
+
+- El propietario confirma que el flujo real de convocatorias desde Discord y el
+  recorrido de candidatura funcionan. La comprobación de rangos con cuentas reales
+  sigue pendiente; se mantienen las pruebas automáticas de permisos.
+- Exportación privada del líder: formato 2, esquema 5, snapshot transaccional y
+  SHA-256; incluye outbox y todas las tablas de negocio, excluye autenticación.
+- Nueva herramienta `npm run restore -- copia.json [nueva.sqlite]`: ensayo offline
+  o archivo nuevo 0600, validación de integridad/referencias y rechazo de sobrescritura.
+  Restauración pausa colas para no reenviar operaciones a Discord.
+- Backup local nativo: rechaza rutas inexistentes y comprueba integridad SQLite.
+- Documentado procedimiento en `docs/RECOVERY.md`, incluyendo PITR oficial de
+  Cloudflare, limitaciones, retención documentada y precauciones de recuperación.
+- No se han descargado datos privados de producción ni realizado PITR real.
+  Las copias externas siguen siendo manuales; importación a Cloudflare no automatizada.
+  Siguiente acción del líder: descargar una copia en Panel → Exportación y guardarla
+  en almacenamiento privado. No enviar el archivo al chat ni al repositorio.
+- Validación: 47 pruebas Node completas y un test adicional de backup nativo (48 en total),
+  integración workerd con exportación/restauración aprobada, builds de Pages/backend correctos.

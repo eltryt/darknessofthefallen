@@ -97,3 +97,5 @@ Convocatorias integradas con Raid-Helper: configuración, permisos, API oficial,
 fuentes de verdad y límites de sincronización en [docs/RAID_EVENTS.md](docs/RAID_EVENTS.md).
 La clave `RAID_HELPER_API_KEY` se guarda en GitHub Actions Secrets; el despliegue
 existente la instala en el Worker sin modificar el login Discord.
+
+Copias y ensayo de restauración: [docs/RECOVERY.md](docs/RECOVERY.md).

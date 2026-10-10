@@ -14,4 +14,7 @@ Public characters have ONLY name/class/role. Attendance API restricts members to
 
 ## Backup / restore
 
-`node scripts/backup.mjs` uses the SQLite online-backup API (consistent with WAL). Copy backups to a separate private device/provider and retain daily/weekly generations. A local copy alone does not protect against device loss. To restore: stop the server; keep a copy of the current database directory; copy a verified backup to a NEW database path; set `DATABASE_PATH` to that path; run tests and start; verify counts and representative records. Do not overwrite an active database or mix an old main database with current WAL files. JSON export is portable and includes version metadata; JSON import is NOT implemented. Encrypted offsite backup scheduling remains pending.
+Ver [Copias y recuperación](RECOVERY.md). La exportación del líder ahora incluye
+formato versionado y checksum; `npm run restore -- copia.json` ensaya su recuperación
+en memoria. `npm run backup` solo copia una base Node local existente, no Cloudflare.
+Las copias externas siguen siendo manuales; no hay restauración pública sobre producción.

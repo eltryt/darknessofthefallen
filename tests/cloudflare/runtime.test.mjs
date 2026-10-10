@@ -1,3 +1,5 @@
+import {openDatabase} from '../../src/db.mjs';
+import {restoreRecovery} from '../../src/recovery.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp, readFile, readdir, rm} from 'node:fs/promises';
@@ -80,7 +82,10 @@ test('Cloudflare SQLite: permissions, writes, rollback, assets and persistence a
     assert.equal(persisted[0].notes,'private-review');
     assert.equal(persisted[0].data.discord,candidate.discord);
     assert.equal((await (await request('/api/public')).json()).settings.recruitmentOpen,false);
-    assert.equal((await request('/api/export', {headers: headers('leader')})).status, 200);
+    const snapshotResponse=await request('/api/export', {headers: headers('leader')});
+    assert.equal(snapshotResponse.status,200);
+    const restored=openDatabase(':memory:');
+    try{const report=restoreRecovery(restored,await snapshotResponse.json());assert.equal(report.verified,true);assert.ok(report.counts.applications>0);assert.ok(report.counts.raid_events>0);}finally{restored.close();}
   } finally {
     await runtime?.dispose();
     await rm(directory, {recursive: true, force: true});
