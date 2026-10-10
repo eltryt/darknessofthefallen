@@ -1,57 +1,1254 @@
-import {mountRaidEvents} from './raid-events-ui.js';
-import {prepareApplication,applicationReceipt,applicationInbox} from '/recruitment-ui.js';
-import {schedulePlanner,attachSchedulePlanner} from '/schedule-ui.js';
-import {attachCharacterEditor} from '/character-editor.js';
-import {operationTab,attachMemberOperations,renderProgress} from '/operations-ui.js';
-function operationsContext(){return {api,esc,empty,table,field,select,area,formHandler,toast,me,data};}
-const $=s=>document.querySelector(s);const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let data,me;const roles=['Tanque','Sanador','DPS melee','DPS distancia'],classes=['Guerrero','Paladín','Cazador','Pícaro','Sacerdote','Chamán','Mago','Brujo','Druida'];
-const opts=items=>items.map(x=>`<option>${esc(x)}</option>`).join('');
-const empty=(title,detail)=>`<div class="empty"><h3>${esc(title)}</h3><p>${esc(detail)}</p></div>`;
-const title=(tag,heading,description)=>`<div class="page-title"><span class="eyebrow">${esc(tag)}</span><h1>${esc(heading)}</h1><p>${esc(description)}</p></div>`;
-let toastTimer;function toast(message){clearTimeout(toastTimer);$('#toast').textContent=message;toastTimer=setTimeout(()=>$('#toast').textContent='',7000);}
-async function api(path,method='GET',value){const r=await fetch(path,{method,headers:{'Content-Type':'application/json',...(me?.csrf?{'X-CSRF-Token':me.csrf}:{})},...(value!==undefined?{body:JSON.stringify(value)}:{})});const result=await r.json().catch(()=>({error:'No se pudo conectar. Vuelve a intentarlo en unos instantes.'}));if(!r.ok)throw new Error(result.error||'No se pudo completar la operación.');return result;}
-function field(label,name,type='text',value='',required=true){return `<label>${esc(label)}${required?' <span class="required-mark" aria-hidden="true">*</span>':''}<input name="${name}" type="${type}" value="${esc(value)}" ${required?'required':''} maxlength="500"></label>`;}
-function select(label,name,items){return `<label>${esc(label)} <span class="required-mark" aria-hidden="true">*</span><select name="${name}" required>${opts(items)}</select></label>`;}
-function recruitmentChoices(label,name,items,selected){return `<fieldset class="wide recruitment-choices"><legend>${esc(label)}</legend><div>${items.map(item=>`<label><input type="checkbox" name="${name}" value="${esc(item)}" ${selected.includes(item)?'checked':''}>${esc(item)}</label>`).join('')}</div></fieldset>`;}
-function area(label,name,required=true){return `<label class="wide">${esc(label)}${required?' <span class="required-mark" aria-hidden="true">*</span>':''}<textarea name="${name}" maxlength="2000" ${required?'required':''}></textarea></label>`;}
-function formHandler(id,fn){$(id)?.addEventListener('submit',async e=>{e.preventDefault();const button=e.target.querySelector('button[type=submit]');button.disabled=true;e.target.setAttribute('aria-busy','true');e.target.querySelector('.form-feedback')?.remove();try{await fn(Object.fromEntries(new FormData(e.target)),e.target);}catch(err){const feedback=document.createElement('p');feedback.className='form-feedback error';feedback.setAttribute('role','alert');feedback.textContent=err.message;e.target.append(feedback);toast(err.message);}finally{button.disabled=false;e.target.removeAttribute('aria-busy');}});}
-function table(heads,rows){return `<div class="table-wrap" tabindex="0" aria-label="Tabla de datos"><table><thead><tr>${heads.map(h=>`<th scope="col">${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`;}
-function home(){const s=data.settings;return `<section class="hero"><div><span class="eyebrow">World of Warcraft Forever · ${esc(s.faction)}</span><h1>La noche es nuestra.<br><em>El camino, juntos.</em></h1><p>${esc(s.description)}</p><div class="actions"><a class="button" href="/reclutamiento">Encuentra tu lugar <span aria-hidden="true">→</span></a><a class="button secondary" href="/nosotros">Conoce la hermandad</a></div></div><div class="hero-art" aria-hidden="true"><img class="hero-logo" src="/assets/guild-logo.png" alt="" width="1254" height="1254" fetchpriority="high"></div></section><div class="facts"><div class="fact"><span class="label">Nuestro horario</span><strong>${esc(s.raidStart)} — ${esc(s.raidEnd)}</strong><small>Europe/Madrid</small></div><div class="fact"><span class="label">Nuestra facción</span><strong>${esc(s.faction)}</strong><small>${esc(s.region)}</small></div><div class="fact"><span class="label">Nuestra aventura</span><strong>Servidor ${esc(s.ruleset)}</strong><small>Progresión PvE y PvP</small></div><div class="fact"><span class="label">Días de raid</span><strong>${s.raidDays.length?esc(s.raidDays.join(' · ')):'Por confirmar'}</strong><small>${esc(s.raidStart)} — ${esc(s.raidEnd)} · Europe/Madrid</small></div></div><section class="section"><div class="section-head"><h2>Más que una raid.</h2><a href="/nosotros">Nuestra filosofía ↗</a></div><div class="grid"><article class="card"><span class="card-number">I.</span><h3>Construir algo duradero</h3><p>Una comunidad que siga aquí después del lanzamiento. Compartir el viaje importa tanto como llegar al siguiente boss.</p></article><article class="card"><span class="card-number">II.</span><h3>Progresar como equipo</h3><p>Preparación, comunicación y ganas de aprender. Cada papel tiene su sitio en la banda.</p></article><article class="card"><span class="card-number">III.</span><h3>Jugar con transparencia</h3><p>Un Loot Council de tres personas por grupo, con criterios objetivos que definiremos juntos y normas comunes para todas las raids.</p></article></div></section><section class="banner"><div><span class="eyebrow">Cuando Azeroth se queda en silencio</span><h2>Nosotros empezamos.</h2><p>Descubre nuestro horario y la organización de las raids.</p></div><a class="button secondary" href="/raids">Ver información de raids →</a></section>`;}
-function roster(){return title('La hermandad','Nuestro roster','Personajes, clases y roles. Los datos internos de los miembros permanecen privados.')+`<div class="filters"><input id="search" aria-label="Buscar personaje" placeholder="Buscar personaje…"><select id="class" aria-label="Filtrar clase"><option value="">Todas las clases</option>${opts(classes)}</select><select id="role" aria-label="Filtrar rol"><option value="">Todos los roles</option>${opts(roles)}</select></div><div id="roster-result"></div>`;}
-function renderRoster(){const rows=data.characters.filter(c=>(!$('#search').value||c.name.toLowerCase().includes($('#search').value.trim().toLocaleLowerCase('es')))&&(!$('#class').value||c.class===$('#class').value)&&(!$('#role').value||c.role===$('#role').value));$('#roster-count').textContent=`${rows.length} ${rows.length===1?'personaje':'personajes'}`;$('#roster-result').innerHTML=rows.length?table(['Personaje','Clase','Rol'],rows.map(c=>`<tr><td>${esc(c.name)}</td><td>${esc(c.class)}</td><td><span class="pill">${esc(c.role)}</span></td></tr>`)):(data.characters.length?empty('No encontramos personajes con esos filtros','Prueba otra clase o rol, o pulsa Limpiar filtros.'):empty('El roster está por abrirse','Los personajes aparecerán cuando los miembros los registren. Aquí verás su nombre, clase y rol.'));}
-function recruitment(){return title('Un nuevo comienzo','Tu próxima hermandad.','Cuéntanos quién eres, cómo juegas y qué buscas. Tu candidatura solo será visible para el equipo autorizado.')+(!data.settings.recruitmentOpen?empty('Reclutamiento cerrado','Ahora no estamos recibiendo nuevas candidaturas. Puedes contactar con nosotros en Discord.'):`<form id="application" class="card form"><div class="form-grid">${field('Nombre o alias','name')}${field('Usuario de Discord','discord')}${field('Personaje y apellido','character')}${select('Clase','class',classes)}${select('Rol','role',roles)}${field('Disponibilidad y horario','availability')}${area('Experiencia','experience')}${area('¿Por qué quieres entrar?','reason')}${area('Información adicional','additional',false)}<label class="honeypot" aria-hidden="true">Sitio web<input name="website" tabindex="-1" autocomplete="off"></label></div><label><input type="checkbox" name="consent" required>Acepto que el Líder y los Oficiales consulten estos datos para gestionar mi candidatura y contacten conmigo por Discord.</label><p>No necesitas iniciar sesión ni pertenecer al Discord para enviar la candidatura. No incluyas información sensible. Puedes solicitar la retirada de tu candidatura a través del contacto de la hermandad.</p><button type="submit">Enviar candidatura →</button></form>`);}
-function raids(){const s=data.settings;return title('Preparados para la siguiente noche','Información de raids','Las convocatorias y las inscripciones se gestionan en Discord con Raid-Helper.')+`<section class="card"><span class="label">Horario de la hermandad</span><div class="schedule">${esc(s.raidStart)} — ${esc(s.raidEnd)}</div><p>Europe/Madrid · ${s.raidDays.length?esc(s.raidDays.join(', ')):'Días pendientes de confirmar'}</p>${s.discordUrl?`<a class="button" href="${esc(s.discordUrl)}" rel="noopener noreferrer">Abrir Discord ↗</a>`:'<span class="pill">Invitación Discord pendiente</span>'}</section><section class="section"><h2>Próximas convocatorias</h2>${data.raids.length?table(['Raid','Fecha','Fuente'],data.raids.map(r=>`<tr><td>${esc(r.title)}</td><td>${esc(new Date(r.starts_at).toLocaleString('es-ES',{timeZone:'Europe/Madrid'}))}</td><td>${esc(r.source)}</td></tr>`)):empty('Todavía no hay convocatorias','Las raids se mostrarán aquí cuando se importen o se registren en el panel.')}</section>`;}
-async function profile(){const rows=await api('/api/characters'),attendance=await api('/api/attendance?userId=me');$('#content').innerHTML=title('Tu espacio',me.user.name,'Gestiona tus personajes. Tu asistencia detallada solo es visible para ti y los responsables autorizados.')+`<div class="grid"><div class="card"><span class="label">Asistencia</span><span class="metric">${attendance.metrics.percentage}%</span><p>${attendance.metrics.raids?attendance.metrics.raids+' raids registradas · incluye tardanzas':'Sin registros de asistencia todavía'}</p></div><div class="card"><span class="label">Personajes</span><span class="metric">${rows.length}</span><p>Un Main y todos tus Alters</p></div><div class="card"><span class="label">Rango</span><h3>${esc(rankLabel(me.user.rank))}</h3><button id="logout" class="secondary">Cerrar sesión</button></div></div><section class="section"><h2>Mis personajes</h2>${rows.length?table(['Nombre','Clase','Rol','Main / Alter'],rows.map(c=>`<tr><td>${esc(c.name)} ${esc(c.surname)}</td><td>${esc(c.class)}</td><td>${esc(c.role)}</td><td>${c.is_main?'<span class="pill gold">MAIN</span>':`<button data-main="${esc(c.id)}" class="secondary">Marcar Main</button>`}</td></tr>`)):empty('Tu historia empieza aquí','Registra tu primer personaje para incorporarte al roster.')}</section>${me.permissions.includes('character.write')?`<section class="section"><h2>Añadir personaje</h2><form id="character" class="card form"><div class="form-grid">${field('Nombre','name')}${field('Apellido','surname','text','',false)}${select('Clase','class',classes)}${select('Rol','role',roles)}${field('Especialización','spec','text','',false)}${field('Profesiones','professions','text','',false)}${area('Disponibilidad','availability',false)}${area('Notas personales','notes',false)}</div><label><input type="checkbox" name="isMain">Marcar como Main</label><button type="submit">Guardar personaje</button></form></section>`:'<p class="notice">Un rol de miembro en Discord es necesario para registrar personajes.</p>'}`;
-  attachCharacterEditor({rows,api,refresh:profile,toast});
-  formHandler('#character',async(v,f)=>{await api('/api/characters','POST',{...v,isMain:!!v.isMain});toast('Personaje guardado');await profile();});document.querySelectorAll('[data-main]').forEach(b=>b.onclick=async()=>{try{await api(`/api/characters/${b.dataset.main}/main`,'POST',{});await profile();}catch(e){toast(e.message);}});$('#logout').onclick=async()=>{await api('/api/logout','POST',{});location.href='/';};await attachMemberOperations({rows,refresh:profile,...operationsContext()});}
-async function panel(){const tabs=[['roster.read','roster','Roster'],['recruitment.manage','applications','Candidaturas'],['attendance.manage','raids','Raids'],['attendance.manage','attendance','Asistencia'],['loot.manage','loot','Loot'],['loot.manage','wishlists','Wishlists'],['community.read','council','Consejo'],['progress.manage','progress','Progreso'],['settings.manage','settings','Configuración'],['audit.read','audit','Auditoría'],['backup.export','export','Exportación']].filter(t=>me.permissions.includes(t[0]));$('#content').innerHTML=title('Centro de mando','Panel de la hermandad','Organización, datos y seguimiento. Cada herramienta respeta los permisos de tu rango.')+`<div class="panel-tabs" aria-label="Secciones del panel">${tabs.map((t,i)=>`<button data-tab="${t[1]}" aria-pressed="${i===0}" class="${i===0?'active':''}">${t[2]}</button>`).join('')}</div><section id="panel-body"></section>`;document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-tab]').forEach(x=>{x.classList.toggle('active',x===b);x.setAttribute('aria-pressed',String(x===b));});panelTab(b.dataset.tab).catch(e=>{$('#panel-body').innerHTML=empty('No se pudo cargar esta sección',e.message);toast(e.message);});});if(tabs[0])await panelTab(tabs[0][1]);}
-async function panelTab(tab){const el=$('#panel-body');el.innerHTML='<p role="status">Cargando…</p>';if(tab==='raids'){await mountRaidEvents(el,operationsContext(),{manage:true});return;}if(await operationTab(tab,el,operationsContext()))return;if(tab==='roster'){const rows=await api('/api/roster'),mains=rows.filter(c=>c.is_main),t=data.settings.rosterTargets;el.innerHTML=`<div class="grid">${[['Tanques',mains.filter(c=>c.role==='Tanque').length,t.tanks],['Sanadores',mains.filter(c=>c.role==='Sanador').length,t.healers],['DPS',mains.filter(c=>c.role.startsWith('DPS')).length,t.dps]].map(([n,v,max])=>`<div class="card"><span class="label">${n} · Mains registrados</span><span class="metric">${v} / ${max}</span></div>`).join('')}</div><p class="notice">Composición por personajes Main; no representa confirmaciones de asistencia a una raid.</p>${table(['Personaje','Clase','Rol','Disponibilidad','Rango'],rows.map(c=>`<tr><td>${esc(c.name)}</td><td>${esc(c.class)}</td><td>${esc(c.role)}</td><td>${esc(c.availability)||'Sin indicar'}</td><td>${esc(c.rank)}</td></tr>`))}`;}
-  if(tab==='applications'){await applicationInbox(el,{api,esc,toast});return;}
-  if(tab==='attendance'){const a=await api('/api/attendance');el.innerHTML=a.rows.length?table(['Raid','Miembro','Estado'],a.rows.map(r=>`<tr><td>${esc(r.raid_id)}</td><td>${esc(r.user_id)}</td><td>${esc(r.status)}</td></tr>`)):empty('Sin asistencias registradas','La edición de raids y asistencia se implementará en la siguiente fase.');}
-  if(tab==='audit'){const rows=await api('/api/audit');el.innerHTML=table(['Fecha','Usuario','Acción','Objeto'],rows.map(r=>`<tr><td>${esc(r.created_at)}</td><td>${esc(r.actor_id)}</td><td>${esc(r.action)}</td><td>${esc(r.target)}</td></tr>`));}
-  if(tab==='export')el.innerHTML=`<div class="card"><h2>Copia de los datos de la hermandad</h2><p>JSON con roster, personajes, candidaturas, raids, asistencia, loot, wishlist, progreso, configuración y auditoría. Contiene datos privados: guárdalo en un lugar seguro.</p><a class="button" href="/api/export" download>Descargar exportación JSON</a><p class="notice">Copia manual con comprobación de integridad. Incluye convocatorias e inscripciones. No incluye sesiones ni secretos. Guarda varias copias fuera de la web, en un lugar privado.</p><div class="actions">${['characters','attendance','loot','applications','settings'].map((name,i)=>`<a class="button secondary" href="/api/export/csv?dataset=${name}" download>CSV · ${['Personajes','Asistencia','Loot','Candidaturas','Configuración'][i]}</a>`).join('')}</div></div>`;
-  if(tab==='settings'){const s=data.settings;el.innerHTML=`<form id="settings" class="card form"><div class="form-grid">${field('Nombre','name','text',s.name)}${field('Descripción','description','text',s.description)}<label class="wide">Sobre la hermandad<textarea name="about" maxlength="4000" required>${esc(s.about)}</textarea></label>${field('Facción','faction','text',s.faction)}${field('Región','region','text',s.region)}${field('Servidor','server','text',s.server)}${select('Ruleset','ruleset',['Por confirmar','PvP','PvE'])}${field('Inicio de raid','raidStart','time',s.raidStart)}${field('Fin de raid','raidEnd','time',s.raidEnd)}${field('Invitación de Discord','discordUrl','url',s.discordUrl,false)}${select('Método de loot','lootMethod',['Loot Council','Roll','Soft Reserve','DKP','Híbrido'])}<fieldset class="wide"><legend>Días de raid</legend>${['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'].map(d=>`<label><input name="days" type="checkbox" value="${d}" ${s.raidDays.includes(d)?'checked':''}>${d}</label>`).join('')}</fieldset>${field('Objetivo tanques','tanks','number',s.rosterTargets.tanks)}${field('Objetivo sanadores','healers','number',s.rosterTargets.healers)}${field('Objetivo DPS','dps','number',s.rosterTargets.dps)}</div><p>Marca las clases y roles que buscáis. Son prioridades informativas: otras clases también pueden presentar candidatura. Si no marcas ninguna opción, no se anunciará una prioridad.</p>${recruitmentChoices('Clases buscadas','soughtClasses',classes,s.soughtClasses||[])}${recruitmentChoices('Roles buscados','soughtRoles',roles,s.soughtRoles||[])}<label><input name="recruitmentOpen" type="checkbox" ${s.recruitmentOpen?'checked':''}>Reclutamiento abierto</label><button type="submit">Guardar configuración</button></form>`;$('#settings').elements.ruleset.value=s.ruleset;$('#settings').elements.lootMethod.value=s.lootMethod;formHandler('#settings',async(v,f)=>{data.settings=await api('/api/settings','PUT',{...v,raidDays:new FormData(f).getAll('days'),soughtClasses:new FormData(f).getAll('soughtClasses'),soughtRoles:new FormData(f).getAll('soughtRoles'),recruitmentOpen:!!v.recruitmentOpen,rosterTargets:{tanks:Number(v.tanks),healers:Number(v.healers),dps:Number(v.dps)}});toast('Configuración guardada');});}}
-async function boot(){try{[data,me]=await Promise.all([api('/api/public'),api('/api/me')]);const s=data.settings,path=location.pathname.replace(/\/$/,'')||'/';if(!data.authConfigured&&!me.user)$('.login').textContent='Acceso de miembros';document.title=`${({'/nosotros':'Hermandad','/raids':'Raids','/roster':'Roster','/progreso':'Progreso PvE','/reclutamiento':'Reclutamiento','/contacto':'Contacto','/login':'Entrar con Discord','/perfil':'Mi perfil','/panel':'Panel'}[path]||'Inicio')} · ${s.name}`;document.querySelectorAll('nav a').forEach(a=>{if(a.pathname.replace(/\/$/,'')===path.replace(/\/$/,''))a.setAttribute('aria-current','page');});if(me.user){$('.login').href='/perfil';$('.login').textContent='Mi perfil ↗';if(me.permissions.includes('roster.read'))$('#navigation').insertAdjacentHTML('beforeend','<a href="/panel">Panel</a>');}let html='';switch(path){case '/':html=home();break;case '/nosotros':html=title('Nuestra identidad','Un lugar al que volver.',s.about)+`<div class="grid"><article class="card"><h3>Alianza</h3><p>${esc(s.name)} en ${esc(s.region)}. ${esc(s.server)} · WoW Forever Realmless.</p></article><article class="card"><h3>Progresión PvE</h3><p>Conocer cada encuentro, mejorar juntos y construir un equipo estable.</p></article><article class="card"><h3>Noches compartidas</h3><p>De ${esc(s.raidStart)} a ${esc(s.raidEnd)}, Europe/Madrid. ${s.raidDays.length?esc(s.raidDays.join(', ')):'Días por confirmar.'}</p></article></div>`;break;case '/roster':html=roster();break;case '/reclutamiento':html=recruitment();break;case '/raids':html=raids();break;case '/progreso':html=title('Paso a paso, boss a boss','Nuestro progreso PvE','Aquí quedarán los encuentros superados y los hitos de la hermandad.')+renderProgress(data.progress,{esc,empty});break;case '/contacto':html=title('Nos vemos en Azeroth','Hablemos en Discord.','Nuestro punto de encuentro para la comunidad, las convocatorias y las dudas.')+(s.discordUrl?`<a class="button" href="${esc(s.discordUrl)}">Entrar al Discord de la guild ↗</a>`:empty('Invitación pendiente','El Líder añadirá aquí el enlace oficial de Discord.'));break;case '/login':html=title('Bienvenido a casa','Entra con Discord.','Tu cuenta de Discord conecta tus personajes y tu rango con la hermandad.')+(data.authConfigured?'<a class="button" href="/auth/discord">Autorizar con Discord ↗</a>':empty('Conexión pendiente','El acceso se activará cuando esté configurada la aplicación Discord de la hermandad.'));break;case '/perfil':await profile();return;case '/panel':await panel();return;default:html=empty('Página no encontrada','Vuelve al inicio para seguir explorando.');}$('#content').innerHTML=publicLayout(path,html);attachSchedulePlanner(s);if(path==='/raids'){const host=document.createElement('section');host.className='section';$('#content').querySelector('.page-title').after(host);await mountRaidEvents(host,operationsContext());}if(path==='/roster'){renderRoster();$('#clear-roster').onclick=()=>{['#search','#class','#role'].forEach(id=>$(id).value='');renderRoster();$('#search').focus();};['#search','#class','#role'].forEach(s=>$(s).addEventListener('input',renderRoster));}prepareApplication($('#application'));formHandler('#application',async(v,f)=>{const result=await api('/api/applications','POST',{...v,consent:!!v.consent});applicationReceipt(f,result,esc);toast('Candidatura guardada');});}catch(e){$('#content').innerHTML=`<div class="page-title"><h1>No hemos podido abrir esta página.</h1><p class="error">${esc(e.message)}</p><a class="button" href="/">Volver al inicio</a></div>`;}}
-const closeMenu=()=>{$('#navigation').classList.remove('open');$('#menu').setAttribute('aria-expanded','false');};$('#menu').onclick=()=>{const open=$('#navigation').classList.toggle('open');$('#menu').setAttribute('aria-expanded',String(open));};document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#navigation').classList.contains('open')){closeMenu();$('#menu').focus();}});$('#navigation').addEventListener('click',e=>{if(e.target.closest('a'))closeMenu();});boot();
+import { mountRaidEvents } from './raid-events-ui.js';
+import { prepareApplication, applicationReceipt, applicationInbox } from '/recruitment-ui.js';
+import { schedulePlanner, attachSchedulePlanner } from '/schedule-ui.js';
+import { attachCharacterEditor } from '/character-editor.js';
+import { operationTab, attachMemberOperations, renderProgress } from '/operations-ui.js';
+// Contexto compartido por las herramientas del panel.
+function operationsContext() {
+	return { api, esc, empty, table, field, select, area, formHandler, toast, me, data };
+}
+// Utilidades de DOM, escape de contenido y estado de la sesión.
+const $ = (s) => document.querySelector(s);
+const esc = (v) =>
+	String(v ?? '').replace(
+		/[&<>"']/g,
+		(c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
+	);
+let data, me;
+const roles = ['Tanque', 'Sanador', 'DPS melee', 'DPS distancia'],
+	classes = [
+		'Guerrero',
+		'Paladín',
+		'Cazador',
+		'Pícaro',
+		'Sacerdote',
+		'Chamán',
+		'Mago',
+		'Brujo',
+		'Druida',
+	];
+const opts = (items) => items.map((x) => `<option>${esc(x)}</option>`).join('');
+const empty = (title, detail) =>
+	`<div class="empty"><h3>${esc(title)}</h3><p>${esc(detail)}</p></div>`;
+const title = (tag, heading, description) =>
+	/* HTML */ `<div class="page-title">
+		<span class="eyebrow">${esc(tag)}</span>
+		<h1>${esc(heading)}</h1>
+		<p>${esc(description)}</p>
+	</div>`;
+let toastTimer;
+function toast(message) {
+	clearTimeout(toastTimer);
+	$('#toast').textContent = message;
+	toastTimer = setTimeout(() => ($('#toast').textContent = ''), 7000);
+}
+// Comunicación con el backend autenticado.
+async function api(path, method = 'GET', value) {
+	const r = await fetch(path, {
+		method,
+		headers: {
+			'Content-Type': 'application/json',
+			...(me?.csrf ? { 'X-CSRF-Token': me.csrf } : {}),
+		},
+		...(value !== undefined ? { body: JSON.stringify(value) } : {}),
+	});
+	const result = await r
+		.json()
+		.catch(() => ({ error: 'No se pudo conectar. Vuelve a intentarlo en unos instantes.' }));
+	if (!r.ok) throw new Error(result.error || 'No se pudo completar la operación.');
+	return result;
+}
+// Controles reutilizables de formularios y tablas.
+function field(label, name, type = 'text', value = '', required = true) {
+	return /* HTML */ `<label
+		>${esc(label)}${required ? ' <span class="required-mark" aria-hidden="true">*</span>' : ''}<input
+			name="${name}"
+			type="${type}"
+			value="${esc(value)}"
+			${required ? 'required' : ''}
+			maxlength="500"
+	/></label>`;
+}
+function select(label, name, items) {
+	return /* HTML */ `<label
+		>${esc(label)} <span class="required-mark" aria-hidden="true">*</span
+		><select name="${name}" required>
+			${opts(items)}
+		</select></label
+	>`;
+}
+function recruitmentChoices(label, name, items, selected) {
+	return /* HTML */ `<fieldset class="wide recruitment-choices">
+		<legend>${esc(label)}</legend>
+		<div>
+			${items.map((item) => /* HTML */ `<label><input type="checkbox" name="${name}" value="${esc(item)}" ${selected.includes(item) ? 'checked' : ''} />${esc(item)}</label>`).join('')}
+		</div>
+	</fieldset>`;
+}
+function area(label, name, required = true) {
+	return /* HTML */ `<label class="wide"
+		>${esc(label)}${required ? ' <span class="required-mark" aria-hidden="true">*</span>' : ''}<textarea
+			name="${name}"
+			maxlength="2000"
+			${required ? 'required' : ''}
+		></textarea>
+	</label>`;
+}
+function formHandler(id, fn) {
+	$(id)?.addEventListener('submit', async (e) => {
+		e.preventDefault();
+		const button = e.target.querySelector('button[type=submit]');
+		button.disabled = true;
+		e.target.setAttribute('aria-busy', 'true');
+		e.target.querySelector('.form-feedback')?.remove();
+		try {
+			await fn(Object.fromEntries(new FormData(e.target)), e.target);
+		} catch (err) {
+			const feedback = document.createElement('p');
+			feedback.className = 'form-feedback error';
+			feedback.setAttribute('role', 'alert');
+			feedback.textContent = err.message;
+			e.target.append(feedback);
+			toast(err.message);
+		} finally {
+			button.disabled = false;
+			e.target.removeAttribute('aria-busy');
+		}
+	});
+}
+function table(heads, rows) {
+	return /* HTML */ `<div class="table-wrap" tabindex="0" aria-label="Tabla de datos">
+		<table>
+			<thead>
+				<tr>
+					${heads.map((h) => `<th scope="col">${esc(h)}</th>`).join('')}
+				</tr>
+			</thead>
+			<tbody>
+				${rows.join('')}
+			</tbody>
+		</table>
+	</div>`;
+}
+// Vistas principales: páginas públicas, perfil y panel.
+function home() {
+	const s = data.settings;
+	return /* HTML */ `<section class="hero">
+			<div>
+				<span class="eyebrow">World of Warcraft Forever · ${esc(s.faction)}</span>
+				<h1>La noche es nuestra.<br /><em>El camino, juntos.</em></h1>
+				<p>${esc(s.description)}</p>
+				<div class="actions">
+					<a class="button" href="/reclutamiento"
+						>Encuentra tu lugar <span aria-hidden="true">→</span></a
+					><a class="button secondary" href="/nosotros">Conoce la hermandad</a>
+				</div>
+			</div>
+			<div class="hero-art" aria-hidden="true">
+				<img
+					class="hero-logo"
+					src="/assets/guild-logo.png"
+					alt=""
+					width="1254"
+					height="1254"
+					fetchpriority="high"
+				/>
+			</div>
+		</section>
+		<div class="facts">
+			<div class="fact">
+				<span class="label">Nuestro horario</span
+				><strong>${esc(s.raidStart)} — ${esc(s.raidEnd)}</strong><small>Europe/Madrid</small>
+			</div>
+			<div class="fact">
+				<span class="label">Nuestra facción</span><strong>${esc(s.faction)}</strong
+				><small>${esc(s.region)}</small>
+			</div>
+			<div class="fact">
+				<span class="label">Nuestra aventura</span><strong>Servidor ${esc(s.ruleset)}</strong
+				><small>Progresión PvE y PvP</small>
+			</div>
+			<div class="fact">
+				<span class="label">Días de raid</span
+				><strong>${s.raidDays.length ? esc(s.raidDays.join(' · ')) : 'Por confirmar'}</strong
+				><small>${esc(s.raidStart)} — ${esc(s.raidEnd)} · Europe/Madrid</small>
+			</div>
+		</div>
+		<section class="section">
+			<div class="section-head">
+				<h2>Más que una raid.</h2>
+				<a href="/nosotros">Nuestra filosofía ↗</a>
+			</div>
+			<div class="grid">
+				<article class="card">
+					<span class="card-number">I.</span>
+					<h3>Construir algo duradero</h3>
+					<p>
+						Una comunidad que siga aquí después del lanzamiento. Compartir el viaje importa tanto
+						como llegar al siguiente boss.
+					</p>
+				</article>
+				<article class="card">
+					<span class="card-number">II.</span>
+					<h3>Progresar como equipo</h3>
+					<p>
+						Preparación, comunicación y ganas de aprender. Cada papel tiene su sitio en la banda.
+					</p>
+				</article>
+				<article class="card">
+					<span class="card-number">III.</span>
+					<h3>Jugar con transparencia</h3>
+					<p>
+						Un Loot Council de tres personas por grupo, con criterios objetivos que definiremos
+						juntos y normas comunes para todas las raids.
+					</p>
+				</article>
+			</div>
+		</section>
+		<section class="banner">
+			<div>
+				<span class="eyebrow">Cuando Azeroth se queda en silencio</span>
+				<h2>Nosotros empezamos.</h2>
+				<p>Descubre nuestro horario y la organización de las raids.</p>
+			</div>
+			<a class="button secondary" href="/raids">Ver información de raids →</a>
+		</section>`;
+}
+function roster() {
+	return (
+		title(
+			'La hermandad',
+			'Nuestro roster',
+			'Personajes, clases y roles. Los datos internos de los miembros permanecen privados.',
+		) +
+		/* HTML */ `<div class="filters">
+				<input id="search" aria-label="Buscar personaje" placeholder="Buscar personaje…" /><select
+					id="class"
+					aria-label="Filtrar clase"
+				>
+					<option value="">Todas las clases</option>
+					${opts(classes)}</select
+				><select id="role" aria-label="Filtrar rol">
+					<option value="">Todos los roles</option>
+					${opts(roles)}
+				</select>
+			</div>
+			<div id="roster-result"></div>`
+	);
+}
+function renderRoster() {
+	const rows = data.characters.filter(
+		(c) =>
+			(!$('#search').value ||
+				c.name.toLowerCase().includes($('#search').value.trim().toLocaleLowerCase('es'))) &&
+			(!$('#class').value || c.class === $('#class').value) &&
+			(!$('#role').value || c.role === $('#role').value),
+	);
+	$('#roster-count').textContent =
+		`${rows.length} ${rows.length === 1 ? 'personaje' : 'personajes'}`;
+	$('#roster-result').innerHTML = rows.length
+		? table(
+				['Personaje', 'Clase', 'Rol'],
+				rows.map(
+					(c) =>
+						/* HTML */ `<tr>
+							<td>${esc(c.name)}</td>
+							<td>${esc(c.class)}</td>
+							<td><span class="pill">${esc(c.role)}</span></td>
+						</tr>`,
+				),
+			)
+		: data.characters.length
+			? empty(
+					'No encontramos personajes con esos filtros',
+					'Prueba otra clase o rol, o pulsa Limpiar filtros.',
+				)
+			: empty(
+					'El roster está por abrirse',
+					'Los personajes aparecerán cuando los miembros los registren. Aquí verás su nombre, clase y rol.',
+				);
+}
+function recruitment() {
+	return (
+		title(
+			'Un nuevo comienzo',
+			'Tu próxima hermandad.',
+			'Cuéntanos quién eres, cómo juegas y qué buscas. Tu candidatura solo será visible para el equipo autorizado.',
+		) +
+		(!data.settings.recruitmentOpen
+			? empty(
+					'Reclutamiento cerrado',
+					'Ahora no estamos recibiendo nuevas candidaturas. Puedes contactar con nosotros en Discord.',
+				)
+			: /* HTML */ `<form id="application" class="card form">
+					<div class="form-grid">
+						${field('Nombre o alias', 'name')}${field('Usuario de Discord', 'discord')}${field('Personaje y apellido', 'character')}${select('Clase', 'class', classes)}${select('Rol', 'role', roles)}${field('Disponibilidad y horario', 'availability')}${area('Experiencia', 'experience')}${area('¿Por qué quieres entrar?', 'reason')}${area('Información adicional', 'additional', false)}<label
+							class="honeypot"
+							aria-hidden="true"
+							>Sitio web<input name="website" tabindex="-1" autocomplete="off"
+						/></label>
+					</div>
+					<label
+						><input type="checkbox" name="consent" required />Acepto que el Líder y los Oficiales
+						consulten estos datos para gestionar mi candidatura y contacten conmigo por
+						Discord.</label
+					>
+					<p>
+						No necesitas iniciar sesión ni pertenecer al Discord para enviar la candidatura. No
+						incluyas información sensible. Puedes solicitar la retirada de tu candidatura a través
+						del contacto de la hermandad.
+					</p>
+					<button type="submit">Enviar candidatura →</button>
+				</form>`)
+	);
+}
+function raids() {
+	const s = data.settings;
+	return (
+		title(
+			'Preparados para la siguiente noche',
+			'Información de raids',
+			'Las convocatorias y las inscripciones se gestionan en Discord con Raid-Helper.',
+		) +
+		/* HTML */ `<section class="card">
+				<span class="label">Horario de la hermandad</span>
+				<div class="schedule">${esc(s.raidStart)} — ${esc(s.raidEnd)}</div>
+				<p>
+					Europe/Madrid ·
+					${s.raidDays.length ? esc(s.raidDays.join(', ')) : 'Días pendientes de confirmar'}
+				</p>
+				${s.discordUrl ? `<a class="button" href="${esc(s.discordUrl)}" rel="noopener noreferrer">Abrir Discord ↗</a>` : '<span class="pill">Invitación Discord pendiente</span>'}
+			</section>
+			<section class="section">
+				<h2>Próximas convocatorias</h2>
+				${
+					data.raids.length
+						? table(
+								['Raid', 'Fecha', 'Fuente'],
+								data.raids.map(
+									(r) =>
+										/* HTML */ `<tr>
+											<td>${esc(r.title)}</td>
+											<td>
+												${esc(new Date(r.starts_at).toLocaleString('es-ES', { timeZone: 'Europe/Madrid' }))}
+											</td>
+											<td>${esc(r.source)}</td>
+										</tr>`,
+								),
+							)
+						: empty(
+								'Todavía no hay convocatorias',
+								'Las raids se mostrarán aquí cuando se importen o se registren en el panel.',
+							)
+				}
+			</section>`
+	);
+}
+// Área privada del jugador.
+async function profile() {
+	const rows = await api('/api/characters'),
+		attendance = await api('/api/attendance?userId=me');
+	$('#content').innerHTML =
+		title(
+			'Tu espacio',
+			me.user.name,
+			'Gestiona tus personajes. Tu asistencia detallada solo es visible para ti y los responsables autorizados.',
+		) +
+		/* HTML */ `<div class="grid">
+				<div class="card">
+					<span class="label">Asistencia</span
+					><span class="metric">${attendance.metrics.percentage}%</span>
+					<p>
+						${attendance.metrics.raids ? attendance.metrics.raids + ' raids registradas · incluye tardanzas' : 'Sin registros de asistencia todavía'}
+					</p>
+				</div>
+				<div class="card">
+					<span class="label">Personajes</span><span class="metric">${rows.length}</span>
+					<p>Un Main y todos tus Alters</p>
+				</div>
+				<div class="card">
+					<span class="label">Rango</span>
+					<h3>${esc(rankLabel(me.user.rank))}</h3>
+					<button id="logout" class="secondary">Cerrar sesión</button>
+				</div>
+			</div>
+			<section class="section">
+				<h2>Mis personajes</h2>
+				${
+					rows.length
+						? table(
+								['Nombre', 'Clase', 'Rol', 'Main / Alter'],
+								rows.map(
+									(c) =>
+										/* HTML */ `<tr>
+											<td>${esc(c.name)} ${esc(c.surname)}</td>
+											<td>${esc(c.class)}</td>
+											<td>${esc(c.role)}</td>
+											<td>
+												${c.is_main ? '<span class="pill gold">MAIN</span>' : `<button data-main="${esc(c.id)}" class="secondary">Marcar Main</button>`}
+											</td>
+										</tr>`,
+								),
+							)
+						: empty(
+								'Tu historia empieza aquí',
+								'Registra tu primer personaje para incorporarte al roster.',
+							)
+				}
+			</section>
+			${
+				me.permissions.includes('character.write')
+					? /* HTML */ `<section class="section">
+							<h2>Añadir personaje</h2>
+							<form id="character" class="card form">
+								<div class="form-grid">
+									${field('Nombre', 'name')}${field('Apellido', 'surname', 'text', '', false)}${select('Clase', 'class', classes)}${select('Rol', 'role', roles)}${field('Especialización', 'spec', 'text', '', false)}${field('Profesiones', 'professions', 'text', '', false)}${area('Disponibilidad', 'availability', false)}${area('Notas personales', 'notes', false)}
+								</div>
+								<label><input type="checkbox" name="isMain" />Marcar como Main</label
+								><button type="submit">Guardar personaje</button>
+							</form>
+						</section>`
+					: '<p class="notice">Un rol de miembro en Discord es necesario para registrar personajes.</p>'
+			}`;
+	attachCharacterEditor({ rows, api, refresh: profile, toast });
+	formHandler('#character', async (v, f) => {
+		await api('/api/characters', 'POST', { ...v, isMain: !!v.isMain });
+		toast('Personaje guardado');
+		await profile();
+	});
+	document.querySelectorAll('[data-main]').forEach(
+		(b) =>
+			(b.onclick = async () => {
+				try {
+					await api(`/api/characters/${b.dataset.main}/main`, 'POST', {});
+					await profile();
+				} catch (e) {
+					toast(e.message);
+				}
+			}),
+	);
+	$('#logout').onclick = async () => {
+		await api('/api/logout', 'POST', {});
+		location.href = '/';
+	};
+	await attachMemberOperations({ rows, refresh: profile, ...operationsContext() });
+}
+// Panel de gestión, con pestañas según los permisos de la sesión.
+async function panel() {
+	const tabs = [
+		['roster.read', 'roster', 'Roster'],
+		['recruitment.manage', 'applications', 'Candidaturas'],
+		['attendance.manage', 'raids', 'Raids'],
+		['attendance.manage', 'attendance', 'Asistencia'],
+		['loot.manage', 'loot', 'Loot'],
+		['loot.manage', 'wishlists', 'Wishlists'],
+		['community.read', 'council', 'Consejo'],
+		['progress.manage', 'progress', 'Progreso'],
+		['settings.manage', 'settings', 'Configuración'],
+		['audit.read', 'audit', 'Auditoría'],
+		['backup.export', 'export', 'Exportación'],
+	].filter((t) => me.permissions.includes(t[0]));
+	$('#content').innerHTML =
+		title(
+			'Centro de mando',
+			'Panel de la hermandad',
+			'Organización, datos y seguimiento. Cada herramienta respeta los permisos de tu rango.',
+		) +
+		/* HTML */ `<div class="panel-tabs" aria-label="Secciones del panel">
+				${tabs.map((t, i) => /* HTML */ `<button data-tab="${t[1]}" aria-pressed="${i === 0}" class="${i === 0 ? 'active' : ''}">${t[2]}</button>`).join('')}
+			</div>
+			<section id="panel-body"></section>`;
+	document.querySelectorAll('[data-tab]').forEach(
+		(b) =>
+			(b.onclick = () => {
+				document.querySelectorAll('[data-tab]').forEach((x) => {
+					x.classList.toggle('active', x === b);
+					x.setAttribute('aria-pressed', String(x === b));
+				});
+				panelTab(b.dataset.tab).catch((e) => {
+					$('#panel-body').innerHTML = empty('No se pudo cargar esta sección', e.message);
+					toast(e.message);
+				});
+			}),
+	);
+	if (tabs[0]) await panelTab(tabs[0][1]);
+}
+async function panelTab(tab) {
+	const el = $('#panel-body');
+	el.innerHTML = '<p role="status">Cargando…</p>';
+	if (tab === 'raids') {
+		await mountRaidEvents(el, operationsContext(), { manage: true });
+		return;
+	}
+	if (await operationTab(tab, el, operationsContext())) return;
+	if (tab === 'roster') {
+		const rows = await api('/api/roster'),
+			mains = rows.filter((c) => c.is_main),
+			t = data.settings.rosterTargets;
+		el.innerHTML = /* HTML */ `<div class="grid">
+				${[
+					['Tanques', mains.filter((c) => c.role === 'Tanque').length, t.tanks],
+					['Sanadores', mains.filter((c) => c.role === 'Sanador').length, t.healers],
+					['DPS', mains.filter((c) => c.role.startsWith('DPS')).length, t.dps],
+				]
+					.map(
+						([n, v, max]) =>
+							/* HTML */ `<div class="card">
+								<span class="label">${n} · Mains registrados</span
+								><span class="metric">${v} / ${max}</span>
+							</div>`,
+					)
+					.join('')}
+			</div>
+			<p class="notice">
+				Composición por personajes Main; no representa confirmaciones de asistencia a una raid.
+			</p>
+			${table(
+				['Personaje', 'Clase', 'Rol', 'Disponibilidad', 'Rango'],
+				rows.map(
+					(c) =>
+						/* HTML */ `<tr>
+							<td>${esc(c.name)}</td>
+							<td>${esc(c.class)}</td>
+							<td>${esc(c.role)}</td>
+							<td>${esc(c.availability) || 'Sin indicar'}</td>
+							<td>${esc(c.rank)}</td>
+						</tr>`,
+				),
+			)}`;
+	}
+	if (tab === 'applications') {
+		await applicationInbox(el, { api, esc, toast });
+		return;
+	}
+	if (tab === 'attendance') {
+		const a = await api('/api/attendance');
+		el.innerHTML = a.rows.length
+			? table(
+					['Raid', 'Miembro', 'Estado'],
+					a.rows.map(
+						(r) =>
+							`<tr><td>${esc(r.raid_id)}</td><td>${esc(r.user_id)}</td><td>${esc(r.status)}</td></tr>`,
+					),
+				)
+			: empty(
+					'Sin asistencias registradas',
+					'La edición de raids y asistencia se implementará en la siguiente fase.',
+				);
+	}
+	if (tab === 'audit') {
+		const rows = await api('/api/audit');
+		el.innerHTML = table(
+			['Fecha', 'Usuario', 'Acción', 'Objeto'],
+			rows.map(
+				(r) =>
+					/* HTML */ `<tr>
+						<td>${esc(r.created_at)}</td>
+						<td>${esc(r.actor_id)}</td>
+						<td>${esc(r.action)}</td>
+						<td>${esc(r.target)}</td>
+					</tr>`,
+			),
+		);
+	}
+	if (tab === 'export')
+		el.innerHTML = /* HTML */ `<div class="card">
+			<h2>Copia de los datos de la hermandad</h2>
+			<p>
+				JSON con roster, personajes, candidaturas, raids, asistencia, loot, wishlist, progreso,
+				configuración y auditoría. Contiene datos privados: guárdalo en un lugar seguro.
+			</p>
+			<a class="button" href="/api/export" download>Descargar exportación JSON</a>
+			<p class="notice">
+				Copia manual con comprobación de integridad. Incluye convocatorias e inscripciones. No
+				incluye sesiones ni secretos. Guarda varias copias fuera de la web, en un lugar privado.
+			</p>
+			<div class="actions">
+				${['characters', 'attendance', 'loot', 'applications', 'settings'].map((name, i) => /* HTML */ `<a class="button secondary" href="/api/export/csv?dataset=${name}" download>CSV · ${['Personajes', 'Asistencia', 'Loot', 'Candidaturas', 'Configuración'][i]}</a>`).join('')}
+			</div>
+		</div>`;
+	if (tab === 'settings') {
+		const s = data.settings;
+		el.innerHTML = /* HTML */ `<form id="settings" class="card form">
+			<div class="form-grid">
+				${field('Nombre', 'name', 'text', s.name)}${field('Descripción', 'description', 'text', s.description)}<label
+					class="wide"
+					>Sobre la hermandad<textarea name="about" maxlength="4000" required>
+${esc(s.about)}</textarea></label
+				>${field('Facción', 'faction', 'text', s.faction)}${field('Región', 'region', 'text', s.region)}${field('Servidor', 'server', 'text', s.server)}${select('Ruleset', 'ruleset', ['Por confirmar', 'PvP', 'PvE'])}${field('Inicio de raid', 'raidStart', 'time', s.raidStart)}${field('Fin de raid', 'raidEnd', 'time', s.raidEnd)}${field('Invitación de Discord', 'discordUrl', 'url', s.discordUrl, false)}${select('Método de loot', 'lootMethod', ['Loot Council', 'Roll', 'Soft Reserve', 'DKP', 'Híbrido'])}
+				<fieldset class="wide">
+					<legend>Días de raid</legend>
+					${['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'].map((d) => /* HTML */ `<label><input name="days" type="checkbox" value="${d}" ${s.raidDays.includes(d) ? 'checked' : ''} />${d}</label>`).join('')}
+				</fieldset>
+				${field('Objetivo tanques', 'tanks', 'number', s.rosterTargets.tanks)}${field('Objetivo sanadores', 'healers', 'number', s.rosterTargets.healers)}${field('Objetivo DPS', 'dps', 'number', s.rosterTargets.dps)}
+			</div>
+			<p>
+				Marca las clases y roles que buscáis. Son prioridades informativas: otras clases también
+				pueden presentar candidatura. Si no marcas ninguna opción, no se anunciará una prioridad.
+			</p>
+			${recruitmentChoices('Clases buscadas', 'soughtClasses', classes, s.soughtClasses || [])}${recruitmentChoices('Roles buscados', 'soughtRoles', roles, s.soughtRoles || [])}<label
+				><input
+					name="recruitmentOpen"
+					type="checkbox"
+					${s.recruitmentOpen ? 'checked' : ''}
+				/>Reclutamiento abierto</label
+			><button type="submit">Guardar configuración</button>
+		</form>`;
+		$('#settings').elements.ruleset.value = s.ruleset;
+		$('#settings').elements.lootMethod.value = s.lootMethod;
+		formHandler('#settings', async (v, f) => {
+			data.settings = await api('/api/settings', 'PUT', {
+				...v,
+				raidDays: new FormData(f).getAll('days'),
+				soughtClasses: new FormData(f).getAll('soughtClasses'),
+				soughtRoles: new FormData(f).getAll('soughtRoles'),
+				recruitmentOpen: !!v.recruitmentOpen,
+				rosterTargets: { tanks: Number(v.tanks), healers: Number(v.healers), dps: Number(v.dps) },
+			});
+			toast('Configuración guardada');
+		});
+	}
+}
+// Inicio de la aplicación y navegación.
+async function boot() {
+	try {
+		[data, me] = await Promise.all([api('/api/public'), api('/api/me')]);
+		const s = data.settings,
+			path = location.pathname.replace(/\/$/, '') || '/';
+		if (!data.authConfigured && !me.user) $('.login').textContent = 'Acceso de miembros';
+		document.title = `${{ '/nosotros': 'Hermandad', '/raids': 'Raids', '/roster': 'Roster', '/progreso': 'Progreso PvE', '/reclutamiento': 'Reclutamiento', '/contacto': 'Contacto', '/login': 'Entrar con Discord', '/perfil': 'Mi perfil', '/panel': 'Panel' }[path] || 'Inicio'} · ${s.name}`;
+		document.querySelectorAll('nav a').forEach((a) => {
+			if (a.pathname.replace(/\/$/, '') === path.replace(/\/$/, ''))
+				a.setAttribute('aria-current', 'page');
+		});
+		if (me.user) {
+			$('.login').href = '/perfil';
+			$('.login').textContent = 'Mi perfil ↗';
+			if (me.permissions.includes('roster.read'))
+				$('#navigation').insertAdjacentHTML('beforeend', '<a href="/panel">Panel</a>');
+		}
+		let html = '';
+		switch (path) {
+			case '/':
+				html = home();
+				break;
+			case '/nosotros':
+				html =
+					title('Nuestra identidad', 'Un lugar al que volver.', s.about) +
+					/* HTML */ `<div class="grid">
+						<article class="card">
+							<h3>Alianza</h3>
+							<p>${esc(s.name)} en ${esc(s.region)}. ${esc(s.server)} · WoW Forever Realmless.</p>
+						</article>
+						<article class="card">
+							<h3>Progresión PvE</h3>
+							<p>Conocer cada encuentro, mejorar juntos y construir un equipo estable.</p>
+						</article>
+						<article class="card">
+							<h3>Noches compartidas</h3>
+							<p>
+								De ${esc(s.raidStart)} a ${esc(s.raidEnd)}, Europe/Madrid.
+								${s.raidDays.length ? esc(s.raidDays.join(', ')) : 'Días por confirmar.'}
+							</p>
+						</article>
+					</div>`;
+				break;
+			case '/roster':
+				html = roster();
+				break;
+			case '/reclutamiento':
+				html = recruitment();
+				break;
+			case '/raids':
+				html = raids();
+				break;
+			case '/progreso':
+				html =
+					title(
+						'Paso a paso, boss a boss',
+						'Nuestro progreso PvE',
+						'Aquí quedarán los encuentros superados y los hitos de la hermandad.',
+					) + renderProgress(data.progress, { esc, empty });
+				break;
+			case '/contacto':
+				html =
+					title(
+						'Nos vemos en Azeroth',
+						'Hablemos en Discord.',
+						'Nuestro punto de encuentro para la comunidad, las convocatorias y las dudas.',
+					) +
+					(s.discordUrl
+						? `<a class="button" href="${esc(s.discordUrl)}">Entrar al Discord de la guild ↗</a>`
+						: empty('Invitación pendiente', 'El Líder añadirá aquí el enlace oficial de Discord.'));
+				break;
+			case '/login':
+				html =
+					title(
+						'Bienvenido a casa',
+						'Entra con Discord.',
+						'Tu cuenta de Discord conecta tus personajes y tu rango con la hermandad.',
+					) +
+					(data.authConfigured
+						? '<a class="button" href="/auth/discord">Autorizar con Discord ↗</a>'
+						: empty(
+								'Conexión pendiente',
+								'El acceso se activará cuando esté configurada la aplicación Discord de la hermandad.',
+							));
+				break;
+			case '/perfil':
+				await profile();
+				return;
+			case '/panel':
+				await panel();
+				return;
+			default:
+				html = empty('Página no encontrada', 'Vuelve al inicio para seguir explorando.');
+		}
+		$('#content').innerHTML = publicLayout(path, html);
+		attachSchedulePlanner(s);
+		if (path === '/raids') {
+			const host = document.createElement('section');
+			host.className = 'section';
+			$('#content').querySelector('.page-title').after(host);
+			await mountRaidEvents(host, operationsContext());
+		}
+		if (path === '/roster') {
+			renderRoster();
+			$('#clear-roster').onclick = () => {
+				['#search', '#class', '#role'].forEach((id) => ($(id).value = ''));
+				renderRoster();
+				$('#search').focus();
+			};
+			['#search', '#class', '#role'].forEach((s) => $(s).addEventListener('input', renderRoster));
+		}
+		prepareApplication($('#application'));
+		formHandler('#application', async (v, f) => {
+			const result = await api('/api/applications', 'POST', { ...v, consent: !!v.consent });
+			applicationReceipt(f, result, esc);
+			toast('Candidatura guardada');
+		});
+	} catch (e) {
+		$('#content').innerHTML = /* HTML */ `<div class="page-title">
+			<h1>No hemos podido abrir esta página.</h1>
+			<p class="error">${esc(e.message)}</p>
+			<a class="button" href="/">Volver al inicio</a>
+		</div>`;
+	}
+}
+const closeMenu = () => {
+	$('#navigation').classList.remove('open');
+	$('#menu').setAttribute('aria-expanded', 'false');
+};
+$('#menu').onclick = () => {
+	const open = $('#navigation').classList.toggle('open');
+	$('#menu').setAttribute('aria-expanded', String(open));
+};
+document.addEventListener('keydown', (e) => {
+	if (e.key === 'Escape' && $('#navigation').classList.contains('open')) {
+		closeMenu();
+		$('#menu').focus();
+	}
+});
+$('#navigation').addEventListener('click', (e) => {
+	if (e.target.closest('a')) closeMenu();
+});
+boot();
 
-function rankLabel(rank){return ({visitor:'Visitante',member:'Miembro',raider:'Raider',raid_leader:'Raid Leader',officer:'Oficial',leader:'Líder'})[rank]||rank;}
-function weekSchedule(){const s=data.settings;return `<div class="week-schedule" aria-label="Calendario semanal de raids">${['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'].map(day=>`<div class="week-day ${s.raidDays.includes(day)?'raid-day':''}"><span>${day}</span><strong>${s.raidDays.includes(day)?({'Martes':'Continuación','Miércoles':'20','Jueves':'40'}[day]||'Base'):'—'}</strong><small>${s.raidDays.includes(day)?esc(s.raidStart)+'–'+esc(s.raidEnd):'Sin raid fija'}</small></div>`).join('')}</div><p class="schedule-note">Horario base · Hora peninsular española (Europe/Madrid). Las sesiones que terminan después de medianoche finalizan al día siguiente. Miércoles: raid de 20. Jueves: raid de 40. Martes: continuación o contenido alternativo. Cada convocatoria concreta confirma el horario y el roster; las franjas alternativas siguen sujetas a coordinación.</p>${schedulePlanner()}`;}
-function guildFacts(){const s=data.settings;return `<div class="identity-tags"><span class="pill">${esc(s.faction)}</span><span class="pill">Servidor ${esc(s.ruleset)}</span><span class="pill">${esc(s.region)}</span><span class="pill">WoW Forever</span></div>`;}
-function faq(items){return `<div class="faq-list">${items.map(([q,a])=>`<details><summary>${esc(q)}</summary><p>${a}</p></details>`).join('')}</div>`;}
-function raidOrganization(s){return `<section class="section"><div class="section-head"><div><span class="eyebrow">Un equipo, distintas formas de reunirnos</span><h2>Raids de 40, 20 y 10.</h2></div></div><p>Nuestro horario base es de ${esc(s.raidStart)} a ${esc(s.raidEnd)}, hora peninsular española (Europe/Madrid). Queremos una organización estable que también tenga en cuenta la disponibilidad del grupo.</p><div class="grid"><article class="card"><span class="card-number">40</span><h3>Una cita para la gran banda</h3><p>Los jueves de 23:00 a 01:00 reuniremos el roster conjunto de 40.</p></article><article class="card"><span class="card-number">20</span><h3>Dos rosters potenciales</h3><p>Los miércoles de 23:00 a 01:00 empezaremos el progreso semanal con raids de 20 y dos rosters potenciales. Si hay demanda, podremos valorar otra franja, por ejemplo de 22:00 a 00:00. Es una posibilidad, no un segundo horario confirmado.</p></article><article class="card"><span class="card-number">10</span><h3>Más margen para organizarnos</h3><p>Las raids de 10 tendrán mayor flexibilidad de horario, coordinando cada convocatoria según la disponibilidad de quienes quieran participar.</p></article></div><article class="card section"><h3>Más oportunidades, sin obligación</h3><p>También podremos organizar convocatorias oficiales y extraordinarias fuera de los días habituales, siempre coordinadas con el Líder o las personas designadas. Son oportunidades adicionales para jugar juntos, no una obligación.</p><p>Los martes de 23:00 a 01:00 continuaremos el progreso pendiente o haremos contenido alternativo. Consulta la convocatoria concreta en la web o en Raid-Helper; se pueden organizar actividades fuera de estos días.</p></article></section>`;}
-function lootPhilosophy(){return `<section class="section"><div class="section-head"><div><span class="eyebrow">El progreso se comparte</span><h2>Loot Council con transparencia.</h2></div></div><div class="grid"><article class="card"><h3>Tres personas por grupo</h3><p>El Loot Council estará formado por tres personas por grupo para evitar empates. No tiene por qué estar compuesto solo por oficiales: la responsabilidad del consejo puede compartirse con otros miembros.</p></article><article class="card"><h3>Criterios que acordaremos juntos</h3><p>Queremos decisiones basadas en criterios objetivos y transparentes. Esos criterios todavía están por definir colectivamente; no presentamos como cerradas unas normas que aún debemos acordar.</p></article><article class="card"><h3>Las mismas normas para todos</h3><p>Las normas de loot que acordemos serán comunes para todos los rosters y tipos de raid, sean de 40, 20 o 10. Compartimos hermandad, objetivos y una misma forma de entender el reparto.</p></article></div><p>La idea es progresar como equipo, explicar las decisiones y cuidar la confianza entre compañeros.</p></section>`;}
-function publicLayout(path,html){
-  const s=data.settings,days=s.raidDays.length?s.raidDays.join(', '):'Días pendientes de confirmar';
-  const discord=s.discordUrl?`<a class="button" href="${esc(s.discordUrl)}" rel="noopener noreferrer">Ir al Discord de la hermandad ↗</a>`:`<div class="inline-status"><span class="status-dot" aria-hidden="true"></span>La invitación oficial de Discord estará disponible aquí.</div>`;
-  const scheduleSection=`<section class="section"><div class="section-head"><div><span class="eyebrow">Nuestras noches en Azeroth</span><h2>Un horario para encontrarnos.</h2></div><span class="pill">Europe/Madrid</span></div>${weekSchedule()}</section>`;
-  if(path==='/')return html+scheduleSection+`<section class="section"><div class="section-head"><div><span class="eyebrow">El siguiente paso</span><h2>Conoce tu próxima hermandad.</h2></div></div><div class="link-grid"><a class="card link-card" href="/progreso"><span class="card-number">01</span><h3>El camino de la banda</h3><p>Encuentros, primeras victorias e historia compartida.</p><span>Ver progreso <span aria-hidden="true">↗</span></span></a><a class="card link-card" href="/roster"><span class="card-number">02</span><h3>Quienes lo hacen posible</h3><p>Conoce los personajes y los roles de nuestro equipo.</p><span>Explorar roster <span aria-hidden="true">↗</span></span></a><a class="card link-card" href="/reclutamiento"><span class="card-number">03</span><h3>Tu lugar en el grupo</h3><p>Descubre nuestra forma de jugar y el proceso de entrada.</p><span>Reclutamiento <span aria-hidden="true">↗</span></span></a></div></section>`;
-  if(path==='/nosotros')return title('Una hermandad para quedarnos','Un lugar al que volver.',s.about)+guildFacts()+`<section class="about-layout"><div class="about-emblem"><img src="/assets/guild-logo.png" width="1254" height="1254" alt="Emblema de Darkness of the Fallen" loading="lazy"></div><div><h2>El equipo antes que el ruido.</h2><p>No buscamos una aventura que termine con el lanzamiento. Queremos una comunidad con la que seguir jugando, aprender los encuentros y disfrutar de cada noche en Azeroth.</p><div class="values-list"><article><span>01</span><div><h3>Continuidad</h3><p>Construir una comunidad estable, con compañerismo y ganas de compartir el camino a largo plazo.</p></div></article><article><span>02</span><div><h3>Progresión en equipo</h3><p>Preparación, comunicación y espacio para mejorar juntos.</p></div></article><article><span>03</span><div><h3>Transparencia</h3><p>Hablar con claridad, acordar juntos los criterios de loot y explicar las decisiones para cuidar la confianza del grupo.</p></div></article></div></div></section>`+lootPhilosophy()+scheduleSection+`<p>Tenemos un horario base y contemplamos distintas formas de organizarnos según el tamaño de la raid. <a class="link" href="/raids">Consulta la organización y la flexibilidad de horarios →</a></p><div class="banner"><div><h2>¿Encaja contigo?</h2><p>Descubre cómo formar parte de la hermandad.</p></div><a class="button" href="/reclutamiento">Conocer el reclutamiento →</a></div>`;
-  if(path==='/raids')return title('Organización de banda','Nuestras noches de raid.',`${days} · ${s.raidStart}–${s.raidEnd}, hora de Madrid.`)+guildFacts()+weekSchedule()+raidOrganization(s)+lootPhilosophy()+`<section class="section"><div class="grid"><article class="card"><span class="card-number">01</span><h3>Consulta la convocatoria</h3><p>Discord y Raid-Helper son el punto de encuentro para ver la banda y su horario.</p></article><article class="card"><span class="card-number">02</span><h3>Confirma tu disponibilidad</h3><p>Apúntate desde la convocatoria en la web o en Raid-Helper. El calendario semanal es una referencia, no una inscripción.</p></article><article class="card"><span class="card-number">03</span><h3>Comparte la noche</h3><p>Coordínate con el grupo y consulta las indicaciones de la convocatoria.</p></article></div></section><section class="banner"><div><h2>Convocatorias conectadas con Discord.</h2><p>Así mantenemos las convocatorias y la organización del grupo en el mismo sitio.</p></div>${discord}</section>`;
-  if(path==='/reclutamiento')return title('Hay historias que empiezan en grupo','Encuentra tu lugar.',`Alianza · Servidor ${s.ruleset} · ${days}, ${s.raidStart}–${s.raidEnd}.`)+`<div class="recruit-intro"><article class="card"><span class="eyebrow">Nuestra forma de jugar</span><h2>Ganas de progresar. Ganas de quedarse.</h2><p>Buscamos personas que disfruten jugando en equipo, comunicándose y aprendiendo. Un proyecto estable, más allá del entusiasmo del primer día.</p><div class="identity-tags"><span class="pill">Compañerismo</span><span class="pill">Comunicación</span><span class="pill">Progresión</span></div></article><aside class="card recruitment-state"><span class="label">Reclutamiento</span><h3>${document.body.dataset.applicationUrl?'Formulario de candidatura':s.recruitmentOpen?'Candidaturas abiertas':'Reclutamiento cerrado'}</h3><p>${document.body.dataset.applicationUrl?'Consulta el reclutamiento y envía tu solicitud en la aplicación de la hermandad.':s.recruitmentOpen?'Cuéntanos quién eres y qué buscas. El equipo autorizado revisará tu candidatura.':'El reclutamiento está cerrado por ahora. Puedes contactar con nosotros en Discord.'}</p><p>${s.soughtClasses?.length?'Clases buscadas: '+esc(s.soughtClasses.join(', ')):'Todas las clases son bienvenidas.'}</p><p>${s.soughtRoles?.length?'Roles buscados: '+esc(s.soughtRoles.join(', ')):'Buscamos tanques, sanadores y DPS.'}</p><p>Las prioridades no impiden presentar candidatura con otra clase o rol.</p></aside></div><section class="section"><h2>El camino para entrar</h2><ol class="application-steps"><li><strong>Tu candidatura</strong><span>Personaje, experiencia, disponibilidad y lo que buscas en una guild.</span></li><li><strong>Una conversación</strong><span>El equipo revisa tu solicitud y contacta contigo por Discord.</span></li><li><strong>Conocernos jugando</strong><span>Si encajamos, el equipo te explicará los siguientes pasos.</span></li></ol></section>${document.body.dataset.applicationUrl?`<section class="section card"><h2>Presenta tu candidatura</h2><p>El formulario se guarda en la aplicación de la hermandad. No necesitas iniciar sesión ni pertenecer al Discord para enviarlo.</p><a class="button" href="${esc(document.body.dataset.applicationUrl)}">Abrir formulario de candidatura →</a></section>`:s.recruitmentOpen?`<section class="section"><h2>Cuéntanos sobre ti</h2><p>Los campos marcados con * son obligatorios. Tu candidatura solo es visible para el equipo autorizado.</p>${html.slice(html.indexOf('<form id="application"'))}</section>`:''}<section class="section"><h2>Antes de dar el paso</h2>${faq([['¿En qué horario jugamos?',`Nuestro horario base es ${esc(days)}, de ${esc(s.raidStart)} a ${esc(s.raidEnd)}, hora peninsular. La raid de 40 tendrá un día específico aún por concretar. Para las de 20 contemplamos dos rosters y posibles alternativas si hay demanda; las de 10 serán más flexibles. <a class="link" href="/raids">Ver la organización de raids</a>.`],['¿Las convocatorias adicionales son obligatorias?','No. Las convocatorias oficiales y extraordinarias fuera de los días habituales son oportunidades adicionales, siempre coordinadas con el Líder o las personas designadas.'],['¿Cómo se repartirá el loot?','Usaremos un Loot Council de tres personas por grupo, no necesariamente solo oficiales. Los criterios objetivos y transparentes se definirán colectivamente, con normas comunes para todos los rosters y tipos de raid.'],['¿En qué tipo de servidor estamos?',`Jugamos en un servidor ${esc(s.ruleset)}, en la ${esc(s.faction)}. La progresión PvE es uno de nuestros puntos de encuentro.`],['¿Quién puede ver mi candidatura?','Solo el Líder y los Oficiales autorizados. Tus datos no aparecen en el roster público.'],['¿Cómo me contactaréis?','Por Discord, con el usuario que indiques en tu candidatura. No necesitamos tu contraseña.']])}</section>`;
-  if(path==='/roster')return html.replace('<div id="roster-result"></div>','<div class="results-toolbar"><span id="roster-count" role="status"></span><button id="clear-roster" class="secondary" type="button">Limpiar filtros</button></div><div id="roster-result"></div>')+`<aside class="privacy-note">El roster público muestra únicamente nombre, clase y rol. La información de los miembros permanece en el área privada.</aside>`;
-  if(path==='/progreso')return html+`<section class="section"><h2>Cada encuentro tiene su historia.</h2><div class="grid"><article class="card"><span class="pill">No intentado</span><h3>El reto por delante</h3><p>Encuentros que la hermandad todavía no ha empezado.</p></article><article class="card"><span class="pill">En progreso</span><h3>Aprender y avanzar</h3><p>Bosses en los que la banda está trabajando.</p></article><article class="card"><span class="pill gold">Derrotado</span><h3>Una victoria compartida</h3><p>Encuentros superados, con su primera victoria e historial.</p></article></div><p class="privacy-note">Aquí compartimos el progreso de la hermandad. Las métricas individuales detalladas permanecen privadas.</p></section>`;
-  if(path==='/contacto')return title('Nuestro punto de encuentro','Nos vemos en Discord.','Comunidad, convocatorias y conversaciones. Todo empieza con un saludo.')+`<div class="contact-layout"><article class="card contact-card"><img src="/assets/guild-logo.png" alt="" width="1254" height="1254"><h2>${esc(s.name)}</h2>${guildFacts()}${discord}</article><div class="contact-notes"><article><h3>¿Quieres formar parte?</h3><p>Consulta nuestros horarios y cómo funciona el proceso de entrada.</p><a class="link" href="/reclutamiento">Ir a reclutamiento →</a></article><article><h3>¿Buscas una convocatoria?</h3><p>Las inscripciones se realizan desde la web o en Discord con Raid-Helper.</p><a class="link" href="/raids">Ver información de raids →</a></article><article><h3>Tu información personal</h3><p>Las dudas sobre candidaturas o datos de miembro se tratan con el equipo autorizado por Discord.</p></article></div></div>`;
-  if(path==='/login')return `<div class="login-layout"><div class="login-art"><img src="/assets/guild-logo.png" width="1254" height="1254" alt="Emblema de Darkness of the Fallen"></div><section class="card login-card"><span class="eyebrow">Tu lugar en la hermandad</span><h1>Bienvenido a casa.</h1><p>Una cuenta de Discord. Tus personajes, tu wishlist y la historia que compartimos.</p><ul class="login-features"><li>Gestiona tu Main y tus Alters.</li><li>Consulta tu asistencia y el historial de loot.</li><li>Accede a las herramientas de tu rango.</li></ul>${data.authConfigured?'<a class="button discord-button" href="/auth/discord">Entrar con Discord ↗</a>':'<div class="connection-pending"><strong>El acceso de miembros aún no está abierto</strong><p>Cuando se active, entrarás con tu cuenta de Discord. Mientras tanto, puedes consultar los horarios y guardar las próximas noches de raid en tu calendario.</p><div class="login-pending-actions"><a class="button secondary" href="/raids">Ver próximas raids →</a><a class="link" href="/nosotros">Conocer la hermandad</a></div></div>'}<p class="login-footnote">Solo usamos Discord para entrar. Nunca te pediremos crear una contraseña para esta web.</p><a class="link" href="/">Volver a la hermandad →</a></section></div>`;
-  return html;
+// Componentes de presentación e identidad de la hermandad.
+function rankLabel(rank) {
+	return (
+		{
+			visitor: 'Visitante',
+			member: 'Miembro',
+			raider: 'Raider',
+			raid_leader: 'Raid Leader',
+			officer: 'Oficial',
+			leader: 'Líder',
+		}[rank] || rank
+	);
+}
+function weekSchedule() {
+	const s = data.settings;
+	return /* HTML */ `<div class="week-schedule" aria-label="Calendario semanal de raids">
+			${['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'].map((day) => /* HTML */ `<div class="week-day ${s.raidDays.includes(day) ? 'raid-day' : ''}"><span>${day}</span><strong>${s.raidDays.includes(day) ? { Martes: 'Continuación', Miércoles: '20', Jueves: '40' }[day] || 'Base' : '—'}</strong><small>${s.raidDays.includes(day) ? esc(s.raidStart) + '–' + esc(s.raidEnd) : 'Sin raid fija'}</small></div>`).join('')}
+		</div>
+		<p class="schedule-note">
+			Horario base · Hora peninsular española (Europe/Madrid). Las sesiones que terminan después de
+			medianoche finalizan al día siguiente. Miércoles: raid de 20. Jueves: raid de 40. Martes:
+			continuación o contenido alternativo. Cada convocatoria concreta confirma el horario y el
+			roster; las franjas alternativas siguen sujetas a coordinación.
+		</p>
+		${schedulePlanner()}`;
+}
+function guildFacts() {
+	const s = data.settings;
+	return /* HTML */ `<div class="identity-tags">
+		<span class="pill">${esc(s.faction)}</span><span class="pill">Servidor ${esc(s.ruleset)}</span
+		><span class="pill">${esc(s.region)}</span><span class="pill">WoW Forever</span>
+	</div>`;
+}
+function faq(items) {
+	return /* HTML */ `<div class="faq-list">
+		${items.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${a}</p></details>`).join('')}
+	</div>`;
+}
+function raidOrganization(s) {
+	return /* HTML */ `<section class="section">
+		<div class="section-head">
+			<div>
+				<span class="eyebrow">Un equipo, distintas formas de reunirnos</span>
+				<h2>Raids de 40, 20 y 10.</h2>
+			</div>
+		</div>
+		<p>
+			Nuestro horario base es de ${esc(s.raidStart)} a ${esc(s.raidEnd)}, hora peninsular española
+			(Europe/Madrid). Queremos una organización estable que también tenga en cuenta la
+			disponibilidad del grupo.
+		</p>
+		<div class="grid">
+			<article class="card">
+				<span class="card-number">40</span>
+				<h3>Una cita para la gran banda</h3>
+				<p>Los jueves de 23:00 a 01:00 reuniremos el roster conjunto de 40.</p>
+			</article>
+			<article class="card">
+				<span class="card-number">20</span>
+				<h3>Dos rosters potenciales</h3>
+				<p>
+					Los miércoles de 23:00 a 01:00 empezaremos el progreso semanal con raids de 20 y dos
+					rosters potenciales. Si hay demanda, podremos valorar otra franja, por ejemplo de 22:00 a
+					00:00. Es una posibilidad, no un segundo horario confirmado.
+				</p>
+			</article>
+			<article class="card">
+				<span class="card-number">10</span>
+				<h3>Más margen para organizarnos</h3>
+				<p>
+					Las raids de 10 tendrán mayor flexibilidad de horario, coordinando cada convocatoria según
+					la disponibilidad de quienes quieran participar.
+				</p>
+			</article>
+		</div>
+		<article class="card section">
+			<h3>Más oportunidades, sin obligación</h3>
+			<p>
+				También podremos organizar convocatorias oficiales y extraordinarias fuera de los días
+				habituales, siempre coordinadas con el Líder o las personas designadas. Son oportunidades
+				adicionales para jugar juntos, no una obligación.
+			</p>
+			<p>
+				Los martes de 23:00 a 01:00 continuaremos el progreso pendiente o haremos contenido
+				alternativo. Consulta la convocatoria concreta en la web o en Raid-Helper; se pueden
+				organizar actividades fuera de estos días.
+			</p>
+		</article>
+	</section>`;
+}
+function lootPhilosophy() {
+	return /* HTML */ `<section class="section">
+		<div class="section-head">
+			<div>
+				<span class="eyebrow">El progreso se comparte</span>
+				<h2>Loot Council con transparencia.</h2>
+			</div>
+		</div>
+		<div class="grid">
+			<article class="card">
+				<h3>Tres personas por grupo</h3>
+				<p>
+					El Loot Council estará formado por tres personas por grupo para evitar empates. No tiene
+					por qué estar compuesto solo por oficiales: la responsabilidad del consejo puede
+					compartirse con otros miembros.
+				</p>
+			</article>
+			<article class="card">
+				<h3>Criterios que acordaremos juntos</h3>
+				<p>
+					Queremos decisiones basadas en criterios objetivos y transparentes. Esos criterios todavía
+					están por definir colectivamente; no presentamos como cerradas unas normas que aún debemos
+					acordar.
+				</p>
+			</article>
+			<article class="card">
+				<h3>Las mismas normas para todos</h3>
+				<p>
+					Las normas de loot que acordemos serán comunes para todos los rosters y tipos de raid,
+					sean de 40, 20 o 10. Compartimos hermandad, objetivos y una misma forma de entender el
+					reparto.
+				</p>
+			</article>
+		</div>
+		<p>
+			La idea es progresar como equipo, explicar las decisiones y cuidar la confianza entre
+			compañeros.
+		</p>
+	</section>`;
+}
+// Composición de las páginas públicas.
+function publicLayout(path, html) {
+	const s = data.settings,
+		days = s.raidDays.length ? s.raidDays.join(', ') : 'Días pendientes de confirmar';
+	const discord = s.discordUrl
+		? /* HTML */ `<a class="button" href="${esc(s.discordUrl)}" rel="noopener noreferrer"
+				>Ir al Discord de la hermandad ↗</a
+			>`
+		: /* HTML */ `<div class="inline-status">
+				<span class="status-dot" aria-hidden="true"></span>La invitación oficial de Discord estará
+				disponible aquí.
+			</div>`;
+	const scheduleSection = /* HTML */ `<section class="section">
+		<div class="section-head">
+			<div>
+				<span class="eyebrow">Nuestras noches en Azeroth</span>
+				<h2>Un horario para encontrarnos.</h2>
+			</div>
+			<span class="pill">Europe/Madrid</span>
+		</div>
+		${weekSchedule()}
+	</section>`;
+	if (path === '/')
+		return (
+			html +
+			scheduleSection +
+			/* HTML */ `<section class="section">
+				<div class="section-head">
+					<div>
+						<span class="eyebrow">El siguiente paso</span>
+						<h2>Conoce tu próxima hermandad.</h2>
+					</div>
+				</div>
+				<div class="link-grid">
+					<a class="card link-card" href="/progreso"
+						><span class="card-number">01</span>
+						<h3>El camino de la banda</h3>
+						<p>Encuentros, primeras victorias e historia compartida.</p>
+						<span>Ver progreso <span aria-hidden="true">↗</span></span></a
+					><a class="card link-card" href="/roster"
+						><span class="card-number">02</span>
+						<h3>Quienes lo hacen posible</h3>
+						<p>Conoce los personajes y los roles de nuestro equipo.</p>
+						<span>Explorar roster <span aria-hidden="true">↗</span></span></a
+					><a class="card link-card" href="/reclutamiento"
+						><span class="card-number">03</span>
+						<h3>Tu lugar en el grupo</h3>
+						<p>Descubre nuestra forma de jugar y el proceso de entrada.</p>
+						<span>Reclutamiento <span aria-hidden="true">↗</span></span></a
+					>
+				</div>
+			</section>`
+		);
+	if (path === '/nosotros')
+		return (
+			title('Una hermandad para quedarnos', 'Un lugar al que volver.', s.about) +
+			guildFacts() +
+			/* HTML */ `<section class="about-layout">
+				<div class="about-emblem">
+					<img
+						src="/assets/guild-logo.png"
+						width="1254"
+						height="1254"
+						alt="Emblema de Darkness of the Fallen"
+						loading="lazy"
+					/>
+				</div>
+				<div>
+					<h2>El equipo antes que el ruido.</h2>
+					<p>
+						No buscamos una aventura que termine con el lanzamiento. Queremos una comunidad con la
+						que seguir jugando, aprender los encuentros y disfrutar de cada noche en Azeroth.
+					</p>
+					<div class="values-list">
+						<article>
+							<span>01</span>
+							<div>
+								<h3>Continuidad</h3>
+								<p>
+									Construir una comunidad estable, con compañerismo y ganas de compartir el camino a
+									largo plazo.
+								</p>
+							</div>
+						</article>
+						<article>
+							<span>02</span>
+							<div>
+								<h3>Progresión en equipo</h3>
+								<p>Preparación, comunicación y espacio para mejorar juntos.</p>
+							</div>
+						</article>
+						<article>
+							<span>03</span>
+							<div>
+								<h3>Transparencia</h3>
+								<p>
+									Hablar con claridad, acordar juntos los criterios de loot y explicar las
+									decisiones para cuidar la confianza del grupo.
+								</p>
+							</div>
+						</article>
+					</div>
+				</div>
+			</section>` +
+			lootPhilosophy() +
+			scheduleSection +
+			/* HTML */ `<p>
+					Tenemos un horario base y contemplamos distintas formas de organizarnos según el tamaño de
+					la raid.
+					<a class="link" href="/raids">Consulta la organización y la flexibilidad de horarios →</a>
+				</p>
+				<div class="banner">
+					<div>
+						<h2>¿Encaja contigo?</h2>
+						<p>Descubre cómo formar parte de la hermandad.</p>
+					</div>
+					<a class="button" href="/reclutamiento">Conocer el reclutamiento →</a>
+				</div>`
+		);
+	if (path === '/raids')
+		return (
+			title(
+				'Organización de banda',
+				'Nuestras noches de raid.',
+				`${days} · ${s.raidStart}–${s.raidEnd}, hora de Madrid.`,
+			) +
+			guildFacts() +
+			weekSchedule() +
+			raidOrganization(s) +
+			lootPhilosophy() +
+			/* HTML */ `<section class="section">
+					<div class="grid">
+						<article class="card">
+							<span class="card-number">01</span>
+							<h3>Consulta la convocatoria</h3>
+							<p>Discord y Raid-Helper son el punto de encuentro para ver la banda y su horario.</p>
+						</article>
+						<article class="card">
+							<span class="card-number">02</span>
+							<h3>Confirma tu disponibilidad</h3>
+							<p>
+								Apúntate desde la convocatoria en la web o en Raid-Helper. El calendario semanal es
+								una referencia, no una inscripción.
+							</p>
+						</article>
+						<article class="card">
+							<span class="card-number">03</span>
+							<h3>Comparte la noche</h3>
+							<p>Coordínate con el grupo y consulta las indicaciones de la convocatoria.</p>
+						</article>
+					</div>
+				</section>
+				<section class="banner">
+					<div>
+						<h2>Convocatorias conectadas con Discord.</h2>
+						<p>Así mantenemos las convocatorias y la organización del grupo en el mismo sitio.</p>
+					</div>
+					${discord}
+				</section>`
+		);
+	if (path === '/reclutamiento')
+		return (
+			title(
+				'Hay historias que empiezan en grupo',
+				'Encuentra tu lugar.',
+				`Alianza · Servidor ${s.ruleset} · ${days}, ${s.raidStart}–${s.raidEnd}.`,
+			) +
+			/* HTML */ `<div class="recruit-intro">
+					<article class="card">
+						<span class="eyebrow">Nuestra forma de jugar</span>
+						<h2>Ganas de progresar. Ganas de quedarse.</h2>
+						<p>
+							Buscamos personas que disfruten jugando en equipo, comunicándose y aprendiendo. Un
+							proyecto estable, más allá del entusiasmo del primer día.
+						</p>
+						<div class="identity-tags">
+							<span class="pill">Compañerismo</span><span class="pill">Comunicación</span
+							><span class="pill">Progresión</span>
+						</div>
+					</article>
+					<aside class="card recruitment-state">
+						<span class="label">Reclutamiento</span>
+						<h3>
+							${document.body.dataset.applicationUrl ? 'Formulario de candidatura' : s.recruitmentOpen ? 'Candidaturas abiertas' : 'Reclutamiento cerrado'}
+						</h3>
+						<p>
+							${document.body.dataset.applicationUrl ? 'Consulta el reclutamiento y envía tu solicitud en la aplicación de la hermandad.' : s.recruitmentOpen ? 'Cuéntanos quién eres y qué buscas. El equipo autorizado revisará tu candidatura.' : 'El reclutamiento está cerrado por ahora. Puedes contactar con nosotros en Discord.'}
+						</p>
+						<p>
+							${s.soughtClasses?.length ? 'Clases buscadas: ' + esc(s.soughtClasses.join(', ')) : 'Todas las clases son bienvenidas.'}
+						</p>
+						<p>
+							${s.soughtRoles?.length ? 'Roles buscados: ' + esc(s.soughtRoles.join(', ')) : 'Buscamos tanques, sanadores y DPS.'}
+						</p>
+						<p>Las prioridades no impiden presentar candidatura con otra clase o rol.</p>
+					</aside>
+				</div>
+				<section class="section">
+					<h2>El camino para entrar</h2>
+					<ol class="application-steps">
+						<li>
+							<strong>Tu candidatura</strong
+							><span>Personaje, experiencia, disponibilidad y lo que buscas en una guild.</span>
+						</li>
+						<li>
+							<strong>Una conversación</strong
+							><span>El equipo revisa tu solicitud y contacta contigo por Discord.</span>
+						</li>
+						<li>
+							<strong>Conocernos jugando</strong
+							><span>Si encajamos, el equipo te explicará los siguientes pasos.</span>
+						</li>
+					</ol>
+				</section>
+				${
+					document.body.dataset.applicationUrl
+						? /* HTML */ `<section class="section card">
+								<h2>Presenta tu candidatura</h2>
+								<p>
+									El formulario se guarda en la aplicación de la hermandad. No necesitas iniciar
+									sesión ni pertenecer al Discord para enviarlo.
+								</p>
+								<a class="button" href="${esc(document.body.dataset.applicationUrl)}"
+									>Abrir formulario de candidatura →</a
+								>
+							</section>`
+						: s.recruitmentOpen
+							? /* HTML */ `<section class="section">
+									<h2>Cuéntanos sobre ti</h2>
+									<p>
+										Los campos marcados con * son obligatorios. Tu candidatura solo es visible para
+										el equipo autorizado.
+									</p>
+									${html.slice(html.indexOf('<form id="application"'))}
+								</section>`
+							: ''
+				}
+				<section class="section">
+					<h2>Antes de dar el paso</h2>
+					${faq([
+						[
+							'¿En qué horario jugamos?',
+							`Nuestro horario base es ${esc(days)}, de ${esc(s.raidStart)} a ${esc(s.raidEnd)}, hora peninsular. La raid de 40 tendrá un día específico aún por concretar. Para las de 20 contemplamos dos rosters y posibles alternativas si hay demanda; las de 10 serán más flexibles. <a class="link" href="/raids">Ver la organización de raids</a>.`,
+						],
+						[
+							'¿Las convocatorias adicionales son obligatorias?',
+							'No. Las convocatorias oficiales y extraordinarias fuera de los días habituales son oportunidades adicionales, siempre coordinadas con el Líder o las personas designadas.',
+						],
+						[
+							'¿Cómo se repartirá el loot?',
+							'Usaremos un Loot Council de tres personas por grupo, no necesariamente solo oficiales. Los criterios objetivos y transparentes se definirán colectivamente, con normas comunes para todos los rosters y tipos de raid.',
+						],
+						[
+							'¿En qué tipo de servidor estamos?',
+							`Jugamos en un servidor ${esc(s.ruleset)}, en la ${esc(s.faction)}. La progresión PvE es uno de nuestros puntos de encuentro.`,
+						],
+						[
+							'¿Quién puede ver mi candidatura?',
+							'Solo el Líder y los Oficiales autorizados. Tus datos no aparecen en el roster público.',
+						],
+						[
+							'¿Cómo me contactaréis?',
+							'Por Discord, con el usuario que indiques en tu candidatura. No necesitamos tu contraseña.',
+						],
+					])}
+				</section>`
+		);
+	if (path === '/roster')
+		return (
+			html.replace(
+				'<div id="roster-result"></div>',
+				'<div class="results-toolbar"><span id="roster-count" role="status"></span><button id="clear-roster" class="secondary" type="button">Limpiar filtros</button></div><div id="roster-result"></div>',
+			) +
+			/* HTML */ `<aside class="privacy-note">
+				El roster público muestra únicamente nombre, clase y rol. La información de los miembros
+				permanece en el área privada.
+			</aside>`
+		);
+	if (path === '/progreso')
+		return (
+			html +
+			/* HTML */ `<section class="section">
+				<h2>Cada encuentro tiene su historia.</h2>
+				<div class="grid">
+					<article class="card">
+						<span class="pill">No intentado</span>
+						<h3>El reto por delante</h3>
+						<p>Encuentros que la hermandad todavía no ha empezado.</p>
+					</article>
+					<article class="card">
+						<span class="pill">En progreso</span>
+						<h3>Aprender y avanzar</h3>
+						<p>Bosses en los que la banda está trabajando.</p>
+					</article>
+					<article class="card">
+						<span class="pill gold">Derrotado</span>
+						<h3>Una victoria compartida</h3>
+						<p>Encuentros superados, con su primera victoria e historial.</p>
+					</article>
+				</div>
+				<p class="privacy-note">
+					Aquí compartimos el progreso de la hermandad. Las métricas individuales detalladas
+					permanecen privadas.
+				</p>
+			</section>`
+		);
+	if (path === '/contacto')
+		return (
+			title(
+				'Nuestro punto de encuentro',
+				'Nos vemos en Discord.',
+				'Comunidad, convocatorias y conversaciones. Todo empieza con un saludo.',
+			) +
+			/* HTML */ `<div class="contact-layout">
+				<article class="card contact-card">
+					<img src="/assets/guild-logo.png" alt="" width="1254" height="1254" />
+					<h2>${esc(s.name)}</h2>
+					${guildFacts()}${discord}
+				</article>
+				<div class="contact-notes">
+					<article>
+						<h3>¿Quieres formar parte?</h3>
+						<p>Consulta nuestros horarios y cómo funciona el proceso de entrada.</p>
+						<a class="link" href="/reclutamiento">Ir a reclutamiento →</a>
+					</article>
+					<article>
+						<h3>¿Buscas una convocatoria?</h3>
+						<p>Las inscripciones se realizan desde la web o en Discord con Raid-Helper.</p>
+						<a class="link" href="/raids">Ver información de raids →</a>
+					</article>
+					<article>
+						<h3>Tu información personal</h3>
+						<p>
+							Las dudas sobre candidaturas o datos de miembro se tratan con el equipo autorizado por
+							Discord.
+						</p>
+					</article>
+				</div>
+			</div>`
+		);
+	if (path === '/login')
+		return /* HTML */ `<div class="login-layout">
+			<div class="login-art">
+				<img
+					src="/assets/guild-logo.png"
+					width="1254"
+					height="1254"
+					alt="Emblema de Darkness of the Fallen"
+				/>
+			</div>
+			<section class="card login-card">
+				<span class="eyebrow">Tu lugar en la hermandad</span>
+				<h1>Bienvenido a casa.</h1>
+				<p>Una cuenta de Discord. Tus personajes, tu wishlist y la historia que compartimos.</p>
+				<ul class="login-features">
+					<li>Gestiona tu Main y tus Alters.</li>
+					<li>Consulta tu asistencia y el historial de loot.</li>
+					<li>Accede a las herramientas de tu rango.</li>
+				</ul>
+				${data.authConfigured ? '<a class="button discord-button" href="/auth/discord">Entrar con Discord ↗</a>' : '<div class="connection-pending"><strong>El acceso de miembros aún no está abierto</strong><p>Cuando se active, entrarás con tu cuenta de Discord. Mientras tanto, puedes consultar los horarios y guardar las próximas noches de raid en tu calendario.</p><div class="login-pending-actions"><a class="button secondary" href="/raids">Ver próximas raids →</a><a class="link" href="/nosotros">Conocer la hermandad</a></div></div>'}
+				<p class="login-footnote">
+					Solo usamos Discord para entrar. Nunca te pediremos crear una contraseña para esta web.
+				</p>
+				<a class="link" href="/">Volver a la hermandad →</a>
+			</section>
+		</div>`;
+	return html;
 }

@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.wrangler/
+data/
+backups/
+docs/imported/
+package-lock.json

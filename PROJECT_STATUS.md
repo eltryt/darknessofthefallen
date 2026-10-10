@@ -152,3 +152,21 @@ y `docs/RECRUITMENT.md`.
   en almacenamiento privado. No enviar el archivo al chat ni al repositorio.
 - Validación: 47 pruebas Node completas y un test adicional de backup nativo (48 en total),
   integración workerd con exportación/restauración aprobada, builds de Pages/backend correctos.
+
+## Orden del código y estilos — 11 de octubre de 2026
+
+- Primera limpieza de legibilidad: JavaScript, HTML, CSS, backend, scripts y pruebas
+  con formato consistente y tabulaciones. Plantillas HTML extensas formateadas.
+- CSS unificado en `public/style.css` conservando el orden de cascada de las tres
+  hojas anteriores. HTML, backend y exportador de Pages apuntan a la única hoja.
+- Prettier fijado, EditorConfig y comandos format/format:check; CI exige el formato.
+- Corregidas dependencias del exportador respecto a espacios del código comprimido.
+  Se conservan las rutas de Pages, metadatos y aviso de presentación estática.
+- No cambia la lógica de login, permisos, loot, raids ni recuperación de copias.
+- Validación: 48 pruebas Node aprobadas; comparación Chromium de inicio, raids,
+  candidatura y exportación del líder a 1440 y 390 px, sin errores de JavaScript.
+  Las páginas públicas comparadas conservan los mismos píxeles; el panel conserva
+  dimensiones y contenido (variación visual limitada al estado de sus pestañas).
+- Guía de mantenimiento en `docs/CODE_STYLE.md`. La modularización adicional de
+  vistas puede continuar en próximas tandas; no se presenta el formato como una
+  reescritura de toda la arquitectura.

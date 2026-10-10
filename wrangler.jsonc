@@ -1,21 +1,25 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "darknessofthefallen-backend",
-  "main": "src/cloudflare-worker.mjs",
-  "compatibility_date": "2026-10-08",
-  "compatibility_flags": ["nodejs_compat"],
-  "workers_dev": true,
-  "preview_urls": false,
-  "vars": {"RAID_HELPER_CHANNEL_ID": "1550997172982382723", "RAID_HELPER_TEMPLATE_ID": "wowforever", "APP_ORIGIN": "https://darknessofthefallen.eltryt-darknessofthefallen.workers.dev"},
-  "assets": {
-    "directory": "./public",
-    "binding": "ASSETS",
-    "run_worker_first": true
-  },
-  "durable_objects": {
-    "bindings": [{"name": "GUILD", "class_name": "Guild"}]
-  },
-  "migrations": [{"tag": "v1", "new_sqlite_classes": ["Guild"]}],
-  "rules": [{"type": "Text", "globs": ["**/*.sql"], "fallthrough": true}],
-  "observability": {"enabled": false}
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "darknessofthefallen-backend",
+	"main": "src/cloudflare-worker.mjs",
+	"compatibility_date": "2026-10-08",
+	"compatibility_flags": ["nodejs_compat"],
+	"workers_dev": true,
+	"preview_urls": false,
+	"vars": {
+		"RAID_HELPER_CHANNEL_ID": "1550997172982382723",
+		"RAID_HELPER_TEMPLATE_ID": "wowforever",
+		"APP_ORIGIN": "https://darknessofthefallen.eltryt-darknessofthefallen.workers.dev",
+	},
+	"assets": {
+		"directory": "./public",
+		"binding": "ASSETS",
+		"run_worker_first": true,
+	},
+	"durable_objects": {
+		"bindings": [{ "name": "GUILD", "class_name": "Guild" }],
+	},
+	"migrations": [{ "tag": "v1", "new_sqlite_classes": ["Guild"] }],
+	"rules": [{ "type": "Text", "globs": ["**/*.sql"], "fallthrough": true }],
+	"observability": { "enabled": false },
 }

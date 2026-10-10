@@ -99,3 +99,6 @@ La clave `RAID_HELPER_API_KEY` se guarda en GitHub Actions Secrets; el despliegu
 existente la instala en el Worker sin modificar el login Discord.
 
 Copias y ensayo de restauración: [docs/RECOVERY.md](docs/RECOVERY.md).
+
+Formato y organización del código: [docs/CODE_STYLE.md](docs/CODE_STYLE.md).
+Usa `npm run format` antes de publicar; CI verifica `npm run format:check`.
