@@ -70,7 +70,9 @@ async function runJob(db,env,provider,job){
   if(job.kind==='update'){const data=eventRaw(updated);if(data.title!==payload.title||data.startTime!==payload.startTime||data.endTime!==payload.endTime||Number(data.advancedSettings?.limit)!==payload.advancedSettings.limit)throw new ProviderError(502);}
 }
 function linkCharacter(db,row,payload){
-  const matches=eventRaw(row).signUps.filter(s=>s.userId===payload.userId&&s.name===payload.value.name&&s.className===payload.value.className&&(s.specName||'')===(payload.value.specName||''));
+  const raw=eventRaw(row),hasSpecs=(raw.classes.find(c=>c.name===payload.value.className)?.specs||[]).length>0;
+  // Default choices such as Bench may retain the previous specialization remotely.
+  const matches=raw.signUps.filter(s=>s.userId===payload.userId&&s.name===payload.value.name&&s.className===payload.value.className&&(!hasSpecs||(s.specName||'')===(payload.value.specName||'')));
   if(matches.length===1){const s=matches[0];db.prepare('INSERT OR REPLACE INTO raid_character_links VALUES(?,?,?,?,?)').run(row.id,String(s.id),s.userId,payload.characterId,signupFingerprint(s));return true;}return false;
 }
 function reconcile(db,job,row){
