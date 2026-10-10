@@ -94,43 +94,40 @@ y `docs/RECRUITMENT.md`.
 - Validación local: 36 pruebas Node, integración SQLite de Cloudflare, builds de Pages/backend y prueba Chromium de cancelación, borrado activo/anulado, recarga y lista vacía en móvil/escritorio. Pruebas con datos sintéticos; no se han borrado objetos reales.
 - Publicación mediante los workflows existentes del commit de esta tanda; consultar Actions para el resultado del despliegue.
 
-## Convocatorias con Raid-Helper — 10 de octubre de 2026
+## Convocatorias con Raid-Helper — cierre 10 de octubre de 2026
 
-- Nueva decisión: reutilizar API oficial Raid-Helper v4. Detalles, fuentes, costes,
-  seguridad, limitaciones y despliegue en `docs/RAID_EVENTS.md`. Sin bot nuevo ni Premium.
-- Canal confirmado por el propietario: `1550997172982382723`; indicó haber guardado
-  `RAID_HELPER_API_KEY` en GitHub. Pendiente de comprobar acceso real en el workflow.
-- Migración 005 aditiva en SQLite existente: convocatorias, vínculo de personajes,
-  historial de bajas, cola idempotente y estado de sincronización. Conserva loot/asistencia.
-- Panel y `/raids`: creación, edición de horario/capacidad/roles, clasificación/roster
-  libre, visibilidad, filtros, inscripciones con personajes y cancelaciones. Perfil:
-  próximas inscripciones. Los borradores de Raid-Helper aún no publicados no se importan.
-- Fuente de verdad remota para fechas e inscripciones; local para clasificación y
-  vínculos. Polling por alarmas, errores visibles, reintentos 429 y reconciliación de
-  respuestas perdidas sin repetir creaciones ambiguas. Casos inciertos pueden requerir
-  revisión técnica. La API no documenta CAS: ventana residual de carrera GET/PATCH.
-- Calendario confirmado más reciente: miércoles raid 20, jueves raid 40, martes
-  continuación/alternativo; 23:00–01:00 Europe/Madrid. Sustituye el antiguo «día de 40 pendiente».
-- Pruebas iniciales: 43 Node + integración workerd aprobadas; Chromium local comprueba
-  rangos y móvil/escritorio. Falta aceptación externa real; no confundir mocks con Discord.
-- Pendiente antes del cierre: desplegar y comprobar lectura autenticada/sincronización
-  real, verificar eventos reales y registrar el alcance de aceptación externo.
-- Primera comprobación remota: fallo 404 del listado. Causa identificada: el renderizador
-  de la documentación transforma la versión histórica a v4. Corregido el listado a
-  `/api/v4/servers/{server}/events`; no se atribuyó el fallo a la clave del propietario.
-- Se añade workflow manual de aceptación real con un evento temporal identificado;
-  limpieza limitada a ese evento. Resultado pendiente de ejecución.
-- Despliegue `1f06a84`: backend, Pages y CI aprobados. La lectura de API con la clave
-  configurada devolvió 0 eventos en el canal. Eso no prueba por sí solo permiso de escritura.
-- Aceptación real inicial: creación rechazada con `401 locked template`. Diagnóstico
-  corregido: se había utilizado el ID de la imagen del selector; el ID real de la
-  plantilla es `wowforever`. No se publicó ningún mensaje durante esas pruebas fallidas.
-- Añadida integración workerd con transporte saliente simulado para comprobar que el
-  sincronizador completa y persiste su estado en el runtime real, además de Node.
-- Se endurece la confirmación: tras editar/borrar se relee Raid-Helper antes de dar
-  la operación por completada. Los textos de estado de la respuesta se interpretan
-  sin asumir una capitalización/valor de éxito no especificados por la documentación.
-- Aceptación API real `8ea1cc9`: creación, deduplicación al repetir envío, cambio de
-  horario/capacidad y limpieza del evento temporal comprobados contra Raid-Helper.
-  Sus mensajes de estado son `Event created!` / `Event updated!`, no el enum `success`.
-  Prueba de inscripciones pendiente de adaptar a las opciones reales de la plantilla.
+- Implementada integración con la API oficial Raid-Helper v4, plantilla `wowforever`
+  y canal `1550997172982382723`. Clave configurada mediante GitHub Secrets y Cloudflare.
+  Decisión, fuentes, instalación y limitaciones: `docs/RAID_EVENTS.md`.
+- Panel y `/raids`: crear, editar horarios/capacidad/distribución, clasificar, asignar
+  roster libre, filtrar, inscribir personajes registrados, gestionar suplentes/bajas
+  y cancelar. Perfil: próximas convocatorias. Controles y permisos en backend.
+- Reutiliza SQLite/Durable Object existente con migración 005 aditiva, sin segundo
+  login, bot propio, servidor nuevo ni suscripción Premium. Conserva loot/asistencia.
+- Raid-Helper es fuente de verdad para eventos e inscripciones; la web conserva
+  clasificación, visibilidad y vínculos de personajes. Alarmas cada cinco minutos,
+  cola de escritura, deduplicación, reintentos limitados y reconciliación.
+- Calendario: miércoles raid 20, jueves raid 40, martes continuación/alternativo;
+  23:00–01:00 Europe/Madrid con cambios estacionales. No limita otras convocatorias.
+- Validación local: 44 pruebas Node aprobadas; integración workerd/SQLite y builds
+  verificados. Chromium: creación, clasificación, inscripción, permisos y anchos
+  1440/768/390/320 sin desbordamiento. Fallos temporales 429/503 y respuestas perdidas
+  comprobados con proveedor simulado, no provocados en el servicio real.
+- Aceptación API real aprobada: Actions 38074135714, commit 35d53e5. Handlers reales
+  con base efímera: publicación en Discord, envío repetido sin duplicado, modificación
+  de horario/capacidad, inscripción, cambio de personaje, suplente, baja y cancelación.
+  Limpieza del único evento técnico confirmada. No modifica perfiles de producción.
+- Corregidas incompatibilidades observadas: ID de plantilla (no su imagen), textos
+  de éxito de la API, roles agrupados de Forever, restricciones desactivadas con
+  `none` y especialización anterior conservada por Raid-Helper al pasar a Bench.
+- Producción: `/api/events` devuelve sincronización saludable y evento externo real
+  importado, incluida su cancelación. No se editó ni borró ese evento del propietario.
+- Aceptación pendiente del propietario: crear/apuntarse usando directamente los
+  botones de Discord y comprobar su sesión en la web. La prueba API real no sustituye
+  esa interacción manual ni demuestra un nuevo login OAuth desde el navegador.
+- Límites: borradores programados aún no publicados no se importan; eventos con
+  restricciones de roles requieren inscripción en Discord. La API no ofrece CAS,
+  por lo que existe una ventana GET/PATCH; resultados ambiguos no se repiten a ciegas.
+  No se han activado webhooks Premium ni definido nuevas normas de composición.
+- Siguiente paso recomendado: usar una convocatoria normal en el canal configurado
+  y comprobar el resultado en Panel → Raids tras el siguiente ciclo de sincronización.

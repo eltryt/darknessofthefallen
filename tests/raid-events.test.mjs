@@ -89,6 +89,8 @@ test('signup, character changes, cancellation and event edits sync; ownership an
   assert.equal((await f.request(path+'/signup','member','POST',signupInput())).status,202);await syncRaidEvents(f.db,env,p.transport,{force:true});
   let event=(await f.request(path,'member')).body;assert.equal(event.mine[0].characterId,'char1');assert.equal(event.occupied,1);
   await f.request(path+'/signup','member','POST',{...signupInput(),characterId:'char2'});await syncRaidEvents(f.db,env,p.transport,{force:true});event=(await f.request(path,'member')).body;assert.equal(event.mine[0].characterId,'char2');assert.equal(event.signups.length,1);
+  const benchId=randomUUID();await f.request(path+'/signup','member','POST',{characterId:'char2',className:'Bench',requestId:benchId});await syncRaidEvents(f.db,env,p.transport,{force:true});
+  event=(await f.request(path,'member')).body;assert.equal(event.mine[0].status,'Suplente');assert.equal(event.mine[0].characterId,'char2');assert.equal(event.occupied,0);assert.equal(raw.signUps[0].specName,'Frost');assert.equal(f.db.prepare('SELECT status FROM raid_jobs WHERE id=?').get(benchId).status,'done');
   raw.signUps[0].name='Changed in Discord';raw.lastUpdated++;await syncRaidEvents(f.db,env,p.transport,{force:true});assert.equal((await f.request(path,'member')).body.mine[0].registeredCharacter,false);
   await f.request(path+'/signup','member','POST',{cancel:true,requestId:randomUUID()});await syncRaidEvents(f.db,env,p.transport,{force:true});assert.equal((await f.request(path,'member')).body.signups.length,0);
   event=(await f.request(path,'leader')).body;

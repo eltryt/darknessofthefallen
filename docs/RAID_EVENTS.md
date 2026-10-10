@@ -175,3 +175,12 @@ La documentación declara las plantillas como objetos `{id, name, image}`.
 El ID para esta guild es **`wowforever`**, no el número de la imagen/emoji.
 La primera prueba usó por error ese número y recibió `401 locked template`; se
 corrigió el identificador. No se infiere de ese error un requisito Premium.
+
+Aceptación real completada el 10/10/2026: workflow 38074135714, commit 35d53e5.
+Pasaron publicación, deduplicación, edición de horario/capacidad, inscripción,
+cambio de personaje, suplente, baja, cancelación y limpieza del mensaje técnico.
+El endpoint desplegado también confirma importación y sincronización saludable.
+Queda la aceptación manual con los botones de Discord y la sesión del propietario.
+Las opciones por defecto como Bench pueden conservar una especialización anterior;
+se verifica el usuario, personaje y opción seleccionada sin exigir especialización
+cuando esa opción no la admite. El vínculo conserva la huella real del proveedor.
