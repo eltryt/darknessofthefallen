@@ -17,7 +17,7 @@ for(const [id,name] of [['qa-main','PRUEBA-Main'],['qa-alt','PRUEBA-Alter']])db.
 const session=issueSession(db,actor),server=createServer(createApp(db,env));await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const request=async(path,method='GET',value)=>{
  const r=await fetch(`http://127.0.0.1:${server.address().port}${path}`,{method,headers:{Origin:env.APP_ORIGIN,'Content-Type':'application/json',Cookie:'session='+session.raw,'X-CSRF-Token':session.csrf},...(value?{body:JSON.stringify(value)}:{})});
- assert.ok(r.ok,`Local HTTP handler ${method} failed (${r.status}).`);return r.json();
+ const data=await r.json();if(!r.ok)console.error('HTTP handler diagnostic: '+String(data.error||r.status));assert.ok(r.ok,`Local HTTP handler ${method} failed (${r.status}).`);return data;
 };
 let localId,externalId,marker;let failed=false;
 const diagnosticFetch=async(url,options)=>{const response=await fetch(url,options);if(options.method!=='GET'||!response.ok){try{const data=await response.clone().json();console.log('Provider response schema: '+Object.keys(data).join(', '));if(data.status)console.log('Provider status: '+String(data.status).replaceAll(env.RAID_HELPER_API_KEY,'[redacted]').slice(0,120));const reason=data.reason||data.message||data.error;if(typeof reason==='string')console.error('Provider diagnostic: '+reason.replaceAll(env.RAID_HELPER_API_KEY,'[redacted]').replace(/\b\d{17,20}\b/g,'[id]').slice(0,250));}catch{}}return response;};
@@ -39,6 +39,7 @@ try{
  let event=await request('/api/events/'+localId);
  await request('/api/events/'+localId,'PATCH',{title:'[PRUEBA TÉCNICA] Darkness — horario modificado',start:day+'T22:00',end:day+'T23:59',capacity:10,revision:event.revision,requestId:randomUUID()});await tick();
  event=await request('/api/events/'+localId);assert.equal(event.capacity,10);console.log('PASS: real event schedule and capacity changed.');
+ console.log('Restriction settings shape: '+JSON.stringify(Object.fromEntries(['allowed_roles','banned_roles'].map(k=>{const v=JSON.parse(db.prepare('SELECT raw FROM raid_events WHERE id=?').get(localId).raw).advancedSettings?.[k];return [k,{type:typeof v,isEmpty:!v,isFalse:String(v).toLowerCase()==='false'}];}))));
  console.log('Template options: '+JSON.stringify(event.classes.map(c=>({name:c.name,type:c.type,specs:c.specs.map(s=>s.name)}))));
  const cls=event.classes.find(c=>['mage','mago','ranged'].includes(c.name.toLowerCase()));assert.ok(cls,'WoW template must offer Mage to test a registered Mage character.');
  const spec=cls.specs.find(s=>s.name==='Frost')?.name||cls.specs[0]?.name;
