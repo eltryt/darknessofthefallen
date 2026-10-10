@@ -30,7 +30,7 @@ export function ingestRaidEvent(db,value,env,localId){
   return db.prepare('SELECT * FROM raid_events WHERE id=?').get(id);
 }
 function cancelled(db,event){transaction(db,()=>{db.prepare("UPDATE raid_events SET state=?,synced_at=?,updated_at=? WHERE id=?").run(event.ends_at&&Date.parse(event.ends_at)<Date.now()?'Finalizada':'Cancelada',stamp(),stamp(),event.id);audit(db,'raid-helper','raid.removed.remote',event.id,{});});}
-function safeError(e){if(e.reason==='locked template')return 'La plantilla de Raid-Helper está bloqueada; utiliza una plantilla disponible.';if(e instanceof HttpError)return e.message;if(e instanceof ProviderError)return `Raid-Helper respondió HTTP ${e.status}. Revisa acceso, configuración o disponibilidad.`;return 'No se pudo confirmar la respuesta de Raid-Helper.';}
+function safeError(e){if(e.reason==='locked template')return 'La plantilla de Raid-Helper está bloqueada; utiliza una plantilla disponible.';if(e instanceof HttpError)return e.message;if(e instanceof ProviderError)return `Raid-Helper respondió HTTP ${e.status}. Revisa acceso, configuración o disponibilidad.`;return 'No se pudo confirmar la respuesta de Raid-Helper ('+(['TypeError','SyntaxError','TimeoutError','AbortError'].includes(e.name)?e.name:'Error')+').';}
 async function runJob(db,env,provider,job){
   let row=db.prepare('SELECT * FROM raid_events WHERE id=?').get(job.event_id);
   const payload=JSON.parse(job.payload),actor=db.prepare('SELECT * FROM users WHERE id=?').get(job.actor_id);

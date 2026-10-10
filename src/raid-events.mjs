@@ -64,7 +64,7 @@ export async function raidEventsApi(ctx){
   if(path==='/api/events'&&method==='GET'){
     const rows=db.prepare('SELECT * FROM raid_events ORDER BY starts_at DESC LIMIT 500').all().filter(r=>mayView(user,r)||r.public===1);
     const sync=db.prepare('SELECT last_success,error FROM raid_sync WHERE id=1').get();
-    send(200,{events:rows.map(r=>projectEvent(db,r,user,env)),configured:raidHelperReady(env),sync:can(user,'attendance.manage')?sync:{last_success:sync.last_success,healthy:!sync.error,providerStatus:Number(sync.error.match(/HTTP (\d+)/)?.[1])||null}});return true;
+    send(200,{events:rows.map(r=>projectEvent(db,r,user,env)),configured:raidHelperReady(env),sync:can(user,'attendance.manage')?sync:{last_success:sync.last_success,healthy:!sync.error,diagnostic:sync.error,providerStatus:Number(sync.error.match(/HTTP (\d+)/)?.[1])||null}});return true;
   }
   if(path==='/api/events'&&method==='POST'){
     requirePermission('attendance.manage');if(!raidHelperReady(env))throw new HttpError(503,'Falta activar Raid-Helper. Consulta la configuración del proyecto.');
@@ -80,7 +80,7 @@ export async function raidEventsApi(ctx){
     transaction(db,()=>{
       db.prepare('INSERT INTO raid_events(id,channel_id,organizer_id,title,starts_at,ends_at,category,roster,public,capacity,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)').run(id,env.RAID_HELPER_CHANNEL_ID,organizer,title,start,end,meta.category,meta.roster,Number(meta.public),size,stamp);
       const description=`${meta.category} · ${meta.roster||'Sin roster fijo'}\n[DOTF:${id}]`;
-      enqueueRaidJob(db,user,{id},'create',{leaderId:organizer,templateId:env.RAID_HELPER_TEMPLATE_ID||'599020379125841954',title,description,date:String(Date.parse(start)/1000),time:String(Date.parse(start)/1000),advancedSettings:{duration:(Date.parse(end)-Date.parse(start))/60000,limit:size,limit_per_user:1,allow_duplicate:false,mentions:'',mention_leader:false}},v.requestId);
+      enqueueRaidJob(db,user,{id},'create',{leaderId:organizer,templateId:env.RAID_HELPER_TEMPLATE_ID||'wowforever',title,description,date:String(Date.parse(start)/1000),time:String(Date.parse(start)/1000),advancedSettings:{duration:(Date.parse(end)-Date.parse(start))/60000,limit:size,limit_per_user:1,allow_duplicate:false,mentions:'',mention_leader:false}},v.requestId);
     });send(202,{id});return true;
   }
   const match=path.match(/^\/api\/events\/([^/]+)(?:\/(signup|cancel|metadata|retry))?$/);

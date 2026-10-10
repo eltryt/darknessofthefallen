@@ -6,7 +6,7 @@ export class ProviderError extends Error {
 export function raidHelper(env,transport=fetch){
   const call=async(path,method='GET',value,headers={})=>{
     if(!raidHelperReady(env))throw new ProviderError(503);
-    const r=await transport('https://raid-helper.xyz/api/'+path,{method,redirect:'error',headers:{Authorization:env.RAID_HELPER_API_KEY,'Content-Type':'application/json',...headers},...(value===undefined?{}:{body:JSON.stringify(value)}),signal:AbortSignal.timeout(10000)});
+    const r=await transport('https://raid-helper.xyz/api/'+path,{method,redirect:'manual',headers:{Authorization:env.RAID_HELPER_API_KEY,'Content-Type':'application/json',...headers},...(value===undefined?{}:{body:JSON.stringify(value)}),signal:AbortSignal.timeout(10000)});
     if(!r.ok){
       let seconds=Number(r.headers.get('retry-after'))||60,reason='';
       try{const data=await r.json();if(r.status===429)seconds=Number(data.retry_after)||seconds;const value=data.reason||data.message||data.error;
