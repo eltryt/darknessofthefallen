@@ -65,6 +65,9 @@ try {
 		'login',
 	];
 	const assets = [
+		'roster-ui.js',
+		'wishlist-ui.js',
+		'encounter-catalog.js',
 		'public-views.js',
 		'public-layout.js',
 		'profile-view.js',

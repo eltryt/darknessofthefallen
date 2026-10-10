@@ -212,7 +212,19 @@ test('wishlist ownership and private notes cannot be bypassed with IDs or query 
 			(await f.request('/api/wishlists', 'member', 'POST', { ...data, priority: 0 })).status,
 			400,
 		);
-		const created = await f.request('/api/wishlists', 'member', 'POST', data);
+		const created = await f.request('/api/wishlists', 'member', 'POST', {
+			...data,
+			raid: 'Raid manual de prueba',
+		});
+		assert.equal(
+			(await f.request('/api/wishlists', 'member')).body[0].data.raid,
+			'Raid manual de prueba',
+		);
+		assert.equal(
+			(await f.request('/api/wishlists', 'member', 'POST', { ...data, raid: 'x'.repeat(121) }))
+				.status,
+			400,
+		);
 		assert.equal(created.status, 201);
 		assert.equal((await f.request('/api/wishlists', 'raider')).body.length, 0);
 		assert.equal((await f.request('/api/wishlists?all=true', 'member')).status, 403);

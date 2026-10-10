@@ -2188,3 +2188,241 @@ fieldset label {
 	text-align: center;
 	background: #191419;
 }
+
+/* Roster: identidad por clase y columnas por rol. */
+.class-warrior {
+	--class-color: #c69b6d;
+}
+.class-paladin {
+	--class-color: #f48cba;
+}
+.class-hunter {
+	--class-color: #aad372;
+}
+.class-rogue {
+	--class-color: #fff468;
+}
+.class-priest {
+	--class-color: #f0f0f0;
+}
+.class-shaman {
+	--class-color: #579bff;
+}
+.class-mage {
+	--class-color: #3fc7eb;
+}
+.class-warlock {
+	--class-color: #a894ed;
+}
+.class-druid {
+	--class-color: #ff9346;
+}
+.class-unknown {
+	--class-color: #bfc1ca;
+}
+.roster-board {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+	gap: 16px;
+	margin: 20px 0;
+	align-items: start;
+}
+.roster-role {
+	border: 1px solid var(--line);
+	border-radius: 12px;
+	background: #111115;
+	overflow: hidden;
+	min-width: 0;
+}
+.roster-role-heading {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 15px 16px;
+	background: #19191f;
+	position: static;
+	min-height: 0;
+	border-bottom: 1px solid var(--line);
+}
+.roster-role-heading h3 {
+	font-family: inherit;
+	font-size: 14px;
+	margin: 0;
+}
+.roster-count {
+	font-size: 12px;
+	color: #d8d6df;
+	background: #292832;
+	padding: 3px 8px;
+	border-radius: 6px;
+}
+.roster-members {
+	list-style: none;
+	padding: 8px;
+	margin: 0;
+	display: grid;
+	gap: 6px;
+}
+.roster-player {
+	display: flex;
+	align-items: flex-start;
+	gap: 10px;
+	padding: 12px 10px;
+	border-left: 3px solid var(--class-color);
+	border-radius: 6px;
+	background: #19191e;
+	min-width: 0;
+}
+.roster-player:hover {
+	background: #202027;
+}
+.class-emblem {
+	display: grid;
+	place-items: center;
+	flex: 0 0 32px;
+	height: 32px;
+	border: 1px solid var(--class-color);
+	border-radius: 7px;
+	color: var(--class-color);
+	background: #101014;
+	font-size: 10px;
+	font-weight: 800;
+}
+.roster-player-info {
+	display: grid;
+	gap: 3px;
+	min-width: 0;
+	flex: 1;
+}
+.roster-player .class-name {
+	color: var(--class-color);
+	font-size: 14px;
+	overflow-wrap: anywhere;
+}
+.roster-player-info span,
+.roster-player-info small {
+	color: #b8b7c2;
+	font-size: 11px;
+	overflow-wrap: anywhere;
+}
+.roster-player-info .roster-availability {
+	margin-top: 5px;
+	color: #a7a6b2;
+}
+.roster-main-badge {
+	font-size: 10px;
+	background: #2a2731;
+	color: #ddd4e4;
+	padding: 2px 5px;
+	border-radius: 4px;
+}
+/* Wishlist: agrupación por encuentro, con prioridades personales. */
+.wishlist-heading {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+}
+.wishlist-heading h2 {
+	margin: 8px 0;
+}
+.catalog-note {
+	border: 1px dashed var(--line);
+	border-radius: 8px;
+	padding: 14px 18px;
+	margin: 18px 0;
+	color: #bab8c5;
+	font-size: 13px;
+}
+.catalog-note summary {
+	cursor: pointer;
+}
+.wishlist-filters {
+	margin: 24px 0;
+}
+.wishlist-encounter {
+	margin: 18px 0;
+	border: 1px solid var(--line);
+	border-radius: 12px;
+	overflow: hidden;
+	background: #111115;
+}
+.wishlist-encounter > header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 12px;
+	padding: 16px 20px;
+	background: #19191f;
+	position: static;
+	min-height: 0;
+}
+.wishlist-encounter h3 {
+	margin: 4px 0 0;
+	font-family: inherit;
+	font-size: 17px;
+}
+.wishlist-encounter ul {
+	list-style: none;
+	padding: 8px;
+	margin: 0;
+}
+.wishlist-item {
+	display: flex;
+	gap: 14px;
+	align-items: center;
+	padding: 16px 12px;
+	border-bottom: 1px solid var(--line);
+}
+.wishlist-item:last-child {
+	border-bottom: 0;
+}
+.wishlist-item > div {
+	flex: 1;
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+.wishlist-item strong {
+	color: #ddd5ed;
+	font-size: 15px;
+}
+.wishlist-item small {
+	display: block;
+	color: #a7a5b4;
+	margin-top: 4px;
+}
+.wishlist-item p {
+	font-size: 12px;
+	margin: 6px 0 0;
+	white-space: pre-wrap;
+}
+.wish-priority {
+	padding: 8px;
+	border: 1px solid #756439;
+	border-radius: 7px;
+	color: #efd48d;
+	font-weight: 700;
+	font-size: 12px;
+}
+.wishlist-add {
+	margin-top: 24px;
+}
+@media (max-width: 520px) {
+	.wishlist-heading {
+		align-items: flex-start;
+	}
+	.wishlist-item {
+		flex-wrap: wrap;
+		gap: 10px;
+	}
+	.wishlist-item button {
+		margin-left: auto;
+	}
+	.wishlist-item > div {
+		flex-basis: calc(100% - 55px);
+	}
+	.wishlist-encounter > header {
+		padding: 14px;
+	}
+}

@@ -1,3 +1,4 @@
+import { rosterCards } from './roster-ui.js';
 import { createPublicLayout } from './public-layout.js';
 import { mountRaidEvents } from './raid-events-ui.js';
 import { prepareApplication, applicationReceipt } from './recruitment-ui.js';
@@ -141,17 +142,7 @@ export function createPublicViews(context) {
 		$('#roster-count').textContent =
 			`${rows.length} ${rows.length === 1 ? 'personaje' : 'personajes'}`;
 		$('#roster-result').innerHTML = rows.length
-			? table(
-					['Personaje', 'Clase', 'Rol'],
-					rows.map(
-						(c) =>
-							/* HTML */ `<tr>
-								<td>${esc(c.name)}</td>
-								<td>${esc(c.class)}</td>
-								<td><span class="pill">${esc(c.role)}</span></td>
-							</tr>`,
-					),
-				)
+			? rosterCards(rows, esc)
 			: data.characters.length
 				? empty(
 						'No encontramos personajes con esos filtros',

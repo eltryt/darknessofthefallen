@@ -325,6 +325,7 @@ export async function operations(ctx) {
 				characterId: c.id,
 				characterName: c.name,
 				item: text(v.item, 'objeto', 160),
+				raid: text(v.raid ?? '', 'raid', 120, false),
 				boss: text(v.boss ?? '', 'boss', 120, false),
 				priority,
 				notes: text(v.notes ?? '', 'notas', 1000, false),

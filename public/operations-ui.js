@@ -1,3 +1,5 @@
+import { rosterCards } from './roster-ui.js';
+import { mountWishlist } from './wishlist-ui.js';
 import { mountRaidEvents } from './raid-events-ui.js';
 const rankLabel = (rank) =>
 	({
@@ -84,7 +86,9 @@ function paginated(el, heads, rows, render, ctx) {
 		const pages = Math.max(1, Math.ceil(filtered.length / 20));
 		page = Math.min(page, pages - 1);
 		el.querySelector('[data-rows]').innerHTML = filtered.length
-			? table(heads, filtered.slice(page * 20, (page + 1) * 20).map(render))
+			? ctx.renderRows
+				? ctx.renderRows(filtered.slice(page * 20, (page + 1) * 20))
+				: table(heads, filtered.slice(page * 20, (page + 1) * 20).map(render))
 			: empty('Sin resultados', 'No hay registros que coincidan con esta búsqueda.');
 		el.querySelector('[data-count]').textContent = filtered.length
 			? `${filtered.length} ${filtered.length === 1 ? 'registro' : 'registros'} · ${page + 1} / ${pages}`
@@ -595,13 +599,15 @@ export async function operationTab(tab, el, ctx) {
 			'<h2>Wishlists de la hermandad</h2><p>Prioridades personales del 1 (más alta) al 5. No implican una asignación automática.</p><div id="wishlist-table"></div>';
 		paginated(
 			el.querySelector('#wishlist-table'),
-			['Personaje', 'Objeto', 'Boss', 'Prioridad', 'Notas'],
+			['Personaje', 'Objeto', 'Raid / boss', 'Prioridad', 'Notas'],
 			rows,
 			(r) =>
 				/* HTML */ `<tr>
 					<td>${esc(r.data.characterName)}</td>
 					<td>${esc(r.data.item)}</td>
-					<td>${esc(r.data.boss)}</td>
+					<td>
+						${esc(r.data.raid || 'Sin raid')}<small class="cell-detail">${esc(r.data.boss)}</small>
+					</td>
 					<td>${r.data.priority}</td>
 					<td>${esc(r.data.notes)}</td>
 				</tr>`,
@@ -698,7 +704,10 @@ export async function operationTab(tab, el, ctx) {
 							${esc(r.display_name)}<small class="cell-detail">${esc(rankLabel(r.rank))}</small>
 						</td>
 					</tr>`,
-				ctx,
+				{
+					...ctx,
+					renderRows: (rows) => rosterCards(rows, esc, { privateDetails: true, rankLabel }),
+				},
 			);
 		};
 		el.querySelectorAll('.filters select').forEach((s) => (s.onchange = filter));
@@ -716,73 +725,9 @@ export async function attachMemberOperations({ rows, refresh, ...ctx }) {
 	host.className = 'section';
 	host.id = 'member-operations';
 	document.querySelector('#content').append(host);
-	const wishlist = await api('/api/wishlists');
-	host.innerHTML = /* HTML */ `<h2>Mi wishlist</h2>
-		<p>
-			Registra qué objetos buscas. La prioridad expresa tu preferencia; no determina el reparto.
-		</p>
-		${
-			wishlist.length
-				? table(
-						['Personaje', 'Objeto', 'Boss', 'Prioridad', ''],
-						wishlist.map(
-							(r) =>
-								/* HTML */ `<tr>
-									<td>${esc(r.data.characterName)}</td>
-									<td>${esc(r.data.item)}</td>
-									<td>${esc(r.data.boss)}</td>
-									<td>${r.data.priority}</td>
-									<td>
-										<button class="secondary" data-remove-wish="${esc(r.id)}">Retirar</button>
-									</td>
-								</tr>`,
-						),
-					)
-				: empty(
-						'Tu wishlist está vacía',
-						'Añade los objetos que quieres compartir con los responsables de loot.',
-					)
-		}${
-			rows.length
-				? /* HTML */ `<details class="card">
-						<summary>Añadir un objeto</summary>
-						<form id="wishlist-form" class="form">
-							<div class="form-grid">
-								<label
-									>Personaje<select name="characterId">
-										${rows.map((c) => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('')}
-									</select></label
-								>${field('Objeto', 'item')}${field('Boss', 'boss', 'text', '', false)}${select('Prioridad · 1 es la más alta', 'priority', ['1', '2', '3', '4', '5'])}${area('Notas para el equipo de loot', 'notes', false)}
-							</div>
-							<button type="submit">Añadir a wishlist</button>
-						</form>
-					</details>`
-				: ''
-		}
-		<div class="panel-tabs">
-			<button data-member-tab="loot" class="active" aria-pressed="true">Historial de loot</button
-			><button data-member-tab="council" aria-pressed="false" class="secondary">
-				Consejo actual
-			</button>
-		</div>
-		<div id="member-loot"></div>`;
-	formHandler('#wishlist-form', async (v) => {
-		await api('/api/wishlists', 'POST', { ...v, priority: Number(v.priority) });
-		toast('Wishlist actualizada');
-		await refresh();
-	});
-	host.querySelectorAll('[data-remove-wish]').forEach(
-		(b) =>
-			(b.onclick = async () => {
-				if (!confirm('¿Retirar este objeto de tu wishlist?')) return;
-				try {
-					await api('/api/wishlists/' + b.dataset.removeWish, 'DELETE', {});
-					await refresh();
-				} catch (error) {
-					toast(error.message);
-				}
-			}),
-	);
+	host.innerHTML = `<div id="member-wishlist"></div><div class="panel-tabs"><button data-member-tab="loot" class="active" aria-pressed="true">Historial de loot</button><button data-member-tab="council" aria-pressed="false" class="secondary">Consejo actual</button></div><div id="member-loot"></div>`;
+	await mountWishlist(host.querySelector('#member-wishlist'), rows, refresh, ctx);
+
 	host.querySelectorAll('[data-member-tab]').forEach(
 		(b) =>
 			(b.onclick = async () => {

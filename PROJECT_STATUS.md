@@ -185,3 +185,21 @@ y `docs/RECRUITMENT.md`.
   del roster, perfil miembro y todas las pestañas del líder, sin errores JavaScript.
   Comparación móvil/escritorio conserva dimensiones y diseño de las vistas revisadas.
 - No cambia el CSS unificado ni las reglas del backend, login o sincronización.
+
+## Wishlist por encuentro y roster visual — 11 de octubre de 2026
+
+- Roster público y de panel con tarjetas compactas por rol, colores/distintivos
+  por clase y filtros existentes. Respeta la separación entre datos públicos y privados.
+- Wishlist extraída a módulo propio: agrupación raid/boss, prioridades, búsqueda,
+  filtro de personaje, alta y retirada. Las entradas antiguas siguen funcionando.
+- Backend conserva `raid` opcional en el JSON de wishlist, validado a 120 caracteres;
+  sin migración de esquema. La vista de oficiales muestra raid y boss.
+- Investigación: página oficial de Forever consultada; no se identificó en ella
+  una lista verificable de bosses y loot. No se han cargado encuentros inventados.
+- Catálogo extensible en `public/encounter-catalog.js`: fuentes/estado, raids,
+  bosses y espacio para objetos. Las entradas verificadas podrán sugerirse en el
+  formulario. Hasta entonces se permite entrada manual explícita.
+- Fuentes, alcance y mantenimiento documentados en `docs/WISHLIST_CATALOG.md`.
+- Validación: 48 pruebas Node y runtime Cloudflare aprobados; Chromium a 1440,
+  390 y 320 px verifica roster, filtros, privacidad, wishlist antigua, creación,
+  persistencia tras recarga y retirada. Sin errores JavaScript ni desbordamiento.
