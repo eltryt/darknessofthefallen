@@ -39,6 +39,7 @@ try{
  let event=await request('/api/events/'+localId);
  await request('/api/events/'+localId,'PATCH',{title:'[PRUEBA TÉCNICA] Darkness — horario modificado',start:day+'T22:00',end:day+'T23:59',capacity:10,revision:event.revision,requestId:randomUUID()});await tick();
  event=await request('/api/events/'+localId);assert.equal(event.capacity,10);console.log('PASS: real event schedule and capacity changed.');
+ console.log('Template options: '+JSON.stringify(event.classes.map(c=>({name:c.name,type:c.type,specs:c.specs.map(s=>s.name)}))));
  const cls=event.classes.find(c=>['mage','mago'].includes(c.name.toLowerCase()));assert.ok(cls,'WoW template must offer Mage to test a registered Mage character.');
  const spec=cls.specs[0]?.name;
  await request('/api/events/'+localId+'/signup','POST',{characterId:'qa-main',className:cls.name,specName:spec,requestId:randomUUID()});await tick();

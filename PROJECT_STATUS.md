@@ -130,3 +130,7 @@ y `docs/RECRUITMENT.md`.
 - Se endurece la confirmación: tras editar/borrar se relee Raid-Helper antes de dar
   la operación por completada. Los textos de estado de la respuesta se interpretan
   sin asumir una capitalización/valor de éxito no especificados por la documentación.
+- Aceptación API real `8ea1cc9`: creación, deduplicación al repetir envío, cambio de
+  horario/capacidad y limpieza del evento temporal comprobados contra Raid-Helper.
+  Sus mensajes de estado son `Event created!` / `Event updated!`, no el enum `success`.
+  Prueba de inscripciones pendiente de adaptar a las opciones reales de la plantilla.
