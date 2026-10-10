@@ -10,7 +10,7 @@ const classNames={Guerrero:'Warrior','Paladín':'Paladin',Cazador:'Hunter','Píc
 
 export const eventRaw=row=>JSON.parse(row.raw);
 export const canManageEvent=(user,event)=>can(user,'recruitment.manage')||(can(user,'attendance.manage')&&event.organizer_id===user.id);
-export const restricted=raw=>Boolean(raw.advancedSettings?.allowed_roles||raw.advancedSettings?.banned_roles);
+export const restricted=raw=>['allowed_roles','banned_roles'].some(key=>{const value=raw.advancedSettings?.[key];return Array.isArray(value)?value.length>0:Boolean(value)&&String(value).trim().toLowerCase()!=='none';});
 export function mayView(user,row){return canManageEvent(user,row)||(can(user,'community.read')&&!restricted(eventRaw(row)));}
 export function signupStatus(signup,raw){
   const cls=(raw.classes||[]).find(c=>c.name===signup.className);

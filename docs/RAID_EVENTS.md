@@ -110,7 +110,9 @@ La interfaz refresca cada 30 segundos sin cerrar un formulario o detalle abierto
 
 - La clase/spec/opción se toma de la plantilla remota, sin inventar IDs o botones.
   Las clases principales se validan contra el personaje registrado (nombre español
-  o inglés estándar). El jugador selecciona su spec de la plantilla explícitamente.
+  o inglés estándar); la plantilla WoW Forever usa grupos Tank/Melee/Ranged/Healer,
+  que se validan contra su rol registrado. El sentinel `none` de restricciones se
+  trata como ausencia de restricción, según respuesta real del proveedor. El jugador selecciona su spec de la plantilla explícitamente.
 - `primary` en una clase principal se presenta como Confirmado; `queued` y Bench
   como Suplente; Absence como Ausente; Tentative y opciones no interpretables como
   Pendiente de confirmación. «Confirmado» significa inscripción activa en Raid-Helper,
