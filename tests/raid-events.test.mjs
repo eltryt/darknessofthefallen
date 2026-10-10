@@ -119,3 +119,12 @@ test('official list pagination is followed and partial responses fail safely',as
  const calls=[];const provider=raidHelper(env,async(url,options)=>{calls.push(options.headers.Page);return Response.json({pages:2,postedEvents:[{id:options.headers.Page}]});});assert.equal((await provider.list()).length,2);assert.deepEqual(calls,['1','2']);
  await assert.rejects(()=>raidHelper(env,async()=>Response.json({postedEvents:[]})).list());
 });
+
+
+test('WoW Forever role-group template accepts matching roles and rejects mismatched characters',async()=>{
+ const f=await fixture();try{
+  const raw=base();raw.classes=[{name:'Ranged',type:'primary',specs:[{name:'Frost',roleName:'Ranged'}]},{name:'Healer',type:'primary',specs:[{name:'Holy',roleName:'Healer'}]}];const row=ingestRaidEvent(f.db,raw,env);
+  assert.equal((await f.request('/api/events/'+row.id+'/signup','member','POST',{...signupInput(),className:'Healer',specName:'Holy'})).status,400);
+  assert.equal((await f.request('/api/events/'+row.id+'/signup','member','POST',{...signupInput(),className:'Ranged'})).status,202);
+ }finally{await f.close();}
+});

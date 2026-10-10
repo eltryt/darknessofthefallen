@@ -5,6 +5,7 @@ import {raidHelperReady} from './raid-helper.mjs';
 import {madridInstant} from './raid-time.mjs';
 export const categories=['Oficial','Extraordinaria','Voluntaria'];
 const now=()=>new Date().toISOString();
+const groupRoles={tank:'Tanque',healer:'Sanador',melee:'DPS melee',ranged:'DPS distancia'};
 const classNames={Guerrero:'Warrior','Paladín':'Paladin',Cazador:'Hunter','Pícaro':'Rogue',Sacerdote:'Priest','Chamán':'Shaman',Mago:'Mage',Brujo:'Warlock',Druida:'Druid'};
 
 export const eventRaw=row=>JSON.parse(row.raw);
@@ -36,9 +37,9 @@ export function projectEvent(db,row,user,env){
   result.classes=(raw.classes||[]).map(c=>({name:c.name,type:c.type,limit:c.limit,specs:(c.specs||[]).map(s=>({name:s.name,roleName:s.roleName||''}))}));
   result.roleLimits=(raw.roles||[]).map(r=>({name:r.name,limit:r.limit}));
   result.signups=signups.map(s=>{
-    const own=s.userId===user.id,link=db.prepare('SELECT l.*,c.name,c.surname,c.archived_at FROM raid_character_links l JOIN characters c ON c.id=l.character_id WHERE event_id=? AND signup_id=?').get(row.id,String(s.id));
+    const own=s.userId===user.id,link=db.prepare('SELECT l.*,c.name,c.surname,c.class,c.archived_at FROM raid_character_links l JOIN characters c ON c.id=l.character_id WHERE event_id=? AND signup_id=?').get(row.id,String(s.id));
     const linked=link&&!link.archived_at&&link.user_id===s.userId&&link.fingerprint===signupFingerprint(s);
-    return {id:String(s.id),name:s.name,className:s.className,specName:s.specName||'',role:s.roleName||'',status:signupStatus(s,raw),own,userId:manage||own?s.userId:undefined,characterId:linked&&(own||manage)?link.character_id:null,characterName:linked?[link.name,link.surname].filter(Boolean).join(' '):null,registeredCharacter:Boolean(linked)};
+    return {id:String(s.id),name:s.name,className:s.className,specName:s.specName||'',role:s.roleName||'',status:signupStatus(s,raw),own,userId:manage||own?s.userId:undefined,characterId:linked&&(own||manage)?link.character_id:null,characterName:linked?[link.name,link.surname].filter(Boolean).join(' '):null,registeredCharacter:Boolean(linked),registeredClass:linked?link.class:null};
   });
   result.cancelledSignups=db.prepare('SELECT * FROM raid_signup_cancellations WHERE event_id=? ORDER BY cancelled_at DESC LIMIT 100').all(row.id).filter(s=>manage||s.user_id===user.id).map(s=>{const data=JSON.parse(s.data);return {name:data.name,className:data.className,specName:data.specName||'',status:'Cancelado',cancelledAt:s.cancelled_at};});
   result.mine=result.signups.filter(s=>s.own);
@@ -113,7 +114,7 @@ export async function raidEventsApi(ctx){
       const character=db.prepare('SELECT * FROM characters WHERE id=? AND user_id=? AND archived_at IS NULL').get(v.characterId,target);
       if(!character)throw new HttpError(400,'Selecciona un personaje registrado de este jugador.');
       const cls=(raw.classes||[]).find(c=>c.name===v.className);if(!cls)throw new HttpError(400,'Selecciona una opción disponible en la plantilla de Raid-Helper.');
-      if(cls.type!=='default'&&![character.class,classNames[character.class]].some(name=>name?.toLowerCase()===cls.name.toLowerCase()))throw new HttpError(400,'La clase seleccionada no coincide con el personaje registrado.');
+      if(cls.type!=='default'){const groupRole=groupRoles[cls.name.toLowerCase()];if(groupRole?character.role!==groupRole:![character.class,classNames[character.class]].some(name=>name?.toLowerCase()===cls.name.toLowerCase()))throw new HttpError(400,'La clase o el rol seleccionado no coincide con el personaje registrado.');}
       const specs=cls.specs||[];if(specs.length&&!specs.some(s=>s.name===v.specName))throw new HttpError(400,'Selecciona una especialización de Raid-Helper.');
       kind='signup';payload={userId:target,characterId:character.id,signupId:previous[0]?String(previous[0].id):null,value:{userId:target,name:[character.name,character.surname].filter(Boolean).join(' '),className:cls.name,...(specs.length?{specName:v.specName}:{})}};
     }
