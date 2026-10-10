@@ -120,3 +120,8 @@ y `docs/RECRUITMENT.md`.
   `/api/v4/servers/{server}/events`; no se atribuyó el fallo a la clave del propietario.
 - Se añade workflow manual de aceptación real con un evento temporal identificado;
   limpieza limitada a ese evento. Resultado pendiente de ejecución.
+- Despliegue `1f06a84`: backend, Pages y CI aprobados. La lectura de API con la clave
+  configurada devolvió 0 eventos en el canal. Eso no prueba por sí solo permiso de escritura.
+- Aceptación real: la creación rechazó la plantilla WoW Forever con 401, motivo
+  `locked template`. No llegó a publicar un mensaje. Se cambia el valor configurable
+  por la plantilla oficial estándar WoW Classic `599020379125841954`; no se contrata Premium.

@@ -9,7 +9,7 @@ import {createApp} from '../src/app.mjs';
 import {issueSession} from '../src/auth.mjs';
 import {syncRaidEvents} from '../src/raid-sync.mjs';
 import {raidHelper,raidHelperReady} from '../src/raid-helper.mjs';
-const env={...process.env,APP_ORIGIN:'http://localhost:3010',RAID_HELPER_CHANNEL_ID:'1550997172982382723',RAID_HELPER_TEMPLATE_ID:'1552931206847266847'};
+const env={...process.env,APP_ORIGIN:'http://localhost:3010',RAID_HELPER_CHANNEL_ID:'1550997172982382723',RAID_HELPER_TEMPLATE_ID:'599020379125841954'};
 assert.ok(raidHelperReady(env)&&/^\d{17,20}$/.test(env.DISCORD_LEADER_ID||''),'Missing test configuration.');
 const db=openDatabase(':memory:'),api=raidHelper(env),actor=env.DISCORD_LEADER_ID;
 db.prepare('INSERT INTO users VALUES(?,?,?,?)').run(actor,'Prueba técnica autorizada','leader',new Date().toISOString());

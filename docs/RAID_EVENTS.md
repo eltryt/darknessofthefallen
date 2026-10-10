@@ -137,7 +137,7 @@ La interfaz refresca cada 30 segundos sin cerrar un formulario o detalle abierto
 1. En GitHub Actions guardar `RAID_HELPER_API_KEY` como secreto de repositorio.
 2. Se reutiliza `DISCORD_GUILD_ID` ya configurado; no cambiar los secretos OAuth.
 3. Canal confirmado: `1550997172982382723`, variable de Wrangler.
-4. Plantilla oficial WoW Forever de la documentación: `1552931206847266847`.
+4. Plantilla oficial estándar WoW Classic de la documentación: `599020379125841954`.
    Se puede cambiar `RAID_HELPER_TEMPLATE_ID` por la plantilla de la hermandad.
 5. Ejecutar **Deploy backend to Cloudflare**. El workflow comprueba lectura autenticada,
    instala solo la nueva clave con `wrangler secret bulk`, despliega y comprueba login.
@@ -168,3 +168,8 @@ prueba cambios/inscripciones y lo elimina en `finally`. Solo usa el ID del propi
 para un participante de prueba y personajes registrados explícitamente en esa base
 local desechable; no crea perfiles ni sesiones en producción. No sustituye probar
 los botones de Discord con una sesión real del usuario. No se ejecuta en cada deploy.
+
+La plantilla específica WoW Forever `1552931206847266847` devolvió **401 locked template**
+en la prueba real del servidor. El valor inicial se cambió a la plantilla oficial
+WoW Classic `599020379125841954`, configurable, sin modificar plantillas de eventos
+existentes ni contratar accesos. No interpretar ese 401 como prueba de una clave incorrecta.
