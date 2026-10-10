@@ -20,7 +20,7 @@ const request=async(path,method='GET',value)=>{
  assert.ok(r.ok,`Local HTTP handler ${method} failed (${r.status}).`);return r.json();
 };
 let localId,externalId,marker;let failed=false;
-const diagnosticFetch=async(url,options)=>{const response=await fetch(url,options);if(!response.ok){try{const data=await response.clone().json();const reason=data.reason||data.message||data.error;if(typeof reason==='string')console.error('Provider diagnostic: '+reason.replaceAll(env.RAID_HELPER_API_KEY,'[redacted]').replace(/\b\d{17,20}\b/g,'[id]').slice(0,250));}catch{}}return response;};
+const diagnosticFetch=async(url,options)=>{const response=await fetch(url,options);if(options.method!=='GET'||!response.ok){try{const data=await response.clone().json();console.log('Provider response schema: '+Object.keys(data).join(', '));if(data.status)console.log('Provider status: '+String(data.status).replaceAll(env.RAID_HELPER_API_KEY,'[redacted]').slice(0,120));const reason=data.reason||data.message||data.error;if(typeof reason==='string')console.error('Provider diagnostic: '+reason.replaceAll(env.RAID_HELPER_API_KEY,'[redacted]').replace(/\b\d{17,20}\b/g,'[id]').slice(0,250));}catch{}}return response;};
 const tick=async()=>{
  await syncRaidEvents(db,env,diagnosticFetch);
  const job=db.prepare('SELECT status FROM raid_jobs WHERE event_id=? ORDER BY created_at DESC LIMIT 1').get(localId);
@@ -28,8 +28,10 @@ const tick=async()=>{
 };
 try{
  const day=new Date(Date.now()+3*86400000).toISOString().slice(0,10),end=new Date(Date.parse(day)+86400000).toISOString().slice(0,10),key=randomUUID();
+ // Remove only a labelled technical event left by an interrupted run of this script.
+ for(const old of await api.list()){if(old.leaderId===actor&&old.title==='[PRUEBA TÉCNICA] Darkness — se retirará al terminar'&&/^Voluntaria · Prueba técnica temporal\n\[DOTF:[0-9a-f-]{36}\]$/.test(old.description||'')){await api.remove(old.id);console.log('Removed a labelled test event left by the previous attempt.');}}
  const created=await request('/api/events','POST',{title:'[PRUEBA TÉCNICA] Darkness — se retirará al terminar',start:day+'T23:00',end:end+'T01:00',capacity:20,category:'Voluntaria',roster:'Prueba técnica temporal',requestId:key});
- localId=created.id;marker=`[DOTF:${localId}]`;
+ localId=created.id;marker=`[DOTF:${localId}]`;console.log('Technical test correlation: '+marker);
  await tick();externalId=db.prepare('SELECT external_id FROM raid_events WHERE id=?').get(localId).external_id;
  assert.ok(externalId);console.log('PASS: production web handler queued and published one real Raid-Helper message.');
  await request('/api/events','POST',{title:'[PRUEBA TÉCNICA] Darkness — se retirará al terminar',start:day+'T23:00',end:end+'T01:00',capacity:20,category:'Voluntaria',roster:'Prueba técnica temporal',requestId:key});

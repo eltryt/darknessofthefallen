@@ -1,6 +1,7 @@
 // Compiled only by the integration test. Never use this as the deployment entrypoint.
 import worker, {Guild as ProductionGuild} from '../../src/cloudflare-worker.mjs';
 import {issueSession} from '../../src/auth.mjs';
+import {syncRaidEvents} from '../../src/raid-sync.mjs';
 import {transaction} from '../../src/database-core.mjs';
 export class Guild extends ProductionGuild {
   async fetch(request) {
@@ -13,6 +14,10 @@ export class Guild extends ProductionGuild {
       }
       this.db.prepare("INSERT OR IGNORE INTO raid_events(id,channel_id,organizer_id,title,starts_at,ends_at,updated_at) VALUES('runtime-event','test-channel','leader','Private runtime raid','2030-01-01T22:00:00Z','2030-01-02T00:00:00Z','2026-10-10T00:00:00Z')").run();
       return Response.json(sessions);
+    }
+    if(path==='/__test/raid-sync'){
+      await syncRaidEvents(this.db,{...this.env,RAID_HELPER_API_KEY:'runtime-test',DISCORD_GUILD_ID:'1550000000000000001',RAID_HELPER_CHANNEL_ID:'1550997172982382723'});
+      return Response.json(this.db.prepare('SELECT last_success,error FROM raid_sync WHERE id=1').get());
     }
     if (path === '/__test/rollback') {
       try {

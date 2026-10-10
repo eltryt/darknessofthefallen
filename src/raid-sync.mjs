@@ -51,7 +51,7 @@ async function runJob(db,env,provider,job){
     if(!can(actor,'community.read')||restricted(current)||(payload.userId!==actor.id&&!canManageEvent(actor,row)))throw new HttpError(403,'Ya no tienes permiso para cambiar esta inscripción.');
   }
   if(row.state!=='Abierta')throw new HttpError(409,'Esta convocatoria ya no está abierta.');
-  if(job.kind==='cancel'){await provider.remove(row.external_id);cancelled(db,row);return;}
+  if(job.kind==='cancel'){await provider.remove(row.external_id);try{await provider.get(row.external_id);}catch(e){if(e.status===404){cancelled(db,row);return;}throw e;}throw new ProviderError(502);}
   if(job.kind==='update')await provider.update(row.external_id,payload);
   if(['signup','remove_signup'].includes(job.kind)){
     const mine=current.signUps.filter(s=>s.userId===payload.userId);
@@ -65,7 +65,9 @@ async function runJob(db,env,provider,job){
     }
   }
   const updated=ingestRaidEvent(db,await provider.get(row.external_id),env,row.id);
-  if(job.kind==='signup')linkCharacter(db,updated,payload);
+  if(job.kind==='signup'&&!linkCharacter(db,updated,payload))throw new ProviderError(502);
+  if(job.kind==='remove_signup'&&eventRaw(updated).signUps.some(s=>String(s.id)===payload.signupId))throw new ProviderError(502);
+  if(job.kind==='update'){const data=eventRaw(updated);if(data.title!==payload.title||data.startTime!==payload.startTime||data.endTime!==payload.endTime||Number(data.advancedSettings?.limit)!==payload.advancedSettings.limit)throw new ProviderError(502);}
 }
 function linkCharacter(db,row,payload){
   const matches=eventRaw(row).signUps.filter(s=>s.userId===payload.userId&&s.name===payload.value.name&&s.className===payload.value.className&&(s.specName||'')===(payload.value.specName||''));

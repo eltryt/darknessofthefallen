@@ -22,6 +22,7 @@ test('Cloudflare SQLite: permissions, writes, rollback, assets and persistence a
       isolatedResourcePersistencePath: join(directory, 'storage'),
       name: 'darkness-integration',
       bindings: {APP_ORIGIN: 'https://guild.example', DISCORD_CLIENT_ID: 'test-id', DISCORD_CLIENT_SECRET: 'test-secret', DISCORD_GUILD_ID: 'test-guild'},
+      outboundService: async request => {assert.equal(new URL(request.url).hostname,'raid-helper.xyz');return Response.json({pages:0,postedEvents:[]});},
       serviceBindings: {ASSETS: async request => {
         const path = new URL(request.url).pathname;
         return new Response(await readFile(resolve('public', path === '/' ? 'index.html' : path.slice(1))));
@@ -34,6 +35,7 @@ test('Cloudflare SQLite: permissions, writes, rollback, assets and persistence a
     assert.equal(oldAddress.status,302);
     assert.equal(oldAddress.headers.get('location'),'https://guild.example/raids?view=next');
     assert.equal((await runtime.dispatchFetch('https://old.example/api/settings',{method:'PUT',body:'{}'})).status,409);
+    const sync=await (await request('/__test/raid-sync')).json();assert.equal(sync.error,'');assert.ok(sync.last_success);
     assert.equal((await request('/panel')).status, 401);
     assert.equal((await request('/perfil')).status, 401);
     assert.equal((await request('/api/export')).status, 401);

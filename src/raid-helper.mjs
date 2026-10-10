@@ -14,7 +14,7 @@ export function raidHelper(env,transport=fetch){
       }catch{}
       const error=new ProviderError(r.status,Math.max(5,Math.min(seconds,86400)));error.reason=reason;throw error;
     }
-    const valueOut=await r.json();if(valueOut.status&&valueOut.status!=='success')throw new ProviderError(422);
+    const valueOut=await r.json();if(['failed','failure','error'].includes(String(valueOut.status).toLowerCase())||valueOut.error)throw new ProviderError(422);
     return valueOut;
   };
   const id=value=>{if(!/^[\w-]{1,80}$/.test(String(value)))throw new ProviderError(400);return encodeURIComponent(value);};

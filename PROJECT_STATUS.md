@@ -125,3 +125,8 @@ y `docs/RECRUITMENT.md`.
 - Aceptación real inicial: creación rechazada con `401 locked template`. Diagnóstico
   corregido: se había utilizado el ID de la imagen del selector; el ID real de la
   plantilla es `wowforever`. No se publicó ningún mensaje durante esas pruebas fallidas.
+- Añadida integración workerd con transporte saliente simulado para comprobar que el
+  sincronizador completa y persiste su estado en el runtime real, además de Node.
+- Se endurece la confirmación: tras editar/borrar se relee Raid-Helper antes de dar
+  la operación por completada. Los textos de estado de la respuesta se interpretan
+  sin asumir una capitalización/valor de éxito no especificados por la documentación.
