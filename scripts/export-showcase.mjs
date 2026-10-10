@@ -13,6 +13,10 @@ if (memberApp) {
 mkdirSync(join(destination, 'assets'), { recursive: true });
 const source = new URL('../public/', import.meta.url);
 for (const file of [
+	'public-views.js',
+	'public-layout.js',
+	'profile-view.js',
+	'panel-view.js',
 	'raid-events-ui.js',
 	'recruitment-ui.js',
 	'schedule.js',
@@ -21,8 +25,15 @@ for (const file of [
 	'character-editor.js',
 	'operations-ui.js',
 	'assets/guild-logo.png',
-])
-	copyFileSync(new URL(file, source), join(destination, file));
+]) {
+	if (file.endsWith('.js') && memberApp) {
+		const code = readFileSync(new URL(file, source), 'utf8').replaceAll(
+			'href="/reclutamiento"',
+			`href="${memberApp}/reclutamiento"`,
+		);
+		writeFileSync(join(destination, file), code);
+	} else copyFileSync(new URL(file, source), join(destination, file));
+}
 let app = readFileSync(new URL('app.js', source), 'utf8');
 const start = app.indexOf('async function api('),
 	end = app.indexOf('\nfunction field(', start);

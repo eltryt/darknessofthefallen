@@ -87,7 +87,16 @@ test(
 			assert.equal((await request('/panel')).status, 401);
 			assert.equal((await request('/perfil')).status, 401);
 			assert.equal((await request('/api/export')).status, 401);
-			for (const path of ['/', '/reclutamiento', '/app.js', '/assets/guild-logo.png'])
+			for (const path of [
+				'/',
+				'/reclutamiento',
+				'/app.js',
+				'/public-views.js',
+				'/public-layout.js',
+				'/profile-view.js',
+				'/panel-view.js',
+				'/assets/guild-logo.png',
+			])
 				assert.equal((await request(path)).status, 200);
 			const sessions = await (await request('/__test/seed')).json();
 			const headers = (rank) => ({

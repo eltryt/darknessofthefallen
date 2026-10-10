@@ -68,7 +68,7 @@ test('Pages uses the current published website with its logo, branding and confi
 	const html = readFileSync(new URL('index.html', source), 'utf8');
 	assert.match(html, /class="brand-logo"/);
 	assert.match(html, /style\.css/);
-	const app = readFileSync(new URL('app.js', source), 'utf8');
+	const app = readFileSync(new URL('public-layout.js', source), 'utf8');
 	assert.match(app, /function weekSchedule/);
 	assert.match(app, /function publicLayout/);
 });
@@ -108,10 +108,21 @@ test('Pages builds complete, repeatable artifacts at both base paths and rejects
 		assert.match(branding, /showcase-notice/);
 		assert.deepEqual(JSON.parse(readFileSync(new URL('site-data.json', dist), 'utf8')), content());
 		const app = readFileSync(new URL('app.js', dist), 'utf8');
-		assert.ok(app.includes(`from '${base}character-editor.js'`));
-		assert.ok(app.includes(`from '${base}schedule-ui.js'`));
-		assert.ok(app.includes(`from '${base}operations-ui.js'`));
 		assert.ok(app.includes(`fetch('${base}site-data.json')`));
+		for (const file of ['public-views.js', 'public-layout.js', 'profile-view.js', 'panel-view.js'])
+			assert.ok(existsSync(new URL(file, dist)));
+		assert.match(app, /createPublicViews/);
+		// Every static ES module import must resolve inside the exported artifact.
+		for (const file of files.filter((file) => file.endsWith('.js'))) {
+			const code = readFileSync(new URL(file, dist), 'utf8');
+			for (const [, specifier] of code.matchAll(/from\s+['"]([^'"]+)['"]/g)) {
+				const target = specifier.startsWith(base)
+					? new URL(specifier.slice(base.length), dist)
+					: new URL(specifier, new URL(file, dist));
+				assert.ok(existsSync(target), `${file} imports missing ${specifier}`);
+			}
+		}
+
 		assert.match(app, /path\s*=\s*pagesPath\(location\.pathname\)/);
 		assert.ok(app.includes('pagesPath(a.pathname)'));
 		for (const route of [

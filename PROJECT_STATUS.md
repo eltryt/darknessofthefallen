@@ -170,3 +170,18 @@ y `docs/RECRUITMENT.md`.
 - Guía de mantenimiento en `docs/CODE_STYLE.md`. La modularización adicional de
   vistas puede continuar en próximas tandas; no se presenta el formato como una
   reescritura de toda la arquitectura.
+
+## Vistas separadas en módulos — 11 de octubre de 2026
+
+- `app.js` reducido de más de 1.200 líneas a unas 180: arranque, navegación,
+  petición API y utilidades comunes. Sin dependencias circulares entre vistas.
+- Nuevos módulos: `public-views.js` (rutas públicas y sus eventos),
+  `public-layout.js` (composición visual), `profile-view.js` (perfil y personajes)
+  y `panel-view.js` (pestañas y configuración). Reciben contexto explícito.
+- Backend y exportador sirven/copían los nuevos módulos. Los enlaces de candidatura
+  de la presentación siguen apuntando a la aplicación cuando MEMBER_APP_URL existe.
+- Pruebas Pages verifican que cada import estático resuelva en el artefacto.
+- Verificación: 48 pruebas Node; Chromium sobre todas las rutas públicas, filtros
+  del roster, perfil miembro y todas las pestañas del líder, sin errores JavaScript.
+  Comparación móvil/escritorio conserva dimensiones y diseño de las vistas revisadas.
+- No cambia el CSS unificado ni las reglas del backend, login o sincronización.

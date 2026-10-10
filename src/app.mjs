@@ -32,6 +32,10 @@ async function readLocalAsset(file) {
 
 const date = () => new Date().toISOString();
 const files = {
+	'/public-views.js': ['public-views.js', 'text/javascript'],
+	'/public-layout.js': ['public-layout.js', 'text/javascript'],
+	'/profile-view.js': ['profile-view.js', 'text/javascript'],
+	'/panel-view.js': ['panel-view.js', 'text/javascript'],
 	'/raid-events-ui.js': ['raid-events-ui.js', 'text/javascript'],
 	'/recruitment-ui.js': ['recruitment-ui.js', 'text/javascript'],
 	'/schedule.js': ['schedule.js', 'text/javascript'],

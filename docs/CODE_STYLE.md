@@ -4,9 +4,14 @@
 - `public/style.css`: única hoja de estilos. Mantiene, en este orden, base y
   variables, herramientas del panel, identidad visual y presentación estática.
   El orden importa: no reordenar reglas automáticamente por selector.
-- `public/app.js`: entrada de la interfaz, componentes compartidos y composición
-  de páginas. Los módulos de personajes, candidaturas, raids y calendario siguen
-  separados en sus archivos `*-ui.js` y `character-editor.js`.
+- `public/app.js`: arranque, navegación y utilidades compartidas. Construye el
+  contexto de cada vista después de cargar los datos y la sesión.
+- `public/public-views.js`: rutas públicas, roster y candidatura.
+- `public/public-layout.js`: composición visual pública, horarios e identidad.
+- `public/profile-view.js`: perfil, personajes y acciones del jugador.
+- `public/panel-view.js`: pestañas, configuración y herramientas de administración.
+  Cada módulo recibe sus dependencias por contexto; ninguno importa `app.js`.
+  Los módulos especializados `*-ui.js` continúan gestionando sus herramientas.
 - `src/`: backend, autenticación, permisos, persistencia e integraciones.
 - `scripts/`: compilación, despliegue, copias y herramientas administrativas.
 - `tests/`: pruebas funcionales y del runtime de Cloudflare.
@@ -30,6 +35,7 @@ exportadores. Las copias importadas históricas y archivos generados quedan fuer
 del formateador. El CSS no debe introducirse en atributos `style` ni en bloques
 `<style>` dentro del JavaScript: añadir clases y sus reglas a `public/style.css`.
 
-Esta tanda mejora legibilidad y centraliza estilos, conservando la arquitectura.
-La separación de más vistas del archivo principal puede hacerse por módulos en
-futuras tandas, con pruebas del flujo afectado, sin mezclarla con cambios de reglas.
+Las vistas se organizan por responsabilidad. Para añadir un módulo público,
+registrar su recurso en el backend y los exportadores; las pruebas de Pages
+comprueban que sus imports resuelven. Mantener los cambios de reglas de negocio
+separados de las reorganizaciones de código.
