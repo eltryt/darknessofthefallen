@@ -39,7 +39,7 @@ try{
  let event=await request('/api/events/'+localId);
  await request('/api/events/'+localId,'PATCH',{title:'[PRUEBA TÉCNICA] Darkness — horario modificado',start:day+'T22:00',end:day+'T23:59',capacity:10,revision:event.revision,requestId:randomUUID()});await tick();
  event=await request('/api/events/'+localId);assert.equal(event.capacity,10);console.log('PASS: real event schedule and capacity changed.');
- console.log('Restriction settings shape: '+JSON.stringify(Object.fromEntries(['allowed_roles','banned_roles'].map(k=>{const v=JSON.parse(db.prepare('SELECT raw FROM raid_events WHERE id=?').get(localId).raw).advancedSettings?.[k];return [k,{type:typeof v,isEmpty:!v,isFalse:String(v).toLowerCase()==='false'}];}))));
+ console.log('Restriction settings shape: '+JSON.stringify(Object.fromEntries(['allowed_roles','banned_roles'].map(k=>{const v=JSON.parse(db.prepare('SELECT raw FROM raid_events WHERE id=?').get(localId).raw).advancedSettings?.[k];return [k,{type:typeof v,isEmpty:!v,isFalse:String(v).toLowerCase()==='false',sentinel:['not set','none','disabled','undefined','null','false','true','0','all','[]','notset','off','not_set','-','default','no','not-set'].find(x=>x===String(v).trim().toLowerCase())||'custom value'}];}))));
  console.log('Template options: '+JSON.stringify(event.classes.map(c=>({name:c.name,type:c.type,specs:c.specs.map(s=>s.name)}))));
  const cls=event.classes.find(c=>['mage','mago','ranged'].includes(c.name.toLowerCase()));assert.ok(cls,'WoW template must offer Mage to test a registered Mage character.');
  const spec=cls.specs.find(s=>s.name==='Frost')?.name||cls.specs[0]?.name;
