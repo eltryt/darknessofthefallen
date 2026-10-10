@@ -7,7 +7,13 @@ export function raidHelper(env,transport=fetch){
   const call=async(path,method='GET',value,headers={})=>{
     if(!raidHelperReady(env))throw new ProviderError(503);
     const r=await transport('https://raid-helper.xyz/api/'+path,{method,redirect:'error',headers:{Authorization:env.RAID_HELPER_API_KEY,'Content-Type':'application/json',...headers},...(value===undefined?{}:{body:JSON.stringify(value)}),signal:AbortSignal.timeout(10000)});
-    if(!r.ok){let seconds=Number(r.headers.get('retry-after'))||60;if(r.status===429){try{seconds=Number((await r.json()).retry_after)||seconds;}catch{}}throw new ProviderError(r.status,Math.max(5,Math.min(seconds,86400)));}
+    if(!r.ok){
+      let seconds=Number(r.headers.get('retry-after'))||60,reason='';
+      try{const data=await r.json();if(r.status===429)seconds=Number(data.retry_after)||seconds;const value=data.reason||data.message||data.error;
+        if(typeof value==='string'){reason=value.replaceAll(env.RAID_HELPER_API_KEY,'[redacted]').replace(/\b\d{17,20}\b/g,'[id]').slice(0,250);}
+      }catch{}
+      const error=new ProviderError(r.status,Math.max(5,Math.min(seconds,86400)));error.reason=reason;throw error;
+    }
     const valueOut=await r.json();if(valueOut.status&&valueOut.status!=='success')throw new ProviderError(422);
     return valueOut;
   };

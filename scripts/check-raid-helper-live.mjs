@@ -20,8 +20,9 @@ const request=async(path,method='GET',value)=>{
  assert.ok(r.ok,`Local HTTP handler ${method} failed (${r.status}).`);return r.json();
 };
 let localId,externalId,marker;let failed=false;
+const diagnosticFetch=async(url,options)=>{const response=await fetch(url,options);if(!response.ok){try{const data=await response.clone().json();const reason=data.reason||data.message||data.error;if(typeof reason==='string')console.error('Provider diagnostic: '+reason.replaceAll(env.RAID_HELPER_API_KEY,'[redacted]').replace(/\b\d{17,20}\b/g,'[id]').slice(0,250));}catch{}}return response;};
 const tick=async()=>{
- await syncRaidEvents(db,env);
+ await syncRaidEvents(db,env,diagnosticFetch);
  const job=db.prepare('SELECT status FROM raid_jobs WHERE event_id=? ORDER BY created_at DESC LIMIT 1').get(localId);
  assert.equal(job?.status,'done','Remote write did not confirm; inspect configuration and pending state before retrying.');
 };

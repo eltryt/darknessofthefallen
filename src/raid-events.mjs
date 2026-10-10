@@ -64,7 +64,7 @@ export async function raidEventsApi(ctx){
   if(path==='/api/events'&&method==='GET'){
     const rows=db.prepare('SELECT * FROM raid_events ORDER BY starts_at DESC LIMIT 500').all().filter(r=>mayView(user,r)||r.public===1);
     const sync=db.prepare('SELECT last_success,error FROM raid_sync WHERE id=1').get();
-    send(200,{events:rows.map(r=>projectEvent(db,r,user,env)),configured:raidHelperReady(env),sync:can(user,'attendance.manage')?sync:{last_success:sync.last_success}});return true;
+    send(200,{events:rows.map(r=>projectEvent(db,r,user,env)),configured:raidHelperReady(env),sync:can(user,'attendance.manage')?sync:{last_success:sync.last_success,healthy:!sync.error,providerStatus:Number(sync.error.match(/HTTP (\d+)/)?.[1])||null}});return true;
   }
   if(path==='/api/events'&&method==='POST'){
     requirePermission('attendance.manage');if(!raidHelperReady(env))throw new HttpError(503,'Falta activar Raid-Helper. Consulta la configuración del proyecto.');
