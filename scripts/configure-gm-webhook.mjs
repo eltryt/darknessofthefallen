@@ -16,7 +16,23 @@ async function main() {
 	])
 		if (!env[name]) throw new Error('Missing configuration: ' + name);
 	const url = gmWebhook(env);
-	if (!url) throw new Error('DISCORD_GM_WEBHOOK_URL must be a Discord channel webhook URL.');
+	if (!url) {
+		let reason = 'the value is not a complete URL';
+		try {
+			const parsed = new URL(env.DISCORD_GM_WEBHOOK_URL);
+			reason = !['discord.com', 'discordapp.com'].includes(parsed.hostname)
+				? 'the host is not a Discord webhook host'
+				: !parsed.pathname.startsWith('/api/webhooks/') &&
+					  !parsed.pathname.startsWith('/api/v10/webhooks/')
+					? 'the path is not /api/webhooks/ID/TOKEN'
+					: 'the webhook ID/token or URL options are invalid';
+		} catch {}
+		throw new Error(
+			'DISCORD_GM_WEBHOOK_URL must be a Discord channel webhook URL: ' +
+				reason +
+				'. Copy the entire URL from channel settings > Integrations > Webhooks.',
+		);
+	}
 	const response = await fetch(url, { redirect: 'error', signal: AbortSignal.timeout(10000) });
 	if (!response.ok)
 		throw new Error('Discord webhook validation failed (HTTP ' + response.status + ').');

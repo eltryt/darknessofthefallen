@@ -9,15 +9,18 @@ export function gmWebhook(env) {
 		const url = new URL(value);
 		if (
 			url.protocol !== 'https:' ||
-			url.hostname !== 'discord.com' ||
+			!['discord.com', 'discordapp.com'].includes(url.hostname) ||
 			url.port ||
 			url.username ||
 			url.password ||
-			!/^\/api(?:\/v10)?\/webhooks\/\d{17,20}\/[\w-]+$/.test(url.pathname) ||
-			url.search ||
+			!/^\/api(?:\/v10)?\/webhooks\/\d{17,20}\/[\w.-]+\/?$/.test(url.pathname) ||
+			[...url.searchParams.keys()].some((key) => key !== 'wait') ||
 			url.hash
 		)
 			return null;
+		url.hostname = 'discord.com';
+		url.pathname = url.pathname.replace(/\/$/, '');
+		url.search = '';
 		return url;
 	} catch {
 		return null;

@@ -137,3 +137,22 @@ test('message creation is idempotent and inbox is restricted to officers', async
 		db.close();
 	}
 });
+
+test('Discord legacy URLs and wait query are supported without allowing arbitrary endpoints', () => {
+	assert.equal(
+		gmReady({
+			...env,
+			DISCORD_GM_WEBHOOK_URL:
+				'https://discordapp.com/api/webhooks/1550997172982382723/test.token/?wait=true',
+		}),
+		true,
+	);
+	assert.equal(
+		gmReady({
+			...env,
+			DISCORD_GM_WEBHOOK_URL:
+				'https://discord.com/developers/applications/1550997172982382723/webhooks',
+		}),
+		false,
+	);
+});
