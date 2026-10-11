@@ -46,11 +46,21 @@ test(
 				name: 'darkness-integration',
 				bindings: {
 					APP_ORIGIN: 'https://guild.example',
+					GM_NOTIFICATIONS_ENABLED: 'true',
+					DISCORD_GM_WEBHOOK_URL:
+						'https://discord.com/api/webhooks/1550997172982382723/runtime-token',
 					DISCORD_CLIENT_ID: 'test-id',
 					DISCORD_CLIENT_SECRET: 'test-secret',
 					DISCORD_GUILD_ID: 'test-guild',
 				},
 				outboundService: async (request) => {
+					if (new URL(request.url).hostname === 'discord.com') {
+						const payload = await request.json();
+						assert.match(payload.content, /Nueva solicitud de reclutamiento/);
+						assert.match(payload.content, /panel\?tab=applications&record=/);
+						assert.ok(!payload.content.includes('private-discord-handle'));
+						return Response.json({ id: '1550997172982382724' });
+					}
 					assert.equal(new URL(request.url).hostname, 'raid-helper.xyz');
 					return Response.json({ pages: 0, postedEvents: [] });
 				},
@@ -147,6 +157,13 @@ test(
 			const sent = await request('/api/applications', submit(candidate));
 			assert.equal(sent.status, 201);
 			const application = await sent.json();
+			const notices = await (
+				await request('/api/gm-notifications', { headers: headers('leader') })
+			).json();
+			assert.equal(notices.rows[0].target_id, application.id);
+			assert.equal(notices.rows[0].status, 'pending');
+			const delivery = await (await request('/__test/gm-deliver')).json();
+			assert.equal(delivery[0].status, 'delivered', JSON.stringify(delivery));
 			assert.equal((await request('/api/applications')).status, 401);
 			assert.equal(
 				(await request('/api/applications', { headers: headers('member') })).status,

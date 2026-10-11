@@ -232,3 +232,20 @@ y `docs/RECRUITMENT.md`.
 - Siguiente comprobación de uso: observar en el panel el estado de entrega de la
   próxima candidatura real. Pruebas de formularios y cola realizadas localmente;
   prueba de webhook y lectura realizadas contra Discord real.
+
+## Corrección del aviso automático de candidaturas — 11 de octubre de 2026
+
+- La candidatura sí generaba su aviso, pero Workers rechazaba `redirect: error`
+  antes de realizar el envío. La prueba anterior desde Node no detectaba esta
+  incompatibilidad; no demostraba el recorrido completo en Cloudflare.
+- Cambiado a `redirect: manual`; las redirecciones se rechazan explícitamente sin
+  seguirlas ni reenviar la credencial a otro destino.
+- Prueba de regresión workerd: POST real al endpoint de candidaturas, comprobación
+  de cola, envío con Discord simulado y estado entregado. Reproduce el fallo antes
+  del arreglo y pasa después; sin datos privados en el contenido del aviso.
+- Recuperación única y auditada en Workers de los avisos anteriores al
+  11/10/2026 12:29:08 UTC con el error concreto del despliegue inicial. El runtime
+  rechazaba la petición antes de enviarla; se reencolan sin recrear candidaturas.
+  No se reenvían entregados, restaurados, interrumpidos ni fallos posteriores.
+- Despliegue correctivo pendiente; la entrega de la candidatura del usuario aún
+  debe confirmarse en Discord. No se ha accedido a su sesión privada.

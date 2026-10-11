@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { openDatabase } from '../src/db.mjs';
 import {
+	repairGMRedirectFailures,
 	enqueueGM,
 	deliverGM,
 	gmReady,
@@ -155,4 +156,35 @@ test('Discord legacy URLs and wait query are supported without allowing arbitrar
 		}),
 		false,
 	);
+});
+
+test('Workers redirect recovery only requeues known pre-fix failures once', () => {
+	const db = openDatabase(':memory:');
+	try {
+		enqueueGM(db, 'recruitment', 'old');
+		enqueueGM(db, 'recruitment', 'new');
+		db.exec(
+			"UPDATE gm_notifications SET status='uncertain', last_error='Respuesta no confirmada: revisa el canal antes de reintentar.'",
+		);
+		db.prepare('UPDATE gm_notifications SET created_at=? WHERE target_id=?').run(
+			'2026-10-11T12:23:45.000Z',
+			'old',
+		);
+		db.prepare('UPDATE gm_notifications SET created_at=? WHERE target_id=?').run(
+			'2026-10-12T12:00:00.000Z',
+			'new',
+		);
+		assert.equal(repairGMRedirectFailures(db), 1);
+		assert.equal(
+			db.prepare("SELECT status FROM gm_notifications WHERE target_id='old'").get().status,
+			'pending',
+		);
+		assert.equal(
+			db.prepare("SELECT status FROM gm_notifications WHERE target_id='new'").get().status,
+			'uncertain',
+		);
+		assert.equal(repairGMRedirectFailures(db), 0);
+	} finally {
+		db.close();
+	}
 });

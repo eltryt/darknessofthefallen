@@ -2,6 +2,26 @@ import { randomUUID } from 'node:crypto';
 import { audit, transaction } from './database-core.mjs';
 import { HttpError, text } from './domain.mjs';
 
+// One-time recovery for the first Workers deployment: redirect:'error' was
+// rejected before dispatch. Do not replay genuinely ambiguous network failures.
+export function repairGMRedirectFailures(db) {
+	return transaction(db, () => {
+		const action = 'notification.redirect_runtime_repair';
+		if (db.prepare('SELECT 1 FROM audit WHERE action=?').get(action)) return 0;
+		const repaired = db
+			.prepare(
+				`UPDATE gm_notifications
+   SET status='pending',attempts=0,next_at=0,last_error=''
+   WHERE status='uncertain' AND message_id IS NULL
+    AND last_error='Respuesta no confirmada: revisa el canal antes de reintentar.'
+    AND created_at<='2026-10-11T12:29:08.000Z'`,
+			)
+			.run().changes;
+		audit(db, 'system', action, 'gm_notifications', { repaired });
+		return repaired;
+	});
+}
+
 export function gmWebhook(env) {
 	const value = env.DISCORD_GM_WEBHOOK_URL;
 	if (!value) return null;
@@ -77,7 +97,8 @@ export async function deliverGM(db, env, transport = fetch) {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(gmPayload(row.kind, row.target_id, env.APP_ORIGIN)),
-				redirect: 'error',
+				// Workers supports manual redirects; never forward this secret to a redirected host.
+				redirect: 'manual',
 				signal: AbortSignal.timeout(10000),
 			});
 			const result = await response.json().catch(() => ({}));
@@ -85,6 +106,9 @@ export async function deliverGM(db, env, transport = fetch) {
 				status = 'delivered';
 				reason = '';
 				messageId = result.id;
+			} else if (response.status >= 300 && response.status < 400) {
+				status = 'failed';
+				reason = 'Discord devolvió una redirección. No se ha seguido por seguridad.';
 			} else if (response.status === 429) {
 				status = row.attempts + 1 >= 5 ? 'failed' : 'pending';
 				reason = 'Discord ha limitado los envíos. Reintento aplazado.';

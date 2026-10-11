@@ -1,3 +1,4 @@
+import { deliverGM } from '../../src/gm-notifications.mjs';
 // Compiled only by the integration test. Never use this as the deployment entrypoint.
 import worker, { Guild as ProductionGuild } from '../../src/cloudflare-worker.mjs';
 import { issueSession } from '../../src/auth.mjs';
@@ -6,6 +7,10 @@ import { transaction } from '../../src/database-core.mjs';
 export class Guild extends ProductionGuild {
 	async fetch(request) {
 		const path = new URL(request.url).pathname;
+		if (path === '/__test/gm-deliver') {
+			await deliverGM(this.db, this.env);
+			return Response.json(this.db.prepare('SELECT status,last_error FROM gm_notifications').all());
+		}
 		if (path === '/__test/seed') {
 			const sessions = {};
 			for (const rank of ['member', 'leader']) {

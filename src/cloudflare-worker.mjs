@@ -1,5 +1,10 @@
 import gmSchema from '../migrations/006_gm_notifications.sql';
-import { deliverGM, gmReady, captureRaidIncidents } from './gm-notifications.mjs';
+import {
+	deliverGM,
+	gmReady,
+	captureRaidIncidents,
+	repairGMRedirectFailures,
+} from './gm-notifications.mjs';
 import { DurableObject } from 'cloudflare:workers';
 import { Buffer } from 'node:buffer';
 import { createApp } from './app.mjs';
@@ -25,6 +30,7 @@ export class Guild extends DurableObject {
 			raidEventsSchema,
 			gmSchema,
 		);
+		repairGMRedirectFailures(this.db);
 	}
 
 	async fetch(request) {
