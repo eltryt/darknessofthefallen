@@ -395,6 +395,21 @@ export function createApp(db, env, { readAsset = readLocalAsset } = {}) {
 						.map((r) => ({ ...r, data: JSON.parse(r.data) })),
 				);
 			}
+			if (/^\/api\/applications\/[^/]+$/.test(path) && method === 'DELETE') {
+				requirePermission('recruitment.manage');
+				const id = path.split('/')[3];
+				transaction(db, () => {
+					if (!db.prepare('SELECT id FROM applications WHERE id=?').get(id))
+						throw new HttpError(404, 'Candidatura no encontrada.');
+					db.prepare('DELETE FROM outbox WHERE application_id=?').run(id);
+					db.prepare("DELETE FROM gm_notifications WHERE kind='recruitment' AND target_id=?").run(
+						id,
+					);
+					db.prepare('DELETE FROM applications WHERE id=?').run(id);
+					audit(db, user.id, 'application.deleted', id, {});
+				});
+				return send(200, { ok: true });
+			}
 			if (path.startsWith('/api/applications/') && method === 'PATCH') {
 				requirePermission('recruitment.manage');
 				const id = path.split('/')[3],

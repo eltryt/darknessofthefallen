@@ -251,3 +251,15 @@ y `docs/RECRUITMENT.md`.
   56 pruebas Node y prueba workerd aprobadas. Salud HTTPS y login verificados.
   Recuperación automática instalada; la recepción final del aviso del usuario
   debe confirmarse en Discord/panel. No se ha accedido a su sesión privada.
+
+## Borrado de candidaturas — 11 de octubre de 2026
+
+- Botón «Borrar candidatura» en cada tarjeta, con confirmación de borrado definitivo.
+  Actualiza tarjetas y contador conservando filtros; muestra errores sin ocultar datos.
+- Endpoint DELETE protegido con `recruitment.manage` (Líder/Oficiales), sesión,
+  origen y CSRF. Borrado atómico de candidatura, cola antigua y avisos asociados;
+  auditoría por referencia sin copiar el contenido personal de la solicitud.
+- No elimina mensajes ya publicados en Discord ni altera otras candidaturas.
+- Validación: 57 pruebas Node, runtime Cloudflare y Chromium a 320/390/1440 px
+  (cancelar, confirmar, persistencia tras recargar y estado vacío) aprobados.
+- Publicación mediante el workflow de backend existente.

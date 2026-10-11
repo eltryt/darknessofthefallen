@@ -354,3 +354,46 @@ test('GM inbox enforces authentication, ranks and CSRF through real HTTP routes'
 		await f.close();
 	}
 });
+
+test('application deletion requires staff and CSRF, removes queues and preserves other applications', async () => {
+	const f = await fixture();
+	try {
+		for (const id of ['remove', 'keep'])
+			f.db
+				.prepare('INSERT INTO applications(id,data,created_at,updated_at) VALUES(?,?,?,?)')
+				.run(id, '{}', '2026-10-11', '2026-10-11');
+		f.db.prepare('INSERT INTO outbox(id,application_id) VALUES(?,?)').run('out', 'remove');
+		f.db
+			.prepare(
+				'INSERT INTO gm_notifications(id,kind,target_id,dedupe_key,created_at) VALUES(?,?,?,?,?)',
+			)
+			.run('notice', 'recruitment', 'remove', 'recruitment:remove', '2026-10-11');
+		for (const rank of [undefined, 'visitor', 'member', 'raider', 'raid_leader'])
+			assert.equal(
+				(await f.request('/api/applications/remove', rank, 'DELETE')).status,
+				rank ? 403 : 401,
+			);
+		assert.equal(
+			(
+				await f.request('/api/applications/remove', 'leader', 'DELETE', undefined, {
+					'X-CSRF-Token': 'wrong',
+				})
+			).status,
+			403,
+		);
+		assert.equal((await f.request('/api/applications/remove', 'leader', 'DELETE')).status, 200);
+		assert.equal(f.db.prepare("SELECT COUNT(*) n FROM applications WHERE id='remove'").get().n, 0);
+		assert.equal(f.db.prepare('SELECT COUNT(*) n FROM outbox').get().n, 0);
+		assert.equal(f.db.prepare('SELECT COUNT(*) n FROM gm_notifications').get().n, 0);
+		assert.ok(f.db.prepare("SELECT 1 FROM applications WHERE id='keep'").get());
+		assert.ok(
+			f.db
+				.prepare("SELECT 1 FROM audit WHERE action='application.deleted' AND target='remove'")
+				.get(),
+		);
+		assert.equal((await f.request('/api/applications/remove', 'leader', 'DELETE')).status, 404);
+		assert.equal((await f.request('/api/applications/keep', 'officer', 'DELETE')).status, 200);
+	} finally {
+		await f.close();
+	}
+});

@@ -131,6 +131,9 @@ ${esc(row.notes)}</textarea>
 										automático al candidato.
 									</p>
 									<button type="submit">Guardar revisión</button>
+									<button type="button" class="secondary" data-delete-application="${esc(row.id)}">
+										Borrar candidatura
+									</button>
 									<p class="review-feedback" role="status"></p>
 								</form>
 							</article>`,
@@ -142,6 +145,33 @@ ${esc(row.notes)}</textarea>
 						${rows.length ? 'Prueba otro nombre o estado.' : 'Las solicitudes enviadas desde Reclutamiento aparecerán aquí.'}
 					</p>
 				</div>`;
+
+		for (const button of list.querySelectorAll('[data-delete-application]')) {
+			button.addEventListener('click', async () => {
+				const index = rows.findIndex((row) => row.id === button.dataset.deleteApplication);
+				if (index < 0 || button.disabled) return;
+				const row = rows[index];
+				if (
+					!confirm(
+						`¿Borrar definitivamente la candidatura de ${row.data.name}? Se eliminarán sus datos y notas. Esta acción no se puede deshacer.`,
+					)
+				)
+					return;
+				button.disabled = true;
+				try {
+					await api('/api/applications/' + row.id, 'DELETE');
+					rows.splice(
+						rows.findIndex((entry) => entry.id === row.id),
+						1,
+					);
+					render();
+					toast('Candidatura borrada');
+				} catch (error) {
+					toast(error.message);
+					button.disabled = false;
+				}
+			});
+		}
 		for (const form of list.querySelectorAll('form'))
 			form.addEventListener('submit', async (event) => {
 				event.preventDefault();
