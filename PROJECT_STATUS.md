@@ -263,3 +263,5 @@ y `docs/RECRUITMENT.md`.
 - Validación: 57 pruebas Node, runtime Cloudflare y Chromium a 320/390/1440 px
   (cancelar, confirmar, persistencia tras recargar y estado vacío) aprobados.
 - Publicación mediante el workflow de backend existente.
+- Despliegue confirmado: `94b580f`, Actions 38164777202 correcto. Módulo de
+  candidaturas servido en producción idéntico al probado y salud HTTPS correcta.
