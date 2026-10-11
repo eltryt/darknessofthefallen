@@ -1,3 +1,4 @@
+import { deliverGM, captureRaidIncidents } from './gm-notifications.mjs';
 import { createServer } from 'node:http';
 import { existsSync } from 'node:fs';
 import { openDatabase } from './db.mjs';
@@ -20,6 +21,8 @@ const timer = setInterval(async () => {
 	try {
 		await deliverRecruitment(db, env);
 		await syncRaidEvents(db, env);
+		captureRaidIncidents(db, env);
+		await deliverGM(db, env);
 	} catch {
 		console.error('Notification delivery unavailable. Check configuration.');
 	} finally {

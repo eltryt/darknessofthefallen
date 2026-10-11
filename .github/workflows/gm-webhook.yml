@@ -1,0 +1,30 @@
+name: Configure private GM webhook
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: cloudflare-backend
+  cancel-in-progress: false
+jobs:
+  configure:
+    runs-on: ubuntu-latest
+    env:
+      WRANGLER_SEND_METRICS: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci
+      - run: node --test tests/gm-notifications.test.mjs
+      - name: Check webhook, send one test and install secret
+        run: node scripts/configure-gm-webhook.mjs
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || vars.CLOUDFLARE_ACCOUNT_ID }}
+          DISCORD_GM_WEBHOOK_URL: ${{ secrets.DISCORD_GM_WEBHOOK_URL }}
+          DISCORD_GUILD_ID: ${{ secrets.DISCORD_GUILD_ID }}
+          DISCORD_LEADER_ID: ${{ secrets.DISCORD_LEADER_ID }}
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_ROLE_MAP: ${{ secrets.DISCORD_ROLE_MAP }}

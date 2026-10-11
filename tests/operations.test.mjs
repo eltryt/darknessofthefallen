@@ -394,7 +394,7 @@ test('migration runs once and preserves existing records on reopening', () => {
 		db.prepare('INSERT INTO users VALUES(?,?,?,?)').run('id', 'Miembro', 'member', '2026-10-07');
 		db.close();
 		db = openDatabase(file);
-		assert.equal(db.prepare('SELECT count(*) n FROM schema_migrations').get().n, 5);
+		assert.equal(db.prepare('SELECT count(*) n FROM schema_migrations').get().n, 6);
 		assert.equal(
 			db.prepare('SELECT display_name FROM users WHERE id=?').get('id').display_name,
 			'Miembro',

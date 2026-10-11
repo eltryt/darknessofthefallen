@@ -1,3 +1,5 @@
+import gmSchema from '../migrations/006_gm_notifications.sql';
+import { deliverGM, gmReady, captureRaidIncidents } from './gm-notifications.mjs';
 import { DurableObject } from 'cloudflare:workers';
 import { Buffer } from 'node:buffer';
 import { createApp } from './app.mjs';
@@ -21,6 +23,7 @@ export class Guild extends DurableObject {
 			invitationSchema,
 			recruitmentSchema,
 			raidEventsSchema,
+			gmSchema,
 		);
 	}
 
@@ -81,6 +84,18 @@ export class Guild extends DurableObject {
 	}
 
 	async scheduleNotifications() {
+		if (gmReady(this.env)) {
+			const row = this.db
+				.prepare(
+					"SELECT MIN(next_at) due FROM gm_notifications WHERE status IN ('pending','sending')",
+				)
+				.get();
+			if (row.due !== null) {
+				const due = Math.max(Date.now() + 60000, row.due),
+					alarm = await this.ctx.storage.getAlarm();
+				if (alarm === null || alarm > due) await this.ctx.storage.setAlarm(due);
+			}
+		}
 		if (raidHelperReady(this.env)) {
 			const sync = this.db.prepare('SELECT next_at FROM raid_sync WHERE id=1').get(),
 				job = this.db
@@ -105,6 +120,8 @@ export class Guild extends DurableObject {
 		if (origin) await deliverRecruitment(this.db, { ...this.env, APP_ORIGIN: origin });
 		try {
 			await syncRaidEvents(this.db, this.env);
+			captureRaidIncidents(this.db, this.env);
+			await deliverGM(this.db, this.env);
 		} finally {
 			await this.scheduleNotifications();
 		}

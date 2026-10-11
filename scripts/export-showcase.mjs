@@ -16,6 +16,7 @@ for (const file of [
 	'roster-ui.js',
 	'wishlist-ui.js',
 	'encounter-catalog.js',
+	'gm-ui.js',
 	'public-views.js',
 	'public-layout.js',
 	'profile-view.js',

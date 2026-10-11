@@ -102,3 +102,8 @@ Copias y ensayo de restauración: [docs/RECOVERY.md](docs/RECOVERY.md).
 
 Formato y organización del código: [docs/CODE_STYLE.md](docs/CODE_STYLE.md).
 Usa `npm run format` antes de publicar; CI verifica `npm run format:check`.
+
+### Avisos privados al GM
+
+Configuración de `DISCORD_GM_WEBHOOK_URL`, prueba de envío, cola persistente,
+permisos y recuperación: [docs/GM_NOTIFICATIONS.md](docs/GM_NOTIFICATIONS.md).

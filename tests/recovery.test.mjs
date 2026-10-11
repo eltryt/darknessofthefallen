@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
@@ -129,5 +130,28 @@ test('native local backup preserves WAL data and rejects a missing database', ()
 	} finally {
 		db.close();
 		rmSync(dir, { recursive: true, force: true });
+	}
+});
+
+test('schema 5 snapshots remain restorable after notification migration', () => {
+	const source = openDatabase(':memory:'),
+		target = openDatabase(':memory:');
+	try {
+		seed(source);
+		const snapshot = exportRecovery(source);
+		snapshot.databaseVersion = 5;
+		delete snapshot.gm_messages;
+		delete snapshot.gm_notifications;
+		const { integrity, ...content } = snapshot;
+		snapshot.integrity = {
+			algorithm: 'sha256',
+			digest: createHash('sha256').update(JSON.stringify(content)).digest('hex'),
+		};
+		assert.equal(restoreRecovery(target, snapshot).verified, true);
+		assert.equal(target.prepare('SELECT COUNT(*) n FROM gm_notifications').get().n, 0);
+		assert.equal(target.prepare('SELECT COUNT(*) n FROM applications').get().n, 1);
+	} finally {
+		source.close();
+		target.close();
 	}
 });

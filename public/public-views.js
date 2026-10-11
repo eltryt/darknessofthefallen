@@ -1,3 +1,4 @@
+import { contactForm } from './gm-ui.js';
 import { rosterCards } from './roster-ui.js';
 import { createPublicLayout } from './public-layout.js';
 import { mountRaidEvents } from './raid-events-ui.js';
@@ -306,6 +307,12 @@ export function createPublicViews(context) {
 		}
 		$('#content').innerHTML = publicLayout(path, html);
 		attachSchedulePlanner(s);
+		if (path === '/contacto' && context.me?.permissions.includes('community.read')) {
+			const host = document.createElement('section');
+			host.className = 'section';
+			$('#content').append(host);
+			contactForm(host, context);
+		}
 		if (path === '/raids') {
 			const host = document.createElement('section');
 			host.className = 'section';

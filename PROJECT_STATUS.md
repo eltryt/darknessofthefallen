@@ -203,3 +203,21 @@ y `docs/RECRUITMENT.md`.
 - Validación: 48 pruebas Node y runtime Cloudflare aprobados; Chromium a 1440,
   390 y 320 px verifica roster, filtros, privacidad, wishlist antigua, creación,
   persistencia tras recarga y retirada. Sin errores JavaScript ni desbordamiento.
+
+## Avisos privados al GM — 11 de octubre de 2026
+
+- Webhook `DISCORD_GM_WEBHOOK_URL` exclusivo del backend; avisos genéricos con
+  enlaces al panel para nuevas candidaturas, contactos e incidencias.
+- Formulario de contacto para miembros autenticados y pestaña «Mensajes y avisos»
+  privada del GM/oficiales; permisos comprobados en backend y CSRF existente.
+- Cola persistente con deduplicación, reintentos de límites de Discord, auditoría
+  y revisión manual de entregas inciertas para evitar duplicados por timeout.
+- Incidencias manuales y trabajos recientes bloqueados de Raid-Helper. No incluye
+  monitorización universal de errores ni reenvío de candidaturas históricas.
+- Migración 006 y copias de esquema 6 compatibles con restauración de esquema 5.
+- Procedimiento y límites: `docs/GM_NOTIFICATIONS.md`. Workflow manual comprueba
+  servidor, envío/lectura de prueba e instala secretos sin imprimir sus valores.
+- Validación: 54 pruebas Node, runtime Cloudflare, compilación backend/Pages y
+  Chromium a 320/390/1440 px aprobados (contacto, privacidad y panel).
+- Despliegue y envío real pendientes de ejecución; los permisos del canal
+  requieren bot autorizado o revisión manual.

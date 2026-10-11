@@ -1,3 +1,4 @@
+import { gmApi, enqueueGM, gmReady } from './gm-notifications.mjs';
 import { exportRecovery } from './recovery.mjs';
 import { randomUUID } from 'node:crypto';
 import { Buffer } from 'node:buffer';
@@ -32,6 +33,7 @@ async function readLocalAsset(file) {
 
 const date = () => new Date().toISOString();
 const files = {
+	'/gm-ui.js': ['gm-ui.js', 'text/javascript'],
 	'/roster-ui.js': ['roster-ui.js', 'text/javascript'],
 	'/wishlist-ui.js': ['wishlist-ui.js', 'text/javascript'],
 	'/encounter-catalog.js': ['encounter-catalog.js', 'text/javascript'],
@@ -151,6 +153,20 @@ export function createApp(db, env, { readAsset = readLocalAsset } = {}) {
 				res.writeHead(status, { ...headers, 'Content-Type': type, ...extra });
 				res.end(value);
 			};
+			if (
+				await gmApi({
+					db,
+					user,
+					path,
+					method,
+					url,
+					body: () => body(req),
+					send,
+					env,
+					requirePermission,
+				})
+			)
+				return;
 			if (
 				await raidEventsApi({
 					db,
@@ -359,7 +375,11 @@ export function createApp(db, env, { readAsset = readLocalAsset } = {}) {
 						date(),
 						date(),
 					);
-					if (env.RECRUITMENT_NOTIFICATIONS_ENABLED === 'true' && env.DISCORD_RECRUITMENT_WEBHOOK)
+					if (gmReady(env)) enqueueGM(db, 'recruitment', id);
+					else if (
+						env.RECRUITMENT_NOTIFICATIONS_ENABLED === 'true' &&
+						env.DISCORD_RECRUITMENT_WEBHOOK
+					)
 						db.prepare('INSERT INTO outbox(id,application_id) VALUES(?,?)').run(randomUUID(), id);
 					audit(db, user?.id || 'candidate', 'application.created', id, {});
 				});

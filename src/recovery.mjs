@@ -19,6 +19,8 @@ export const recoveryTables = [
 	'raid_jobs',
 	'raid_sync',
 	'outbox',
+	'gm_messages',
+	'gm_notifications',
 ];
 const digest = (value) => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const content = (s) => ({
@@ -26,13 +28,17 @@ const content = (s) => ({
 	databaseVersion: s.databaseVersion,
 	exportedAt: s.exportedAt,
 	settings: s.settings,
-	...Object.fromEntries(recoveryTables.map((t) => [t, s[t]])),
+	...Object.fromEntries(
+		recoveryTables
+			.filter((t) => s.databaseVersion >= 6 || !t.startsWith('gm_'))
+			.map((t) => [t, s[t]]),
+	),
 });
 export function exportRecovery(db) {
 	return transaction(db, () => {
 		const snapshot = {
 			schemaVersion: 2,
-			databaseVersion: 5,
+			databaseVersion: 6,
 			exportedAt: new Date().toISOString(),
 			settings: JSON.parse(db.prepare('SELECT data FROM settings WHERE id=1').get().data),
 		};
@@ -43,7 +49,7 @@ export function exportRecovery(db) {
 	});
 }
 export function validateRecovery(snapshot) {
-	if (!snapshot || snapshot.schemaVersion !== 2 || snapshot.databaseVersion !== 5)
+	if (!snapshot || snapshot.schemaVersion !== 2 || ![5, 6].includes(snapshot.databaseVersion))
 		throw new Error('Formato no compatible: descarga una nueva exportación JSON desde el panel.');
 	if (
 		!snapshot.settings ||
@@ -51,7 +57,9 @@ export function validateRecovery(snapshot) {
 		Array.isArray(snapshot.settings)
 	)
 		throw new Error('Configuración inválida.');
-	for (const table of recoveryTables)
+	for (const table of recoveryTables.filter(
+		(t) => snapshot.databaseVersion >= 6 || !t.startsWith('gm_'),
+	))
 		if (!Array.isArray(snapshot[table])) throw new Error(`Falta la tabla ${table}.`);
 	if (
 		snapshot.integrity?.algorithm !== 'sha256' ||
@@ -84,7 +92,7 @@ export function restoreRecovery(db, snapshot) {
 			const insert = db.prepare(
 				`INSERT INTO ${table} (${columns.map((c) => `"${c}"`).join(',')}) VALUES (${columns.map(() => '?').join(',')})`,
 			);
-			for (const original of snapshot[table]) {
+			for (const original of snapshot[table] || []) {
 				if (
 					!original ||
 					typeof original !== 'object' ||
@@ -94,6 +102,10 @@ export function restoreRecovery(db, snapshot) {
 					throw new Error(`Columnas incompatibles en ${table}.`);
 				const row = { ...original };
 				// Restoring a backup must never replay side effects against Discord.
+				if (table === 'gm_notifications' && row.status !== 'delivered') {
+					row.status = 'uncertain';
+					row.last_error = 'Copia restaurada: revisa el canal antes de reintentar.';
+				}
 				if (table === 'raid_jobs' && row.status !== 'done') {
 					row.status = 'blocked';
 					row.error = 'Recuperado de copia: revisar en Discord antes de reintentar.';

@@ -1,3 +1,4 @@
+import { gmInbox } from './gm-ui.js';
 import { mountRaidEvents } from './raid-events-ui.js';
 import { operationTab } from './operations-ui.js';
 import { applicationInbox } from './recruitment-ui.js';
@@ -24,6 +25,7 @@ export function createPanelView(context) {
 		const tabs = [
 			['roster.read', 'roster', 'Roster'],
 			['recruitment.manage', 'applications', 'Candidaturas'],
+			['recruitment.manage', 'messages', 'Mensajes y avisos'],
 			['attendance.manage', 'raids', 'Raids'],
 			['attendance.manage', 'attendance', 'Asistencia'],
 			['loot.manage', 'loot', 'Loot'],
@@ -57,12 +59,24 @@ export function createPanelView(context) {
 					});
 				}),
 		);
-		if (tabs[0]) await panelTab(tabs[0][1]);
+		const selected = new URLSearchParams(location.search).get('tab');
+		const active = tabs.find((t) => t[1] === selected) || tabs[0];
+		if (active) {
+			document.querySelectorAll('[data-tab]').forEach((b) => {
+				b.classList.toggle('active', b.dataset.tab === active[1]);
+				b.setAttribute('aria-pressed', String(b.dataset.tab === active[1]));
+			});
+			await panelTab(active[1]);
+		}
 	}
 
 	async function panelTab(tab) {
 		const el = $('#panel-body');
 		el.innerHTML = '<p role="status">Cargando…</p>';
+		if (tab === 'messages') {
+			await gmInbox(el, context);
+			return;
+		}
 		if (tab === 'raids') {
 			await mountRaidEvents(el, operationsContext(), { manage: true });
 			return;

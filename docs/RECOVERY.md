@@ -13,7 +13,7 @@ el repositorio, un issue o un artefacto público de GitHub. Hacerlo antes de cam
 importantes y conservar varias fechas. Actualmente esta descarga es **manual**;
 no hay una copia diaria externa programada.
 
-Formato 2, esquema de base 5: configuración y todas las tablas de negocio,
+Formato 2, esquema de base 6 (restauración compatible con esquema 5): configuración y todas las tablas de negocio,
 incluidas convocatorias, personajes vinculados, bajas, auditoría y colas. Contiene
 datos personales. No contiene sesiones, estados OAuth ni secretos de Cloudflare.
 El SHA-256 detecta corrupción accidental; no demuestra autenticidad frente a

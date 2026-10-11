@@ -314,3 +314,43 @@ test('expired sessions and absent authentication fail closed', async () => {
 		await f.close();
 	}
 });
+
+test('GM inbox enforces authentication, ranks and CSRF through real HTTP routes', async () => {
+	const f = await fixture();
+	try {
+		for (const rank of [undefined, 'visitor', 'member', 'raider', 'raid_leader']) {
+			for (const path of ['/api/gm-messages', '/api/gm-notifications'])
+				assert.equal((await f.request(path, rank)).status, rank ? 403 : 401);
+		}
+		const value = {
+			requestId: '12345678-1234-1234-1234-123456789abc',
+			subject: 'Asunto privado',
+			message: 'Mensaje privado',
+		};
+		assert.equal(
+			(await f.request('/api/gm-messages', 'member', 'POST', value, { 'X-CSRF-Token': 'bad' }))
+				.status,
+			403,
+		);
+		assert.equal((await f.request('/api/gm-messages', 'visitor', 'POST', value)).status, 403);
+		assert.equal((await f.request('/api/gm-messages', 'member', 'POST', value)).status, 201);
+		assert.equal((await f.request('/api/gm-messages', 'member', 'POST', value)).status, 200);
+		for (const rank of ['officer', 'leader']) {
+			const inbox = await f.request('/api/gm-messages', rank);
+			assert.equal(inbox.status, 200);
+			assert.equal(inbox.body[0].message, value.message);
+		}
+		assert.ok(!JSON.stringify((await f.request('/api/public')).body).includes(value.message));
+		assert.equal(
+			(
+				await f.request('/api/gm-notifications/retry', 'member', 'POST', {
+					id: 'x',
+					reviewed: true,
+				})
+			).status,
+			403,
+		);
+	} finally {
+		await f.close();
+	}
+});
