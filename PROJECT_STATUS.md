@@ -217,7 +217,18 @@ y `docs/RECRUITMENT.md`.
 - Migración 006 y copias de esquema 6 compatibles con restauración de esquema 5.
 - Procedimiento y límites: `docs/GM_NOTIFICATIONS.md`. Workflow manual comprueba
   servidor, envío/lectura de prueba e instala secretos sin imprimir sus valores.
-- Validación: 54 pruebas Node, runtime Cloudflare, compilación backend/Pages y
+- Validación: 55 pruebas Node, runtime Cloudflare, compilación backend/Pages y
   Chromium a 320/390/1440 px aprobados (contacto, privacidad y panel).
-- Despliegue y envío real pendientes de ejecución; los permisos del canal
-  requieren bot autorizado o revisión manual.
+- Desplegado: backend `ee1981a`, Actions 38138933814 correcto. API pública de salud
+  responde y `/api/gm-messages` devuelve 401 sin sesión; módulo UI publicado verificado.
+- Activación real completada en Actions 38138936000: servidor del webhook validado,
+  mensaje de PRUEBA enviado y releído desde Discord, secreto instalado en backend
+  y `GM_NOTIFICATIONS_ENABLED=true`. No se crearon candidaturas ficticias en producción.
+- Primera validación rechazó una variante de URL; corregido soporte para variantes
+  oficiales (dominio antiguo, token con punto, barra final y parámetro wait).
+- Pendiente externo: permisos del canal NO verificados. No existe token de bot
+  disponible para consultarlos; revisar en Discord @everyone sin Ver canal y
+  acceso solo GM/oficiales, teniendo en cuenta administradores/propietario.
+- Siguiente comprobación de uso: observar en el panel el estado de entrega de la
+  próxima candidatura real. Pruebas de formularios y cola realizadas localmente;
+  prueba de webhook y lectura realizadas contra Discord real.
