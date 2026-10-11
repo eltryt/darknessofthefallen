@@ -247,5 +247,7 @@ y `docs/RECRUITMENT.md`.
   11/10/2026 12:29:08 UTC con el error concreto del despliegue inicial. El runtime
   rechazaba la petición antes de enviarla; se reencolan sin recrear candidaturas.
   No se reenvían entregados, restaurados, interrumpidos ni fallos posteriores.
-- Despliegue correctivo pendiente; la entrega de la candidatura del usuario aún
-  debe confirmarse en Discord. No se ha accedido a su sesión privada.
+- Despliegue correctivo `3a94811` completado: Actions 38139501462 correcto,
+  56 pruebas Node y prueba workerd aprobadas. Salud HTTPS y login verificados.
+  Recuperación automática instalada; la recepción final del aviso del usuario
+  debe confirmarse en Discord/panel. No se ha accedido a su sesión privada.
