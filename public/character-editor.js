@@ -54,7 +54,7 @@ export function attachCharacterEditor({ rows, api, refresh, toast }) {
 				heading.textContent = `Editar ${character.name}`;
 				submit.textContent = 'Guardar cambios';
 				form.elements.name.focus();
-				
+
 				// Update specialization dropdown when editing
 				updateSpecOptions(form.elements.class.value);
 			};
@@ -83,44 +83,44 @@ export function attachCharacterEditor({ rows, api, refresh, toast }) {
 			tr.append(td);
 		}
 	}
-	
+
 	// Add class change listener to update specialization options dynamically
 	const classSelect = form.elements.class;
 	if (classSelect) {
-		classSelect.addEventListener('change', function() {
+		classSelect.addEventListener('change', function () {
 			updateSpecOptions(this.value);
 		});
 	}
-	
+
 	function updateSpecOptions(selectedClass) {
 		const specSelect = form.elements.spec;
 		if (!specSelect) return;
-		
+
 		// Clear existing options
 		specSelect.innerHTML = '';
-		
+
 		// Define specializations by class
 		const specializations = {
-			'Guerrero': ['Armas', 'Protección', 'Furia'],
-			'Paladín': ['Sagrado', 'Protección', 'Hierro'],
-			'Cazador': ['Bestia', 'Puntería', 'Supervivencia'],
-			'Pícaro': ['Sutileza', 'Asesinato', 'Combate'],
-			'Sacerdote': ['Disciplina', 'Sagrado', 'Sombras'],
-			'Chamán': ['Elemental', 'Melee', 'Restauración'],
-			'Mago': ['Arcano', 'Fuego', 'Escarcha'],
-			'Brujo': ['Aflicción', 'Demonología', 'Destrucción'],
-			'Druida': ['Equilibrio', 'Feral', 'Restauración', 'Guardián'],
+			Guerrero: ['Armas', 'Protección', 'Furia'],
+			Paladín: ['Sagrado', 'Protección', 'Hierro'],
+			Cazador: ['Bestia', 'Puntería', 'Supervivencia'],
+			Pícaro: ['Sutileza', 'Asesinato', 'Combate'],
+			Sacerdote: ['Disciplina', 'Sagrado', 'Sombras'],
+			Chamán: ['Elemental', 'Melee', 'Restauración'],
+			Mago: ['Arcano', 'Fuego', 'Escarcha'],
+			Brujo: ['Aflicción', 'Demonología', 'Destrucción'],
+			Druida: ['Equilibrio', 'Feral', 'Restauración', 'Guardián'],
 		};
-		
+
 		// Add default option
 		const defaultOption = document.createElement('option');
 		defaultOption.value = '';
 		defaultOption.textContent = 'Seleccionar especialización';
 		specSelect.appendChild(defaultOption);
-		
+
 		// Add class-specific specializations or generic message if not found
 		if (specializations[selectedClass]) {
-			specializations[selectedClass].forEach(spec => {
+			specializations[selectedClass].forEach((spec) => {
 				const option = document.createElement('option');
 				option.value = spec;
 				option.textContent = spec;
@@ -134,7 +134,7 @@ export function attachCharacterEditor({ rows, api, refresh, toast }) {
 			specSelect.appendChild(genericOption);
 		}
 	}
-	
+
 	// Capture phase prevents the creation handler from also running during editing.
 	form.addEventListener(
 		'submit',

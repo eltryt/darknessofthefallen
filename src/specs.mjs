@@ -2,66 +2,66 @@
 export const specs = {
 	// Warrior specializations
 	warrior: {
-		arms: { name: "Armas", category: "DPS melee" },
-		fury: { name: "Furia", category: "DPS melee" },
-		protection: { name: "Protección", category: "Tanque" },
+		arms: { name: 'Armas', category: 'DPS melee' },
+		fury: { name: 'Furia', category: 'DPS melee' },
+		protection: { name: 'Protección', category: 'Tanque' },
 	},
-	
+
 	// Paladin specializations
 	paladin: {
-		holy: { name: "Sagrado", category: "Sanador" },
-		protection: { name: "Protección", category: "Tanque" },
-		retribution: { name: "Hierro", category: "DPS melee" },
+		holy: { name: 'Sagrado', category: 'Sanador' },
+		protection: { name: 'Protección', category: 'Tanque' },
+		retribution: { name: 'Hierro', category: 'DPS melee' },
 	},
-	
+
 	// Hunter specializations
 	hunter: {
-		beast_mastery: { name: "Bestia", category: "DPS distance" },
-		archery: { name: "Puntería", category: "DPS distance" },
-		survival: { name: "Supervivencia", category: "DPS distance" },
+		beast_mastery: { name: 'Bestia', category: 'DPS distance' },
+		archery: { name: 'Puntería', category: 'DPS distance' },
+		survival: { name: 'Supervivencia', category: 'DPS distance' },
 	},
-	
+
 	// Rogue specializations
 	rogue: {
-		subtlety: { name: "Sutileza", category: "DPS melee" },
-		assassination: { name: "Asesinato", category: "DPS melee" },
-		combat: { name: "Combate", category: "DPS melee" },
+		subtlety: { name: 'Sutileza', category: 'DPS melee' },
+		assassination: { name: 'Asesinato', category: 'DPS melee' },
+		combat: { name: 'Combate', category: 'DPS melee' },
 	},
-	
+
 	// Priest specializations
 	priest: {
-		discipline: { name: "Disciplina", category: "Sanador" },
-		holy: { name: "Sagrado", category: "Sanador" },
-		shadow: { name: "Sombras", category: "DPS distance" },
+		discipline: { name: 'Disciplina', category: 'Sanador' },
+		holy: { name: 'Sagrado', category: 'Sanador' },
+		shadow: { name: 'Sombras', category: 'DPS distance' },
 	},
-	
+
 	// Shaman specializations
 	shaman: {
-		elemental: { name: "Elemental", category: "DPS distance" },
-		enhancement: { name: "Melee", category: "DPS melee" },
-		restore: { name: "Restauración", category: "Sanador" },
+		elemental: { name: 'Elemental', category: 'DPS distance' },
+		enhancement: { name: 'Melee', category: 'DPS melee' },
+		restore: { name: 'Restauración', category: 'Sanador' },
 	},
-	
+
 	// Mage specializations
 	mage: {
-		arcane: { name: "Arcano", category: "DPS distance" },
-		fire: { name: "Fuego", category: "DPS distance" },
-		frost: { name: "Escarcha", category: "DPS distance" },
+		arcane: { name: 'Arcano', category: 'DPS distance' },
+		fire: { name: 'Fuego', category: 'DPS distance' },
+		frost: { name: 'Escarcha', category: 'DPS distance' },
 	},
-	
+
 	// Warlock specializations
 	warlock: {
-		affliction: { name: "Aflicción", category: "DPS distance" },
-		demonology: { name: "Demonología", category: "DPS distance" },
-		destruction: { name: "Destrucción", category: "DPS distance" },
+		affliction: { name: 'Aflicción', category: 'DPS distance' },
+		demonology: { name: 'Demonología', category: 'DPS distance' },
+		destruction: { name: 'Destrucción', category: 'DPS distance' },
 	},
-	
+
 	// Druid specializations
 	druid: {
-		balance: { name: "Equilibrio", category: "DPS distance" },
-		feral: { name: "Feral", category: "DPS melee" },
-		restore: { name: "Restauración", category: "Sanador" },
-		guardian: { name: "Guardián", category: "Tanque" },
+		balance: { name: 'Equilibrio', category: 'DPS distance' },
+		feral: { name: 'Feral', category: 'DPS melee' },
+		restore: { name: 'Restauración', category: 'Sanador' },
+		guardian: { name: 'Guardián', category: 'Tanque' },
 	},
 };
 
