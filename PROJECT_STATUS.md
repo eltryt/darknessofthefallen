@@ -426,3 +426,8 @@ estadísticas en la portada; no se ha accedido a su cuenta de Google.
   Pendiente Search Console: verificar propiedad de prefijo de URL y enviar sitemap.
   No hay acceso a esa cuenta ni se ha solicitado indexación; no prometer posiciones.
 - El propietario confirmó recepción de visitas GA4 en el turno anterior.
+
+SEO publicado en 099522b: backend 38321839599, Pages 38321838603 y CI 38321838641
+correctos. 64 pruebas Node y workerd pasan. HTTP real verifica título, canonical,
+contenido inicial de Reclutamiento y las siete URLs del sitemap. No equivale a
+confirmación de indexación de Google, pendiente de Search Console.
