@@ -402,3 +402,8 @@ Validación: 63 pruebas Node, build Pages, workerd y navegador local con script 
 Google simulado: aceptar/rechazar/retirar, rutas excluidas y URL limpia correctos.
 Pendiente comprobar publicación y recepción en el informe Tiempo real de la propiedad;
 no se dispone de acceso de lectura al panel de Analytics ni se afirma recepción confirmada.
+
+GA4 publicado: e784ed8; Cloudflare 38321203958, Pages 38321203008 y validación
+38321202815 completados correctamente. analytics.js servido en producción idéntico
+al probado. Falta confirmación del propietario en Tiempo real de GA4 tras aceptar
+estadísticas en la portada; no se ha accedido a su cuenta de Google.
