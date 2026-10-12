@@ -43,7 +43,7 @@ export function rosterCards(
 								(row) =>
 									/* HTML */ `<li class="roster-player class-${classKey(row.class)}">
 										<span class="class-emblem" aria-hidden="true">
-											${ClassIcon({ className: row.class, size: 'small' })}
+											${row.spec ? ClassWithSpecIcon({ className: row.class, specId: row.spec }) : ClassIcon({ className: row.class })}
 										</span>
 										<div class="roster-player-info">
 											<strong class="class-name"

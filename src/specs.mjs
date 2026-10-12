@@ -75,3 +75,37 @@ export function isValidSpecForClass(spec, className) {
 export function getSpecsForClass(className) {
 	return specs[className] || {};
 }
+
+// Función para normalizar valores antiguos (textos en español) a IDs estables
+export function normalizeSpecValue(specValue) {
+	// Mapa de valores antiguos a IDs estables
+	const oldToNew = {
+		Armas: 'arms',
+		Furia: 'fury',
+		Protección: 'protection',
+		Sagrado: 'holy',
+		Hierro: 'retribution',
+		Bestia: 'beast_mastery',
+		Puntería: 'archery',
+		Supervivencia: 'survival',
+		Sutileza: 'subtlety',
+		Asesinato: 'assassination',
+		Combate: 'combat',
+		Disciplina: 'discipline',
+		Sombras: 'shadow',
+		Elemental: 'elemental',
+		Melee: 'enhancement',
+		Restauración: 'restore',
+		Arcano: 'arcane',
+		Fuego: 'fire',
+		Escarcha: 'frost',
+		Afllicción: 'affliction',
+		Demonología: 'demonology',
+		Destrucción: 'destruction',
+		Equilibrio: 'balance',
+		Feral: 'feral',
+		Guardián: 'guardian',
+	};
+
+	return oldToNew[specValue] || specValue;
+}

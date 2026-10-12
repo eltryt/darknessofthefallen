@@ -48,6 +48,11 @@ export function attachCharacterEditor({ rows, api, refresh, toast }) {
 					'notes',
 				])
 					form.elements[key].value = character[key] || '';
+				// Normalizar valores antiguos de especializaciones
+				if (character.spec) {
+					const normalizedSpec = normalizeOldSpecValue(character.spec);
+					form.elements.spec.value = normalizedSpec;
+				}
 				main.checked = !!character.is_main;
 				main.disabled = true;
 				cancel.hidden = false;
@@ -99,17 +104,54 @@ export function attachCharacterEditor({ rows, api, refresh, toast }) {
 		// Clear existing options
 		specSelect.innerHTML = '';
 
-		// Define specializations by class
+		// Define specializations by class with stable IDs and Spanish names
 		const specializations = {
-			Guerrero: ['Armas', 'Protección', 'Furia'],
-			Paladín: ['Sagrado', 'Protección', 'Hierro'],
-			Cazador: ['Bestia', 'Puntería', 'Supervivencia'],
-			Pícaro: ['Sutileza', 'Asesinato', 'Combate'],
-			Sacerdote: ['Disciplina', 'Sagrado', 'Sombras'],
-			Chamán: ['Elemental', 'Melee', 'Restauración'],
-			Mago: ['Arcano', 'Fuego', 'Escarcha'],
-			Brujo: ['Aflicción', 'Demonología', 'Destrucción'],
-			Druida: ['Equilibrio', 'Feral', 'Restauración', 'Guardián'],
+			Guerrero: [
+				{ id: 'arms', name: 'Armas' },
+				{ id: 'protection', name: 'Protección' },
+				{ id: 'fury', name: 'Furia' },
+			],
+			Paladín: [
+				{ id: 'holy', name: 'Sagrado' },
+				{ id: 'protection', name: 'Protección' },
+				{ id: 'retribution', name: 'Hierro' },
+			],
+			Cazador: [
+				{ id: 'beast_mastery', name: 'Bestia' },
+				{ id: 'archery', name: 'Puntería' },
+				{ id: 'survival', name: 'Supervivencia' },
+			],
+			Pícaro: [
+				{ id: 'subtlety', name: 'Sutileza' },
+				{ id: 'assassination', name: 'Asesinato' },
+				{ id: 'combat', name: 'Combate' },
+			],
+			Sacerdote: [
+				{ id: 'discipline', name: 'Disciplina' },
+				{ id: 'holy', name: 'Sagrado' },
+				{ id: 'shadow', name: 'Sombras' },
+			],
+			Chamán: [
+				{ id: 'elemental', name: 'Elemental' },
+				{ id: 'enhancement', name: 'Melee' },
+				{ id: 'restore', name: 'Restauración' },
+			],
+			Mago: [
+				{ id: 'arcane', name: 'Arcano' },
+				{ id: 'fire', name: 'Fuego' },
+				{ id: 'frost', name: 'Escarcha' },
+			],
+			Brujo: [
+				{ id: 'affliction', name: 'Aflicción' },
+				{ id: 'demonology', name: 'Demonología' },
+				{ id: 'destruction', name: 'Destrucción' },
+			],
+			Druida: [
+				{ id: 'balance', name: 'Equilibrio' },
+				{ id: 'feral', name: 'Feral' },
+				{ id: 'restore', name: 'Restauración' },
+				{ id: 'guardian', name: 'Guardián' },
+			],
 		};
 
 		// Add default option
@@ -122,8 +164,8 @@ export function attachCharacterEditor({ rows, api, refresh, toast }) {
 		if (specializations[selectedClass]) {
 			specializations[selectedClass].forEach((spec) => {
 				const option = document.createElement('option');
-				option.value = spec;
-				option.textContent = spec;
+				option.value = spec.id;
+				option.textContent = spec.name;
 				specSelect.appendChild(option);
 			});
 		} else {
@@ -133,6 +175,39 @@ export function attachCharacterEditor({ rows, api, refresh, toast }) {
 			genericOption.disabled = true;
 			specSelect.appendChild(genericOption);
 		}
+	}
+
+	// Función para normalizar valores antiguos a IDs estables
+	function normalizeOldSpecValue(oldSpecValue) {
+		const oldToNew = {
+			Armas: 'arms',
+			Furia: 'fury',
+			Protección: 'protection',
+			Sagrado: 'holy',
+			Hierro: 'retribution',
+			Bestia: 'beast_mastery',
+			Puntería: 'archery',
+			Supervivencia: 'survival',
+			Sutileza: 'subtlety',
+			Asesinato: 'assassination',
+			Combate: 'combat',
+			Disciplina: 'discipline',
+			Sombras: 'shadow',
+			Elemental: 'elemental',
+			Melee: 'enhancement',
+			Restauración: 'restore',
+			Arcano: 'arcane',
+			Fuego: 'fire',
+			Escarcha: 'frost',
+			Afllicción: 'affliction',
+			Demonología: 'demonology',
+			Destrucción: 'destruction',
+			Equilibrio: 'balance',
+			Feral: 'feral',
+			Guardián: 'guardian',
+		};
+
+		return oldToNew[oldSpecValue] || oldSpecValue;
 	}
 
 	// Capture phase prevents the creation handler from also running during editing.
