@@ -293,3 +293,15 @@ personalizada e iconos sin errores/overflow a 320, 390 y 1440px.
 Publicación autorizada por el propietario, incluida la retirada de la restricción
 anterior sobre commits, push y despliegues para las tareas encargadas.
 Despliegue en curso mediante los workflows existentes; resultado pendiente de verificar.
+
+## Sesiones de siete días — 12 de octubre de 2026
+
+A petición del propietario, las nuevas sesiones duran siete días desde el login
+(604800 segundos), tanto en SQLite como en la cookie persistente HttpOnly/Secure.
+Las sesiones existentes conservan su vencimiento; volver a entrar crea la de siete días.
+Se conserva cierre de sesión, CSRF y consulta del rango local en cada petición.
+No se almacenan tokens de Discord. Limitación existente: los cambios de rango o bajas
+hechos únicamente en Discord se sincronizan al volver a entrar, no continuamente;
+al ampliar la sesión se amplía también ese intervalo máximo. No se afirma revocación
+inmediata desde Discord. Prueba añadida: duración, cookie, vigencia al sexto día,
+vencimiento exacto, cambios de rango local y revocación de sesión.

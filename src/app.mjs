@@ -16,6 +16,7 @@ import {
 	attendanceMetrics,
 } from './domain.mjs';
 import {
+	SESSION_MAX_AGE_SECONDS,
 	currentSession,
 	startOAuth,
 	finishOAuth,
@@ -226,7 +227,7 @@ export function createApp(db, env, { readAsset = readLocalAsset } = {}) {
 					...headers,
 					Location: '/perfil',
 					'Set-Cookie': [
-						cookie('session', session.raw, env, 1800),
+						cookie('session', session.raw, env, SESSION_MAX_AGE_SECONDS),
 						cookie('oauth_state', '', env, 0),
 					],
 				});

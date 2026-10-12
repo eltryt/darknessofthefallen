@@ -1,5 +1,6 @@
 import { randomBytes, createHash } from 'node:crypto';
 import { HttpError, roleFromDiscord } from './domain.mjs';
+export const SESSION_MAX_AGE_SECONDS = 7 * 24 * 60 * 60;
 export const token = () => randomBytes(32).toString('base64url');
 export const hash = (value) => createHash('sha256').update(value).digest('hex');
 export function cookies(req) {
@@ -26,7 +27,7 @@ export function issueSession(db, id) {
 		hash(raw),
 		id,
 		csrf,
-		Date.now() + 30 * 60 * 1000,
+		Date.now() + SESSION_MAX_AGE_SECONDS * 1000,
 	);
 	return { raw, csrf };
 }
