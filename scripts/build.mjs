@@ -81,6 +81,7 @@ try {
 		'character-editor.js',
 		'operations-ui.js',
 		'style.css',
+		'components.js',
 		'assets/guild-logo.png',
 		'site-data.json',
 	];

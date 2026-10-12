@@ -28,6 +28,7 @@ for (const file of [
 	'style.css',
 	'character-editor.js',
 	'operations-ui.js',
+	'components.js',
 	'assets/guild-logo.png',
 ]) {
 	if (file.endsWith('.js') && memberApp) {
