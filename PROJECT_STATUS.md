@@ -327,4 +327,12 @@ Se fusiona la nueva hoja de estilos con las correcciones anteriores, conservando
 ambas líneas de trabajo y sin force-push. La prueba workerd comprueba ahora también
 components.js, specs.js, roster-ui.js e iconos de clase/especialización.
 Navegador local: edición de personajes y roster correctos a 320/390/1440px.
-Publicación de recuperación en curso; comprobar los resultados de Actions.
+Recuperación desplegada: `e276d11`. Cloudflare Actions 38269207941, Pages
+38269202768 y validación 38269202747 completados correctamente.
+Verificado el contenido público servido: components.js responde 200 y coincide con
+el local; icono mage.jpg idéntico al local. Portada de la aplicación y roster de Pages
+renderizados sin errores JavaScript en Chromium con recursos HTTPS obtenidos mediante
+curl (validación TLS del entorno; el almacén de Chromium no confía en la CA del proxy).
+Las sesiones de siete días están incluidas en el backend publicado; no se realizó
+un login real de Discord en esta comprobación. Pages sigue siendo una presentación
+estática: el roster con datos reales está en la aplicación Cloudflare.
