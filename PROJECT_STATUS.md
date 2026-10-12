@@ -431,3 +431,10 @@ SEO publicado en 099522b: backend 38321839599, Pages 38321838603 y CI 3832183864
 correctos. 64 pruebas Node y workerd pasan. HTTP real verifica título, canonical,
 contenido inicial de Reclutamiento y las siete URLs del sitemap. No equivale a
 confirmación de indexación de Google, pendiente de Search Console.
+
+## Search Console — etiqueta de propiedad
+
+Añadida al head de public/index.html la etiqueta google-site-verification entregada
+por el propietario para la propiedad de prefijo de URL de la aplicación. Mantenerla
+tras verificar. No equivale a confirmación de propiedad: el propietario debe pulsar
+Verificar en Search Console cuando el despliegue esté comprobado.
