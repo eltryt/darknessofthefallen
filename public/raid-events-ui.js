@@ -197,13 +197,33 @@ export async function mountRaidEvents(host, ctx, { manage = false, mine = false 
 								</p>
 								${e.mine?.length ? `<p>Tu inscripción: ${e.mine.map((s) => esc(s.status)).join(', ')}</p>` : ''}
 								<div class="actions">
-									${me.user && e.signups ? `<button type="button" data-event="${esc(e.id)}">Ver convocatoria</button>` : ''}${e.discordUrl ? /* HTML */ `<a class="button secondary" href="${esc(e.discordUrl)}" target="_blank" rel="noopener noreferrer">Discord ↗</a>` : ''}
+									${e.canDelete ? `<button type="button" class="secondary danger" data-delete-event="${esc(e.id)}">Borrar convocatoria</button>` : ''}${me.user && e.signups ? `<button type="button" data-event="${esc(e.id)}">Ver convocatoria</button>` : ''}${e.discordUrl ? /* HTML */ `<a class="button secondary" href="${esc(e.discordUrl)}" target="_blank" rel="noopener noreferrer">Discord ↗</a>` : ''}
 								</div>
 								${e.job ? /* HTML */ `<p class="notice">${esc(jobLabel(e.job.status))} · ${esc(e.job.error || 'Esperando sincronización')}</p>` : ''}
 							</article>`,
 					)
 					.join('')
 			: '<p class="notice">No hay convocatorias que coincidan con estos filtros.</p>';
+		host.querySelectorAll('[data-delete-event]').forEach((button) => {
+			button.onclick = async () => {
+				if (
+					!confirm(
+						'¿Borrar esta convocatoria de la web? Se conservará el historial. No se cancela ni borra en Discord/Raid-Helper.',
+					)
+				)
+					return;
+				button.disabled = true;
+				try {
+					await api('/api/events/' + button.dataset.deleteEvent, 'DELETE', {});
+					selected = null;
+					await load();
+					toast('Convocatoria borrada de la web');
+				} catch (error) {
+					button.disabled = false;
+					toast(error.message);
+				}
+			};
+		});
 		host
 			.querySelectorAll('[data-event]')
 			.forEach((b) => (b.onclick = () => detail(b.dataset.event).catch((e) => toast(e.message))));

@@ -467,3 +467,46 @@ test('WoW Forever role-group template accepts matching roles and rejects mismatc
 		await f.close();
 	}
 });
+
+test('only leader and officers delete website events and sync does not resurrect them', async () => {
+	const f = await fixture();
+	try {
+		for (const staff of ['officer', 'leader']) {
+			const raw = base();
+			raw.id = staff === 'leader' ? '1550000000000000098' : raw.id;
+			const event = ingestRaidEvent(f.db, raw, env);
+			for (const rank of ['member', 'visitor', 'raid_leader', 'other', undefined])
+				assert.ok(
+					[401, 403].includes(
+						(await f.request('/api/events/' + event.id, rank, 'DELETE', {})).status,
+					),
+				);
+			assert.equal(
+				(
+					await f.request(
+						'/api/events/' + event.id,
+						staff,
+						'DELETE',
+						{},
+						{ 'X-CSRF-Token': 'wrong' },
+					)
+				).status,
+				403,
+			);
+			assert.equal((await f.request('/api/events/' + event.id, staff, 'DELETE', {})).status, 200);
+			assert.equal((await f.request('/api/events/' + event.id, staff)).status, 404);
+			raw.title = 'Remote changed';
+			ingestRaidEvent(f.db, raw, env);
+			assert.equal(
+				f.db.prepare('SELECT state FROM raid_events WHERE id=?').get(event.id).state,
+				'Eliminada',
+			);
+			assert.ok(
+				!(await f.request('/api/events', staff)).body.events.some((e) => e.id === event.id),
+			);
+			assert.ok(f.db.prepare('SELECT id FROM raids WHERE id=?').get(event.id));
+		}
+	} finally {
+		await f.close();
+	}
+});

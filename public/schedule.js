@@ -158,3 +158,40 @@ export function calendarFile(settings, { now = new Date(), daysAhead = 84 } = {}
 	}
 	return lines.concat('END:VCALENDAR').map(fold).join('\r\n') + '\r\n';
 }
+
+export function googleCalendarUrl(settings, { now = new Date() } = {}) {
+	const sessions = upcomingSessions(settings, { now });
+	if (!sessions.length) return null;
+	const zone = settings.timezone || 'Europe/Madrid';
+	const formatter = new Intl.DateTimeFormat('en-CA', {
+		timeZone: zone,
+		year: 'numeric',
+		month: '2-digit',
+		day: '2-digit',
+		hour: '2-digit',
+		minute: '2-digit',
+		second: '2-digit',
+		hourCycle: 'h23',
+	});
+	const local = (value) => {
+		const p = Object.fromEntries(
+			formatter.formatToParts(new Date(value)).map((p) => [p.type, p.value]),
+		);
+		return `${p.year}${p.month}${p.day}T${p.hour}${p.minute}${p.second}`;
+	};
+	const days = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
+	const byday = settings.raidDays
+		.map((d) => days[weekdays.indexOf(d)])
+		.filter(Boolean)
+		.join(',');
+	const params = new URLSearchParams({
+		action: 'TEMPLATE',
+		text: `${settings.name} · Horario de raid`,
+		dates: `${local(sessions[0].start)}/${local(sessions[0].end)}`,
+		ctz: zone,
+		details:
+			'Horario habitual, no convocatoria confirmada. Confirma tu inscripción en Discord. Esta copia no se actualiza automáticamente.',
+		recur: `RRULE:FREQ=WEEKLY;BYDAY=${byday};UNTIL=${utc(sessions.at(-1).start)}`,
+	});
+	return `https://calendar.google.com/calendar/render?${params}`;
+}

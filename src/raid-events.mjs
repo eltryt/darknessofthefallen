@@ -76,6 +76,7 @@ export function projectEvent(db, row, user, env) {
 		revision: row.updated_at,
 		syncedAt: row.synced_at,
 		canManage: manage,
+		canDelete: can(user, 'recruitment.manage'),
 	};
 	if (!member) return result;
 	result.organizer =
@@ -155,7 +156,7 @@ export function projectEvent(db, row, user, env) {
 }
 function getEvent(db, id) {
 	const row = db.prepare('SELECT * FROM raid_events WHERE id=?').get(id);
-	if (!row) throw new HttpError(404, 'Convocatoria no encontrada.');
+	if (!row || row.state === 'Eliminada') throw new HttpError(404, 'Convocatoria no encontrada.');
 	return row;
 }
 const capacity = (value) => {
@@ -205,7 +206,9 @@ export async function raidEventsApi(ctx) {
 	const { db, user, path, method, url, body, send, env, requirePermission, requireUser } = ctx;
 	if (path === '/api/events' && method === 'GET') {
 		const rows = db
-			.prepare('SELECT * FROM raid_events ORDER BY starts_at DESC LIMIT 500')
+			.prepare(
+				"SELECT * FROM raid_events WHERE state != 'Eliminada' ORDER BY starts_at DESC LIMIT 500",
+			)
 			.all()
 			.filter((r) => mayView(user, r) || r.public === 1);
 		const sync = db
@@ -311,6 +314,29 @@ export async function raidEventsApi(ctx) {
 	const row = getEvent(db, match[1]),
 		action = match[2],
 		raw = eventRaw(row);
+	if (method === 'DELETE' && !action) {
+		requirePermission('recruitment.manage');
+		transaction(db, () => {
+			if (
+				db
+					.prepare(
+						"SELECT id FROM raid_jobs WHERE event_id=? AND status IN ('pending','running','uncertain')",
+					)
+					.get(row.id)
+			)
+				throw new HttpError(
+					409,
+					'Espera a que se resuelva la sincronización pendiente antes de borrar.',
+				);
+			db.prepare("UPDATE raid_events SET state='Eliminada', public=0, updated_at=? WHERE id=?").run(
+				now(),
+				row.id,
+			);
+			audit(db, user.id, 'raid.deleted', row.id, { scope: 'website' });
+		});
+		send(200, { ok: true });
+		return true;
+	}
 	if (!mayView(user, row))
 		throw new HttpError(
 			403,

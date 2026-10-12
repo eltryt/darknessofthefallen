@@ -111,3 +111,20 @@ test('calendar escapes text and folds Unicode without injecting properties', () 
 	assert.ok(!/^ATTENDEE:/m.test(unfolded));
 	assert.ok(unfolded.includes('\\,\\;\\\\\\nBEGIN:VEVENT\\nATTENDEE:unexpected'));
 });
+
+test('Google Calendar opens a Madrid weekly schedule across midnight without downloading ICS', async () => {
+	const { googleCalendarUrl } = await import('../public/schedule.js');
+	const settings = {
+		name: 'Darkness & Friends',
+		timezone: 'Europe/Madrid',
+		raidDays: ['Martes', 'Miércoles', 'Jueves'],
+		raidStart: '23:00',
+		raidEnd: '01:00',
+	};
+	const url = new URL(googleCalendarUrl(settings, { now: new Date('2026-10-13T08:00:00Z') }));
+	assert.equal(url.origin, 'https://calendar.google.com');
+	assert.equal(url.searchParams.get('ctz'), 'Europe/Madrid');
+	assert.equal(url.searchParams.get('dates'), '20261013T230000/20261014T010000');
+	assert.match(url.searchParams.get('recur'), /^RRULE:FREQ=WEEKLY;BYDAY=TU,WE,TH;UNTIL=/);
+	assert.equal(googleCalendarUrl({ ...settings, raidDays: [] }), null);
+});

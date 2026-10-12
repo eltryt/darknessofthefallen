@@ -357,3 +357,19 @@ validación 38319230616 correctos. Módulo home-events.js servido idéntico al l
 Portada real renderizada como visitante: bloque visible con estado vacío y enlace
 al calendario, sin errores JavaScript. Eventos futuros y reintento se comprobaron
 con datos sintéticos localmente, no creando convocatorias en Discord.
+
+## Google Calendar y borrado de convocatorias — 13 de octubre de 2026
+
+- El botón del planificador abre Google Calendar con el horario recurrente de las
+  próximas doce semanas, zona de la hermandad y final al día siguiente. El usuario
+  guarda la copia en Google; no se descarga ICS ni se abre la aplicación del sistema.
+- Borrar convocatoria disponible solo para Líder y Oficial, validado en backend
+  con sesión, origen y CSRF. Los Raid Leaders no tienen permiso de borrado.
+- Borrado lógico de la web: desaparece de las convocatorias y de la portada,
+  conserva historial y referencias para impedir reimportación por Raid-Helper.
+  No cancela ni borra en Discord; la confirmación lo indica expresamente.
+- Se rechaza borrar si hay una operación pendiente, en ejecución o incierta.
+- Verificación: 62 pruebas Node, workerd y build Pages correctos; navegador local
+  comprueba destino Google (sin crear eventos reales), cancelar/confirmar borrado
+  y tamaños 320/390/1440. Pruebas de permisos, CSRF y no reaparición al sincronizar.
+- Publicación pendiente de verificar mediante los workflows existentes.

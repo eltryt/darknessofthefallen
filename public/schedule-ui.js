@@ -1,4 +1,4 @@
-import { upcomingSessions, calendarFile } from './schedule.js';
+import { upcomingSessions, googleCalendarUrl } from './schedule.js';
 
 export const schedulePlanner = () =>
 	/* HTML */ `<section class="raid-planner" aria-label="Planifica tus noches de raid">
@@ -26,16 +26,16 @@ export const schedulePlanner = () =>
 		></ol>
 		<div class="planner-actions">
 			<button type="button" class="secondary" data-download-calendar>
-				Añadir a mi calendario <span aria-hidden="true">↓</span>
+				Añadir a Google Calendar <span aria-hidden="true">↗</span>
 			</button>
 			<p>
-				Importa las próximas 12 semanas en tu calendario. Las convocatorias y las inscripciones se
-				confirman en Discord.
+				Abre Google Calendar y guarda el horario de las próximas 12 semanas. Las convocatorias y las
+				inscripciones se confirman en Discord.
 			</p>
 		</div>
 		<p class="planner-footnote">
 			Es una copia del horario actual, no una suscripción. Si cambia el horario de la hermandad,
-			vuelve a descargarla.
+			actualízala en Google Calendar.
 		</p>
 		<p class="planner-feedback" data-calendar-feedback role="status"></p>
 	</section>`;
@@ -111,18 +111,9 @@ export function attachSchedulePlanner(settings) {
 				render();
 				return;
 			}
-			const url = URL.createObjectURL(
-				new Blob([calendarFile(settings, { now })], { type: 'text/calendar;charset=utf-8' }),
-			);
-			const link = document.createElement('a');
-			link.href = url;
-			link.download = 'darkness-of-the-fallen-horarios.ics';
-			document.body.append(link);
-			link.click();
-			link.remove();
-			setTimeout(() => URL.revokeObjectURL(url), 10000);
+			window.open(googleCalendarUrl(settings, { now }), '_blank', 'noopener,noreferrer');
 			planner.querySelector('[data-calendar-feedback]').textContent =
-				`Calendario preparado con ${sessions.length} horarios habituales. Ábrelo con tu aplicación de calendario para importarlo.`;
+				'Guarda el horario en la pestaña de Google Calendar.';
 		});
 		render();
 		const timer = setInterval(render, 60000);

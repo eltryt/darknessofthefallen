@@ -30,6 +30,7 @@ export function ingestRaidEvent(db, value, env, localId) {
 		(localId
 			? db.prepare('SELECT * FROM raid_events WHERE id=? AND external_id IS NULL').get(localId)
 			: null);
+	if (existing?.state === 'Eliminada') return existing;
 	const id = existing?.id || randomUUID(),
 		limit = Number(raw.advancedSettings?.limit),
 		size = Number.isInteger(limit) && limit > 0 ? limit : null,
@@ -104,6 +105,7 @@ export function ingestRaidEvent(db, value, env, localId) {
 	return db.prepare('SELECT * FROM raid_events WHERE id=?').get(id);
 }
 function cancelled(db, event) {
+	if (event.state === 'Eliminada') return;
 	transaction(db, () => {
 		db.prepare('UPDATE raid_events SET state=?,synced_at=?,updated_at=? WHERE id=?').run(
 			event.ends_at && Date.parse(event.ends_at) < Date.now() ? 'Finalizada' : 'Cancelada',
