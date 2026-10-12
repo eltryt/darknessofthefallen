@@ -131,35 +131,76 @@ function table(heads, rows) {
 }
 
 // Inicio de la aplicación y navegación.
-async function boot() {
-	try {
-		[data, me] = await Promise.all([api('/api/public'), api('/api/me')]);
-		const s = data.settings,
-			path = location.pathname.replace(/\/$/, '') || '/';
-		if (!data.authConfigured && !me.user) $('.login').textContent = 'Acceso de miembros';
-		document.title = `${{ '/nosotros': 'Hermandad', '/raids': 'Raids', '/roster': 'Roster', '/progreso': 'Progreso PvE', '/reclutamiento': 'Reclutamiento', '/contacto': 'Contacto', '/login': 'Entrar con Discord', '/perfil': 'Mi perfil', '/panel': 'Panel' }[path] || 'Inicio'} · ${s.name}`;
-		document.querySelectorAll('nav a').forEach((a) => {
-			if (a.pathname.replace(/\/$/, '') === path.replace(/\/$/, ''))
-				a.setAttribute('aria-current', 'page');
-		});
-		if (me.user) {
-			$('.login').href = '/perfil';
-			$('.login').textContent = 'Mi perfil ↗';
-			if (me.permissions.includes('roster.read'))
-				$('#navigation').insertAdjacentHTML('beforeend', '<a href="/panel">Panel</a>');
+	async function boot() {
+		try {
+			[data, me] = await Promise.all([api('/api/public'), api('/api/me')]);
+			const s = data.settings,
+				path = location.pathname.replace(/\/$/, '') || '/';
+			if (!data.authConfigured && !me.user) $('.login').textContent = 'Acceso de miembros';
+			document.title = `${{ '/nosotros': 'Hermandad', '/raids': 'Raids', '/roster': 'Roster', '/progreso': 'Progreso PvE', '/reclutamiento': 'Reclutamiento', '/contacto': 'Contacto', '/login': 'Entrar con Discord', '/perfil': 'Mi perfil', '/panel': 'Panel' }[path] || 'Inicio'} · ${s.name}`;
+			document.querySelectorAll('nav a').forEach((a) => {
+				if (a.pathname.replace(/\/$/, '') === path.replace(/\/$/, ''))
+					a.setAttribute('aria-current', 'page');
+			});
+			if (me.user) {
+				$('.login').href = '/perfil';
+				$('.login').textContent = 'Mi perfil ↗';
+				if (me.permissions.includes('roster.read'))
+					$('#navigation').insertAdjacentHTML('beforeend', '<a href="/panel">Panel</a>');
+			}
+			const context = { ...operationsContext(), $, title, roles, classes, opts, recruitmentChoices };
+			if (path === '/perfil') await createProfileView(context).profile();
+			else if (path === '/panel') await createPanelView(context).panel();
+			else {
+				await createPublicViews(context).render(path);
+				// Cargar convocatorias en la portada
+				if (path === '/') {
+					loadHomeEvents();
+				}
+			}
+		} catch (e) {
+			$('#content').innerHTML = /* HTML */ `<div class="page-title">
+				<h1>No hemos podido abrir esta página.</h1>
+				<p class="error">${esc(e.message)}</p>
+				<a class="button" href="/">Volver al inicio</a>
+			</div>`;
 		}
-		const context = { ...operationsContext(), $, title, roles, classes, opts, recruitmentChoices };
-		if (path === '/perfil') await createProfileView(context).profile();
-		else if (path === '/panel') await createPanelView(context).panel();
-		else await createPublicViews(context).render(path);
-	} catch (e) {
-		$('#content').innerHTML = /* HTML */ `<div class="page-title">
-			<h1>No hemos podido abrir esta página.</h1>
-			<p class="error">${esc(e.message)}</p>
-			<a class="button" href="/">Volver al inicio</a>
-		</div>`;
 	}
-}
+
+	async function loadHomeEvents() {
+		const eventsContainer = document.querySelector('[data-home-events]');
+		if (!eventsContainer) return;
+
+		try {
+			const events = await api('/api/events');
+			if (events.events?.length > 0) {
+				const upcomingEvents = events.events
+					.sort((a, b) => a.starts_at.localeCompare(b.starts_at))
+					.slice(0, 3);
+				
+				eventsContainer.innerHTML = upcomingEvents.map(event => `
+					<article class="card">
+						<span class="eyebrow">${esc(event.category)}</span>
+						<h3>${esc(event.title)}</h3>
+						<p>${esc(new Date(event.starts_at).toLocaleDateString('es-ES', { 
+							weekday: 'short', 
+							month: 'short', 
+							day: 'numeric' 
+						}))} · ${esc(event.roster)}</p>
+						<p class="inline-status">
+							<span class="status-dot" aria-hidden="true"></span>
+							${event.state === 'Abierta' ? 'Inscripciones abiertas' : event.state}
+						</p>
+					</article>
+				`).join('');
+			} else {
+				eventsContainer.innerHTML = '<p class="notice">No hay convocatorias próximas disponibles.</p>';
+			}
+		} catch (error) {
+			console.error('Error cargando eventos:', error);
+			eventsContainer.innerHTML = '<p class="notice">No se pudieron cargar las convocatorias.</p>';
+		}
+	}
 const closeMenu = () => {
 	$('#navigation').classList.remove('open');
 	$('#menu').setAttribute('aria-expanded', 'false');
