@@ -137,7 +137,12 @@ test('Pages builds complete, repeatable artifacts at both base paths and rejects
 		]) {
 			const html = readFileSync(new URL(`${route}index.html`, dist), 'utf8');
 			assert.ok(!html.includes('https://darkness-of-the-fallen.borclagonher.chatgpt.site'));
-			assert.ok(html.includes(`https://eltryt.github.io${base}`));
+			assert.ok(
+				html.includes(
+					`rel="canonical" href="https://darknessofthefallen.eltryt-darknessofthefallen.workers.dev/${route.replace(/\/$/, '')}"`,
+				),
+			);
+			assert.match(html, /name="robots" content="noindex,follow"/);
 			for (const [, attr, url] of html.matchAll(/(href|src)="([^"]+)"/g)) {
 				if (url.startsWith('#') || url.startsWith('https:')) continue;
 				assert.ok(url.startsWith(base), `${attr}=${url}`);

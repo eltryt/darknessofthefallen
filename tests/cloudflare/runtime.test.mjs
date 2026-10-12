@@ -114,6 +114,14 @@ test(
 				'/assets/guild-logo.png',
 			])
 				assert.equal((await request(path)).status, 200);
+			const homepage = await request('/');
+			assert.equal(homepage.headers.get('x-robots-tag'), 'index, follow');
+			assert.match(await homepage.text(), /rel="canonical"/);
+			const map = await request('/sitemap.xml');
+			assert.equal(map.status, 200);
+			assert.match(await map.text(), /guild.example\/reclutamiento/);
+			assert.match(await (await request('/robots.txt')).text(), /Sitemap:/);
+			assert.match((await request('/api/public')).headers.get('x-robots-tag'), /noindex/);
 			const sessions = await (await request('/__test/seed')).json();
 			const headers = (rank) => ({
 				cookie: 'session=' + sessions[rank].raw,

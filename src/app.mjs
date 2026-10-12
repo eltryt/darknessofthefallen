@@ -1,3 +1,4 @@
+import { seoPages, seoHtml, sitemap } from './seo.mjs';
 import { iconAssets } from '../public/icon-assets.js';
 import { gmApi, enqueueGM, gmReady } from './gm-notifications.mjs';
 import { exportRecovery } from './recovery.mjs';
@@ -100,6 +101,7 @@ export function createApp(db, env, { readAsset = readLocalAsset } = {}) {
 	return async (req, res) => {
 		const headers = {
 			'X-Content-Type-Options': 'nosniff',
+			'X-Robots-Tag': 'noindex, nofollow',
 			'Referrer-Policy': 'no-referrer',
 			'Content-Security-Policy':
 				"default-src 'self'; script-src 'self' https://www.googletagmanager.com; style-src 'self'; img-src 'self' data:; connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com https://www.googletagmanager.com; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
@@ -120,6 +122,27 @@ export function createApp(db, env, { readAsset = readLocalAsset } = {}) {
 			const url = new URL(req.url, env.APP_ORIGIN),
 				path = url.pathname,
 				method = req.method;
+			if (
+				['GET', 'HEAD'].includes(method) &&
+				path !== '/' &&
+				path.endsWith('/') &&
+				pages.has(path.slice(0, -1))
+			) {
+				res.writeHead(308, { ...headers, Location: path.slice(0, -1) + url.search });
+				return res.end();
+			}
+			if (['GET', 'HEAD'].includes(method) && ['/robots.txt', '/sitemap.xml'].includes(path)) {
+				const content =
+					path === '/robots.txt'
+						? `User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /auth/\nSitemap: ${env.APP_ORIGIN}/sitemap.xml\n`
+						: sitemap(env.APP_ORIGIN);
+				res.writeHead(200, {
+					...headers,
+					'Content-Type':
+						path === '/robots.txt' ? 'text/plain; charset=utf-8' : 'application/xml; charset=utf-8',
+				});
+				return res.end(method === 'HEAD' ? '' : content);
+			}
 			const user = currentSession(db, req),
 				s = settings(db);
 			const requireUser = () => {
@@ -542,8 +565,19 @@ export function createApp(db, env, { readAsset = readLocalAsset } = {}) {
 			if (path === '/perfil') requireUser();
 			if (files[path] || pages.has(path)) {
 				const [file, type] = files[path] || ['index.html', 'text/html'];
-				res.writeHead(200, { ...headers, 'Content-Type': `${type}; charset=utf-8` });
-				return res.end(method === 'HEAD' ? '' : await readAsset(file));
+				res.writeHead(200, {
+					...headers,
+					'X-Robots-Tag': seoPages[path] ? 'index, follow' : 'noindex, nofollow',
+					'Content-Type': `${type}; charset=utf-8`,
+				});
+				const content = method === 'HEAD' ? '' : await readAsset(file);
+				return res.end(
+					method === 'HEAD'
+						? ''
+						: type === 'text/html'
+							? seoHtml(Buffer.from(content).toString('utf8'), path, env.APP_ORIGIN, s)
+							: content,
+				);
 			}
 			throw new HttpError(404, 'Página no encontrada.');
 		} catch (e) {

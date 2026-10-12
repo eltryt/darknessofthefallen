@@ -407,3 +407,22 @@ GA4 publicado: e784ed8; Cloudflare 38321203958, Pages 38321203008 y validación
 38321202815 completados correctamente. analytics.js servido en producción idéntico
 al probado. Falta confirmación del propietario en Tiempo real de GA4 tras aceptar
 estadísticas en la portada; no se ha accedido a su cuenta de Google.
+
+## SEO técnico — 13 de octubre de 2026
+
+- Metadatos HTML por ruta pública entregados por el servidor: título, descripción,
+  canonical sin parámetros, Open Graph y Twitter Card con el logo existente.
+- Resumen editorial público y enlaces en el HTML inicial, legibles sin JavaScript;
+  la interfaz interactiva lo sustituye al cargar. Sin personajes ni datos privados.
+- /sitemap.xml con siete páginas públicas y /robots.txt con referencia al sitemap.
+  Rutas privadas, login, API y errores llevan X-Robots-Tag noindex; no es sustituto
+  de los controles de acceso. No se bloquea el rastreo de privadas en robots para
+  que el buscador pueda observar sus respuestas noindex/autenticación.
+- URLs públicas con barra final redirigen a su versión sin barra; raíz conservada.
+- Pages permanece noindex y su canonical apunta a la aplicación, no a la copia estática.
+- Pruebas de metadatos, escape de HTML, sitemap, rutas servidas por workerd y canonical
+  de Pages. Navegador local confirma que la portada interactiva sigue funcionando.
+- No se inventan logros, bosses, valoraciones ni datos estructurados de eventos.
+  Pendiente Search Console: verificar propiedad de prefijo de URL y enviar sitemap.
+  No hay acceso a esa cuenta ni se ha solicitado indexación; no prometer posiciones.
+- El propietario confirmó recepción de visitas GA4 en el turno anterior.
