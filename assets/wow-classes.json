@@ -1,0 +1,52 @@
+{
+  "version": "1.0.0",
+  "description": "Mapeo de clases de World of Warcraft para el proyecto Darkness of the Fallen",
+  "lastUpdated": "2026-10-12",
+  "classes": {
+    "warrior": {
+      "name": "Guerrero",
+      "icon": "warrior",
+      "color": "#C79C6E"
+    },
+    "paladin": {
+      "name": "Paladín",
+      "icon": "paladin",
+      "color": "#F58080"
+    },
+    "hunter": {
+      "name": "Cazador",
+      "icon": "hunter",
+      "color": "#ABD473"
+    },
+    "rogue": {
+      "name": "Pícaro",
+      "icon": "rogue",
+      "color": "#FFF569"
+    },
+    "priest": {
+      "name": "Sacerdote",
+      "icon": "priest",
+      "color": "#FFFFFF"
+    },
+    "shaman": {
+      "name": "Chamán",
+      "icon": "shaman",
+      "color": "#2459FF"
+    },
+    "mage": {
+      "name": "Mago",
+      "icon": "mage",
+      "color": "#69CCF0"
+    },
+    "warlock": {
+      "name": "Brujo",
+      "icon": "warlock",
+      "color": "#9482C9"
+    },
+    "druid": {
+      "name": "Druida",
+      "icon": "druid",
+      "color": "#FF7D0A"
+    }
+  }
+}
