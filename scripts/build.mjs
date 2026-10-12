@@ -1,3 +1,4 @@
+import { iconAssets } from '../public/icon-assets.js';
 import {
 	mkdirSync,
 	copyFileSync,
@@ -82,6 +83,8 @@ try {
 		'operations-ui.js',
 		'style.css',
 		'components.js',
+		'specs.js',
+		...iconAssets,
 		'assets/guild-logo.png',
 		'site-data.json',
 	];

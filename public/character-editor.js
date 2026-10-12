@@ -1,3 +1,5 @@
+import { getSpecsForClass, normalizeSpecValue } from './specs.js';
+import { classKey } from './roster-ui.js';
 // Edits use the same owner-protected API as the profile. No local credentials.
 export function attachCharacterEditor({ rows, api, refresh, toast }) {
 	const form = document.querySelector('#character');
@@ -15,6 +17,7 @@ export function attachCharacterEditor({ rows, api, refresh, toast }) {
 	function reset() {
 		editing = null;
 		form.reset();
+		updateSpecOptions(form.elements.class.value);
 		heading.textContent = 'Añadir personaje';
 		submit.textContent = 'Guardar personaje';
 		main.disabled = false;
@@ -48,11 +51,6 @@ export function attachCharacterEditor({ rows, api, refresh, toast }) {
 					'notes',
 				])
 					form.elements[key].value = character[key] || '';
-				// Normalizar valores antiguos de especializaciones
-				if (character.spec) {
-					const normalizedSpec = normalizeOldSpecValue(character.spec);
-					form.elements.spec.value = normalizedSpec;
-				}
 				main.checked = !!character.is_main;
 				main.disabled = true;
 				cancel.hidden = false;
@@ -61,7 +59,7 @@ export function attachCharacterEditor({ rows, api, refresh, toast }) {
 				form.elements.name.focus();
 
 				// Update specialization dropdown when editing
-				updateSpecOptions(form.elements.class.value);
+				updateSpecOptions(form.elements.class.value, character.spec || '');
 			};
 			const archive = document.createElement('button');
 			archive.type = 'button';
@@ -89,125 +87,25 @@ export function attachCharacterEditor({ rows, api, refresh, toast }) {
 		}
 	}
 
-	// Add class change listener to update specialization options dynamically
-	const classSelect = form.elements.class;
-	if (classSelect) {
-		classSelect.addEventListener('change', function () {
-			updateSpecOptions(this.value);
-		});
-	}
+	const oldSpec = form.elements.spec;
+	const specSelect = document.createElement('select');
+	specSelect.name = oldSpec.name;
+	specSelect.id = oldSpec.id;
+	oldSpec.replaceWith(specSelect);
+	form.elements.class.addEventListener('change', () =>
+		updateSpecOptions(form.elements.class.value),
+	);
+	updateSpecOptions(form.elements.class.value);
 
-	function updateSpecOptions(selectedClass) {
-		const specSelect = form.elements.spec;
-		if (!specSelect) return;
-
-		// Clear existing options
-		specSelect.innerHTML = '';
-
-		// Define specializations by class with stable IDs and Spanish names
-		const specializations = {
-			Guerrero: [
-				{ id: 'arms', name: 'Armas' },
-				{ id: 'protection', name: 'Protección' },
-				{ id: 'fury', name: 'Furia' },
-			],
-			Paladín: [
-				{ id: 'holy', name: 'Sagrado' },
-				{ id: 'protection', name: 'Protección' },
-				{ id: 'retribution', name: 'Hierro' },
-			],
-			Cazador: [
-				{ id: 'beast_mastery', name: 'Bestia' },
-				{ id: 'archery', name: 'Puntería' },
-				{ id: 'survival', name: 'Supervivencia' },
-			],
-			Pícaro: [
-				{ id: 'subtlety', name: 'Sutileza' },
-				{ id: 'assassination', name: 'Asesinato' },
-				{ id: 'combat', name: 'Combate' },
-			],
-			Sacerdote: [
-				{ id: 'discipline', name: 'Disciplina' },
-				{ id: 'holy', name: 'Sagrado' },
-				{ id: 'shadow', name: 'Sombras' },
-			],
-			Chamán: [
-				{ id: 'elemental', name: 'Elemental' },
-				{ id: 'enhancement', name: 'Melee' },
-				{ id: 'restore', name: 'Restauración' },
-			],
-			Mago: [
-				{ id: 'arcane', name: 'Arcano' },
-				{ id: 'fire', name: 'Fuego' },
-				{ id: 'frost', name: 'Escarcha' },
-			],
-			Brujo: [
-				{ id: 'affliction', name: 'Aflicción' },
-				{ id: 'demonology', name: 'Demonología' },
-				{ id: 'destruction', name: 'Destrucción' },
-			],
-			Druida: [
-				{ id: 'balance', name: 'Equilibrio' },
-				{ id: 'feral', name: 'Feral' },
-				{ id: 'restore', name: 'Restauración' },
-				{ id: 'guardian', name: 'Guardián' },
-			],
-		};
-
-		// Add default option
-		const defaultOption = document.createElement('option');
-		defaultOption.value = '';
-		defaultOption.textContent = 'Seleccionar especialización';
-		specSelect.appendChild(defaultOption);
-
-		// Add class-specific specializations or generic message if not found
-		if (specializations[selectedClass]) {
-			specializations[selectedClass].forEach((spec) => {
-				const option = document.createElement('option');
-				option.value = spec.id;
-				option.textContent = spec.name;
-				specSelect.appendChild(option);
-			});
-		} else {
-			const genericOption = document.createElement('option');
-			genericOption.value = '';
-			genericOption.textContent = 'Especialización no disponible';
-			genericOption.disabled = true;
-			specSelect.appendChild(genericOption);
-		}
-	}
-
-	// Función para normalizar valores antiguos a IDs estables
-	function normalizeOldSpecValue(oldSpecValue) {
-		const oldToNew = {
-			Armas: 'arms',
-			Furia: 'fury',
-			Protección: 'protection',
-			Sagrado: 'holy',
-			Hierro: 'retribution',
-			Bestia: 'beast_mastery',
-			Puntería: 'archery',
-			Supervivencia: 'survival',
-			Sutileza: 'subtlety',
-			Asesinato: 'assassination',
-			Combate: 'combat',
-			Disciplina: 'discipline',
-			Sombras: 'shadow',
-			Elemental: 'elemental',
-			Melee: 'enhancement',
-			Restauración: 'restore',
-			Arcano: 'arcane',
-			Fuego: 'fire',
-			Escarcha: 'frost',
-			Afllicción: 'affliction',
-			Demonología: 'demonology',
-			Destrucción: 'destruction',
-			Equilibrio: 'balance',
-			Feral: 'feral',
-			Guardián: 'guardian',
-		};
-
-		return oldToNew[oldSpecValue] || oldSpecValue;
+	function updateSpecOptions(selectedClass, value = '') {
+		const options = getSpecsForClass(classKey(selectedClass));
+		const normalized = normalizeSpecValue(value);
+		specSelect.replaceChildren(new Option('Sin especificar', ''));
+		for (const [id, spec] of Object.entries(options)) specSelect.add(new Option(spec.name, id));
+		// Preserve custom/legacy values: editing another field must never erase them.
+		if (normalized && !Object.hasOwn(options, normalized))
+			specSelect.add(new Option(value, normalized));
+		specSelect.value = normalized;
 	}
 
 	// Capture phase prevents the creation handler from also running during editing.

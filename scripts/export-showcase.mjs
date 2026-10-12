@@ -1,3 +1,4 @@
+import { iconAssets } from '../public/icon-assets.js';
 import { mkdirSync, readFileSync, writeFileSync, copyFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { defaults } from '../src/database-core.mjs';
@@ -10,7 +11,7 @@ if (memberApp) {
 	if (url.protocol !== 'https:' || url.origin !== memberApp || url.username || url.password)
 		throw Error('MEMBER_APP_URL must be an HTTPS origin without a path.');
 }
-mkdirSync(join(destination, 'assets'), { recursive: true });
+mkdirSync(join(destination, 'assets/icons/spec'), { recursive: true });
 const source = new URL('../public/', import.meta.url);
 for (const file of [
 	'roster-ui.js',
@@ -29,6 +30,8 @@ for (const file of [
 	'character-editor.js',
 	'operations-ui.js',
 	'components.js',
+	'specs.js',
+	...iconAssets,
 	'assets/guild-logo.png',
 ]) {
 	if (file.endsWith('.js') && memberApp) {

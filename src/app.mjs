@@ -1,3 +1,4 @@
+import { iconAssets } from '../public/icon-assets.js';
 import { gmApi, enqueueGM, gmReady } from './gm-notifications.mjs';
 import { exportRecovery } from './recovery.mjs';
 import { randomUUID } from 'node:crypto';
@@ -33,6 +34,9 @@ async function readLocalAsset(file) {
 
 const date = () => new Date().toISOString();
 const files = {
+	...Object.fromEntries(iconAssets.map((file) => ['/' + file, [file, 'image/jpeg']])),
+	'/components.js': ['components.js', 'text/javascript'],
+	'/specs.js': ['specs.js', 'text/javascript'],
 	'/gm-ui.js': ['gm-ui.js', 'text/javascript'],
 	'/roster-ui.js': ['roster-ui.js', 'text/javascript'],
 	'/wishlist-ui.js': ['wishlist-ui.js', 'text/javascript'],

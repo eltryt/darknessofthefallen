@@ -265,3 +265,31 @@ y `docs/RECRUITMENT.md`.
 - Publicación mediante el workflow de backend existente.
 - Despliegue confirmado: `94b580f`, Actions 38164777202 correcto. Módulo de
   candidaturas servido en producción idéntico al probado y salud HTTPS correcta.
+
+## Integración del roster de Qwen — 12 de octubre de 2026
+
+Base revisada: `12ca327` (último commit de main al iniciar esta tanda).
+La implementación recibida no estaba lista para publicación: los 35 supuestos PNG
+contenían XML AccessDenied, faltaban módulos/recursos en el servidor y el exportador,
+el CSS de iconos no se cargaba y el editor intentaba añadir opciones a un input.
+
+Correcciones locales:
+- Iconos JPEG válidos, alojados en public/assets/icons; rutas explícitas en el backend
+  y recursos incluidos en la exportación de Pages. CSS integrado en style.css.
+- Catálogo único en public/specs.js, reexportado por src/specs.mjs. Etiquetas corregidas
+  y compatibilidad con textos antiguos. Selector de especialización según clase.
+- La edición conserva la selección y los valores personalizados; cambiar de clase
+  limpia la especialización. No hay migración destructiva de personajes existentes.
+- Componentes con rutas controladas, escape de etiquetas y alternativa para clases
+  desconocidas. No se amplían los datos del roster público ni los permisos.
+- Las clases siguen almacenadas con sus nombres actuales; los IDs de especialización
+  se utilizan en el selector. No afirmar que se ha migrado toda la base a IDs de clase.
+- Catálogo heredado de Qwen: no constituye confirmación de especializaciones o talentos
+  específicos de Forever. No se deducen automáticamente roles ni reglas de guild.
+
+Validación: 58 pruebas Node correctas, integración workerd correcta, build Pages y
+build backend (dry-run) correctos. Chromium local: crear/editar, conservar una spec
+personalizada e iconos sin errores/overflow a 320, 390 y 1440px.
+Publicación autorizada por el propietario, incluida la retirada de la restricción
+anterior sobre commits, push y despliegues para las tareas encargadas.
+Despliegue en curso mediante los workflows existentes; resultado pendiente de verificar.
