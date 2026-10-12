@@ -292,7 +292,9 @@ build backend (dry-run) correctos. Chromium local: crear/editar, conservar una s
 personalizada e iconos sin errores/overflow a 320, 390 y 1440px.
 Publicación autorizada por el propietario, incluida la retirada de la restricción
 anterior sobre commits, push y despliegues para las tareas encargadas.
-Despliegue en curso mediante los workflows existentes; resultado pendiente de verificar.
+Commit de integración: `2b876ba`. Pages publicado correctamente (Actions 38253556095);
+icono público comparado con el archivo local. Cloudflare bloqueado por errores de
+respuesta de su API, incluidos respuestas malformadas y timeout en varios intentos.
 
 ## Sesiones de siete días — 12 de octubre de 2026
 
@@ -305,3 +307,13 @@ hechos únicamente en Discord se sincronizan al volver a entrar, no continuament
 al ampliar la sesión se amplía también ese intervalo máximo. No se afirma revocación
 inmediata desde Discord. Prueba añadida: duración, cookie, vigencia al sexto día,
 vencimiento exacto, cambios de rango local y revocación de sesión.
+
+Resultado de publicación: commit `4419c2e` subido a main, 59 pruebas Node y prueba
+workerd correctas. Backend Actions 38254036285 falló también en el reintento durante
+el despliegue del gateway; no llegó a desplegar el backend con sesiones de siete días.
+La aplicación existente responde correctamente a /api/health. No afirmar activación
+del cambio hasta completar un despliegue y sus comprobaciones.
+Pages Actions 38254035223 queda esperando aprobación del entorno github-pages;
+la conexión actual indica current_user_can_approve=false. No se modificaron protecciones.
+Siguiente paso: reintentar backend.yml cuando la API de Cloudflare se estabilice;
+revisar la aprobación de GitHub Pages desde GitHub.
