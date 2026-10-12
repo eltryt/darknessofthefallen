@@ -1,3 +1,4 @@
+import { initAnalytics } from './analytics.js';
 import { createPublicViews } from './public-views.js';
 import { createProfileView } from './profile-view.js';
 import { createPanelView } from './panel-view.js';
@@ -178,3 +179,4 @@ $('#navigation').addEventListener('click', (e) => {
 	if (e.target.closest('a')) closeMenu();
 });
 boot();
+initAnalytics();

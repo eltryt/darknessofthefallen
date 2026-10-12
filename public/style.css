@@ -3139,3 +3139,19 @@ footer small {
 	width: 60px;
 	flex-shrink: 0;
 }
+
+.analytics-consent {
+	position: fixed;
+	bottom: 1rem;
+	left: 1rem;
+	right: 1rem;
+	max-width: 42rem;
+	padding: 1.25rem;
+	background: var(--bg);
+	border: 1px solid var(--gold);
+	z-index: 1000;
+	box-shadow: 0 4px 24px #0008;
+}
+.analytics-consent[hidden] {
+	display: none;
+}

@@ -35,6 +35,7 @@ async function readLocalAsset(file) {
 
 const date = () => new Date().toISOString();
 const files = {
+	'/analytics.js': ['analytics.js', 'text/javascript'],
 	'/home-events.js': ['home-events.js', 'text/javascript'],
 	...Object.fromEntries(iconAssets.map((file) => ['/' + file, [file, 'image/jpeg']])),
 	'/components.js': ['components.js', 'text/javascript'],
@@ -101,7 +102,7 @@ export function createApp(db, env, { readAsset = readLocalAsset } = {}) {
 			'X-Content-Type-Options': 'nosniff',
 			'Referrer-Policy': 'no-referrer',
 			'Content-Security-Policy':
-				"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
+				"default-src 'self'; script-src 'self' https://www.googletagmanager.com; style-src 'self'; img-src 'self' data:; connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com https://www.googletagmanager.com; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
 			'Cache-Control': 'no-store',
 			'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
 		};

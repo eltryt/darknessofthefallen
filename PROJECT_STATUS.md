@@ -377,3 +377,28 @@ con datos sintéticos localmente, no creando convocatorias en Discord.
 Publicación confirmada: `d66b8b2`, Cloudflare 38320290060, Pages 38320289855 y CI
 38320289882 correctos. Los módulos de calendario y convocatorias servidos en la web
 coinciden con los probados. No se borraron convocatorias reales durante la verificación.
+
+## Preparación de Google Analytics — 13 de octubre de 2026
+
+Integración local pendiente del ID público de medición GA4 proporcionado por el
+propietario. No se ha activado ni desplegado. Carga solo tras aceptar estadísticas;
+excluye panel, perfil, login, candidaturas y contacto. No se envían query strings,
+referencias de candidaturas, IDs de usuarios ni contenido de formularios.
+Solo aplicación principal; Pages queda excluido de esta primera integración.
+Pendiente: añadir el ID G-…, revisar configuración de medición mejorada de la propiedad,
+comprobar consentimiento en navegador y comprobar recepción real en Google Analytics.
+No afirmar que registra visitas antes de esa comprobación. Nunca pedir claves secretas.
+
+## Activación GA4 — 13 de octubre de 2026
+
+ID público confirmado por el propietario: G-CEGJTCH2DX. Se configura la integración
+preparada, con consentimiento previo opcional y retirada desde el pie de página.
+Al rechazar se deshabilita GA, se limpian sus cookies accesibles y se recarga si estaba activo.
+Rutas medidas: inicio, hermandad, roster, raids y progreso. No Pages, formularios,
+autenticación, perfil ni panel. Sin parámetros de URL, referrer ni identificación de usuarios.
+Se indicó desactivar Medición mejorada en GA4; no se ha verificado esa configuración
+remota. CSP permite los hosts de carga y recogida de GA4 sin habilitar inline scripts.
+Validación: 63 pruebas Node, build Pages, workerd y navegador local con script de
+Google simulado: aceptar/rechazar/retirar, rutas excluidas y URL limpia correctos.
+Pendiente comprobar publicación y recepción en el informe Tiempo real de la propiedad;
+no se dispone de acceso de lectura al panel de Analytics ni se afirma recepción confirmada.
