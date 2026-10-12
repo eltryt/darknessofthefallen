@@ -317,3 +317,14 @@ Pages Actions 38254035223 queda esperando aprobación del entorno github-pages;
 la conexión actual indica current_user_can_approve=false. No se modificaron protecciones.
 Siguiente paso: reintentar backend.yml cuando la API de Cloudflare se estabilice;
 revisar la aprobación de GitHub Pages desde GitHub.
+
+## Recuperación de la carga de la web — 12 de octubre de 2026
+
+Se detectó un reemplazo del historial de main: `53115d4` se publicó sobre `12ca327`,
+sin las correcciones `2b876ba` ni las sesiones de siete días `4419c2e`.
+En producción /components.js devolvía 404 y detenía la carga del frontend.
+Se fusiona la nueva hoja de estilos con las correcciones anteriores, conservando
+ambas líneas de trabajo y sin force-push. La prueba workerd comprueba ahora también
+components.js, specs.js, roster-ui.js e iconos de clase/especialización.
+Navegador local: edición de personajes y roster correctos a 320/390/1440px.
+Publicación de recuperación en curso; comprobar los resultados de Actions.
