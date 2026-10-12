@@ -336,3 +336,18 @@ curl (validación TLS del entorno; el almacén de Chromium no confía en la CA d
 Las sesiones de siete días están incluidas en el backend publicado; no se realizó
 un login real de Discord en esta comprobación. Pages sigue siendo una presentación
 estática: el roster con datos reales está en la aplicación Cloudflare.
+
+## Convocatorias de portada — 13 de octubre de 2026
+
+Revisión del intento de Qwen `c6aefb8`: se completa su objetivo sobre main sin
+incorporar la sustitución del historial ni las afirmaciones de trabajo no incluido.
+- Contenedor real en la portada y módulo home-events.js compartido por ambos builds.
+- Tres eventos futuros abiertos, orden cronológico, fechas Europe/Madrid con DST.
+- Solo datos devueltos por la API existente según los permisos del visitante.
+- Estado de carga, vacío y fallo diferenciados, botón de reintento y acceso a raids.
+- Pages enlaza a las convocatorias de la aplicación, sin API ni datos simulados.
+- No se cambian OAuth, sesiones, permisos ni integraciones. No se afirman nuevas
+  animaciones o rediseños que no se han realizado en esta corrección.
+- Verificación: 60 pruebas Node; navegador local con proveedor simulado para error,
+  reintento y evento futuro, y API local real para vacío; 320/390/768/1440px sin overflow.
+  Build Pages y prueba workerd con nueva ruta de módulo. Pendiente verificar publicación.

@@ -35,6 +35,7 @@ async function readLocalAsset(file) {
 
 const date = () => new Date().toISOString();
 const files = {
+	'/home-events.js': ['home-events.js', 'text/javascript'],
 	...Object.fromEntries(iconAssets.map((file) => ['/' + file, [file, 'image/jpeg']])),
 	'/components.js': ['components.js', 'text/javascript'],
 	'/specs.js': ['specs.js', 'text/javascript'],

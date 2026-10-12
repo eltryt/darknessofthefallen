@@ -101,6 +101,7 @@ test(
 				'/',
 				'/reclutamiento',
 				'/app.js',
+				'/home-events.js',
 				'/components.js',
 				'/specs.js',
 				'/roster-ui.js',

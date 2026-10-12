@@ -14,6 +14,7 @@ if (memberApp) {
 mkdirSync(join(destination, 'assets/icons/spec'), { recursive: true });
 const source = new URL('../public/', import.meta.url);
 for (const file of [
+	'home-events.js',
 	'roster-ui.js',
 	'wishlist-ui.js',
 	'encounter-catalog.js',

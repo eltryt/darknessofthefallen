@@ -66,6 +66,7 @@ try {
 		'login',
 	];
 	const assets = [
+		'home-events.js',
 		'roster-ui.js',
 		'wishlist-ui.js',
 		'encounter-catalog.js',

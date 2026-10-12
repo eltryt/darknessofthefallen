@@ -1,3 +1,4 @@
+import { mountHomeEvents } from './home-events.js';
 import { contactForm } from './gm-ui.js';
 import { rosterCards } from './roster-ui.js';
 import { createPublicLayout } from './public-layout.js';
@@ -98,6 +99,13 @@ export function createPublicViews(context) {
 						</p>
 					</article>
 				</div>
+			</section>
+			<section class="section" aria-labelledby="home-events-heading">
+				<div class="section-head">
+					<h2 id="home-events-heading">Próximas convocatorias</h2>
+					<a href="/raids">Ver calendario →</a>
+				</div>
+				<div data-home-events></div>
 			</section>
 			<section class="banner">
 				<div>
@@ -307,6 +315,7 @@ export function createPublicViews(context) {
 		}
 		$('#content').innerHTML = publicLayout(path, html);
 		attachSchedulePlanner(s);
+		if (path === '/') await mountHomeEvents(document.querySelector('[data-home-events]'), context);
 		if (path === '/contacto' && context.me?.permissions.includes('community.read')) {
 			const host = document.createElement('section');
 			host.className = 'section';
