@@ -373,3 +373,7 @@ con datos sintéticos localmente, no creando convocatorias en Discord.
   comprueba destino Google (sin crear eventos reales), cancelar/confirmar borrado
   y tamaños 320/390/1440. Pruebas de permisos, CSRF y no reaparición al sincronizar.
 - Publicación pendiente de verificar mediante los workflows existentes.
+
+Publicación confirmada: `d66b8b2`, Cloudflare 38320290060, Pages 38320289855 y CI
+38320289882 correctos. Los módulos de calendario y convocatorias servidos en la web
+coinciden con los probados. No se borraron convocatorias reales durante la verificación.
