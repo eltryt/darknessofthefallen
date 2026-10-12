@@ -351,3 +351,9 @@ incorporar la sustitución del historial ni las afirmaciones de trabajo no inclu
 - Verificación: 60 pruebas Node; navegador local con proveedor simulado para error,
   reintento y evento futuro, y API local real para vacío; 320/390/768/1440px sin overflow.
   Build Pages y prueba workerd con nueva ruta de módulo. Pendiente verificar publicación.
+
+Publicación confirmada de `82d8f46`: Cloudflare 38319233011, Pages 38319230583 y
+validación 38319230616 correctos. Módulo home-events.js servido idéntico al local.
+Portada real renderizada como visitante: bloque visible con estado vacío y enlace
+al calendario, sin errores JavaScript. Eventos futuros y reintento se comprobaron
+con datos sintéticos localmente, no creando convocatorias en Discord.
