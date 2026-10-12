@@ -1,0 +1,77 @@
+/* Estilos para iconos de clases y especializaciones */
+.icon-class,
+.icon-spec {
+  vertical-align: middle;
+  margin: 0 4px;
+}
+
+.icon-small {
+  width: 16px;
+  height: 16px;
+}
+
+.icon-medium {
+  width: 24px;
+  height: 24px;
+}
+
+.icon-large {
+  width: 32px;
+  height: 32px;
+}
+
+.class-icon-container,
+.spec-icon-container {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.icon-text {
+  font-size: 0.9em;
+  vertical-align: middle;
+}
+
+.class-with-spec {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.spec-separator {
+  opacity: 0.7;
+  font-size: 1.2em;
+  margin: 0 2px;
+}
+
+/* Estilos responsive para iconos */
+@media (max-width: 768px) {
+  .icon-small {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .icon-medium {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .icon-large {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+/* Estilos para el placeholder de icono no disponible */
+.spec-icon-placeholder {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  text-align: center;
+  line-height: 24px;
+  font-size: 0.8em;
+  color: #888;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  margin: 0 2px;
+}
