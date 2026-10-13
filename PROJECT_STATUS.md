@@ -521,3 +521,9 @@ alta de jugadores reales ni se usó una sesión del propietario para la validaci
 - Bloqueo operativo: este entorno no tiene sesión autenticada del propietario en
   el panel. La lista NO se ha aplicado a producción; debe elegirse el JSON y pulsar
   Aplicar lista desde una sesión autorizada. No se ha creado un acceso alternativo.
+
+Importación publicada en 54639fc: Cloudflare 38425441823, Pages 38425441986 y
+validación 38425441891 correctos. Módulo manual-roster-ui.js servido en producción
+idéntico al local. Chromium comprobó carga del archivo y aplicación autenticada
+con datos sintéticos; workerd y build correctos. Pendiente únicamente aplicar el
+archivo del propietario desde su sesión; no se modificaron sus jugadores reales.
