@@ -541,3 +541,7 @@ archivo del propietario desde su sesión; no se modificaron sus jugadores reales
 - Validación: 67 pruebas Node, build Pages y formato. Chromium: 22 tarjetas, filtros,
   búsqueda combinada, acceso a edición, teclado y sin overflow a 320/390/1440 px.
 - Solo presentación: no modifica personajes, clases, rangos, cuentas o datos reales.
+
+Rediseño publicado en 0b30521. Cloudflare 38432556423, Pages 38432557149 y
+validación 38432557148 correctos. Tras propagación, roster-ui.js, operations-ui.js
+ y style.css coinciden con los archivos locales comprobados (consulta versionada).
