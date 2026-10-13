@@ -134,7 +134,7 @@ export function createApp(db, env, { readAsset = readLocalAsset } = {}) {
 			if (['GET', 'HEAD'].includes(method) && ['/robots.txt', '/sitemap.xml'].includes(path)) {
 				const content =
 					path === '/robots.txt'
-						? `User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /auth/\nSitemap: ${env.APP_ORIGIN}/sitemap.xml\n`
+						? `User-agent: *\nAllow: /\nDisallow: /api/\nAllow: /api/public$\nDisallow: /auth/\nSitemap: ${env.APP_ORIGIN}/sitemap.xml\n`
 						: sitemap(env.APP_ORIGIN);
 				res.writeHead(200, {
 					...headers,

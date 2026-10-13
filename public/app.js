@@ -133,8 +133,16 @@ function table(heads, rows) {
 
 // Inicio de la aplicación y navegación.
 async function boot() {
+	const overview = document.querySelector('[data-public-overview]')?.outerHTML;
+
 	try {
-		[data, me] = await Promise.all([api('/api/public'), api('/api/me')]);
+		[data, me] = await Promise.all([
+			api('/api/public'),
+			api('/api/me').catch((error) => {
+				if (overview) return { user: null, permissions: [] };
+				throw error;
+			}),
+		]);
 		const s = data.settings,
 			path = location.pathname.replace(/\/$/, '') || '/';
 		if (!data.authConfigured && !me.user) $('.login').textContent = 'Acceso de miembros';
@@ -154,6 +162,16 @@ async function boot() {
 		else if (path === '/panel') await createPanelView(context).panel();
 		else await createPublicViews(context).render(path);
 	} catch (e) {
+		if (overview) {
+			$('#content').innerHTML = overview;
+			const notice = document.createElement('p');
+			notice.className = 'notice';
+			notice.setAttribute('role', 'status');
+			notice.textContent =
+				'La información interactiva no está disponible en este momento. Puedes recargar la página para volver a intentarlo.';
+			$('#content').append(notice);
+			return;
+		}
 		$('#content').innerHTML = /* HTML */ `<div class="page-title">
 			<h1>No hemos podido abrir esta página.</h1>
 			<p class="error">${esc(e.message)}</p>

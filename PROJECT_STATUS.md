@@ -438,3 +438,16 @@ Añadida al head de public/index.html la etiqueta google-site-verification entre
 por el propietario para la propiedad de prefijo de URL de la aplicación. Mantenerla
 tras verificar. No equivale a confirmación de propiedad: el propietario debe pulsar
 Verificar en Search Console cuando el despliegue esté comprobado.
+
+## Corrección de riesgo Soft 404 — 13 de octubre de 2026
+
+Search Console: portada obtenida correctamente, rastreo e indexación permitidos,
+pero clasificada Soft 404. Reproducción local: bloquear /api/* hacía que boot()
+reemplazara el resumen del servidor por una pantalla de error con respuesta HTML 200.
+robots.txt bloqueaba también /api/public, necesario para renderizar el contenido.
+Ahora permite esa ruta pública exacta; la sesión opcional puede fallar sin bloquear
+las páginas públicas y el contenido inicial se conserva si falla la carga. Privadas
+mantienen su comportamiento autenticado y noindex. No se cambia la respuesta según bot.
+64 pruebas Node y navegador con API bloqueada: contenido público conservado.
+La causa concreta que observó Google no está confirmada sin su HTML renderizado;
+volver a probar URL publicada tras desplegar. El sitemap válido continúa accesible.
