@@ -570,3 +570,7 @@ Fundación y referencia publicadas en 737e0c3: Cloudflare 38433741408, Pages
 - Corregidas reglas de reclutamiento sobrescritas por la cascada que provocaban
   desbordamiento móvil en la introducción y los pasos de candidatura.
 - Build Pages y formato comprobados; no cambia datos ni lógica de autenticación.
+
+Controles publicados y verificados en fc95c64: Cloudflare 38434498549, Pages
+38434498202 y validación 38434498329 correctos. style.css servido en producción
+coincide con el archivo local y /roster responde HTTP 200. Tanda finalizada.
