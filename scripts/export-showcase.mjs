@@ -14,6 +14,9 @@ if (memberApp) {
 mkdirSync(join(destination, 'assets/icons/spec'), { recursive: true });
 const source = new URL('../public/', import.meta.url);
 for (const file of [
+	'theme.css',
+	'assets/night-sanctum.svg',
+	'guild-showcase.js',
 	'boot-state.js',
 	'manual-roster-ui.js',
 	'analytics.js',

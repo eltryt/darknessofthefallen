@@ -38,3 +38,24 @@ No inventar un día o mes de fundación ni calcular años completos sin esa fech
 
 El rediseño de reclutamiento y progreso queda como siguiente trabajo; guardar esta
 referencia no significa que ya esté implementado ni que exista integración externa.
+
+## Artic Tempest y aplicación inicial — 14 de octubre de 2026
+
+Referencia adicional: https://artictempest.es/ y capturas de reclutamiento/progreso
+facilitadas por el propietario. Preferencias: texto sans-serif legible, bloques
+concisos, horario y filosofía visibles, tarjetas teñidas por clase, iconos de
+especialización y filtros de prioridad/rol. Mantener fantasía en la ambientación.
+
+Primera aplicación: theme.css define tipografía y componentes; night-sanctum.svg
+es una ilustración vectorial propia, no una captura de WoW ni de las referencias.
+Las prioridades son configurables por clase (Abierta/Alta/Media/Baja) exclusivamente
+por el Líder. No se han asignado prioridades reales: por defecto todas Abierta.
+Las especializaciones reutilizan el catálogo de perfiles existente; no tienen una
+prioridad independiente en esta tanda.
+
+Progreso utiliza los registros públicos existentes. Onyxia se muestra como referencia
+sin victorias cuando no hay registros, no como raid creada ni boss derrotado. El
+icono procede de https://wow.zamimg.com/images/wow/icons/large/achievement_boss_onyxia.jpg
+(CDN de Wowhead), igual que los iconos ya utilizados. No acredita disponibilidad,
+composición ni loot de una versión concreta de Forever. Pendientes: portadas
+fotográficas verificadas por encuentro y evaluación de proveedores compatibles.

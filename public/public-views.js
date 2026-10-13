@@ -1,3 +1,4 @@
+import { progressShowcase, attachRecruitmentFilters } from './guild-showcase.js';
 import { mountHomeEvents } from './home-events.js';
 import { contactForm } from './gm-ui.js';
 import { rosterCards } from './roster-ui.js';
@@ -5,7 +6,7 @@ import { createPublicLayout } from './public-layout.js';
 import { mountRaidEvents } from './raid-events-ui.js';
 import { prepareApplication, applicationReceipt } from './recruitment-ui.js';
 import { attachSchedulePlanner } from './schedule-ui.js';
-import { renderProgress } from './operations-ui.js';
+
 export function createPublicViews(context) {
 	const {
 		$,
@@ -287,7 +288,7 @@ export function createPublicViews(context) {
 						'Paso a paso, boss a boss',
 						'Nuestro progreso PvE',
 						'Aquí quedarán los encuentros superados y los hitos de la hermandad.',
-					) + renderProgress(data.progress, { esc, empty });
+					) + progressShowcase(data.progress, esc);
 				break;
 			case '/contacto':
 				html =
@@ -318,6 +319,8 @@ export function createPublicViews(context) {
 				html = empty('Página no encontrada', 'Vuelve al inicio para seguir explorando.');
 		}
 		$('#content').innerHTML = publicLayout(path, html);
+		attachRecruitmentFilters($('#content'));
+		document.body.dataset.page = path;
 		attachSchedulePlanner(s);
 		if (path === '/') await mountHomeEvents(document.querySelector('[data-home-events]'), context);
 		if (path === '/contacto' && context.me?.permissions.includes('community.read')) {

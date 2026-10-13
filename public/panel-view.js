@@ -187,6 +187,16 @@ ${esc(s.about)}</textarea></label
 					Marca las clases y roles que buscáis. Son prioridades informativas: otras clases también
 					pueden presentar candidatura. Si no marcas ninguna opción, no se anunciará una prioridad.
 				</p>
+				<fieldset>
+					<legend>Prioridades por clase</legend>
+					<p>
+						Informativas: no impiden presentar candidatura. Abierta mantiene el reclutamiento sin
+						preferencias.
+					</p>
+					<div class="form-grid">
+						${classes.map((name) => select(name, 'priority_' + name, ['abierta', 'alta', 'media', 'baja'])).join('')}
+					</div>
+				</fieldset>
 				${recruitmentChoices('Clases buscadas', 'soughtClasses', classes, s.soughtClasses || [])}${recruitmentChoices('Roles buscados', 'soughtRoles', roles, s.soughtRoles || [])}<label
 					><input
 						name="recruitmentOpen"
@@ -195,12 +205,17 @@ ${esc(s.about)}</textarea></label
 					/>Reclutamiento abierto</label
 				><button type="submit">Guardar configuración</button>
 			</form>`;
+			for (const name of classes)
+				$('#settings').elements['priority_' + name].value = s.classPriorities?.[name] || 'abierta';
 			$('#settings').elements.ruleset.value = s.ruleset;
 			$('#settings').elements.lootMethod.value = s.lootMethod;
 			formHandler('#settings', async (v, f) => {
 				data.settings = await api('/api/settings', 'PUT', {
 					...v,
 					raidDays: new FormData(f).getAll('days'),
+					classPriorities: Object.fromEntries(
+						classes.map((name) => [name, new FormData(f).get('priority_' + name)]),
+					),
 					soughtClasses: new FormData(f).getAll('soughtClasses'),
 					soughtRoles: new FormData(f).getAll('soughtRoles'),
 					recruitmentOpen: !!v.recruitmentOpen,

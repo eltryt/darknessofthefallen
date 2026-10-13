@@ -586,3 +586,29 @@ coincide con el archivo local y /roster responde HTTP 200. Tanda finalizada.
   sin relajar CSP, sin cambios de sesión o autenticación. Asset incluido en Pages.
 - Chromium: carga lenta, render completado, JavaScript desactivado, error de API y
   módulo bloqueado comprobados. Suite Node y build Pages correctos.
+
+Carga uniforme publicada en c09c087: Cloudflare 38482320338, Pages 38482319564 y
+validación 38482319589 correctos; boot-state.js comprobado en producción.
+
+## Rediseño de lectura, reclutamiento y progreso — 14 de octubre de 2026
+
+- Tipografía sans-serif para información y controles, mejor contraste, tamaños y
+  espaciado; títulos, tarjetas, formularios, menú y panel mantienen una identidad
+  oscura con acentos carmesí. Capa visual en public/theme.css.
+- Portada con ilustración vectorial original night-sanctum.svg y el logo existente;
+  año 2026 conservado en Inicio/Hermandad. Sin copiar HTML/CSS ni fondos de referencias.
+- Reclutamiento: horario/filosofía/expectativas a simple vista, CTA al formulario
+  existente, nueve tarjetas con tintes e iconos de clase/especialización y filtros
+  combinables de prioridad/rol. Formulario, privacidad y envío existentes conservados.
+- Configuración exclusiva del Líder para classPriorities (abierta/alta/media/baja),
+  validada en backend y auditada. Por defecto Abierta; no se cambian prioridades reales.
+  No se rechazan candidaturas por clase/prioridad; niveles por especialización pendientes.
+- Progreso: tarjetas visuales, contadores, barras, estados de jefes y primeras victorias
+  procedentes del panel. Sin datos, Onyxia es una referencia explícita sin progreso;
+  no crea registros, no simula kills ni conexión a Raider.IO. Portadas fotográficas
+  por encuentro y fuentes externas compatibles quedan pendientes de verificación.
+- Icono Onyxia local verificado JPEG; procedencia documentada. CSS/JS/SVG incluidos
+  en backend y Pages. Sin dependencias, secretos, servicios o migraciones nuevos.
+- Validación: pruebas de prioridades autorizadas/inválidas y tarjetas; Chromium en
+  ocho rutas y cinco anchuras, guardado/recarga de prioridades, filtros y CTA; sin
+  errores de JavaScript ni assets fallidos. No se alteraron jugadores o progreso real.

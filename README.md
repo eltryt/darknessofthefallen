@@ -123,3 +123,17 @@ historial. No cambia rangos de cuentas Discord; un rango distinto causa rechazo
 de toda la lista. El rango de un registro manual es informativo, sin acceso web.
 Los nombres de Discord pueden diferir de los personajes: ajustar la lista antes
 para evitar crear una segunda ficha. Una lista repetida no duplica las fichas.
+
+### Diseño y prioridades de reclutamiento
+
+`public/theme.css` contiene la nueva capa visual; `public/guild-showcase.js` genera
+las tarjetas de reclutamiento y progreso. El fondo `assets/night-sanctum.svg` es
+propio. La procedencia y límites de los assets se documentan en
+`docs/DESIGN_REFERENCES.md`.
+
+En Panel → Configuración, el Líder puede guardar prioridades por clase: Abierta,
+Alta, Media o Baja. Son informativas y no impiden presentar candidatura. Las
+especializaciones comparten la prioridad de su clase. No requiere secretos,
+servicios externos ni migración: se conserva en el JSON de configuración existente.
+El progreso usa los encuentros registrados por el equipo; no se sincroniza con
+Raider.IO ni se generan resultados de ejemplo en producción.

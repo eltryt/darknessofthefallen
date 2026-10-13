@@ -66,6 +66,9 @@ try {
 		'login',
 	];
 	const assets = [
+		'theme.css',
+		'assets/night-sanctum.svg',
+		'guild-showcase.js',
 		'boot-state.js',
 		'manual-roster-ui.js',
 		'analytics.js',

@@ -1,0 +1,569 @@
+/* Dirección visual propia: santuario nocturno, lectura clara y clases como acento. */
+:root {
+	--bg: #0c0e15;
+	--panel: #151821;
+	--line: #303440;
+	--muted: #b8bdca;
+	--ink: #f1f3f8;
+	font-family:
+		Inter,
+		ui-sans-serif,
+		system-ui,
+		-apple-system,
+		BlinkMacSystemFont,
+		'Segoe UI',
+		sans-serif;
+	font-size: 16px;
+	line-height: 1.6;
+}
+body {
+	margin: 0;
+	background: radial-gradient(ellipse at 90% 0%, #54344725, transparent 50%), var(--bg);
+}
+p,
+li,
+label,
+input,
+select,
+textarea {
+	line-height: 1.65;
+}
+p {
+	color: var(--muted);
+}
+h1,
+h2,
+h3 {
+	color: var(--ink);
+	text-wrap: balance;
+}
+h2,
+h3 {
+	font-family: inherit;
+	font-weight: 650;
+	letter-spacing: -0.025em;
+}
+h2 {
+	font-size: clamp(26px, 3vw, 38px);
+}
+h3 {
+	font-size: 20px;
+}
+main {
+	max-width: 1440px;
+	padding-inline: clamp(20px, 5vw, 72px);
+}
+body > header {
+	padding-inline: clamp(20px, 4vw, 64px);
+}
+#navigation {
+	font-size: 13px;
+	font-weight: 600;
+}
+#navigation a {
+	padding: 12px 9px;
+}
+.brand {
+	font-size: 13px;
+}
+.eyebrow,
+.label {
+	font-family: inherit;
+	font-size: 11px;
+	font-weight: 750;
+	letter-spacing: 0.15em;
+	text-transform: uppercase;
+}
+.eyebrow {
+	color: #dabfa0;
+}
+.page-title {
+	padding-top: clamp(40px, 6vw, 80px);
+	padding-bottom: 28px;
+}
+.page-title h1 {
+	font-family: inherit;
+	font-size: clamp(38px, 5vw, 64px);
+	font-weight: 750;
+	letter-spacing: -0.04em;
+	max-width: 18ch;
+}
+.page-title p {
+	font-size: 17px;
+	line-height: 1.8;
+	max-width: 65ch;
+}
+.hero {
+	position: relative;
+	isolation: isolate;
+	min-height: 620px;
+	gap: 40px;
+	padding-block: 76px;
+}
+.hero::before {
+	content: '';
+	position: absolute;
+	z-index: -1;
+	inset: 0 -5vw;
+	background:
+		linear-gradient(90deg, #0c0e15eb 10%, #0c0e1555 65%, #0c0e1580),
+		linear-gradient(0deg, var(--bg), transparent 40%),
+		url('assets/night-sanctum.svg') center/cover;
+}
+.hero h1 {
+	font-family: inherit;
+	font-weight: 750;
+	font-size: clamp(42px, 5.1vw, 72px);
+	letter-spacing: -0.045em;
+	line-height: 1.09;
+}
+.hero h1 em {
+	font-family: Georgia, serif;
+	font-weight: 400;
+	color: #e6c6ae;
+}
+.hero p {
+	font-size: 17px;
+	line-height: 1.8;
+}
+.hero .eyebrow {
+	font-size: 11px;
+}
+.hero-art {
+	max-width: 420px;
+}
+.hero-logo {
+	filter: drop-shadow(0 15px 45px #0009);
+}
+.button,
+button {
+	font-family: inherit;
+	font-size: 14px;
+	font-weight: 650;
+	gap: 12px;
+	border-radius: 8px;
+	padding: 12px 20px;
+}
+.button.secondary,
+button.secondary {
+	color: #e2e4eb;
+}
+.facts {
+	border-radius: 14px;
+	border: 1px solid var(--line);
+	background: #141720;
+}
+.fact strong {
+	font-size: 18px;
+}
+.fact small {
+	font-size: 13px;
+	color: var(--muted);
+}
+.card {
+	background: linear-gradient(145deg, #1b1e29, #12151e);
+	border: 1px solid var(--line);
+	border-radius: 16px;
+	padding: clamp(20px, 3vw, 32px);
+}
+.section {
+	margin-top: 64px;
+}
+.card p,
+.link-card p {
+	font-size: 15px;
+	line-height: 1.8;
+}
+.link-card {
+	transition:
+		border-color 180ms ease,
+		transform 180ms ease;
+}
+.link-card:hover {
+	border-color: #ae7a83;
+	transform: translateY(-3px);
+}
+.card-number {
+	color: #be8c96;
+}
+.banner {
+	border-radius: 16px;
+	border: 1px solid #61404d;
+	background: linear-gradient(110deg, #48263366, #171822);
+}
+.form {
+	max-width: 960px;
+}
+input,
+select,
+textarea {
+	font-family: inherit;
+	font-size: 15px;
+	padding: 12px;
+	border-radius: 8px;
+	background: #0e111a;
+	border-color: #414655;
+}
+label {
+	font-size: 14px;
+}
+.form-grid {
+	gap: 22px;
+}
+fieldset {
+	min-width: 0;
+	border: 1px solid var(--line);
+	border-radius: 12px;
+	padding: 20px;
+}
+legend {
+	padding: 0 8px;
+}
+.form small,
+.form p {
+	font-size: 13px;
+}
+.recruit-command {
+	display: grid;
+	grid-template-columns: 1.35fr 1fr;
+	gap: 36px;
+	align-items: start;
+	padding: clamp(24px, 4vw, 48px);
+	border: 1px solid #51404e;
+	border-radius: 22px;
+	background:
+		linear-gradient(90deg, #11141bef, #161521dd),
+		url('assets/night-sanctum.svg') center/cover;
+}
+.recruit-lead h2 {
+	font-size: clamp(30px, 3.7vw, 48px);
+	line-height: 1.15;
+	margin: 16px 0;
+}
+.recruit-facts {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 14px;
+	margin: 28px 0;
+}
+.recruit-facts article {
+	background: #ffffff05;
+	border: 1px solid #ffffff15;
+	padding: 18px;
+	border-radius: 12px;
+}
+.recruit-facts strong {
+	display: block;
+	font-size: 18px;
+	margin-top: 8px;
+}
+.recruit-facts p {
+	font-size: 13px;
+	margin-bottom: 0;
+}
+.recruit-expectations {
+	background: #0c1019ba;
+	border: 1px solid #ffffff18;
+	border-radius: 14px;
+	padding: 26px;
+}
+.recruit-expectations h3 {
+	font-size: 24px;
+}
+.recruit-expectations ul {
+	padding-left: 20px;
+	color: #cbd0dd;
+	font-size: 14px;
+}
+.recruit-expectations li {
+	margin: 12px 0;
+}
+.recruit-expectations li::marker {
+	color: #dc9dab;
+}
+.recruit-expectations p {
+	font-size: 13px;
+}
+.recruit-showcase {
+	margin-top: 64px;
+}
+.recruit-controls {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 24px 0;
+}
+.recruit-controls button {
+	border-radius: 30px;
+	min-height: 44px;
+	padding: 8px 20px;
+}
+.recruit-controls button[aria-pressed='true'] {
+	border-color: #e6b5be;
+	background: #643345;
+	color: white;
+}
+.class-recruit-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 310px), 1fr));
+	gap: 18px;
+}
+.class-recruit-card {
+	padding: 24px;
+	border-radius: 18px;
+	border: 1px solid color-mix(in srgb, var(--class-color) 30%, #282e3b);
+	background:
+		radial-gradient(
+			ellipse at 10% 0%,
+			color-mix(in srgb, var(--class-color) 13%, transparent),
+			transparent 70%
+		),
+		#10151f;
+	transition:
+		border-color 180ms ease,
+		transform 180ms ease;
+}
+.class-recruit-card:hover {
+	transform: translateY(-3px);
+	border-color: var(--class-color);
+}
+.class-recruit-heading {
+	display: flex;
+	gap: 16px;
+	align-items: center;
+}
+.class-recruit-heading > img {
+	width: 48px;
+	height: 48px;
+	border-radius: 12px;
+	border: 1px solid color-mix(in srgb, var(--class-color) 50%, transparent);
+}
+.class-recruit-heading h3 {
+	margin: 0 0 4px;
+	font-size: 19px;
+}
+.recruit-priority {
+	font-size: 12px;
+	color: var(--class-color);
+}
+.recruit-specs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-top: 20px;
+}
+.recruit-specs > span {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 9px;
+	font-size: 12px;
+	border: 1px solid #ffffff15;
+	border-radius: 20px;
+	background: #0b0e16a0;
+}
+.recruit-specs img {
+	width: 19px;
+	height: 19px;
+	border-radius: 50%;
+}
+.recruit-cta {
+	text-align: center;
+	margin: 32px 0;
+}
+.recruit-cta p {
+	margin: 12px auto;
+	font-size: 13px;
+}
+.application-steps {
+	gap: 28px;
+}
+.application-steps strong {
+	font-size: 18px;
+}
+.application-steps span {
+	font-size: 14px;
+}
+.raid-showcase-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
+	gap: 24px;
+}
+.raid-showcase {
+	border: 1px solid #42404d;
+	border-radius: 20px;
+	overflow: hidden;
+	background: #131720;
+}
+.raid-art {
+	position: relative;
+	min-height: 280px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+	gap: 10px;
+	padding: 32px;
+	background:
+		linear-gradient(0deg, #11151f, #17121b77),
+		url('assets/night-sanctum.svg') 65% 45% / cover;
+}
+.raid-art img {
+	width: 64px;
+	height: 64px;
+	border-radius: 50%;
+	border: 2px solid #b48d67;
+	box-shadow: 0 0 36px #b34e3733;
+}
+.raid-art h2 {
+	font-size: clamp(28px, 3vw, 42px);
+	margin: 0;
+}
+.raid-art p {
+	margin: 0;
+	font-size: 13px;
+}
+.raid-score {
+	font-size: 54px;
+	font-weight: 750;
+	line-height: 1.15;
+}
+.raid-score span {
+	color: #959eae;
+	font-size: 30px;
+}
+.raid-sigil {
+	font-size: 42px;
+	color: #c79f77;
+}
+.raid-card-body {
+	padding: 24px;
+}
+.raid-card-body progress {
+	width: 100%;
+	height: 8px;
+	accent-color: #82c8aa;
+}
+.encounter-tiles {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+	gap: 10px;
+	list-style: none;
+	padding: 0;
+	margin: 24px 0;
+}
+.encounter-tiles li {
+	display: flex;
+	align-items: start;
+	gap: 12px;
+	padding: 14px;
+	border: 1px solid #ffffff14;
+	border-radius: 10px;
+	background: #ffffff03;
+}
+.encounter-tiles strong {
+	font-size: 14px;
+}
+.encounter-tiles small {
+	display: block;
+	color: #b4bbc8;
+	font-size: 12px;
+}
+.encounter-defeated > span {
+	color: #86d3b1;
+}
+.raid-card-body details {
+	font-size: 14px;
+}
+.progress-source {
+	text-align: center;
+	font-size: 13px;
+	margin-top: 24px;
+}
+.roster-player .class-name {
+	font-size: 15px;
+}
+.roster-role-heading h3 {
+	font-size: 15px;
+}
+.roster-player-info span {
+	font-size: 13px;
+}
+.panel-tabs {
+	gap: 8px;
+}
+.panel-tabs button {
+	font-size: 13px;
+}
+.privacy-note,
+.notice {
+	line-height: 1.7;
+}
+footer {
+	font-family: inherit;
+	font-size: 13px;
+}
+@media (max-width: 1100px) {
+	.hero {
+		gap: 24px;
+	}
+	.hero-art {
+		max-width: 340px;
+	}
+}
+@media (max-width: 800px) {
+	.recruit-command {
+		grid-template-columns: 1fr;
+	}
+}
+@media (max-width: 700px) {
+	.hero {
+		min-height: 0;
+		padding-block: 48px;
+	}
+	.hero h1 {
+		font-size: clamp(38px, 10vw, 56px);
+	}
+	.hero::before {
+		inset-inline: -20px;
+	}
+	.hero p {
+		font-size: 16px;
+	}
+	.recruit-facts {
+		grid-template-columns: 1fr;
+	}
+	.card,
+	.recruit-command {
+		border-radius: 14px;
+	}
+	.section,
+	.recruit-showcase {
+		margin-top: 44px;
+	}
+	.page-title h1 {
+		font-size: 38px;
+	}
+	.raid-art {
+		min-height: 240px;
+		padding: 24px 18px;
+	}
+	.brand {
+		font-size: 11px;
+	}
+	.brand-sub {
+		font-size: 8px;
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.class-recruit-card:hover,
+	.link-card:hover {
+		transform: none;
+	}
+}
+
+.section-head h2 {
+	font-family: inherit;
+	font-weight: 650;
+}

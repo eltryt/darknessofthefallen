@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" fill="none">
+ <defs>
+  <linearGradient id="sky" x2="0" y2="900" gradientUnits="userSpaceOnUse"><stop stop-color="#191526"/><stop offset=".58" stop-color="#402033"/><stop offset="1" stop-color="#0d1018"/></linearGradient>
+  <radialGradient id="halo"><stop stop-color="#dca2ab" stop-opacity=".25"/><stop offset="1" stop-color="#dca2ab" stop-opacity="0"/></radialGradient>
+  <linearGradient id="stone" x2="1" y2="1"><stop stop-color="#29232f"/><stop offset="1" stop-color="#10121a"/></linearGradient>
+ </defs>
+ <path fill="url(#sky)" d="M0 0h1600v900H0z"/>
+ <ellipse cx="1050" cy="260" rx="420" ry="350" fill="url(#halo)"/>
+ <circle cx="1050" cy="260" r="90" fill="#c99ba6" opacity=".18"/>
+ <path d="M0 570 190 350 300 470 485 315 680 530 885 430 1080 550 1270 320 1430 490 1600 355V900H0Z" fill="#242333"/>
+ <path d="m0 690 220-180 240 135 235-200 195 200 285-130 210 110 215-100v375H0Z" fill="#171c28"/>
+ <g fill="url(#stone)" stroke="#76606a" stroke-opacity=".22">
+  <path d="M1240 900V400l35-45v-85l40-100 40 100v85l35 45v500Z"/>
+  <path d="M1435 900V510l25-35v-95l32-85 32 85v95l25 35v390Z"/>
+  <path d="M1285 900V520c80-85 150-85 220 0v380h-35V585c-62-65-105-65-155 0v315Z"/>
+  <path d="M0 900V180L80 50l80 130v720h-40V255L80 180l-40 75v645Z"/>
+ </g>
+ <path d="M0 825c270-85 420-20 650-50s550-100 950-20v145H0Z" fill="#0c1019"/>
+ <g fill="#e5c6b1" opacity=".55"><circle cx="520" cy="100" r="1.5"/><circle cx="800" cy="150" r="1"/><circle cx="1190" cy="70" r="1.5"/><circle cx="430" cy="240" r="1"/><circle cx="1400" cy="155" r="1"/><circle cx="690" cy="55" r="1.5"/></g>
+</svg>

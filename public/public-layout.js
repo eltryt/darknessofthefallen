@@ -1,3 +1,4 @@
+import { recruitmentShowcase } from './guild-showcase.js';
 import { schedulePlanner } from './schedule-ui.js';
 export function createPublicLayout(context) {
 	const { esc, title, data } = context;
@@ -177,7 +178,7 @@ export function createPublicLayout(context) {
 			);
 		if (path === '/nosotros')
 			return (
-				title('Una hermandad para quedarnos', 'Un lugar al que volver.', s.about) +
+				title('Desde 2026 · Una hermandad para quedarnos', 'Un lugar al que volver.', s.about) +
 				guildFacts() +
 				/* HTML */ `<section class="about-layout">
 					<div class="about-emblem">
@@ -293,36 +294,40 @@ export function createPublicLayout(context) {
 					'Encuentra tu lugar.',
 					`Alianza · Servidor ${s.ruleset} · ${days}, ${s.raidStart}–${s.raidEnd}.`,
 				) +
-				/* HTML */ `<div class="recruit-intro">
-						<article class="card">
-							<span class="eyebrow">Nuestra forma de jugar</span>
-							<h2>Ganas de progresar. Ganas de quedarse.</h2>
+				/* HTML */ `<section class="recruit-command">
+						<div class="recruit-lead">
+							<span class="eyebrow">Darkness of the Fallen · Desde 2026</span>
+							<h2>La próxima noche.<br />Tu próximo equipo.</h2>
 							<p>
-								Buscamos personas que disfruten jugando en equipo, comunicándose y aprendiendo. Un
-								proyecto estable, más allá del entusiasmo del primer día.
+								Compañerismo, progresión y un lugar al que volver. Buscamos personas con ganas de
+								compartir el camino.
 							</p>
-							<div class="identity-tags">
-								<span class="pill">Compañerismo</span><span class="pill">Comunicación</span
-								><span class="pill">Progresión</span>
+							<div class="recruit-facts">
+								<article>
+									<span class="label">Nuestro horario</span
+									><strong>${esc(s.raidStart)}–${esc(s.raidEnd)}</strong>
+									<p>${esc(days)}<br />Europe/Madrid</p>
+								</article>
+								<article>
+									<span class="label">Nuestra filosofía</span><strong>El equipo, primero.</strong>
+									<p>Comunidad estable, comunicación y ganas de mejorar juntos.</p>
+								</article>
 							</div>
-						</article>
-						<aside class="card recruitment-state">
-							<span class="label">Reclutamiento</span>
-							<h3>
-								${document.body.dataset.applicationUrl ? 'Formulario de candidatura' : s.recruitmentOpen ? 'Candidaturas abiertas' : 'Reclutamiento cerrado'}
-							</h3>
-							<p>
-								${document.body.dataset.applicationUrl ? 'Consulta el reclutamiento y envía tu solicitud en la aplicación de la hermandad.' : s.recruitmentOpen ? 'Cuéntanos quién eres y qué buscas. El equipo autorizado revisará tu candidatura.' : 'El reclutamiento está cerrado por ahora. Puedes contactar con nosotros en Discord.'}
-							</p>
-							<p>
-								${s.soughtClasses?.length ? 'Clases buscadas: ' + esc(s.soughtClasses.join(', ')) : 'Todas las clases son bienvenidas.'}
-							</p>
-							<p>
-								${s.soughtRoles?.length ? 'Roles buscados: ' + esc(s.soughtRoles.join(', ')) : 'Buscamos tanques, sanadores y DPS.'}
-							</p>
-							<p>Las prioridades no impiden presentar candidatura con otra clase o rol.</p>
+							${s.recruitmentOpen || document.body.dataset.applicationUrl ? `<a class="button" href="${esc(document.body.dataset.applicationUrl || '#application')}">Quiero formar parte →</a>` : '<span class="pill">Candidaturas cerradas</span>'}
+						</div>
+						<aside class="recruit-expectations">
+							<span class="eyebrow">Así jugamos</span>
+							<h3>Buen ambiente.<br />Un objetivo compartido.</h3>
+							<ul>
+								<li>Respeto y compañerismo dentro y fuera de la raid.</li>
+								<li>Comunicar tu disponibilidad y coordinarte con el grupo.</li>
+								<li>Aprender los encuentros y progresar en equipo.</li>
+								<li>Loot Council con criterios transparentes que definiremos juntos.</li>
+							</ul>
+							<p>Las actividades adicionales son oportunidades, no obligaciones.</p>
 						</aside>
-					</div>
+					</section>
+					${recruitmentShowcase(s, esc, document.body.dataset.applicationUrl || '')}
 					<section class="section">
 						<h2>El camino para entrar</h2>
 						<ol class="application-steps">
@@ -368,7 +373,7 @@ export function createPublicLayout(context) {
 						${faq([
 							[
 								'¿En qué horario jugamos?',
-								`Nuestro horario base es ${esc(days)}, de ${esc(s.raidStart)} a ${esc(s.raidEnd)}, hora peninsular. La raid de 40 tendrá un día específico aún por concretar. Para las de 20 contemplamos dos rosters y posibles alternativas si hay demanda; las de 10 serán más flexibles. <a class="link" href="/raids">Ver la organización de raids</a>.`,
+								`Nuestro horario base es ${esc(days)}, de ${esc(s.raidStart)} a ${esc(s.raidEnd)}, hora peninsular. La raid de 40 está prevista para el jueves. Para las de 20 contemplamos dos rosters y posibles alternativas si hay demanda; las de 10 serán más flexibles. <a class="link" href="/raids">Ver la organización de raids</a>.`,
 							],
 							[
 								'¿Las convocatorias adicionales son obligatorias?',

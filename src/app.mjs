@@ -59,6 +59,9 @@ const files = {
 	'/operations-ui.js': ['operations-ui.js', 'text/javascript'],
 	'/character-editor.js': ['character-editor.js', 'text/javascript'],
 	'/style.css': ['style.css', 'text/css'],
+	'/theme.css': ['theme.css', 'text/css'],
+	'/assets/night-sanctum.svg': ['assets/night-sanctum.svg', 'image/svg+xml'],
+	'/guild-showcase.js': ['guild-showcase.js', 'text/javascript'],
 	'/boot-state.js': ['boot-state.js', 'text/javascript'],
 	'/app.js': ['app.js', 'text/javascript'],
 };
@@ -532,6 +535,23 @@ export function createApp(db, env, { readAsset = readLocalAsset } = {}) {
 							),
 						];
 					}
+				if ('classPriorities' in v) {
+					if (
+						!v.classPriorities ||
+						typeof v.classPriorities !== 'object' ||
+						Array.isArray(v.classPriorities)
+					)
+						throw new HttpError(400, 'Prioridades no válidas.');
+					next.classPriorities = {};
+					for (const [name, priority] of Object.entries(v.classPriorities)) {
+						choice(name, classes, 'clase');
+						next.classPriorities[name] = choice(
+							priority,
+							['abierta', 'alta', 'media', 'baja'],
+							'prioridad',
+						);
+					}
+				}
 				if ('rosterTargets' in v) {
 					next.rosterTargets = {};
 					for (const k of ['tanks', 'healers', 'dps']) {

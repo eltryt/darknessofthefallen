@@ -1,4 +1,5 @@
 export const iconAssets = [
+	'assets/icons/onyxia.jpg',
 	'assets/icons/shaman.jpg',
 	'assets/icons/rogue.jpg',
 	'assets/icons/mage.jpg',
