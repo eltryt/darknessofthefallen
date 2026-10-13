@@ -464,3 +464,78 @@ test('manual roster enforces staff ranks, separates offline identity and preserv
 		await f.close();
 	}
 });
+
+test('staff can edit existing roster characters without changing ownership or account permissions', async () => {
+	const f = await fixture();
+	const value = { name: 'Existing', class: 'Mago', role: 'DPS distancia', notes: 'Private' };
+	try {
+		const created = await f.request('/api/characters', 'member', 'POST', value);
+		assert.equal(created.status, 201);
+		const id = created.body.id;
+		const path = '/api/roster/characters/' + id;
+		const before = f.db.prepare('SELECT * FROM characters WHERE id=?').get(id);
+		const owner = f.db.prepare("SELECT * FROM users WHERE id='member'").get();
+		for (const rank of [undefined, 'visitor', 'member', 'raider'])
+			assert.equal((await f.request(path, rank, 'PATCH', value)).status, rank ? 403 : 401);
+		assert.equal(
+			(await f.request(path, 'leader', 'PATCH', value, { 'X-CSRF-Token': 'bad' })).status,
+			403,
+		);
+		assert.equal((await f.request(path, 'leader', 'DELETE')).status, 405);
+		assert.equal(
+			(await f.request(path, 'leader', 'PATCH', { ...value, class: 'Invalid' })).status,
+			400,
+		);
+		for (const rank of ['raid_leader', 'officer', 'leader']) {
+			assert.equal(
+				(
+					await f.request(path, rank, 'PATCH', {
+						...value,
+						spec: rank,
+						playerName: 'Override',
+						user_id: 'leader',
+						rank: 'leader',
+						isMain: !before.is_main,
+						source: 'staff',
+						archived_at: '2026-01-01',
+					})
+				).status,
+				200,
+			);
+			const after = f.db.prepare('SELECT * FROM characters WHERE id=?').get(id);
+			assert.equal(after.spec, rank);
+			for (const key of [
+				'user_id',
+				'is_main',
+				'source',
+				'external_id',
+				'created_at',
+				'archived_at',
+			])
+				assert.equal(after[key], before[key]);
+			assert.deepEqual(f.db.prepare("SELECT * FROM users WHERE id='member'").get(), owner);
+		}
+		assert.equal(
+			f.db
+				.prepare(
+					"SELECT COUNT(*) n FROM audit WHERE action='roster.character.updated' AND target=?",
+				)
+				.get(id).n,
+			3,
+		);
+		assert.equal(
+			(await f.request('/api/characters/' + id, 'member', 'PATCH', { ...value, spec: 'Escarcha' }))
+				.status,
+			200,
+		);
+		await f.request('/api/characters', 'raider', 'POST', { ...value, name: 'Duplicate' });
+		assert.equal(
+			(await f.request(path, 'leader', 'PATCH', { ...value, name: 'Duplicate' })).status,
+			409,
+		);
+		f.db.prepare('UPDATE characters SET archived_at=? WHERE id=?').run('2026-01-01', id);
+		assert.equal((await f.request(path, 'leader', 'PATCH', value)).status, 404);
+	} finally {
+		await f.close();
+	}
+});

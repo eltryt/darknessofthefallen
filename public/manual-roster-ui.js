@@ -2,12 +2,11 @@ export function mountManualRoster(host, rows, ctx, refresh) {
 	const { api, esc, field, select, area, classes, roles, toast } = ctx;
 	const section = document.createElement('details');
 	section.className = 'card section';
-	section.innerHTML = `<summary>Añadir o gestionar jugador manualmente</summary><p>Para jugadores que no entran en la web. Cada alta crea un personaje principal independiente, sin cuenta ni permisos. Si después se registra, no se vinculará automáticamente.</p><label>Registro manual<select data-manual-pick><option value="">Añadir jugador nuevo</option>${rows
-		.filter((r) => r.source === 'staff')
+	section.innerHTML = `<summary>Añadir o editar personajes del roster</summary><p>Selecciona un personaje existente para editarlo o añade un jugador que no entre en la web. Cada alta crea un personaje principal independiente, sin cuenta ni permisos. Si después se registra, no se vinculará automáticamente.</p><label>Personaje<select data-manual-pick><option value="">Añadir jugador nuevo</option>${rows
 		.map((r) => `<option value="${esc(r.id)}">${esc(r.name)} ${esc(r.surname)}</option>`)
 		.join(
 			'',
-		)}</select></label><form data-manual-form class="form"><div class="form-grid">${field('Nombre del jugador (solo panel)', 'playerName', 'text', '', false)}${field('Nombre del personaje', 'name')}${field('Apellido', 'surname', 'text', '', false)}${select('Clase', 'class', classes)}${select('Rol', 'role', roles)}${field('Especialización', 'spec', 'text', '', false)}${field('Profesiones', 'professions', 'text', '', false)}${area('Disponibilidad', 'availability', false)}${area('Notas internas', 'notes', false)}</div><div class="actions"><button type="submit">Guardar jugador manual</button><button type="button" class="secondary danger" data-manual-archive hidden>Archivar personaje</button></div><p data-manual-status role="status"></p></form>`;
+		)}</select></label><form data-manual-form class="form"><div class="form-grid">${field('Nombre del jugador (solo panel)', 'playerName', 'text', '', false)}${field('Nombre del personaje', 'name')}${field('Apellido', 'surname', 'text', '', false)}${select('Clase', 'class', classes)}${select('Rol', 'role', roles)}${field('Especialización', 'spec', 'text', '', false)}${field('Profesiones', 'professions', 'text', '', false)}${area('Disponibilidad', 'availability', false)}${area('Notas del personaje', 'notes', false)}</div><div class="actions"><button type="submit">Guardar personaje</button><button type="button" class="secondary danger" data-manual-archive hidden>Archivar personaje</button></div><p data-manual-status role="status"></p></form>`;
 	host.prepend(section);
 	const form = section.querySelector('form'),
 		pick = section.querySelector('[data-manual-pick]'),
@@ -16,8 +15,12 @@ export function mountManualRoster(host, rows, ctx, refresh) {
 	pick.onchange = () => {
 		form.reset();
 		const row = rows.find((r) => r.id === pick.value);
-		archive.hidden = !row;
-		status.textContent = '';
+		archive.hidden = !row || row.source !== 'staff';
+		form.elements.playerName.disabled = !!row && row.source !== 'staff';
+		status.textContent =
+			row && row.source !== 'staff'
+				? 'La cuenta de Discord, el rango y la condición de Main o Alter se conservan.'
+				: '';
 		if (row) {
 			for (const key of [
 				'name',
@@ -43,11 +46,13 @@ export function mountManualRoster(host, rows, ctx, refresh) {
 		try {
 			const data = Object.fromEntries(new FormData(form));
 			await api(
-				'/api/roster/manual' + (pick.value ? '/' + pick.value : ''),
+				rows.find((r) => r.id === pick.value)?.source !== 'staff' && pick.value
+					? '/api/roster/characters/' + pick.value
+					: '/api/roster/manual' + (pick.value ? '/' + pick.value : ''),
 				pick.value ? 'PATCH' : 'POST',
 				data,
 			);
-			toast('Jugador manual guardado');
+			toast('Personaje guardado');
 			await refresh();
 		} catch (e) {
 			status.textContent = e.message;

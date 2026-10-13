@@ -483,3 +483,19 @@ Roster manual publicado en a2910a6: Cloudflare 38384865084, Pages 38384863650 y
 validación 38384863642 correctos. Los módulos manual-roster-ui.js y operations-ui.js
 servidos en producción coinciden con los comprobados localmente. No se realizó
 alta de jugadores reales ni se usó una sesión del propietario para la validación.
+
+## Edición de personajes existentes — 13 de octubre de 2026
+
+- Panel → Roster → «Añadir o editar personajes del roster» permite seleccionar
+  cualquier personaje activo, también los registrados por usuarios de Discord.
+- PATCH /api/roster/characters/:id exige roster.manage (Líder, Oficial o Raid Leader),
+  sesión, origen y CSRF. Actualiza nombre/apellido, clase, rol, especialización,
+  profesiones, disponibilidad y notas del personaje; rechaza nombres duplicados.
+- Conserva propietario, rango, nombre de cuenta Discord, Main/Alter, origen,
+  referencias e historial. El propietario mantiene su edición desde el perfil.
+- Auditoría roster.character.updated. Los registros archivados no pueden editarse.
+  El botón Archivar continúa limitado a los registros manuales.
+- Validación: 66 pruebas Node, build Pages, formato y prueba Chromium con datos
+  sintéticos (alta/edición/archivado manual, edición de personaje con cuenta y móvil).
+- Sin nuevas variables, secretos, dependencias o migraciones. Despliegue mediante
+  los workflows existentes; no se modificaron personajes reales para las pruebas.
