@@ -554,3 +554,19 @@ validación 38432557148 correctos. Tras propagación, roster-ui.js, operations-u
   SEO de inicio actualizada. No se inventa una fecha completa.
 - El rediseño de reclutamiento/progreso queda pendiente; sigue el reclutamiento
   abierto. APIs del ejemplo y compatibilidad con WoW Forever no verificadas.
+
+Fundación y referencia publicadas en 737e0c3: Cloudflare 38433741408, Pages
+38433743047 y validación 38433743060 correctos; public-views.js verificado en vivo.
+
+## Botones y navegación de fantasía oscura — 13 de octubre de 2026
+
+- Controles con degradado carmesí, bisel y bordes metálicos, estados hover/activo,
+  secundarios oscuros y botones deshabilitados sin movimiento. CSS en style.css.
+- Cabecera con iluminación tenue, navegación activa con rombo luminoso y menú móvil
+  enmarcado. Conserva etiquetas, enlaces, permisos y comportamiento existentes.
+- Foco visible y preferencias de movimiento reducido respetadas, sin assets externos.
+- Comprobación Chromium de Inicio, Raids, Reclutamiento y Panel a 1440/1100/768/390/320;
+  menú, Escape, foco por teclado y reduced-motion correctos, sin errores JavaScript.
+- Corregidas reglas de reclutamiento sobrescritas por la cascada que provocaban
+  desbordamiento móvil en la introducción y los pasos de candidatura.
+- Build Pages y formato comprobados; no cambia datos ni lógica de autenticación.
