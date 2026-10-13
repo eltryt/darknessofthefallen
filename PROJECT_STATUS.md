@@ -545,3 +545,12 @@ archivo del propietario desde su sesión; no se modificaron sus jugadores reales
 Rediseño publicado en 0b30521. Cloudflare 38432556423, Pages 38432557149 y
 validación 38432557148 correctos. Tras propagación, roster-ui.js, operations-ui.js
  y style.css coinciden con los archivos locales comprobados (consulta versionada).
+
+## Referencia visual y fundación — 13 de octubre de 2026
+
+- Preferencias del propietario guardadas en docs/DESIGN_REFERENCES.md: referencia
+  Guilds of WoW, iconos y prioridades de reclutamiento y tarjetas de progreso.
+- Año de fundación confirmado: 2026. Añadido en portada y Hermandad, con descripción
+  SEO de inicio actualizada. No se inventa una fecha completa.
+- El rediseño de reclutamiento/progreso queda pendiente; sigue el reclutamiento
+  abierto. APIs del ejemplo y compatibilidad con WoW Forever no verificadas.

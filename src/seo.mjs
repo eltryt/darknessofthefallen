@@ -1,7 +1,7 @@
 export const seoPages = {
 	'/': [
 		'Darkness of the Fallen · Hermandad WoW Forever',
-		'Hermandad de la Alianza en WoW Forever, servidor PvP. Comunidad, progresión en equipo y raids en horario de noche.',
+		'Hermandad de la Alianza fundada en 2026 en WoW Forever, servidor PvP. Comunidad, progresión en equipo y raids en horario de noche.',
 	],
 	'/nosotros': [
 		'Nuestra hermandad · Darkness of the Fallen',

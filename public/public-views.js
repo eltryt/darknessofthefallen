@@ -33,6 +33,7 @@ export function createPublicViews(context) {
 					<span class="eyebrow">World of Warcraft Forever · ${esc(s.faction)}</span>
 					<h1>La noche es nuestra.<br /><em>El camino, juntos.</em></h1>
 					<p>${esc(s.description)}</p>
+					<p class="eyebrow">Desde 2026 · Darkness of the Fallen</p>
 					<div class="actions">
 						<a class="button" href="/reclutamiento"
 							>Encuentra tu lugar <span aria-hidden="true">→</span></a
@@ -252,8 +253,11 @@ export function createPublicViews(context) {
 					title('Nuestra identidad', 'Un lugar al que volver.', s.about) +
 					/* HTML */ `<div class="grid">
 						<article class="card">
-							<h3>Alianza</h3>
-							<p>${esc(s.name)} en ${esc(s.region)}. ${esc(s.server)} · WoW Forever Realmless.</p>
+							<h3>Desde 2026</h3>
+							<p>
+								Hermandad fundada en 2026. ${esc(s.name)}, ${esc(s.faction)} en ${esc(s.region)}.
+								${esc(s.server)} · WoW Forever Realmless.
+							</p>
 						</article>
 						<article class="card">
 							<h3>Progresión PvE</h3>
