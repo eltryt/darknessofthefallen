@@ -1,3 +1,4 @@
+import { mountManualRoster } from './manual-roster-ui.js';
 import { rosterCards } from './roster-ui.js';
 import { mountWishlist } from './wishlist-ui.js';
 import { mountRaidEvents } from './raid-events-ui.js';
@@ -655,7 +656,7 @@ export async function operationTab(tab, el, ctx) {
 				><label
 					>Rango<select id="roster-rank">
 						<option value="">Todos</option>
-						${[...new Set(rows.map((r) => r.rank))].map((r) => option(r, rankLabel(r))).join('')}
+						${[...new Set(rows.map((r) => (r.source === 'staff' ? 'manual' : r.rank)))].map((r) => option(r, r === 'manual' ? 'Registro manual' : rankLabel(r))).join('')}
 					</select></label
 				><label
 					>Clase<select id="roster-class">
@@ -689,7 +690,7 @@ export async function operationTab(tab, el, ctx) {
 					(r) =>
 						(!main || String(r.is_main) === main) &&
 						(!role || r.role === role) &&
-						(!rank || r.rank === rank) &&
+						(!rank || (r.source === 'staff' ? 'manual' : r.rank) === rank) &&
 						(!klass || r.class === klass) &&
 						(!availability ||
 							(r.availability || '').toLocaleLowerCase('es').includes(availability)),
@@ -713,6 +714,7 @@ export async function operationTab(tab, el, ctx) {
 		el.querySelectorAll('.filters select').forEach((s) => (s.onchange = filter));
 		el.querySelector('#roster-availability').oninput = filter;
 		filter();
+		if (permitted('roster.manage')) mountManualRoster(el, rows, ctx, refresh);
 		return true;
 	}
 	return false;

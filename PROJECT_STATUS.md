@@ -458,3 +458,23 @@ Verificación externa pendiente: las peticiones públicas inmediatamente despué
 éxito (incluyendo no-cache y parámetros distintos) todavía devolvieron app.js y
 robots.txt anteriores. No declarar corregido el resultado de Search Console hasta
 observar la nueva versión y repetir su prueba en tiempo real.
+
+## Roster manual — 13 de octubre de 2026
+
+- Panel → Roster: «Añadir o gestionar jugador manualmente», para Líder, Oficial y
+  Raid Leader mediante roster.manage validado en backend, origen y CSRF.
+- Alta de personaje Main independiente con nombre, clase, rol, especialización,
+  profesiones, disponibilidad y notas privadas; editar y archivar desde el selector.
+- Identidad local manual:UUID con rango técnico visitor y source=staff. No representa
+  una cuenta Discord ni concede acceso; issueSession rechaza estas identidades.
+  Se reutilizan tablas y referencias existentes, sin migración ni pérdida de datos.
+- Visible en roster/contadores y disponible para asistencia/loot mediante sus IDs;
+  información pública limitada a nombre/clase/rol. Notas y contacto solo en panel.
+- Evita nombres completos duplicados activos; solo modifica registros staff,
+  nunca los personajes de una cuenta Discord mediante este endpoint.
+- Archivado conserva historial. Auditoría de altas, ediciones y archivados.
+- No vincula automáticamente registros si una persona inicia sesión posteriormente;
+  no simula inscripciones de Discord/Raid-Helper ni permite asignar rangos de acceso.
+- Validación: 65 pruebas Node, workerd y build Pages; Chromium local creación,
+  edición y archivado, identificación manual y anchuras 320/390/1440 sin overflow.
+- Publicación pendiente de comprobación. No se han añadido personas reales en pruebas.

@@ -1,3 +1,4 @@
+import { manualRosterApi } from './manual-roster.mjs';
 import { seoPages, seoHtml, sitemap } from './seo.mjs';
 import { iconAssets } from '../public/icon-assets.js';
 import { gmApi, enqueueGM, gmReady } from './gm-notifications.mjs';
@@ -36,6 +37,7 @@ async function readLocalAsset(file) {
 
 const date = () => new Date().toISOString();
 const files = {
+	'/manual-roster-ui.js': ['manual-roster-ui.js', 'text/javascript'],
 	'/analytics.js': ['analytics.js', 'text/javascript'],
 	'/home-events.js': ['home-events.js', 'text/javascript'],
 	...Object.fromEntries(iconAssets.map((file) => ['/' + file, [file, 'image/jpeg']])),
@@ -263,6 +265,18 @@ export function createApp(db, env, { readAsset = readLocalAsset } = {}) {
 				db.prepare('DELETE FROM sessions WHERE hash=?').run(hash(cookies(req).session));
 				return send(200, { ok: true }, { 'Set-Cookie': cookie('session', '', env, 0) });
 			}
+			if (
+				await manualRosterApi({
+					db,
+					user,
+					path,
+					method,
+					body: () => body(req),
+					send,
+					requirePermission,
+				})
+			)
+				return;
 			if (path === '/api/characters') {
 				requireUser();
 				if (method === 'GET')

@@ -21,6 +21,8 @@ export function currentSession(db, req) {
 	);
 }
 export function issueSession(db, id) {
+	if (String(id).startsWith('manual:'))
+		throw new HttpError(403, 'Los registros manuales no tienen acceso a la web.');
 	const raw = token(),
 		csrf = token();
 	db.prepare('INSERT INTO sessions VALUES(?,?,?,?)').run(

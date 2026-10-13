@@ -397,3 +397,70 @@ test('application deletion requires staff and CSRF, removes queues and preserves
 		await f.close();
 	}
 });
+
+test('manual roster enforces staff ranks, separates offline identity and preserves archived history', async () => {
+	const f = await fixture();
+	const value = {
+		name: 'Offline',
+		class: 'Mago',
+		role: 'DPS distancia',
+		playerName: 'Contacto privado',
+		notes: 'Nota privada',
+		availability: 'Noches',
+	};
+	try {
+		for (const rank of [undefined, 'visitor', 'member', 'raider'])
+			assert.ok(
+				[401, 403].includes((await f.request('/api/roster/manual', rank, 'POST', value)).status),
+			);
+		assert.equal(
+			(await f.request('/api/roster/manual', 'leader', 'POST', value, { 'X-CSRF-Token': 'bad' }))
+				.status,
+			403,
+		);
+		assert.equal(
+			(await f.request('/api/roster/manual', 'leader', 'POST', { ...value, class: 'Inventada' }))
+				.status,
+			400,
+		);
+		for (const rank of ['raid_leader', 'officer', 'leader']) {
+			const payload = { ...value, name: value.name + rank };
+			const result = await f.request('/api/roster/manual', rank, 'POST', payload);
+			assert.equal(result.status, 201);
+			const id = result.body.id;
+			const record = f.db.prepare('SELECT * FROM characters WHERE id=?').get(id);
+			assert.match(record.user_id, /^manual:/);
+			assert.equal(record.source, 'staff');
+			assert.equal(record.is_main, 1);
+			assert.throws(() => issueSession(f.db, record.user_id), /no tienen acceso/);
+			assert.equal((await f.request('/api/roster/manual', rank, 'POST', payload)).status, 409);
+			assert.equal(
+				(await f.request('/api/roster/manual/' + id, 'member', 'PATCH', payload)).status,
+				403,
+			);
+			assert.equal(
+				(
+					await f.request('/api/roster/manual/' + id, rank, 'PATCH', {
+						...payload,
+						spec: 'Escarcha',
+					})
+				).status,
+				200,
+			);
+			const publicData = (await f.request('/api/public')).body;
+			assert.ok(publicData.characters.some((c) => c.name === payload.name));
+			assert.ok(!JSON.stringify(publicData).includes('Contacto privado'));
+			assert.ok(!JSON.stringify(publicData).includes('Nota privada'));
+			assert.equal((await f.request('/api/roster/manual/' + id, rank, 'DELETE', {})).status, 200);
+			assert.ok(f.db.prepare('SELECT archived_at FROM characters WHERE id=?').get(id).archived_at);
+			assert.ok(!(await f.request('/api/roster', rank)).body.some((c) => c.id === id));
+		}
+		const own = await f.request('/api/characters', 'member', 'POST', value);
+		assert.equal(
+			(await f.request('/api/roster/manual/' + own.body.id, 'leader', 'PATCH', value)).status,
+			404,
+		);
+	} finally {
+		await f.close();
+	}
+});

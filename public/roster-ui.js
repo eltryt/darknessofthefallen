@@ -50,7 +50,7 @@ export function rosterCards(
 												>${esc(row.name)}${privateDetails && row.surname ? ' ' + esc(row.surname) : ''}</strong
 											>
 											<span>${esc(row.class)}</span>
-											${privateDetails ? /* HTML */ `<small>${esc(row.display_name)} · ${esc(rankLabel(row.rank))}</small><small class="roster-availability">${esc(row.availability || 'Disponibilidad sin indicar')}</small>` : ''}
+											${privateDetails ? /* HTML */ `<small>${esc(row.display_name)} · ${esc(row.source === 'staff' ? 'Registro manual · sin cuenta web' : rankLabel(row.rank))}</small><small class="roster-availability">${esc(row.availability || 'Disponibilidad sin indicar')}</small>` : ''}
 										</div>
 										${privateDetails ? `<span class="roster-main-badge">${row.is_main ? 'Main' : 'Alter'}</span>` : ''}
 									</li>`,

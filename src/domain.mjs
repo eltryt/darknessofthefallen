@@ -15,6 +15,7 @@ export const permissions = {
 	'community.read': 'member',
 	'character.write': 'member',
 	'roster.read': 'raid_leader',
+	'roster.manage': 'raid_leader',
 	'attendance.manage': 'raid_leader',
 	'loot.delete': 'leader',
 	'loot.manage': 'raid_leader',
