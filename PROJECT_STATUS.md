@@ -478,3 +478,8 @@ observar la nueva versión y repetir su prueba en tiempo real.
 - Validación: 65 pruebas Node, workerd y build Pages; Chromium local creación,
   edición y archivado, identificación manual y anchuras 320/390/1440 sin overflow.
 - Publicación pendiente de comprobación. No se han añadido personas reales en pruebas.
+
+Roster manual publicado en a2910a6: Cloudflare 38384865084, Pages 38384863650 y
+validación 38384863642 correctos. Los módulos manual-roster-ui.js y operations-ui.js
+servidos en producción coinciden con los comprobados localmente. No se realizó
+alta de jugadores reales ni se usó una sesión del propietario para la validación.
