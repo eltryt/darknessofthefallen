@@ -451,3 +451,10 @@ mantienen su comportamiento autenticado y noindex. No se cambia la respuesta seg
 64 pruebas Node y navegador con API bloqueada: contenido público conservado.
 La causa concreta que observó Google no está confirmada sin su HTML renderizado;
 volver a probar URL publicada tras desplegar. El sitemap válido continúa accesible.
+
+Despliegue a0a7947: backend 38383799650, Pages 38383799539 y CI 38383799507 correctos.
+Versión backend reportada por Wrangler: 50434130-3443-4ae2-9430-6361c8d8bf6a.
+Verificación externa pendiente: las peticiones públicas inmediatamente después del
+éxito (incluyendo no-cache y parámetros distintos) todavía devolvieron app.js y
+robots.txt anteriores. No declarar corregido el resultado de Search Console hasta
+observar la nueva versión y repetir su prueba en tiempo real.
