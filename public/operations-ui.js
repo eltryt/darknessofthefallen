@@ -72,7 +72,8 @@ export function renderProgress(rows, { esc, empty }) {
 function paginated(el, heads, rows, render, ctx) {
 	const { esc, table, empty } = ctx;
 	let page = 0,
-		query = '';
+		query = (ctx.initialQuery || '').toLocaleLowerCase('es');
+	const pageSize = ctx.pageSize || 20;
 	el.innerHTML = /* HTML */ `<label class="table-search"
 			>Buscar en esta lista<input type="search" data-search placeholder="Escribe para filtrar…"
 		/></label>
@@ -84,12 +85,12 @@ function paginated(el, heads, rows, render, ctx) {
 		</div>`;
 	const refresh = () => {
 		const filtered = rows.filter((r) => JSON.stringify(r).toLocaleLowerCase('es').includes(query));
-		const pages = Math.max(1, Math.ceil(filtered.length / 20));
+		const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
 		page = Math.min(page, pages - 1);
 		el.querySelector('[data-rows]').innerHTML = filtered.length
 			? ctx.renderRows
-				? ctx.renderRows(filtered.slice(page * 20, (page + 1) * 20))
-				: table(heads, filtered.slice(page * 20, (page + 1) * 20).map(render))
+				? ctx.renderRows(filtered.slice(page * pageSize, (page + 1) * pageSize))
+				: table(heads, filtered.slice(page * pageSize, (page + 1) * pageSize).map(render))
 			: empty('Sin resultados', 'No hay registros que coincidan con esta búsqueda.');
 		el.querySelector('[data-count]').textContent = filtered.length
 			? `${filtered.length} ${filtered.length === 1 ? 'registro' : 'registros'} · ${page + 1} / ${pages}`
@@ -97,6 +98,7 @@ function paginated(el, heads, rows, render, ctx) {
 		el.querySelector('[data-prev]').disabled = page === 0;
 		el.querySelector('[data-next]').disabled = page >= pages - 1;
 	};
+	el.querySelector('[data-search]').value = query;
 	el.querySelector('[data-search]').oninput = (e) => {
 		query = e.target.value.toLocaleLowerCase('es');
 		page = 0;
@@ -673,8 +675,12 @@ export async function operationTab(tab, el, ctx) {
 						placeholder="Buscar en disponibilidad…"
 				/></label>
 			</div>
+			<div class="roster-quick-filters" role="group" aria-label="Filtrar por rol">
+				${['', 'Tanque', 'Sanador', 'DPS melee', 'DPS distancia'].map((role) => `<button type="button" class="secondary" data-roster-role="${esc(role)}" aria-pressed="${!role}">${esc(role || 'Todos')} <span>${rows.filter((r) => !role || r.role === role).length}</span></button>`).join('')}
+			</div>
 			<div id="roster-table"></div>`;
 		const filter = () => {
+			const initialQuery = el.querySelector('#roster-table [data-search]')?.value || '';
 			const main = el.querySelector('#roster-main').value,
 				role = el.querySelector('#roster-role').value,
 				rank = el.querySelector('#roster-rank').value,
@@ -707,10 +713,42 @@ export async function operationTab(tab, el, ctx) {
 					</tr>`,
 				{
 					...ctx,
-					renderRows: (rows) => rosterCards(rows, esc, { privateDetails: true, rankLabel }),
+					pageSize: 100,
+					initialQuery,
+					renderRows: (rows) =>
+						rosterCards(rows, esc, {
+							privateDetails: true,
+							rankLabel,
+							editable: permitted('roster.manage'),
+						}),
 				},
 			);
 		};
+		el.querySelectorAll('[data-roster-role]').forEach((button) => {
+			button.onclick = () => {
+				el.querySelector('#roster-role').value = button.dataset.rosterRole;
+				el.querySelector('#roster-role').dispatchEvent(new Event('change'));
+			};
+		});
+		el.querySelector('#roster-table').addEventListener('click', (event) => {
+			const button = event.target.closest('[data-roster-edit]');
+			if (!button) return;
+			const picker = el.querySelector('[data-manual-pick]');
+			if (!picker) return;
+			picker.closest('details').open = true;
+			picker.value = button.dataset.rosterEdit;
+			picker.dispatchEvent(new Event('change'));
+			picker.scrollIntoView({ block: 'center' });
+			picker.focus();
+		});
+		el.querySelector('#roster-role').addEventListener('change', () => {
+			el.querySelectorAll('[data-roster-role]').forEach((b) =>
+				b.setAttribute(
+					'aria-pressed',
+					String(b.dataset.rosterRole === el.querySelector('#roster-role').value),
+				),
+			);
+		});
 		el.querySelectorAll('.filters select').forEach((s) => (s.onchange = filter));
 		el.querySelector('#roster-availability').oninput = filter;
 		filter();

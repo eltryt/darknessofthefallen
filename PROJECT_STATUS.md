@@ -527,3 +527,17 @@ validación 38425441891 correctos. Módulo manual-roster-ui.js servido en produc
 idéntico al local. Chromium comprobó carga del archivo y aplicación autenticada
 con datos sintéticos; workerd y build correctos. Pendiente únicamente aplicar el
 archivo del propietario desde su sesión; no se modificaron sus jugadores reales.
+
+## Interfaz dinámica del roster — 13 de octubre de 2026
+
+- Grupos por rol distribuidos en filas de tarjetas adaptables, en lugar de cuatro
+  columnas desiguales. Colores e iconos de clase conservados; texto secundario reducido.
+- Tarjetas privadas desplegables mediante ratón/teclado, con disponibilidad, jugador
+  y tipo de registro. Editar personaje abre y selecciona su ficha cuando el usuario
+  tiene roster.manage; datos privados no se añaden al roster público.
+- Filtros rápidos por rol, estado pulsado accesible y búsqueda conservada al cambiar
+  filtros. Roster del panel hasta 100 por página; otros listados mantienen 20.
+- CSS en style.css; transiciones discretas desactivadas con reduced-motion.
+- Validación: 67 pruebas Node, build Pages y formato. Chromium: 22 tarjetas, filtros,
+  búsqueda combinada, acceso a edición, teclado y sin overflow a 320/390/1440 px.
+- Solo presentación: no modifica personajes, clases, rangos, cuentas o datos reales.

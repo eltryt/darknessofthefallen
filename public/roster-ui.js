@@ -19,7 +19,7 @@ export function classKey(name) {
 export function rosterCards(
 	rows,
 	esc,
-	{ privateDetails = false, rankLabel = (value) => value } = {},
+	{ privateDetails = false, rankLabel = (value) => value, editable = false } = {},
 ) {
 	const roleOrder = ['Tanque', 'Sanador', 'DPS melee', 'DPS distancia'];
 	const roles = [...new Set(rows.map((row) => row.role))].sort(
@@ -39,22 +39,10 @@ export function rosterCards(
 					</header>
 					<ul class="roster-members">
 						${members
-							.map(
-								(row) =>
-									/* HTML */ `<li class="roster-player class-${classKey(row.class)}">
-										<span class="class-emblem" aria-hidden="true">
-											${row.spec ? ClassWithSpecIcon({ className: row.class, specId: row.spec }) : ClassIcon({ className: row.class })}
-										</span>
-										<div class="roster-player-info">
-											<strong class="class-name"
-												>${esc(row.name)}${privateDetails && row.surname ? ' ' + esc(row.surname) : ''}</strong
-											>
-											<span>${esc(row.class)}</span>
-											${privateDetails ? /* HTML */ `<small>${esc(row.display_name)} · ${esc(row.source === 'staff' ? 'Registro manual · ' + rankLabel(row.rank) + ' · sin cuenta web' : rankLabel(row.rank))}</small><small class="roster-availability">${esc(row.availability || 'Disponibilidad sin indicar')}</small>` : ''}
-										</div>
-										${privateDetails ? `<span class="roster-main-badge">${row.is_main ? 'Main' : 'Alter'}</span>` : ''}
-									</li>`,
-							)
+							.map((row) => {
+								const identity = `<span class="class-emblem" aria-hidden="true">${row.spec ? ClassWithSpecIcon({ className: row.class, specId: row.spec }) : ClassIcon({ className: row.class })}</span><span class="roster-player-info"><strong class="class-name">${esc(row.name)}${privateDetails && row.surname ? ' ' + esc(row.surname) : ''}</strong><span>${esc(row.class)}${privateDetails ? ' · ' + esc(rankLabel(row.rank)) : ''}</span></span>`;
+								return `<li class="roster-player class-${classKey(row.class)}">${privateDetails ? `<details class="roster-profile"><summary>${identity}<span class="roster-main-badge">${row.is_main ? 'Main' : 'Alter'}</span><span class="roster-expand" aria-hidden="true">⌄</span></summary><div class="roster-profile-body"><dl><dt>Jugador</dt><dd>${esc(row.display_name || row.name)}</dd><dt>Disponibilidad</dt><dd>${esc(row.availability || 'Por confirmar')}</dd><dt>Registro</dt><dd>${row.source === 'staff' ? 'Manual · sin cuenta web' : 'Cuenta de Discord'}</dd></dl>${editable ? `<button type="button" class="secondary" data-roster-edit="${esc(row.id)}">Editar personaje</button>` : ''}</div></details>` : `<div class="roster-public-identity">${identity}</div>`}</li>`;
+							})
 							.join('')}
 					</ul>
 				</section>`;
