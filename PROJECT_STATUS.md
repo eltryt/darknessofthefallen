@@ -574,3 +574,15 @@ Fundación y referencia publicadas en 737e0c3: Cloudflare 38433741408, Pages
 Controles publicados y verificados en fc95c64: Cloudflare 38434498549, Pages
 38434498202 y validación 38434498329 correctos. style.css servido en producción
 coincide con el archivo local y /roster responde HTTP 200. Tanda finalizada.
+
+## Transición de carga uniforme — 14 de octubre de 2026
+
+- Las páginas públicas muestran «Abriendo las puertas de Azeroth…» durante el
+  arranque, igual que Perfil, sin mostrar fugazmente la presentación SEO simplificada.
+- boot-state.js activa el estado antes del primer pintado. El HTML público permanece
+  en la respuesta, visible sin JavaScript o al fallar la API. Un límite de 8 segundos
+  recupera la presentación si el módulo no arranca; no introduce un retraso mínimo.
+- Boot elimina siempre el estado al terminar. Sin detección especial de Google,
+  sin relajar CSP, sin cambios de sesión o autenticación. Asset incluido en Pages.
+- Chromium: carga lenta, render completado, JavaScript desactivado, error de API y
+  módulo bloqueado comprobados. Suite Node y build Pages correctos.

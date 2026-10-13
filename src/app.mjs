@@ -59,6 +59,7 @@ const files = {
 	'/operations-ui.js': ['operations-ui.js', 'text/javascript'],
 	'/character-editor.js': ['character-editor.js', 'text/javascript'],
 	'/style.css': ['style.css', 'text/css'],
+	'/boot-state.js': ['boot-state.js', 'text/javascript'],
 	'/app.js': ['app.js', 'text/javascript'],
 };
 const pages = new Set([

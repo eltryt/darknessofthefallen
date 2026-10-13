@@ -177,6 +177,8 @@ async function boot() {
 			<p class="error">${esc(e.message)}</p>
 			<a class="button" href="/">Volver al inicio</a>
 		</div>`;
+	} finally {
+		document.documentElement.classList.remove('site-booting');
 	}
 }
 const closeMenu = () => {

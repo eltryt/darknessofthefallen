@@ -3401,3 +3401,14 @@ body > header .brand-logo {
 		grid-template-columns: minmax(0, 1fr);
 	}
 }
+
+/* Mostrar la transición solo mientras arranca JavaScript; conservar el HTML público. */
+.site-booting [data-public-overview] {
+	display: none;
+}
+[data-public-loading] {
+	display: none;
+}
+.site-booting [data-public-loading] {
+	display: grid;
+}

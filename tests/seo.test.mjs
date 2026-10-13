@@ -13,7 +13,9 @@ test('server SEO provides unique public metadata and indexable text without priv
 		});
 		assert.ok(html.includes(`rel="canonical" href="https://guild.example${path}"`));
 		assert.match(html, /<h1>/);
-		assert.doesNotMatch(html, /Abriendo las puertas/);
+		assert.match(html, /data-public-overview/);
+		assert.match(html, /data-public-loading role="status"/);
+		assert.match(html, /src="\/boot-state.js"/);
 		assert.match(html, /og:image/);
 		titles.add(html.match(/<title>(.*?)<\/title>/s)[1]);
 	}

@@ -48,7 +48,12 @@ export function seoHtml(html, path, origin, settings) {
 			() => `<meta name="description" content="${esc(description)}" />`,
 		)
 		.replace('</head>', () => head + '</head>')
-		.replace(/<div class="loading" role="status">.*?<\/div>/s, () => overview);
+		.replace(
+			/<div class="loading" role="status">.*?<\/div>/s,
+			() =>
+				overview +
+				'<div class="loading" data-public-loading role="status">Abriendo las puertas de Azeroth…</div>',
+		);
 }
 export function sitemap(origin) {
 	return (
