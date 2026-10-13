@@ -499,3 +499,25 @@ alta de jugadores reales ni se usó una sesión del propietario para la validaci
   sintéticos (alta/edición/archivado manual, edición de personaje con cuenta y móvil).
 - Sin nuevas variables, secretos, dependencias o migraciones. Despliegue mediante
   los workflows existentes; no se modificaron personajes reales para las pruebas.
+
+## Importación del roster de Raid-Helper — 13 de octubre de 2026
+
+- La edición de personajes existentes se publicó en 4823ac0, Cloudflare 38424672159 correcto.
+- El propietario facilita una captura con 22 jugadores e indica Raider para todos
+  excepto Mishuka (Oficial) y Tryt (Líder). Lista preparada fuera del repositorio;
+  los datos de jugadores no se incluyen en el código ni en los commits.
+- Nueva importación JSON autenticada en Panel → Roster, con vista previa y botón
+  Aplicar lista. POST /api/roster/import exige roster.manage y CSRF. Compara nombre
+  completo normalizado, conserva campos adicionales e historial y evita duplicados.
+- Transacción completa: errores de clase, rango, nombres ambiguos o duplicados
+  revierten toda la lista. Los registros manuales admiten rango informativo hasta
+  Raider, pero siguen sin poder iniciar sesión. No cambia rangos de cuentas Discord.
+- Rango visible y filtro del roster incluyen también los registros manuales.
+- Lista externa preparada: 16 altas, 6 actualizaciones; Nøxik tanque y darthom DPS
+  melee. Roles totales: 2 tanques, 3 sanadores, 7 melee y 10 distancia. Sin inventar
+  disponibilidad o especialización; nombres nuevos son los de la captura y no se
+  presentan como personajes verificados ni se vinculan a Discord automáticamente.
+- Pruebas Node: 67; prueba local de lista de 22 y repetición sin duplicados.
+- Bloqueo operativo: este entorno no tiene sesión autenticada del propietario en
+  el panel. La lista NO se ha aplicado a producción; debe elegirse el JSON y pulsar
+  Aplicar lista desde una sesión autorizada. No se ha creado un acceso alternativo.

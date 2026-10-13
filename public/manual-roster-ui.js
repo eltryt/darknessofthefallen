@@ -7,6 +7,46 @@ export function mountManualRoster(host, rows, ctx, refresh) {
 		.join(
 			'',
 		)}</select></label><form data-manual-form class="form"><div class="form-grid">${field('Nombre del jugador (solo panel)', 'playerName', 'text', '', false)}${field('Nombre del personaje', 'name')}${field('Apellido', 'surname', 'text', '', false)}${select('Clase', 'class', classes)}${select('Rol', 'role', roles)}${field('Especialización', 'spec', 'text', '', false)}${field('Profesiones', 'professions', 'text', '', false)}${area('Disponibilidad', 'availability', false)}${area('Notas del personaje', 'notes', false)}</div><div class="actions"><button type="submit">Guardar personaje</button><button type="button" class="secondary danger" data-manual-archive hidden>Archivar personaje</button></div><p data-manual-status role="status"></p></form>`;
+	section.insertAdjacentHTML(
+		'beforeend',
+		`<hr><h3>Importar lista de jugadores</h3><p>El archivo JSON se compara por nombre y apellido. Actualiza clase y rol, conserva los demás datos y añade los que falten como registros manuales. Los rangos de cuentas Discord no se cambian.</p><label>Archivo JSON<input type="file" accept=".json,application/json" data-roster-file></label><p data-import-preview></p><button type="button" data-roster-import disabled>Aplicar lista</button><p role="status" data-import-status></p>`,
+	);
+	const file = section.querySelector('[data-roster-file]');
+	const apply = section.querySelector('[data-roster-import]');
+	const importStatus = section.querySelector('[data-import-status]');
+	let list;
+	file.onchange = async () => {
+		apply.disabled = true;
+		list = null;
+		importStatus.textContent = '';
+		try {
+			if (!file.files[0]) return;
+			if (file.files[0].size > 50000) throw new Error('Archivo demasiado grande.');
+			list = JSON.parse(await file.files[0].text());
+			if (!Array.isArray(list) || !list.length || list.length > 100)
+				throw new Error('Lista no válida.');
+			section.querySelector('[data-import-preview]').textContent = list
+				.map((r) => `${r.name} ${r.surname || ''} · ${r.class} · ${r.role} · ${r.rank}`)
+				.join(' / ');
+			apply.disabled = false;
+		} catch (e) {
+			importStatus.textContent = e.message;
+		}
+	};
+	apply.onclick = async () => {
+		apply.disabled = true;
+		file.disabled = true;
+		try {
+			const result = await api('/api/roster/import', 'POST', { characters: list });
+			toast(`${result.created} añadidos y ${result.updated} actualizados`);
+			await refresh();
+		} catch (e) {
+			importStatus.textContent = e.message;
+			apply.disabled = false;
+			file.disabled = false;
+		}
+	};
+
 	host.prepend(section);
 	const form = section.querySelector('form'),
 		pick = section.querySelector('[data-manual-pick]'),

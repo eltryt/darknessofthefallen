@@ -1,8 +1,15 @@
+import { importRoster } from './roster-import.mjs';
 import { randomUUID } from 'node:crypto';
 import { characterInput, text, HttpError } from './domain.mjs';
 import { audit, transaction } from './database-core.mjs';
 const normalize = (value) => value.normalize('NFKC').trim().toLocaleLowerCase('es');
 export async function manualRosterApi({ db, user, path, method, body, send, requirePermission }) {
+	if (path === '/api/roster/import') {
+		requirePermission('roster.manage');
+		if (method !== 'POST') throw new HttpError(405, 'Método no permitido.');
+		send(200, importRoster(db, user, (await body()).characters));
+		return true;
+	}
 	const characterMatch = path.match(/^\/api\/roster\/characters\/([^/]+)$/);
 	const match = characterMatch || path.match(/^\/api\/roster\/manual(?:\/([^/]+))?$/);
 	if (!match) return false;

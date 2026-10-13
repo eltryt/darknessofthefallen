@@ -539,3 +539,74 @@ test('staff can edit existing roster characters without changing ownership or ac
 		await f.close();
 	}
 });
+
+test('roster import is atomic, repeatable and never changes Discord account ranks', async () => {
+	const f = await fixture();
+	const request = (path, rank, method, characters, headers) =>
+		f.request(path, rank, method, { characters }, headers);
+	const entry = { name: 'Importado', class: 'Druida', role: 'Sanador', rank: 'raider' };
+	try {
+		const existing = await f.request('/api/characters', 'raider', 'POST', {
+			...entry,
+			name: 'Registrado',
+			notes: 'Conservar',
+		});
+		const batch = [entry, { ...entry, name: 'Registrado', role: 'Tanque' }];
+		for (const rank of [undefined, 'member', 'raider'])
+			assert.equal(
+				(await request('/api/roster/import', rank, 'POST', batch)).status,
+				rank ? 403 : 401,
+			);
+		assert.equal(
+			(await request('/api/roster/import', 'leader', 'POST', batch, { 'X-CSRF-Token': 'bad' }))
+				.status,
+			403,
+		);
+		assert.equal((await request('/api/roster/import', 'raid_leader', 'POST', batch)).status, 200);
+		assert.deepEqual((await request('/api/roster/import', 'raid_leader', 'POST', batch)).body, {
+			created: 0,
+			updated: 2,
+		});
+		assert.equal(f.db.prepare('SELECT COUNT(*) n FROM characters').get().n, 2);
+		const manual = f.db
+			.prepare(
+				"SELECT c.*,u.rank FROM characters c JOIN users u ON u.id=c.user_id WHERE c.source='staff'",
+			)
+			.get();
+		assert.equal(manual.rank, 'raider');
+		assert.throws(() => issueSession(f.db, manual.user_id), /no tienen acceso/);
+		const real = f.db.prepare('SELECT * FROM characters WHERE id=?').get(existing.body.id);
+		assert.equal(real.role, 'Tanque');
+		assert.equal(real.notes, 'Conservar');
+		assert.equal(real.user_id, 'raider');
+		assert.equal(
+			(
+				await request('/api/roster/import', 'leader', 'POST', [
+					{ ...entry, name: 'Rollback' },
+					{ ...entry, name: 'Registrado', rank: 'leader' },
+				])
+			).status,
+			409,
+		);
+		assert.equal(
+			f.db.prepare("SELECT COUNT(*) n FROM characters WHERE name='Rollback'").get().n,
+			0,
+		);
+		assert.equal(
+			(await request('/api/roster/import', 'leader', 'POST', [{ ...entry, rank: 'leader' }]))
+				.status,
+			400,
+		);
+		assert.equal(
+			(await request('/api/roster/import', 'leader', 'POST', [entry, entry])).status,
+			409,
+		);
+		assert.equal(
+			(await request('/api/roster/import', 'leader', 'POST', [{ ...entry, class: 'Invalid' }]))
+				.status,
+			400,
+		);
+	} finally {
+		await f.close();
+	}
+});

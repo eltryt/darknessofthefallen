@@ -656,7 +656,7 @@ export async function operationTab(tab, el, ctx) {
 				><label
 					>Rango<select id="roster-rank">
 						<option value="">Todos</option>
-						${[...new Set(rows.map((r) => (r.source === 'staff' ? 'manual' : r.rank)))].map((r) => option(r, r === 'manual' ? 'Registro manual' : rankLabel(r))).join('')}
+						${[...new Set(rows.map((r) => r.rank))].map((r) => option(r, r === 'manual' ? 'Registro manual' : rankLabel(r))).join('')}
 					</select></label
 				><label
 					>Clase<select id="roster-class">
@@ -690,7 +690,7 @@ export async function operationTab(tab, el, ctx) {
 					(r) =>
 						(!main || String(r.is_main) === main) &&
 						(!role || r.role === role) &&
-						(!rank || (r.source === 'staff' ? 'manual' : r.rank) === rank) &&
+						(!rank || r.rank === rank) &&
 						(!klass || r.class === klass) &&
 						(!availability ||
 							(r.availability || '').toLocaleLowerCase('es').includes(availability)),

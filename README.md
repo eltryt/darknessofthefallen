@@ -107,3 +107,19 @@ Usa `npm run format` antes de publicar; CI verifica `npm run format:check`.
 
 Configuración de `DISCORD_GM_WEBHOOK_URL`, prueba de envío, cola persistente,
 permisos y recuperación: [docs/GM_NOTIFICATIONS.md](docs/GM_NOTIFICATIONS.md).
+
+### Importar jugadores en el roster
+
+Líder, Oficiales y Raid Leaders pueden abrir Panel → Roster → Añadir o editar
+personajes del roster → Importar lista de jugadores. Elegir un archivo JSON con
+una lista de objetos `name`, `surname` (opcional), `class`, `role` y `rank`, revisar
+la vista previa y pulsar **Aplicar lista**. Usar las clases y roles en español de
+los selectores; los rangos internos son `visitor`, `member`, `raider`, `raid_leader`,
+`officer` y `leader`. Las altas manuales solo admiten los tres primeros.
+
+La coincidencia usa nombre completo: actualiza clase/rol y crea únicamente los
+nombres nuevos. Conserva notas, disponibilidad, especialización, propietario e
+historial. No cambia rangos de cuentas Discord; un rango distinto causa rechazo
+de toda la lista. El rango de un registro manual es informativo, sin acceso web.
+Los nombres de Discord pueden diferir de los personajes: ajustar la lista antes
+para evitar crear una segunda ficha. Una lista repetida no duplica las fichas.
