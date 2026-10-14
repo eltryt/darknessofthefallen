@@ -1125,3 +1125,134 @@ body[data-page='/roster'] .page-title {
 		flex-basis: 28px;
 	}
 }
+
+/* A restrained command bar, with small outlined guild symbols. */
+body > header {
+	gap: 20px;
+	border-bottom-color: #a68a5b55;
+	background: linear-gradient(180deg, #191519f5, #0b0b0df5);
+	box-shadow: 0 5px 24px #0004;
+}
+body > header .brand {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+body > header .brand-logo {
+	display: block;
+	width: 64px;
+	height: 64px;
+	object-fit: contain;
+	object-position: center;
+	margin: 0;
+}
+#navigation {
+	display: flex;
+	align-items: center;
+	gap: 3px;
+	padding: 5px;
+	border: 1px solid #a68a5b30;
+	border-radius: 9px;
+	background: #08080b70;
+}
+#navigation a {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 7px;
+	padding: 11px 9px;
+	border: 1px solid transparent;
+	border-radius: 5px;
+	color: #c9c2b8;
+	font-size: 12px;
+	letter-spacing: 0.02em;
+	white-space: nowrap;
+}
+.nav-icon {
+	width: 17px;
+	height: 17px;
+	flex: 0 0 17px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.6;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+	color: #c9ac81;
+}
+#navigation a:hover {
+	background: #a68a5b12;
+	color: #fff3df;
+	border-color: #a68a5b40;
+}
+#navigation a[aria-current='page'] {
+	background: linear-gradient(135deg, #6e0f1d88, #28171c);
+	border-color: #a68a5b65;
+	color: #fff1d7;
+	box-shadow: inset 0 -2px #b54951;
+}
+#navigation a[aria-current='page'] .nav-icon {
+	color: #ed8f90;
+}
+#navigation a[aria-current]::after {
+	display: none;
+}
+#navigation a:focus-visible {
+	outline: 2px solid #e1bf8a;
+	outline-offset: 2px;
+}
+.hero::before {
+	background-position: 58% center;
+}
+@media (min-width: 901px) and (max-width: 1250px) {
+	body > header {
+		flex-wrap: wrap;
+		justify-content: space-between;
+	}
+	#navigation {
+		order: 3;
+		width: 100%;
+		justify-content: center;
+	}
+}
+@media (max-width: 900px) {
+	#navigation {
+		display: none;
+	}
+	#navigation.open {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		width: 100%;
+		padding: 8px;
+	}
+	#navigation a {
+		justify-content: flex-start;
+		padding: 13px;
+	}
+	body > header .brand-logo {
+		width: 52px;
+		height: 52px;
+	}
+}
+@media (max-width: 600px) {
+	.hero::before {
+		background-position: 61% top;
+	}
+}
+@media (max-width: 900px) {
+	body > header {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+	}
+	body > header .menu {
+		display: block;
+	}
+	body > header #navigation,
+	body > header .login {
+		grid-column: 1 / -1;
+	}
+}
+@media (min-width: 901px) {
+	body > header .menu {
+		display: none;
+	}
+}

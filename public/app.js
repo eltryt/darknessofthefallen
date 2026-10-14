@@ -155,8 +155,12 @@ async function boot() {
 			$('.login').href = '/perfil';
 			$('.login').textContent = 'Mi perfil ↗';
 			if (me.permissions.includes('roster.read'))
-				$('#navigation').insertAdjacentHTML('beforeend', '<a href="/panel">Panel</a>');
+				$('#navigation').insertAdjacentHTML(
+					'beforeend',
+					'<a href="/panel"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Panel</a>',
+				);
 		}
+		if (path === '/panel') $('#navigation a[href="/panel"]')?.setAttribute('aria-current', 'page');
 		const context = { ...operationsContext(), $, title, roles, classes, opts, recruitmentChoices };
 		if (path === '/perfil') await createProfileView(context).profile();
 		else if (path === '/panel') await createPanelView(context).panel();

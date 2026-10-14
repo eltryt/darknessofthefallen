@@ -637,3 +637,7 @@ Rediseño publicado con commit `3aeca5e`. Push autorizado a main. Workflows comp
 ## 2026-10-14 — Marcos e iconos en tarjetas de Inicio
 
 Marco metálico fino con cuatro esquinas ornamentales en CSS e iconos SVG decorativos de comunidad, montañas, espadas cruzadas y casco. Títulos actualizados a Explora Azeroth y Raids; descripciones y destinos conservados. Sin nuevas imágenes, dependencias ni cambios de backend. Verificado build y navegador a 1920/1440/768/390 px, sin desbordamientos ni errores JS. Publicación siguiendo la autorización vigente del propietario.
+
+## 2026-10-14 — Menú ilustrado propio y encuadre
+
+Iconos SVG de línea decorativos en los siete enlaces públicos y Panel (solo usuarios autorizados). Barra oscura con borde metálico, activo carmesí y foco visible; todos los nombres y destinos conservados. Panel recibe aria-current después de insertar su enlace. Logo alineado y encuadre del castillo ajustado a escritorio/móvil. Menú adaptable con pruebas de abrir/cerrar y Escape a 900/800/768/390 px, siete iconos públicos, siete anchuras sin overflow. 69 pruebas aprobadas; pruebas existentes de ocho rutas también pasan. Sin cambios backend.
