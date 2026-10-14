@@ -248,9 +248,10 @@ export function createPublicLayout(context) {
 			return (
 				title(
 					'Organización de banda',
-					'Nuestras noches de raid.',
+					'Desafíos que nos hacen más fuertes.',
 					`${days} · ${s.raidStart}–${s.raidEnd}, hora de Madrid.`,
 				) +
+				`<nav class="raid-section-nav" aria-label="En esta página"><a class="button" href="#convocatorias">Convocatorias</a><a class="button secondary" href="/progreso">Progreso de la hermandad</a></nav><article class="onyxia-feature"><img src="/assets/art/onyxia.webp" alt="Ilustración de Onyxia en su guarida" width="750" height="867" loading="lazy"><div><span class="eyebrow">Azeroth nos espera</span><h2>Una banda. Un mismo desafío.</h2><p>Consulta las convocatorias para conocer el encuentro, las plazas y el horario de cada salida. El progreso registrado por la hermandad está disponible en su apartado.</p><a class="button secondary" href="/progreso">Ver progreso real →</a></div></article>` +
 				guildFacts() +
 				weekSchedule() +
 				raidOrganization(s) +

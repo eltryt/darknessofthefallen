@@ -567,3 +567,462 @@ footer {
 	font-family: inherit;
 	font-weight: 650;
 }
+
+/* Illustrated guild system. Artwork and atmosphere remain independent layers. */
+:root {
+	--bg: #0b0b0d;
+	--panel: #1a1a1f;
+	--line: #403931;
+	--ink: #e6e0d4;
+	--muted: #b8b2ad;
+	--guild-gold: #a68a5b;
+	--guild-crimson: #6e0f1d;
+	--art-shade: 0.88;
+	--frame-radius: 3px;
+}
+main {
+	max-width: 1640px;
+	padding-inline: clamp(18px, 4vw, 64px);
+}
+body {
+	background: var(--bg);
+}
+body > header {
+	background: #0b0b0df2;
+	border-bottom: 1px solid var(--line);
+}
+h1,
+.hero h1,
+.page-title h1 {
+	font-family: Georgia, 'Times New Roman', serif;
+	font-weight: 400;
+	letter-spacing: -0.025em;
+}
+.button,
+button,
+.card,
+.banner {
+	border-radius: var(--frame-radius);
+}
+#navigation a[aria-current='page'] {
+	background: linear-gradient(#6e0f1d66, #6e0f1d11);
+	border-color: var(--guild-gold);
+}
+.hero {
+	display: flex;
+	align-items: center;
+	min-height: 570px;
+	padding-block: 64px;
+}
+.hero > div {
+	max-width: 620px;
+	width: 53%;
+}
+.hero::before {
+	background: url('assets/art/castle.webp') center/cover;
+	inset: 0 calc(-1 * clamp(18px, 4vw, 64px));
+}
+.hero::after {
+	content: '';
+	position: absolute;
+	z-index: -1;
+	inset: 0 calc(-1 * clamp(18px, 4vw, 64px));
+	background:
+		linear-gradient(90deg, rgb(11 11 13 / var(--art-shade)), #0b0b0d55 55%, transparent),
+		linear-gradient(0deg, var(--bg), transparent 30%);
+}
+.hero h1 {
+	font-size: clamp(46px, 5.4vw, 82px);
+	text-transform: uppercase;
+	line-height: 1.02;
+}
+.hero h1 em {
+	font-style: normal;
+	color: #d25359;
+	font-size: inherit;
+}
+.hero .hero-motto {
+	color: #ead3ad;
+	font-family: Georgia, serif;
+	font-size: 23px;
+}
+.hero p {
+	max-width: 52ch;
+	color: var(--ink);
+	text-shadow: 0 2px 12px #000;
+}
+.adventure-grid {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: 16px;
+	margin: 0 0 32px;
+}
+.adventure-card {
+	position: relative;
+	isolation: isolate;
+	display: flex;
+	align-items: end;
+	min-height: 230px;
+	padding: 22px;
+	border: 1px solid var(--guild-gold);
+	border-radius: 3px;
+	overflow: hidden;
+	text-decoration: none;
+	background: var(--panel);
+}
+.adventure-card::before {
+	content: '';
+	position: absolute;
+	z-index: -2;
+	inset: 0;
+	background: var(--card-art) center/cover;
+	transition: transform 0.3s ease;
+}
+.adventure-card::after {
+	content: '';
+	position: absolute;
+	z-index: -1;
+	inset: 0;
+	background: linear-gradient(transparent 15%, #0b0b0de6 85%);
+}
+.adventure-card:hover::before {
+	transform: scale(1.035);
+}
+.adventure-card h2 {
+	font:
+		20px Georgia,
+		serif;
+	letter-spacing: 0.03em;
+	margin: 0 0 8px;
+	color: var(--ink);
+}
+.adventure-card p {
+	font-size: 14px;
+	margin: 0;
+	color: var(--ink);
+}
+.art-campfire {
+	--card-art: url('assets/art/campfire.webp');
+}
+.art-landscape {
+	--card-art: url('assets/art/landscape.webp');
+}
+.art-journey {
+	--card-art: url('assets/art/raid-journey.webp');
+}
+.art-heroes {
+	--card-art: url('assets/art/heroes.webp');
+}
+.art-heroes::before {
+	background-position: center 34%;
+}
+body[data-page='/raids'] .page-title,
+body[data-page='/roster'] .page-title {
+	position: relative;
+	isolation: isolate;
+	min-height: 360px;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	margin-bottom: 24px;
+	padding-block: 48px;
+}
+body[data-page='/raids'] .page-title::before,
+body[data-page='/roster'] .page-title::before {
+	content: '';
+	position: absolute;
+	z-index: -2;
+	inset: 0 calc(-1 * clamp(18px, 4vw, 64px));
+	background: var(--page-art) center 45% / cover;
+}
+body[data-page='/raids'] {
+	--page-art: url('assets/art/raid-journey.webp');
+}
+body[data-page='/roster'] {
+	--page-art: url('assets/art/war-room.webp');
+}
+body[data-page='/raids'] .page-title::after,
+body[data-page='/roster'] .page-title::after {
+	content: '';
+	position: absolute;
+	z-index: -1;
+	inset: 0 calc(-1 * clamp(18px, 4vw, 64px));
+	background:
+		linear-gradient(90deg, #0b0b0dee, #0b0b0d88 42%, #0b0b0d08),
+		linear-gradient(0deg, var(--bg), transparent 25%);
+}
+body[data-page='/raids'] .page-title h1,
+body[data-page='/roster'] .page-title h1 {
+	max-width: 15ch;
+	font-size: clamp(38px, 4.5vw, 64px);
+}
+body[data-page='/raids'] .page-title p,
+body[data-page='/roster'] .page-title p {
+	max-width: 43ch;
+	color: var(--ink);
+}
+.raid-section-nav {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	margin: 24px 0;
+}
+.onyxia-feature {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+	background: #131116;
+	border: 1px solid var(--line);
+	max-width: 1050px;
+	margin: 32px auto;
+}
+.onyxia-feature img {
+	display: block;
+	width: 100%;
+	height: auto;
+	max-height: 460px;
+	object-fit: contain;
+	background: #0b0b0d;
+}
+.onyxia-feature > div {
+	padding: clamp(24px, 4vw, 56px);
+	align-self: center;
+}
+.roster-layout {
+	display: grid;
+	grid-template-columns: minmax(0, 3fr) minmax(240px, 1fr);
+	gap: 24px;
+	align-items: start;
+}
+.roster-table-wrap {
+	min-width: 0;
+	border: 1px solid var(--guild-gold);
+	background: #101013;
+	overflow: auto;
+}
+.guild-roster-table {
+	width: 100%;
+	border-collapse: collapse;
+}
+.guild-roster-table caption {
+	text-align: left;
+	padding: 14px 18px;
+	font-size: 13px;
+	color: var(--muted);
+}
+.guild-roster-table th,
+.guild-roster-table td {
+	padding: 16px 20px;
+	text-align: left;
+	border-bottom: 1px solid #ffffff10;
+}
+.guild-roster-table thead {
+	background: #19171b;
+	color: #d9bf93;
+	font-size: 12px;
+	text-transform: uppercase;
+	letter-spacing: 0.07em;
+}
+.guild-roster-table tbody tr:hover {
+	background: #a68a5b0d;
+}
+.roster-table-name {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	color: var(--class-color, var(--ink));
+	overflow-wrap: anywhere;
+}
+.roster-table-name img {
+	width: 32px;
+	height: 32px;
+	flex-shrink: 0;
+	border: 1px solid var(--guild-gold);
+	border-radius: 4px;
+}
+.roster-summary {
+	display: grid;
+	gap: 18px;
+}
+.roster-summary .card {
+	padding: 24px;
+}
+.roster-summary h2 {
+	font:
+		48px Georgia,
+		serif;
+	margin: 10px 0;
+}
+.roster-summary dl > div {
+	display: flex;
+	justify-content: space-between;
+	padding: 10px 0;
+	border-bottom: 1px solid var(--line);
+}
+.roster-summary dd {
+	color: #e4c495;
+	font-weight: 700;
+}
+@media (max-width: 1000px) {
+	.adventure-grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+	.roster-layout {
+		grid-template-columns: minmax(0, 1fr);
+	}
+	.roster-summary {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+@media (max-width: 600px) {
+	.hero {
+		min-height: 650px;
+		align-items: end;
+		padding: 180px 0 36px;
+	}
+	.hero > div {
+		width: 100%;
+	}
+	.hero::before {
+		background-position: 65% top;
+	}
+	.hero::after {
+		background: linear-gradient(0deg, var(--bg), #0b0b0de8 44%, #0b0b0d10);
+	}
+	.hero h1 {
+		font-size: 48px;
+	}
+	.adventure-grid {
+		gap: 12px;
+	}
+	.adventure-card {
+		min-height: 220px;
+		padding: 16px;
+	}
+	.adventure-card h2 {
+		font-size: 18px;
+	}
+	.adventure-card p {
+		font-size: 13px;
+	}
+	body[data-page='/raids'] .page-title,
+	body[data-page='/roster'] .page-title {
+		min-height: 430px;
+		justify-content: end;
+		padding-top: 180px;
+	}
+	body[data-page='/raids'] .page-title::after,
+	body[data-page='/roster'] .page-title::after {
+		background: linear-gradient(0deg, var(--bg), #0b0b0de0 45%, #0b0b0d11);
+	}
+	.onyxia-feature {
+		grid-template-columns: minmax(0, 1fr);
+	}
+	.onyxia-feature img {
+		max-height: 350px;
+	}
+	.roster-summary {
+		grid-template-columns: minmax(0, 1fr);
+	}
+	.guild-roster-table th,
+	.guild-roster-table td {
+		padding: 12px 8px;
+		font-size: 13px;
+	}
+	.roster-table-name {
+		gap: 8px;
+	}
+	.guild-roster-table .pill {
+		font-size: 11px;
+		white-space: normal;
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.adventure-card::before {
+		transition: none;
+	}
+	.adventure-card:hover::before {
+		transform: none;
+	}
+}
+body[data-page='/raids'] .page-title,
+body[data-page='/roster'] .page-title {
+	max-width: none;
+}
+.guild-roster-table tbody th {
+	font-size: 16px;
+	font-weight: 600;
+	text-transform: none;
+	letter-spacing: normal;
+}
+@media (max-width: 768px) {
+	.week-schedule {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+	.week-day {
+		min-width: 0;
+	}
+	.week-day strong {
+		font-size: 23px;
+		overflow-wrap: normal;
+	}
+	.link-grid {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+/* Compact Google Calendar copy tool; native disclosure supports keyboard use. */
+.calendar-disclosure.raid-planner {
+	padding: 0;
+	margin-block: 24px;
+	max-width: 760px;
+}
+.calendar-disclosure > summary {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 20px;
+	padding: 20px 24px;
+	cursor: pointer;
+	list-style: none;
+}
+.calendar-disclosure > summary::-webkit-details-marker {
+	display: none;
+}
+.calendar-disclosure > summary strong {
+	display: block;
+	color: var(--ink);
+	font-size: 16px;
+}
+.calendar-disclosure > summary small {
+	display: block;
+	color: var(--muted);
+	font-size: 13px;
+	margin-top: 4px;
+	line-height: 1.6;
+}
+.calendar-chevron {
+	font-size: 24px;
+	color: #d9bf93;
+}
+.calendar-disclosure[open] .calendar-chevron {
+	transform: rotate(180deg);
+}
+.calendar-disclosure[open] > summary {
+	border-bottom: 1px solid var(--line);
+}
+.calendar-content {
+	padding: 24px;
+}
+.calendar-content .planner-heading {
+	grid-template-columns: minmax(0, 1fr);
+}
+.calendar-content .planner-zone {
+	max-width: 100%;
+}
+@media (max-width: 600px) {
+	.calendar-content {
+		padding: 18px;
+	}
+	.calendar-disclosure > summary {
+		padding: 18px;
+	}
+}

@@ -68,6 +68,14 @@ try {
 	const assets = [
 		'theme.css',
 		'assets/night-sanctum.svg',
+		'assets/art/castle.webp',
+		'assets/art/onyxia.webp',
+		'assets/art/war-room.webp',
+		'assets/art/raid-journey.webp',
+		'assets/art/campfire.webp',
+		'assets/art/heroes.webp',
+		'assets/art/landscape.webp',
+
 		'guild-showcase.js',
 		'boot-state.js',
 		'manual-roster-ui.js',

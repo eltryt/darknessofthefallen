@@ -50,3 +50,9 @@ export function rosterCards(
 			.join('')}
 	</div>`;
 }
+
+// Public roster: use only fields already exposed by the public API.
+export function rosterTable(rows, esc) {
+	const roles = ['Tanque', 'Sanador', 'DPS melee', 'DPS distancia'];
+	return `<div class="roster-layout"><div class="roster-table-wrap"><table class="guild-roster-table"><caption>Personajes que coinciden con los filtros</caption><thead><tr><th scope="col">Personaje</th><th scope="col">Clase</th><th scope="col">Rol</th></tr></thead><tbody>${rows.map((row) => `<tr class="class-${classKey(row.class)}"><th scope="row"><span class="roster-table-name">${ClassIcon({ className: row.class })}<span>${esc(row.name)}</span></span></th><td>${esc(row.class)}</td><td><span class="pill">${esc(row.role || 'Sin rol')}</span></td></tr>`).join('')}</tbody></table></div><aside class="roster-summary"><section class="card"><span class="eyebrow">Nuestra hermandad</span><h2>${rows.length}</h2><p>Personajes en esta selección</p><p>Darkness of the Fallen<br>Desde 2026</p></section><section class="card"><h3>Composición por rol</h3><dl>${roles.map((role) => `<div><dt>${role}</dt><dd>${rows.filter((r) => r.role === role).length}</dd></div>`).join('')}</dl></section></aside></div>`;
+}

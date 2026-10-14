@@ -1,7 +1,7 @@
 import { progressShowcase, attachRecruitmentFilters } from './guild-showcase.js';
 import { mountHomeEvents } from './home-events.js';
 import { contactForm } from './gm-ui.js';
-import { rosterCards } from './roster-ui.js';
+import { rosterTable } from './roster-ui.js';
 import { createPublicLayout } from './public-layout.js';
 import { mountRaidEvents } from './raid-events-ui.js';
 import { prepareApplication, applicationReceipt } from './recruitment-ui.js';
@@ -32,7 +32,8 @@ export function createPublicViews(context) {
 		return /* HTML */ `<section class="hero">
 				<div>
 					<span class="eyebrow">World of Warcraft Forever · ${esc(s.faction)}</span>
-					<h1>La noche es nuestra.<br /><em>El camino, juntos.</em></h1>
+					<h1>Darkness<br />of the <em>Fallen</em></h1>
+					<p class="hero-motto">La noche es nuestra. El camino, juntos.</p>
 					<p>${esc(s.description)}</p>
 					<p class="eyebrow">Desde 2026 · Darkness of the Fallen</p>
 					<div class="actions">
@@ -41,17 +42,33 @@ export function createPublicViews(context) {
 						><a class="button secondary" href="/nosotros">Conoce la hermandad</a>
 					</div>
 				</div>
-				<div class="hero-art" aria-hidden="true">
-					<img
-						class="hero-logo"
-						src="/assets/guild-logo.png"
-						alt=""
-						width="1254"
-						height="1254"
-						fetchpriority="high"
-					/>
-				</div>
 			</section>
+			<nav class="adventure-grid" aria-label="Descubre la hermandad">
+				<a class="adventure-card art-campfire" href="/nosotros"
+					><span
+						><h2>Comunidad</h2>
+						<p>Una historia que escribimos juntos.</p></span
+					></a
+				>
+				<a class="adventure-card art-landscape" href="/progreso"
+					><span
+						><h2>Progresión</h2>
+						<p>Cada encuentro, un nuevo reto.</p></span
+					></a
+				>
+				<a class="adventure-card art-journey" href="/raids"
+					><span
+						><h2>Organización y raids</h2>
+						<p>Horarios, convocatorias y preparación.</p></span
+					></a
+				>
+				<a class="adventure-card art-heroes" href="/reclutamiento"
+					><span
+						><h2>Reclutamiento</h2>
+						<p>Encuentra tu lugar en la banda.</p></span
+					></a
+				>
+			</nav>
 			<div class="facts">
 				<div class="fact">
 					<span class="label">Nuestro horario</span
@@ -153,7 +170,7 @@ export function createPublicViews(context) {
 		$('#roster-count').textContent =
 			`${rows.length} ${rows.length === 1 ? 'personaje' : 'personajes'}`;
 		$('#roster-result').innerHTML = rows.length
-			? rosterCards(rows, esc)
+			? rosterTable(rows, esc)
 			: data.characters.length
 				? empty(
 						'No encontramos personajes con esos filtros',
@@ -332,6 +349,7 @@ export function createPublicViews(context) {
 		if (path === '/raids') {
 			const host = document.createElement('section');
 			host.className = 'section';
+			host.id = 'convocatorias';
 			$('#content').querySelector('.page-title').after(host);
 			await mountRaidEvents(host, operationsContext());
 		}

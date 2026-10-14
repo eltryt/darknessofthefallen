@@ -12,10 +12,19 @@ if (memberApp) {
 		throw Error('MEMBER_APP_URL must be an HTTPS origin without a path.');
 }
 mkdirSync(join(destination, 'assets/icons/spec'), { recursive: true });
+mkdirSync(join(destination, 'assets/art'), { recursive: true });
 const source = new URL('../public/', import.meta.url);
 for (const file of [
 	'theme.css',
 	'assets/night-sanctum.svg',
+	'assets/art/castle.webp',
+	'assets/art/onyxia.webp',
+	'assets/art/war-room.webp',
+	'assets/art/raid-journey.webp',
+	'assets/art/campfire.webp',
+	'assets/art/heroes.webp',
+	'assets/art/landscape.webp',
+
 	'guild-showcase.js',
 	'boot-state.js',
 	'manual-roster-ui.js',

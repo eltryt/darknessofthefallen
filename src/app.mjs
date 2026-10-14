@@ -37,6 +37,14 @@ async function readLocalAsset(file) {
 
 const date = () => new Date().toISOString();
 const files = {
+	'/assets/art/castle.webp': ['assets/art/castle.webp', 'image/webp'],
+	'/assets/art/onyxia.webp': ['assets/art/onyxia.webp', 'image/webp'],
+	'/assets/art/war-room.webp': ['assets/art/war-room.webp', 'image/webp'],
+	'/assets/art/raid-journey.webp': ['assets/art/raid-journey.webp', 'image/webp'],
+	'/assets/art/campfire.webp': ['assets/art/campfire.webp', 'image/webp'],
+	'/assets/art/heroes.webp': ['assets/art/heroes.webp', 'image/webp'],
+	'/assets/art/landscape.webp': ['assets/art/landscape.webp', 'image/webp'],
+
 	'/manual-roster-ui.js': ['manual-roster-ui.js', 'text/javascript'],
 	'/analytics.js': ['analytics.js', 'text/javascript'],
 	'/home-events.js': ['home-events.js', 'text/javascript'],

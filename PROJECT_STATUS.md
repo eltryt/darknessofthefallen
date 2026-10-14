@@ -612,3 +612,20 @@ validación 38482319589 correctos; boot-state.js comprobado en producción.
 - Validación: pruebas de prioridades autorizadas/inválidas y tarjetas; Chromium en
   ocho rutas y cinco anchuras, guardado/recarga de prioridades, filtros y CTA; sin
   errores de JavaScript ni assets fallidos. No se alteraron jugadores o progreso real.
+
+## 2026-10-14 — Rediseño ilustrado, pendiente de revisión
+
+Rama local `visual/illustrated-guild`. Sin push ni despliegue en esta fase.
+
+- Inicio: castillo panorámico, título y lema oficiales como texto HTML, cuatro accesos ilustrados; horarios y próximas convocatorias conservados.
+- Raids: cabecera con expedición, navegación hacia convocatorias/progreso y tarjeta vertical de Onyxia sin datos ficticios. Convocatorias, inscripción y calendario siguen usando sus componentes actuales.
+- Roster público: sala de guerra, tabla semántica con iconos de clase, búsqueda/filtros/reset y resumen de composición de la selección. Solo nombre, clase y rol públicos; no se exponen datos privados ni se modifica el editor del panel.
+- Sistema visual compartido: negro/carmesí/marfil/oro envejecido, superficies y marcos finos, ilustraciones y degradados independientes. Logo original conservado. Calendario semanal y enlaces inferiores adaptados a móvil.
+- Assets: siete WebP en public/assets/art; originales intactos en docs/design-originals. Publicación estática incluida en los exportadores. Único cambio de servidor: registro autorizado de esas siete rutas y su MIME image/webp; no cambia APIs, permisos, autenticación ni base de datos.
+- Validación: 69 pruebas Node; build Pages; smoke de ocho rutas y cinco anchuras; revisión adicional de Inicio/Raids/Roster a 1920/1440/768/390 px, búsqueda, rol y reset con datos sintéticos en SQLite en memoria. Capturas en /workspace/pages-validation/illustrated-{home,raids,roster}-{1440,390}.png.
+- Diferencias deliberadas con los mockups: no se añaden niveles, presencia online, asistencia pública, raids inexistentes, botín destacado ni guías sin respaldo funcional. Se conserva el contenido y navegación real. La ilustración vertical de Onyxia se muestra completa en su tarjeta.
+- Siguiente paso: revisión visual del propietario antes de publicar. No se han tocado datos de producción.
+
+Ajuste solicitado durante la revisión: Google Calendar queda en un desplegable nativo cerrado por defecto, con próximo horario y zona visibles en el resumen. Se conservan selector, fechas y enlace de copia. Comprobados apertura con Enter, cierre y destino calendar.google.com sin enviar datos a Google. 69 pruebas pasan tras el ajuste; formato correcto. Prueba Cloudflare SQLite: 1/1 aprobada antes del ajuste visual del calendario.
+
+Publicación autorizada por el propietario el 14/10/2026: se prepara push a main y despliegue mediante el workflow backend.yml. Los resultados se registrarán al finalizar la comprobación pública.

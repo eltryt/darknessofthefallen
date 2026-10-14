@@ -1,44 +1,52 @@
 import { upcomingSessions, googleCalendarUrl } from './schedule.js';
 
 export const schedulePlanner = () =>
-	/* HTML */ `<section class="raid-planner" aria-label="Planifica tus noches de raid">
-		<div class="planner-heading">
-			<div>
-				<span class="eyebrow">Haz sitio para Azeroth</span>
-				<h3>Tu próxima noche con la hermandad.</h3>
+	/* HTML */ `<details class="raid-planner calendar-disclosure">
+		<summary>
+			<span
+				><strong>Añadir a Google Calendar</strong
+				><small data-calendar-preview>Consultar próximos horarios</small></span
+			><span class="calendar-chevron" aria-hidden="true">⌄</span>
+		</summary>
+		<div class="calendar-content">
+			<div class="planner-heading">
+				<div>
+					<span class="eyebrow">Haz sitio para Azeroth</span>
+					<h3>Tu próxima noche con la hermandad.</h3>
+				</div>
+				<label class="planner-zone"
+					>Mostrar horarios en<select
+						data-schedule-zone
+						aria-label="Zona horaria del calendario"
+					></select
+				></label>
 			</div>
-			<label class="planner-zone"
-				>Mostrar horarios en<select
-					data-schedule-zone
-					aria-label="Zona horaria del calendario"
-				></select
-			></label>
-		</div>
-		<div class="planner-next">
-			<span class="pill" data-next-status></span>
-			<p data-next-session></p>
-			<span class="planner-countdown" data-countdown></span>
-		</div>
-		<ol
-			class="planner-upcoming"
-			data-next-sessions
-			aria-label="Siguientes horarios habituales"
-		></ol>
-		<div class="planner-actions">
-			<button type="button" class="secondary" data-download-calendar>
-				Añadir a Google Calendar <span aria-hidden="true">↗</span>
-			</button>
-			<p>
-				Abre Google Calendar y guarda el horario de las próximas 12 semanas. Las convocatorias y las
-				inscripciones se confirman en Discord.
+			<div class="planner-next">
+				<span class="pill" data-next-status></span>
+				<p data-next-session></p>
+				<span class="planner-countdown" data-countdown></span>
+			</div>
+			<ol
+				class="planner-upcoming"
+				data-next-sessions
+				aria-label="Siguientes horarios habituales"
+			></ol>
+			<div class="planner-actions">
+				<button type="button" class="secondary" data-download-calendar>
+					Añadir a Google Calendar <span aria-hidden="true">↗</span>
+				</button>
+				<p>
+					Abre Google Calendar y guarda el horario de las próximas 12 semanas. Las convocatorias y
+					las inscripciones se confirman en Discord.
+				</p>
+			</div>
+			<p class="planner-footnote">
+				Es una copia del horario actual, no una suscripción. Si cambia el horario de la hermandad,
+				actualízala en Google Calendar.
 			</p>
+			<p class="planner-feedback" data-calendar-feedback role="status"></p>
 		</div>
-		<p class="planner-footnote">
-			Es una copia del horario actual, no una suscripción. Si cambia el horario de la hermandad,
-			actualízala en Google Calendar.
-		</p>
-		<p class="planner-feedback" data-calendar-feedback role="status"></p>
-	</section>`;
+	</details>`;
 
 function countdown(timestamp, now) {
 	const minutes = Math.max(1, Math.ceil((timestamp - now) / 60000));
@@ -72,6 +80,8 @@ export function attachSchedulePlanner(settings) {
 			list.replaceChildren();
 			if (!sessions.length) {
 				status.textContent = 'Horario pendiente';
+				planner.querySelector('[data-calendar-preview]').textContent =
+					'Horario pendiente de confirmar';
 				next.textContent = 'Las próximas noches aparecerán cuando se confirme el horario.';
 				counter.textContent = '';
 				button.disabled = true;
@@ -90,6 +100,8 @@ export function attachSchedulePlanner(settings) {
 			status.textContent =
 				sessions[0].start <= now ? 'Dentro del horario habitual' : 'Próximo horario habitual';
 			next.textContent = label(sessions[0]);
+			planner.querySelector('[data-calendar-preview]').textContent =
+				label(sessions[0]) + ' · ' + select.value;
 			counter.textContent =
 				sessions[0].start <= now
 					? 'Consulta en Discord si hay una convocatoria en curso.'
