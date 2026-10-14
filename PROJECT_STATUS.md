@@ -710,3 +710,10 @@ Publicado: `0e8ee4d`; backend `38650997078`, Pages `38650986419` y validación `
 - Métricas en oro, avisos con filete dorado a 14 px, leyendas y desplegables en oro, casillas de días/clases/roles en cuadrícula compacta, tablas con cabecera dorada a 14 px, grupos del roster con marco y contador carmesí. Filtros en 2 columnas en móvil; contadores de composición en tres columnas.
 - Validación: 69 pruebas Node, prueba workerd y build Pages; las 12 pestañas del Panel y el Perfil con sesión QA de líder (datos sintéticos) a 1440/1024/768/390/320 px sin desbordamiento ni errores JS; páginas públicas sin regresiones.
 Publicado: `aa1b606`; backend `38652050382`, Pages `38652035269` y validación `38652035080` correctos. theme.css y app.js servidos idénticos al local tras la propagación; /panel y /perfil responden 401 sin sesión, como corresponde. No se ha visto el panel de producción con una sesión real: pendiente de revisión del propietario.
+
+## 2026-10-15 — Estados vacíos honestos en Asistencia, Loot y Wishlists
+
+- El propietario señaló la tarjeta grande «Sin resultados · No hay registros que coincidan con esta búsqueda» en secciones que todavía no tienen datos (no hay APIs/catálogo de objetos ni de raids de Forever).
+- Cuando la lista no tiene ningún registro se muestra un aviso compacto que explica la situación, sin buscador ni paginación vacíos: Asistencia (se anota a mano; sin conexión con registros de combate), Loot (asignación manual; sin catálogo verificado de objetos/bosses) y Wishlists (cada miembro desde su perfil; objetos escritos a mano). «Sin resultados» se conserva solo cuando una búsqueda o un filtro no encuentran coincidencias.
+- Cambio en operations-ui.js (parámetro opcional de `paginated`) y estilo `.empty-note` en theme.css. Sin cambios de APIs ni datos.
+- Validación: 69 pruebas Node, workerd y build; navegador local con sesión QA: avisos en las tres pestañas y en el historial de loot del perfil, «Sin resultados» al filtrar asistencia y al buscar en el roster, 1440/390 px sin errores.

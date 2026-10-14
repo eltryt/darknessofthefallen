@@ -69,8 +69,16 @@ export function renderProgress(rows, { esc, empty }) {
 		.join('');
 }
 
-function paginated(el, heads, rows, render, ctx) {
+// emptyState [title, text] explains a list with no records at all, instead of an empty search.
+function paginated(el, heads, rows, render, ctx, emptyState) {
 	const { esc, table, empty } = ctx;
+	if (!rows.length && emptyState) {
+		el.innerHTML = /* HTML */ `<div class="empty-note" role="status">
+			<strong>${esc(emptyState[0])}</strong>
+			<p>${esc(emptyState[1])}</p>
+		</div>`;
+		return;
+	}
 	let page = 0,
 		query = (ctx.initialQuery || '').toLocaleLowerCase('es');
 	const pageSize = ctx.pageSize || 20;
@@ -304,6 +312,12 @@ export async function operationTab(tab, el, ctx) {
 						</td>
 					</tr>`,
 				ctx,
+				Object.values(values || {}).some(Boolean)
+					? null
+					: [
+							'Aún no hay asistencias registradas',
+							'Se anotan a mano en «Registrar o corregir asistencia». Todavía no hay conexión automática con registros de combate.',
+						],
 			);
 		};
 		el.querySelector('#attendance-filter').onsubmit = async (e) => {
@@ -369,6 +383,10 @@ export async function operationTab(tab, el, ctx) {
 					</td>
 				</tr>`,
 			ctx,
+			[
+				'Aún no hay botín asignado',
+				'Los responsables de loot registran cada asignación a mano. Aún no hay un catálogo verificado de objetos ni de bosses de WoW Forever, así que se escriben manualmente.',
+			],
 		);
 		el.querySelector('#loot-list').onclick = async (e) => {
 			const del = e.target.closest('[data-delete-loot]'),
@@ -615,6 +633,10 @@ export async function operationTab(tab, el, ctx) {
 					<td>${esc(r.data.notes)}</td>
 				</tr>`,
 			ctx,
+			[
+				'Nadie ha añadido objetos todavía',
+				'Cada miembro prepara su wishlist desde su perfil. Aún no hay un catálogo verificado de objetos de WoW Forever, así que se escriben a mano.',
+			],
 		);
 		return true;
 	}
