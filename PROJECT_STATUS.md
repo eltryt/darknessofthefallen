@@ -692,3 +692,11 @@ A petición del propietario (código de afiliado Tryt; su cupón ofrece un 10% d
 - Sin scripts ni seguimiento de terceros; no cambia CSP, analítica, APIs ni datos. Registrado el asset en app.mjs, build y exportador de Pages.
 - Corrección de paso: a más de 1640 px las ilustraciones de cabecera llegan ahora a ambos bordes; el menú de escritorio pasa a segunda fila hasta 1380 px para dejar sitio al botón.
 - Validación: 69 pruebas Node, prueba workerd y build Pages correctos; capturas de las siete páginas a 2560/1920/1440/1381/1280/1100/900/768/390/320 px sin desbordamiento ni errores JS.Publicado: commit `0feb409`; Pages `38648958730`, validación `38648958780` y backend Cloudflare `38648980775` correctos. theme.css y public-layout.js servidos idénticos al local; banner servido (200); capturas reales de siete rutas a 1920/1440/390/320 sin desbordamiento ni errores JS.
+
+## 2026-10-15 — Horario semanal legible, lista de valores e icono de Raids
+
+- Calendario semanal rehecho (Inicio, Hermandad y Raids): nombres de día 14 px, títulos 22–26 px, horario 16 px con icono de reloj y detalle de cada noche («Continuación · Progreso pendiente o contenido alternativo», «Raid de 20 · Empieza el progreso semanal», «Raid de 40 · Roster conjunto de la hermandad»). Las noches de raid ocupan más ancho; marca «Hoy» según Europe/Madrid. Por debajo de 1100 px pasa a filas legibles; en móvil, filas compactas. Días y horas siguen leyéndose de la configuración.
+- Nota del horario reescrita con los mismos hechos y a 15 px.
+- Hermandad: números 01–03 con ancho fijo para alinear los títulos; textos a 15 px. Eliminada la franja clara que la ilustración del campamento trae en sus últimas filas (el fondo se extiende por debajo del marco).
+- Icono de Raids del menú redibujado (dos espadas cruzadas limpias, trazo de línea como el resto).
+- Validación: 69 pruebas Node, prueba workerd y build Pages; siete páginas a 1920/1440/1280/1024/768/390/320 px sin desbordamiento ni errores JS.

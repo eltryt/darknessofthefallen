@@ -4,14 +4,32 @@ export function createPublicLayout(context) {
 	const { esc, title, data } = context;
 	function weekSchedule() {
 		const s = data.settings;
-		return /* HTML */ `<div class="week-schedule" aria-label="Calendario semanal de raids">
-				${['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'].map((day) => /* HTML */ `<div class="week-day ${s.raidDays.includes(day) ? 'raid-day' : ''}"><span>${day}</span><strong>${s.raidDays.includes(day) ? { Martes: 'Continuación', Miércoles: '20', Jueves: '40' }[day] || 'Base' : '—'}</strong><small>${s.raidDays.includes(day) ? esc(s.raidStart) + '–' + esc(s.raidEnd) : 'Sin raid fija'}</small></div>`).join('')}
-			</div>
+		const nights = {
+			Martes: ['Continuación', 'Progreso pendiente o contenido alternativo'],
+			Miércoles: ['Raid de 20', 'Empieza el progreso semanal'],
+			Jueves: ['Raid de 40', 'Roster conjunto de la hermandad'],
+		};
+		const today = new Intl.DateTimeFormat('es-ES', { weekday: 'long', timeZone: 'Europe/Madrid' })
+			.format(new Date())
+			.toLowerCase();
+		const clock =
+			'<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>';
+		const day = (name) => {
+			const isToday = name.toLowerCase() === today,
+				current = isToday ? ' aria-current="date"' : '',
+				head = `<span class="raid-week-name">${name}${isToday ? '<span class="raid-week-today">Hoy</span>' : ''}</span>`;
+			if (!s.raidDays.includes(name))
+				return `<li class="raid-week-day"${current}>${head}<span class="raid-week-free">Sin raid fija</span></li>`;
+			const [heading, detail] = nights[name] || ['Noche de raid', ''];
+			return `<li class="raid-week-day is-raid"${current}>${head}<strong>${heading}</strong>${detail ? `<span class="raid-week-detail">${detail}</span>` : ''}<span class="raid-week-time">${clock}${esc(s.raidStart)} – ${esc(s.raidEnd)}</span></li>`;
+		};
+		return /* HTML */ `<ul class="raid-week" aria-label="Calendario semanal de raids">
+				${['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'].map(day).join('')}
+			</ul>
 			<p class="schedule-note">
-				Horario base · Hora peninsular española (Europe/Madrid). Las sesiones que terminan después
-				de medianoche finalizan al día siguiente. Miércoles: raid de 20. Jueves: raid de 40. Martes:
-				continuación o contenido alternativo. Cada convocatoria concreta confirma el horario y el
-				roster; las franjas alternativas siguen sujetas a coordinación.
+				Hora peninsular española (Europe/Madrid). Las sesiones de ${esc(s.raidStart)} a
+				${esc(s.raidEnd)} terminan pasada la medianoche, ya en el día siguiente. Cada convocatoria
+				confirma su horario y su roster; las franjas alternativas se coordinan aparte.
 			</p>
 			${schedulePlanner()}`;
 	}
