@@ -225,10 +225,10 @@ legend {
 }
 .recruit-command {
 	display: grid;
-	grid-template-columns: 1.35fr 1fr;
-	gap: 36px;
-	align-items: start;
-	padding: clamp(24px, 4vw, 48px);
+	grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+	gap: 24px;
+	align-items: stretch;
+	padding: clamp(18px, 2.5vw, 32px);
 	border: 1px solid #51404e;
 	border-radius: 22px;
 	background:
@@ -1602,5 +1602,58 @@ body[data-page='/contacto'] .contact-card > img {
 	}
 	.about-emblem {
 		max-width: 100%;
+	}
+}
+
+/* Recruitment columns share edges, spacing and surface treatment. */
+.recruit-lead,
+.recruit-expectations {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	padding: clamp(20px, 2.4vw, 32px);
+	margin: 0;
+	border: 1px solid #a68a5b45;
+	border-radius: 3px;
+	background: #0b0b0de6;
+}
+.recruit-lead h2 {
+	font-size: clamp(28px, 3vw, 42px);
+	margin: 16px 0;
+}
+.recruit-lead > p {
+	margin: 0;
+}
+.recruit-lead > .button,
+.recruit-lead > .pill {
+	align-self: flex-start;
+	margin-top: auto;
+}
+.recruit-facts {
+	gap: 12px;
+	margin: 24px 0;
+}
+.recruit-facts article {
+	padding: 16px;
+}
+.recruit-expectations h3 {
+	margin: 16px 0;
+	line-height: 1.35;
+}
+.recruit-expectations ul {
+	margin: 0 0 24px;
+}
+.recruit-expectations > p:last-child {
+	margin: auto 0 0;
+	padding-top: 20px;
+	border-top: 1px solid #a68a5b38;
+}
+@media (max-width: 700px) {
+	.recruit-command {
+		gap: 16px;
+		padding: 16px;
+	}
+	.recruit-facts {
+		margin: 20px 0;
 	}
 }
