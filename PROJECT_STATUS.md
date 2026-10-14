@@ -629,3 +629,7 @@ Rama local `visual/illustrated-guild`. Sin push ni despliegue en esta fase.
 Ajuste solicitado durante la revisión: Google Calendar queda en un desplegable nativo cerrado por defecto, con próximo horario y zona visibles en el resumen. Se conservan selector, fechas y enlace de copia. Comprobados apertura con Enter, cierre y destino calendar.google.com sin enviar datos a Google. 69 pruebas pasan tras el ajuste; formato correcto. Prueba Cloudflare SQLite: 1/1 aprobada antes del ajuste visual del calendario.
 
 Publicación autorizada por el propietario el 14/10/2026: se prepara push a main y despliegue mediante el workflow backend.yml. Los resultados se registrarán al finalizar la comprobación pública.
+
+### Publicación verificada — 14/10/2026
+
+Rediseño publicado con commit `3aeca5e`. Push autorizado a main. Workflows completados correctamente: Cloudflare `38500174193`, Pages `38500168448`, validación `38500168675`. Tras la propagación, las tres rutas públicas responden correctamente y CSS, módulos visuales y siete WebP coinciden byte a byte con los archivos locales. Google Calendar continúa en el desplegable compacto. Sustituye el estado anterior de pendiente de publicación.
