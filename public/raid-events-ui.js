@@ -67,6 +67,7 @@ export async function mountRaidEvents(host, ctx, { manage = false, mine = false 
 	};
 	async function load() {
 		result = await api('/api/events');
+		if (!host.isConnected) return;
 		host.innerHTML = /* HTML */ `<div class="section-head">
 				<h2>${mine ? 'Mis próximas convocatorias' : 'Convocatorias'}</h2>
 				<button type="button" class="secondary" data-refresh>Actualizar</button>
@@ -454,6 +455,7 @@ export async function mountRaidEvents(host, ctx, { manage = false, mine = false 
 		target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 	}
 	await load();
+	if (!host.isConnected) return;
 	const timer = setInterval(() => {
 		if (!host.isConnected) {
 			clearInterval(timer);

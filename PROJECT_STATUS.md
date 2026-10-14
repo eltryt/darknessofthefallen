@@ -651,3 +651,9 @@ Nueve WebP añadidos al registro estático y exportadores; sin cambios en APIs, 
 ### Corrección de alineación en Reclutamiento — 14/10/2026
 
 Dos paneles con la misma altura, bordes superior/inferior alineados y espaciado uniforme; CTA y nota inferior colocados al pie. Horario y filosofía mantienen alturas iguales. Textos y acciones conservados. Comprobación de geometría a 1440/1280/1024 y sin overflow a 768/390/320, captura alignment-1440.png; smoke de ocho rutas aprobado. Ajuste exclusivamente CSS.
+
+## 2026-10-14 — Corrección de pestañas del panel
+
+Causa: Convocatorias refrescaba cada 30 segundos sobre #panel-body, reutilizado por Progreso; host.isConnected seguía siendo true. Cada selección ahora crea su propio contenedor y desconecta el anterior. Los errores tardíos solo se muestran si el host sigue activo. Convocatorias no renderiza ni inicia polling tras una carga si su host ya está desconectado. Sin cambios de backend.
+
+Validación: 69 pruebas aprobadas. Regresión de navegador /workspace/pages-validation/panel-race-regression.mjs con SQLite en memoria: polling acelerado, respuesta tardía correcta, error tardío y vuelta a Raids; Progreso y aria-pressed permanecen sincronizados, sin errores JS.

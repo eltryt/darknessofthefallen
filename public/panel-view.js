@@ -53,10 +53,7 @@ export function createPanelView(context) {
 						x.classList.toggle('active', x === b);
 						x.setAttribute('aria-pressed', String(x === b));
 					});
-					panelTab(b.dataset.tab).catch((e) => {
-						$('#panel-body').innerHTML = empty('No se pudo cargar esta sección', e.message);
-						toast(e.message);
-					});
+					void panelTab(b.dataset.tab);
 				}),
 		);
 		const selected = new URLSearchParams(location.search).get('tab');
@@ -71,8 +68,21 @@ export function createPanelView(context) {
 	}
 
 	async function panelTab(tab) {
-		const el = $('#panel-body');
+		// A new host disconnects the previous tab's polling and isolates late responses.
+		const el = document.createElement('section');
+		el.id = 'panel-body';
+		el.dataset.panelTab = tab;
 		el.innerHTML = '<p role="status">Cargando…</p>';
+		$('#panel-body').replaceWith(el);
+		try {
+			await renderPanelTab(tab, el);
+		} catch (e) {
+			if (!el.isConnected) return;
+			el.innerHTML = empty('No se pudo cargar esta sección', e.message);
+			toast(e.message);
+		}
+	}
+	async function renderPanelTab(tab, el) {
 		if (tab === 'messages') {
 			await gmInbox(el, context);
 			return;
