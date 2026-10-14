@@ -1203,7 +1203,7 @@ body > header .brand-logo {
 .hero::before {
 	background-position: 58% center;
 }
-@media (min-width: 901px) and (max-width: 1250px) {
+@media (min-width: 901px) and (max-width: 1380px) {
 	body > header {
 		flex-wrap: wrap;
 		justify-content: space-between;
@@ -1864,5 +1864,182 @@ footer > button.secondary {
 	.week-day small {
 		grid-column: 2;
 		text-align: left;
+	}
+}
+
+/* RestedXP partner link: persistent, themed and clearly marked as an affiliate link. */
+.visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+}
+.header-actions {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+.partner-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	min-height: 44px;
+	padding: 6px 14px 6px 8px;
+	border: 1px solid #a68a5b90;
+	border-radius: 999px;
+	background:
+		radial-gradient(ellipse at 15% 50%, #b5495140, transparent 70%),
+		linear-gradient(135deg, #2a1418, #120d10);
+	box-shadow:
+		inset 0 1px #f0d7ae1a,
+		0 0 18px #b5495126;
+	color: #f3e6cf;
+	text-decoration: none;
+	white-space: nowrap;
+	transition:
+		border-color 0.2s ease,
+		box-shadow 0.2s ease;
+}
+.partner-link:hover {
+	border-color: #e1bf8a;
+	box-shadow:
+		inset 0 1px #f0d7ae26,
+		0 0 24px #d2535944;
+}
+.partner-link:focus-visible {
+	outline: 2px solid #e1bf8a;
+	outline-offset: 3px;
+}
+.partner-icon {
+	width: 28px;
+	height: 28px;
+	flex: 0 0 28px;
+	padding: 5px;
+	border: 1px solid #a68a5b80;
+	border-radius: 50%;
+	background: #6e0f1d;
+	fill: none;
+	stroke: #f0d7ae;
+	stroke-width: 1.7;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+.partner-text {
+	display: grid;
+	line-height: 1.15;
+	text-align: left;
+}
+.partner-text small {
+	font-size: 10px;
+	font-weight: 700;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: #e3b778;
+}
+.partner-text strong {
+	font-size: 13px;
+	font-weight: 750;
+	letter-spacing: 0.04em;
+	color: #fff3df;
+}
+.partner-banner {
+	display: grid;
+	box-sizing: border-box;
+	width: 100%;
+	justify-items: center;
+	gap: 8px;
+	margin: 56px auto 8px;
+	max-width: 760px;
+}
+.partner-banner-label {
+	font-size: 11px;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: #8f877d;
+}
+.partner-banner a {
+	display: block;
+	box-sizing: border-box;
+	width: 100%;
+	max-width: 738px;
+	padding: 4px;
+	border: 1px solid #a68a5b40;
+	background: #111113;
+	opacity: 0.9;
+	transition:
+		opacity 0.2s ease,
+		border-color 0.2s ease;
+}
+.partner-banner a:hover,
+.partner-banner a:focus-visible {
+	opacity: 1;
+	border-color: #a68a5b90;
+}
+.partner-banner img {
+	display: block;
+	width: 100%;
+	max-width: 728px;
+	height: auto;
+}
+@media (min-width: 901px) and (max-width: 1380px) {
+	body > header .header-actions {
+		margin-left: auto;
+	}
+}
+@media (max-width: 900px) {
+	body > header .header-actions {
+		grid-column: 1 / -1;
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+		gap: 8px;
+	}
+	body > header .header-actions .login {
+		width: 100%;
+		min-height: 44px;
+	}
+	.partner-link {
+		justify-content: center;
+		min-width: 0;
+		border-radius: 4px;
+	}
+}
+@media (max-width: 360px) {
+	.partner-icon {
+		display: none;
+	}
+	.partner-link {
+		padding-inline: 8px;
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.partner-link,
+	.partner-banner a {
+		transition: none;
+	}
+}
+
+/* Header actions sit side by side on phones; wide-screen artwork reaches both edges. */
+@media (max-width: 900px) {
+	body > header .header-actions .login {
+		grid-column: auto;
+		padding-inline: 8px;
+	}
+}
+@media (max-width: 360px) {
+	body > header .header-actions .login {
+		font-size: 11px;
+	}
+}
+html {
+	overflow-x: clip;
+}
+@media (min-width: 1641px) {
+	.hero::before,
+	.hero::after,
+	body[data-page] .page-title::before,
+	body[data-page] .page-title::after {
+		inset-inline: calc(50% - 50vw);
 	}
 }

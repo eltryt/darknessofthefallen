@@ -13,6 +13,7 @@ if (memberApp) {
 }
 mkdirSync(join(destination, 'assets/icons/spec'), { recursive: true });
 mkdirSync(join(destination, 'assets/art'), { recursive: true });
+mkdirSync(join(destination, 'assets/partners'), { recursive: true });
 const source = new URL('../public/', import.meta.url);
 for (const file of [
 	'theme.css',
@@ -34,6 +35,7 @@ for (const file of [
 	'assets/art/campfire.webp',
 	'assets/art/heroes.webp',
 	'assets/art/landscape.webp',
+	'assets/partners/restedxp-leaderboard.png',
 
 	'guild-showcase.js',
 	'boot-state.js',

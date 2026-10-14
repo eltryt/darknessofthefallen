@@ -683,3 +683,12 @@ Trabajo coordinado con Codex en main; archivo tocado: `public/theme.css` (bloque
 Validación: 69 pruebas Node y build Pages correctos. Capturas de página completa con Edge (playwright-core, fuera del repo) de las siete páginas públicas a 1440/1024/768/390/320 px: sin desbordamiento horizontal, sin errores JavaScript ni recursos fallidos.
 Publicado: commit `a3ad894` en main; Pages `38635391332` y validación `38635391300` correctos; backend Cloudflare `38645488758` correcto (lanzado con gh). theme.css servido en producción idéntico al local; siete rutas públicas y /api/health responden 200; capturas reales a 1440/390 sin desbordamiento ni errores JS, «Guarida de Onixya» con datos reales 0/1.
 Pendiente propuesto: botón «Acceso de miembros» a ancho completo en la cabecera móvil (ocupa espacio en todas las páginas), orden de bloques en Raids (pestañas tras el filtro vacío) y tipografía de las cabeceras de sección sans/serif aún mixta en algunos bloques.
+
+## 2026-10-15 — Enlace de afiliado RestedXP
+
+A petición del propietario (código de afiliado Tryt; su cupón ofrece un 10% de descuento a quien compre desde el enlace, comprobado por él con otra persona).
+- Botón persistente en la cabecera de todas las páginas: «10% de descuento · RestedXP», estilo carmesí/oro propio, abre https://shop.restedxp.com/forever/ref/Tryt/ en otra pestaña con rel="sponsored noopener" y texto accesible que indica enlace de afiliado. En móvil comparte fila con «Acceso de miembros» (la cabecera queda más baja que antes).
+- Un único banner discreto (728×90) al final de Inicio, rotulado «Aliado de la hermandad · Enlace de afiliado», hacia https://shop.restedxp.com/ref/Tryt/. Copia local en public/assets/partners/ (la CSP solo admite imágenes propias y así no se carga nada de terceros sin pulsar). Los banners de 160×600 y 320×365 no se usan para no recargar la web.
+- Sin scripts ni seguimiento de terceros; no cambia CSP, analítica, APIs ni datos. Registrado el asset en app.mjs, build y exportador de Pages.
+- Corrección de paso: a más de 1640 px las ilustraciones de cabecera llegan ahora a ambos bordes; el menú de escritorio pasa a segunda fila hasta 1380 px para dejar sitio al botón.
+- Validación: 69 pruebas Node, prueba workerd y build Pages correctos; capturas de las siete páginas a 2560/1920/1440/1381/1280/1100/900/768/390/320 px sin desbordamiento ni errores JS.

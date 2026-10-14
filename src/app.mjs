@@ -54,6 +54,10 @@ const files = {
 	'/assets/art/campfire.webp': ['assets/art/campfire.webp', 'image/webp'],
 	'/assets/art/heroes.webp': ['assets/art/heroes.webp', 'image/webp'],
 	'/assets/art/landscape.webp': ['assets/art/landscape.webp', 'image/webp'],
+	'/assets/partners/restedxp-leaderboard.png': [
+		'assets/partners/restedxp-leaderboard.png',
+		'image/png',
+	],
 
 	'/manual-roster-ui.js': ['manual-roster-ui.js', 'text/javascript'],
 	'/analytics.js': ['analytics.js', 'text/javascript'],

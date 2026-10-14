@@ -85,6 +85,7 @@ try {
 		'assets/art/campfire.webp',
 		'assets/art/heroes.webp',
 		'assets/art/landscape.webp',
+		'assets/partners/restedxp-leaderboard.png',
 
 		'guild-showcase.js',
 		'boot-state.js',

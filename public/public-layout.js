@@ -150,31 +150,42 @@ export function createPublicLayout(context) {
 				html +
 				scheduleSection +
 				/* HTML */ `<section class="section">
-					<div class="section-head">
-						<div>
-							<span class="eyebrow">El siguiente paso</span>
-							<h2>Conoce tu próxima hermandad.</h2>
+						<div class="section-head">
+							<div>
+								<span class="eyebrow">El siguiente paso</span>
+								<h2>Conoce tu próxima hermandad.</h2>
+							</div>
 						</div>
-					</div>
-					<div class="link-grid">
-						<a class="card link-card" href="/progreso"
-							><span class="card-number">01</span>
-							<h3>El camino de la banda</h3>
-							<p>Encuentros, primeras victorias e historia compartida.</p>
-							<span>Ver progreso <span aria-hidden="true">↗</span></span></a
-						><a class="card link-card" href="/roster"
-							><span class="card-number">02</span>
-							<h3>Quienes lo hacen posible</h3>
-							<p>Conoce los personajes y los roles de nuestro equipo.</p>
-							<span>Explorar roster <span aria-hidden="true">↗</span></span></a
-						><a class="card link-card" href="/reclutamiento"
-							><span class="card-number">03</span>
-							<h3>Tu lugar en el grupo</h3>
-							<p>Descubre nuestra forma de jugar y el proceso de entrada.</p>
-							<span>Reclutamiento <span aria-hidden="true">↗</span></span></a
-						>
-					</div>
-				</section>`
+						<div class="link-grid">
+							<a class="card link-card" href="/progreso"
+								><span class="card-number">01</span>
+								<h3>El camino de la banda</h3>
+								<p>Encuentros, primeras victorias e historia compartida.</p>
+								<span>Ver progreso <span aria-hidden="true">↗</span></span></a
+							><a class="card link-card" href="/roster"
+								><span class="card-number">02</span>
+								<h3>Quienes lo hacen posible</h3>
+								<p>Conoce los personajes y los roles de nuestro equipo.</p>
+								<span>Explorar roster <span aria-hidden="true">↗</span></span></a
+							><a class="card link-card" href="/reclutamiento"
+								><span class="card-number">03</span>
+								<h3>Tu lugar en el grupo</h3>
+								<p>Descubre nuestra forma de jugar y el proceso de entrada.</p>
+								<span>Reclutamiento <span aria-hidden="true">↗</span></span></a
+							>
+						</div>
+					</section>
+					<aside class="partner-banner" aria-label="Colaboración con RestedXP">
+						<span class="partner-banner-label">Aliado de la hermandad · Enlace de afiliado</span>
+						<a href="https://shop.restedxp.com/ref/Tryt/" target="_blank" rel="sponsored noopener"
+							><img
+								src="/assets/partners/restedxp-leaderboard.png"
+								width="728"
+								height="90"
+								decoding="async"
+								alt="RestedXP: guías premium de leveo con un 10% de descuento"
+						/></a>
+					</aside>`
 			);
 		if (path === '/nosotros')
 			return (
