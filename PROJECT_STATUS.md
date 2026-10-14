@@ -633,3 +633,7 @@ Publicación autorizada por el propietario el 14/10/2026: se prepara push a main
 ### Publicación verificada — 14/10/2026
 
 Rediseño publicado con commit `3aeca5e`. Push autorizado a main. Workflows completados correctamente: Cloudflare `38500174193`, Pages `38500168448`, validación `38500168675`. Tras la propagación, las tres rutas públicas responden correctamente y CSS, módulos visuales y siete WebP coinciden byte a byte con los archivos locales. Google Calendar continúa en el desplegable compacto. Sustituye el estado anterior de pendiente de publicación.
+
+## 2026-10-14 — Marcos e iconos en tarjetas de Inicio
+
+Marco metálico fino con cuatro esquinas ornamentales en CSS e iconos SVG decorativos de comunidad, montañas, espadas cruzadas y casco. Títulos actualizados a Explora Azeroth y Raids; descripciones y destinos conservados. Sin nuevas imágenes, dependencias ni cambios de backend. Verificado build y navegador a 1920/1440/768/390 px, sin desbordamientos ni errores JS. Publicación siguiendo la autorización vigente del propietario.

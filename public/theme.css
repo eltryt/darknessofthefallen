@@ -1026,3 +1026,102 @@ body[data-page='/roster'] .page-title {
 		padding: 18px;
 	}
 }
+
+/* Fine metal frame with mirrored corner ornaments; independent of the artwork. */
+.adventure-card {
+	border-radius: 0;
+	border-color: #8f7856;
+	box-shadow:
+		inset 0 0 0 2px #0b0b0d,
+		inset 0 0 0 3px #a68a5b30;
+}
+.adventure-frame {
+	position: absolute;
+	inset: 5px;
+	border: 1px solid #a68a5b40;
+	pointer-events: none;
+}
+.frame-corner {
+	position: absolute;
+	width: 24px;
+	height: 24px;
+	border-top: 1px solid #d2b68a;
+	border-left: 1px solid #d2b68a;
+}
+.frame-corner::before {
+	content: '';
+	position: absolute;
+	width: 27px;
+	height: 1px;
+	top: 8px;
+	left: -5px;
+	background: #a68a5b;
+	transform: rotate(-45deg);
+}
+.frame-corner::after {
+	content: '';
+	position: absolute;
+	width: 5px;
+	height: 5px;
+	left: 5px;
+	top: 5px;
+	border: 1px solid #d2b68a;
+	transform: rotate(45deg);
+	background: #342a1e;
+}
+.corner-tl {
+	top: -3px;
+	left: -3px;
+}
+.corner-tr {
+	top: -3px;
+	right: -3px;
+	transform: rotate(90deg);
+}
+.corner-bl {
+	bottom: -3px;
+	left: -3px;
+	transform: rotate(-90deg);
+}
+.corner-br {
+	bottom: -3px;
+	right: -3px;
+	transform: rotate(180deg);
+}
+.adventure-caption {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	min-width: 0;
+}
+.adventure-caption > span {
+	min-width: 0;
+}
+.adventure-icon {
+	width: 32px;
+	height: 32px;
+	flex: 0 0 32px;
+	fill: currentColor;
+	color: #dfc197;
+	filter: drop-shadow(0 2px 3px #000);
+}
+.adventure-card h2 {
+	font-size: clamp(16px, 1.4vw, 20px);
+	letter-spacing: 0.02em;
+}
+.adventure-card:focus-visible {
+	outline: 2px solid #f0d7ae;
+	outline-offset: 4px;
+}
+@media (max-width: 600px) {
+	.adventure-caption {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 10px;
+	}
+	.adventure-icon {
+		width: 28px;
+		height: 28px;
+		flex-basis: 28px;
+	}
+}

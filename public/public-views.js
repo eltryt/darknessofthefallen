@@ -45,27 +45,74 @@ export function createPublicViews(context) {
 			</section>
 			<nav class="adventure-grid" aria-label="Descubre la hermandad">
 				<a class="adventure-card art-campfire" href="/nosotros"
-					><span
-						><h2>Comunidad</h2>
-						<p>Una historia que escribimos juntos.</p></span
+					><span class="adventure-frame" aria-hidden="true"
+						><i class="frame-corner corner-tl"></i><i class="frame-corner corner-tr"></i
+						><i class="frame-corner corner-bl"></i><i class="frame-corner corner-br"></i></span
+					><span class="adventure-caption"
+						><svg class="adventure-icon" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+							<circle cx="16" cy="8" r="4" />
+							<circle cx="6" cy="10" r="3" />
+							<circle cx="26" cy="10" r="3" />
+							<path
+								d="M9 28V20a7 7 0 0 1 14 0v8ZM1 26v-7a5 5 0 0 1 6-5 10 10 0 0 0-1 6v6Zm25 0v-6a10 10 0 0 0-1-6 5 5 0 0 1 6 5v7Z"
+							/></svg
+						><span
+							><h2>Comunidad</h2>
+							<p>Una historia que escribimos juntos.</p></span
+						></span
 					></a
-				>
-				<a class="adventure-card art-landscape" href="/progreso"
-					><span
-						><h2>Progresión</h2>
-						<p>Cada encuentro, un nuevo reto.</p></span
+				><a class="adventure-card art-landscape" href="/progreso"
+					><span class="adventure-frame" aria-hidden="true"
+						><i class="frame-corner corner-tl"></i><i class="frame-corner corner-tr"></i
+						><i class="frame-corner corner-bl"></i><i class="frame-corner corner-br"></i></span
+					><span class="adventure-caption"
+						><svg class="adventure-icon" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+							<path
+								d="m1 27 10-20 6 11 5-14 10 23Zm6-5h9l-5-10Zm12-3 3-9 4 10-4-3Z"
+								fill-rule="evenodd"
+							/></svg
+						><span
+							><h2>Explora Azeroth</h2>
+							<p>Cada encuentro, un nuevo reto.</p></span
+						></span
 					></a
-				>
-				<a class="adventure-card art-journey" href="/raids"
-					><span
-						><h2>Organización y raids</h2>
-						<p>Horarios, convocatorias y preparación.</p></span
+				><a class="adventure-card art-journey" href="/raids"
+					><span class="adventure-frame" aria-hidden="true"
+						><i class="frame-corner corner-tl"></i><i class="frame-corner corner-tr"></i
+						><i class="frame-corner corner-bl"></i><i class="frame-corner corner-br"></i></span
+					><span class="adventure-caption"
+						><svg class="adventure-icon" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+							<path d="m3 2 6 2 17 19-3 3L4 9Zm26 0-6 2L6 23l3 3L28 9Z" />
+							<path
+								d="m3 20 9 9m8-26 9 9M4 28l5-5m14-14 5-5"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+							/>
+							<path
+								d="m20 29 9-9m-6 3 5 5M3 12l9-9M4 4l5 5"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+							/></svg
+						><span
+							><h2>Raids</h2>
+							<p>Horarios, convocatorias y preparación.</p></span
+						></span
 					></a
-				>
-				<a class="adventure-card art-heroes" href="/reclutamiento"
-					><span
-						><h2>Reclutamiento</h2>
-						<p>Encuentra tu lugar en la banda.</p></span
+				><a class="adventure-card art-heroes" href="/reclutamiento"
+					><span class="adventure-frame" aria-hidden="true"
+						><i class="frame-corner corner-tl"></i><i class="frame-corner corner-tr"></i
+						><i class="frame-corner corner-bl"></i><i class="frame-corner corner-br"></i></span
+					><span class="adventure-caption"
+						><svg class="adventure-icon" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+							<path
+								d="M16 2C8 3 4 9 4 17l5 3 1 9 4 2V17l-6-4 8 2 8-2-6 4v14l4-2 1-9 5-3C28 9 24 3 16 2Z"
+							/></svg
+						><span
+							><h2>Reclutamiento</h2>
+							<p>Encuentra tu lugar en la banda.</p></span
+						></span
 					></a
 				>
 			</nav>
