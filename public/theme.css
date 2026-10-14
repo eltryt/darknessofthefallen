@@ -1657,3 +1657,65 @@ body[data-page='/contacto'] .contact-card > img {
 		margin: 20px 0;
 	}
 }
+
+/* Form controls must not give checkboxes the dimensions of text fields. */
+input[type='checkbox'],
+.filters input[type='checkbox'],
+.filters > label input[type='checkbox'] {
+	width: 17px;
+	min-width: 17px;
+	max-width: 17px;
+	height: 17px;
+	padding: 0;
+	margin: 0 8px 0 0;
+	flex: 0 0 17px;
+	vertical-align: middle;
+}
+.filters > label:has(> input[type='checkbox']) {
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	gap: 0;
+	flex-basis: 100%;
+	min-width: 0;
+	min-height: 44px;
+}
+.calendar-disclosure > summary:focus-visible {
+	outline: 2px solid #e1bf8a;
+	outline-offset: 3px;
+}
+@media (max-width: 900px) {
+	input:not([type='checkbox']):not([type='radio']),
+	select,
+	textarea {
+		font-size: 16px;
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.link-card:hover {
+		transform: none;
+	}
+}
+.form-grid > label {
+	min-width: 0;
+}
+.form input:not([type='checkbox']):not([type='radio']),
+.form select,
+.form textarea {
+	min-width: 0;
+	max-width: 100%;
+}
+@media (max-width: 480px) {
+	.filters > label {
+		flex-basis: 100%;
+		min-width: 0;
+	}
+	.filters input[type='date'],
+	.filters input[type='datetime-local'] {
+		min-width: 0;
+		max-width: 100%;
+	}
+	.form-grid {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}

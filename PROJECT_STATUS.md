@@ -657,3 +657,13 @@ Dos paneles con la misma altura, bordes superior/inferior alineados y espaciado 
 Causa: Convocatorias refrescaba cada 30 segundos sobre #panel-body, reutilizado por Progreso; host.isConnected seguía siendo true. Cada selección ahora crea su propio contenedor y desconecta el anterior. Los errores tardíos solo se muestran si el host sigue activo. Convocatorias no renderiza ni inicia polling tras una carga si su host ya está desconectado. Sin cambios de backend.
 
 Validación: 69 pruebas aprobadas. Regresión de navegador /workspace/pages-validation/panel-race-regression.mjs con SQLite en memoria: polling acelerado, respuesta tardía correcta, error tardío y vuelta a Raids; Progreso y aria-pressed permanecen sincronizados, sin errores JS.
+
+## 2026-10-14 — Revisión de errores de frontend
+
+Cambios exclusivamente CSS, sin modificar funciones, endpoints ni datos:
+- Checkbox «Solo mis inscripciones»: ya no hereda ancho mínimo de campos de texto (desbordaba 13 px); alineación y área de etiqueta corregidas.
+- Tipografía de campos móviles: 16 px hasta 900 px para evitar el zoom automático habitual de Safari iOS (no se ha ejecutado Safari).
+- Formularios a 320 px: fechas de Asistencia y creación de convocatorias contenidas; filtros apilados y columnas sin mínimo intrínseco.
+- Foco visible explícito para desplegable de Google Calendar; hover de enlaces respeta movimiento reducido.
+
+Verificación en Chromium: nueve páginas a 1440/1024/900/768/390/320, medición de overflow de textos/controles/formularios; todas las pestañas del panel a 1440/390/320, sin incidencias restantes en esta comprobación. Smoke existente de ocho rutas, filtros/prioridades/calendario aprobado. La corrección anterior del panel 326e4ed está desplegada (workflow 38560504905) y su módulo público coincide con el local.
