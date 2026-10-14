@@ -667,3 +667,18 @@ Cambios exclusivamente CSS, sin modificar funciones, endpoints ni datos:
 - Foco visible explícito para desplegable de Google Calendar; hover de enlaces respeta movimiento reducido.
 
 Verificación en Chromium: nueve páginas a 1440/1024/900/768/390/320, medición de overflow de textos/controles/formularios; todas las pestañas del panel a 1440/390/320, sin incidencias restantes en esta comprobación. Smoke existente de ocho rutas, filtros/prioridades/calendario aprobado. La corrección anterior del panel 326e4ed está desplegada (workflow 38560504905) y su módulo público coincide con el local.
+
+## 2026-10-14 — Coherencia visual entre páginas públicas (Claude)
+
+Trabajo coordinado con Codex en main; archivo tocado: `public/theme.css` (bloque final «Consistency pass»). Solo CSS, sin cambios de datos, APIs, permisos ni textos.
+
+- Pie de página alineado con el contenedor de las páginas (mismos márgenes laterales y ancho máximo); aviso legal y botón de estadísticas en una fila más compacta.
+- Inicio: títulos de las cuatro tarjetas ilustradas alineados aunque la descripción ocupe una o dos líneas.
+- Raids: la tarjeta de Onyxia ocupa todo el ancho del contenido y la ilustración llena su marco (antes quedaba centrada y con bandas negras en móvil); título con la tipografía serif común.
+- Progreso: nota «Progreso registrado…» alineada con la tarjeta. La tarjeta «Guarida de Onixya» sigue mostrando el dragón y los datos reales (Normal, Onyxia «No intentado», 0/1, comprobado contra /api/public de producción y replicado en QA local).
+- Reclutamiento: nueve clases en rejilla 3×3 (sin Druida huérfano), 2 columnas en tableta y 1 en móvil con tarjetas más compactas; titular de «Así jugamos» en serif.
+- Horario semanal: en móvil pasa de siete losetas altas a una lista compacta día · tipo · horario (dos líneas por debajo de 380 px); textos auxiliares a 12–13 px.
+- Roster: las etiquetas de rol no se parten en dos líneas.
+
+Validación: 69 pruebas Node y build Pages correctos. Capturas de página completa con Edge (playwright-core, fuera del repo) de las siete páginas públicas a 1440/1024/768/390/320 px: sin desbordamiento horizontal, sin errores JavaScript ni recursos fallidos.
+Pendiente propuesto: botón «Acceso de miembros» a ancho completo en la cabecera móvil (ocupa espacio en todas las páginas), orden de bloques en Raids (pestañas tras el filtro vacío) y tipografía de las cabeceras de sección sans/serif aún mixta en algunos bloques.

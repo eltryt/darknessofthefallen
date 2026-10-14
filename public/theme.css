@@ -1719,3 +1719,150 @@ input[type='checkbox'],
 		grid-template-columns: minmax(0, 1fr);
 	}
 }
+
+/* Consistency pass: shared page edges, aligned card captions and framed artwork. */
+footer {
+	box-sizing: border-box;
+	max-width: 1640px;
+	margin-inline: auto;
+	padding: 32px clamp(18px, 4vw, 64px);
+	border-top-color: #a68a5b38;
+	background: transparent;
+	row-gap: 16px;
+}
+footer small {
+	flex: 1 1 320px;
+	width: auto;
+	margin-top: 0;
+	font-size: 12px;
+	color: #9a948c;
+}
+footer > button.secondary {
+	padding: 8px 14px;
+	font-size: 13px;
+}
+.adventure-card p {
+	min-height: calc(2em * 1.65);
+}
+.adventure-caption {
+	align-items: flex-start;
+}
+.adventure-caption .adventure-icon {
+	margin-top: 2px;
+}
+.week-day > span,
+.week-day small {
+	font-size: 12px;
+}
+.schedule-note {
+	max-width: 78ch;
+	font-size: 13px;
+}
+.class-recruit-grid {
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.recruit-expectations h3,
+.onyxia-feature h2 {
+	font-family: Georgia, serif;
+	font-weight: 400;
+	letter-spacing: -0.01em;
+}
+.onyxia-feature {
+	max-width: none;
+	margin: 32px 0;
+	align-items: stretch;
+	border-color: #a68a5b65;
+	overflow: hidden;
+}
+.onyxia-feature img {
+	height: 100%;
+	min-height: 340px;
+	max-height: 480px;
+	object-fit: cover;
+	object-position: center 30%;
+}
+.progress-source {
+	text-align: left;
+	max-width: none;
+	color: var(--muted);
+}
+.guild-roster-table .pill {
+	white-space: nowrap;
+}
+@media (max-width: 900px) {
+	.class-recruit-grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+@media (max-width: 1000px) and (min-width: 601px) {
+	.adventure-card p {
+		min-height: 0;
+	}
+}
+@media (max-width: 600px) {
+	.adventure-card p {
+		min-height: 0;
+	}
+	.class-recruit-grid {
+		grid-template-columns: minmax(0, 1fr);
+		gap: 12px;
+	}
+	.class-recruit-card {
+		padding: 18px;
+	}
+	.recruit-specs {
+		margin-top: 14px;
+	}
+	/* The week reads as a compact list on phones instead of seven tall tiles. */
+	.week-schedule {
+		grid-template-columns: minmax(0, 1fr);
+		gap: 6px;
+	}
+	.week-day {
+		display: grid;
+		grid-template-columns: 92px minmax(0, 1fr) auto;
+		align-items: center;
+		gap: 12px;
+		padding: 12px 14px;
+		text-align: left;
+	}
+	.week-day > span {
+		font-size: 14px;
+		color: var(--ink);
+	}
+	.week-day strong {
+		margin: 0;
+		font-size: 18px;
+	}
+	.week-day:not(.raid-day) strong {
+		color: var(--muted);
+	}
+	.week-day small {
+		font-size: 12px;
+		text-align: right;
+	}
+	.onyxia-feature img {
+		min-height: 0;
+		height: auto;
+		aspect-ratio: 4 / 3;
+		max-height: 320px;
+		object-position: center 28%;
+	}
+	footer {
+		justify-content: flex-start;
+	}
+	.guild-roster-table .pill {
+		white-space: nowrap;
+		padding-inline: 8px;
+	}
+}
+@media (max-width: 380px) {
+	.week-day {
+		grid-template-columns: 84px minmax(0, 1fr);
+		row-gap: 2px;
+	}
+	.week-day small {
+		grid-column: 2;
+		text-align: left;
+	}
+}
