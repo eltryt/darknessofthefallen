@@ -699,4 +699,4 @@ A petición del propietario (código de afiliado Tryt; su cupón ofrece un 10% d
 - Nota del horario reescrita con los mismos hechos y a 15 px.
 - Hermandad: números 01–03 con ancho fijo para alinear los títulos; textos a 15 px. Eliminada la franja clara que la ilustración del campamento trae en sus últimas filas (el fondo se extiende por debajo del marco).
 - Icono de Raids del menú redibujado (dos espadas cruzadas limpias, trazo de línea como el resto).
-- Validación: 69 pruebas Node, prueba workerd y build Pages; siete páginas a 1920/1440/1280/1024/768/390/320 px sin desbordamiento ni errores JS.
+- Validación: 69 pruebas Node, prueba workerd y build Pages; siete páginas a 1920/1440/1280/1024/768/390/320 px sin desbordamiento ni errores JS.Publicado: `0e8ee4d`; backend `38650997078`, Pages `38650986419` y validación `38650986410` correctos; theme.css/public-layout.js servidos idénticos y capturas reales de Inicio/Hermandad/Raids a 1440/390 sin incidencias.
