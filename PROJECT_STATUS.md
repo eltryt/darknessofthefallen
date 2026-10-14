@@ -681,4 +681,5 @@ Trabajo coordinado con Codex en main; archivo tocado: `public/theme.css` (bloque
 - Roster: las etiquetas de rol no se parten en dos líneas.
 
 Validación: 69 pruebas Node y build Pages correctos. Capturas de página completa con Edge (playwright-core, fuera del repo) de las siete páginas públicas a 1440/1024/768/390/320 px: sin desbordamiento horizontal, sin errores JavaScript ni recursos fallidos.
+Publicado: commit `a3ad894` en main; Pages `38635391332` y validación `38635391300` correctos; backend Cloudflare `38645488758` correcto (lanzado con gh). theme.css servido en producción idéntico al local; siete rutas públicas y /api/health responden 200; capturas reales a 1440/390 sin desbordamiento ni errores JS, «Guarida de Onixya» con datos reales 0/1.
 Pendiente propuesto: botón «Acceso de miembros» a ancho completo en la cabecera móvil (ocupa espacio en todas las páginas), orden de bloques en Raids (pestañas tras el filtro vacío) y tipografía de las cabeceras de sección sans/serif aún mixta en algunos bloques.
