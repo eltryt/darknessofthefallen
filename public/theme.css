@@ -1256,3 +1256,351 @@ body > header .brand-logo {
 		display: none;
 	}
 }
+
+/* Shared public-page finish: aged metal, charcoal surfaces, separate artwork layers. */
+body[data-page] .card,
+body[data-page] .link-card,
+body[data-page] .raid-card-body {
+	background: linear-gradient(145deg, #201b1c, #111113);
+	border-color: #a68a5b50;
+	border-radius: 4px;
+	box-shadow:
+		inset 0 1px #e3c79b0b,
+		0 10px 30px #0002;
+}
+body[data-page] .section-head h2,
+body[data-page] .section > h2,
+body[data-page] .recruit-lead h2,
+body[data-page] .about-layout h2,
+body[data-page] .contact-card h2 {
+	font-family: Georgia, serif;
+	font-weight: 400;
+	letter-spacing: -0.02em;
+}
+body[data-page] .section-head {
+	padding-bottom: 16px;
+	border-bottom: 1px solid #a68a5b38;
+}
+body[data-page='/nosotros'] {
+	--section-art: url('assets/art/tavern.webp');
+}
+body[data-page='/contacto'] {
+	--section-art: url('assets/art/tavern.webp');
+}
+body[data-page='/reclutamiento'] {
+	--section-art: url('assets/art/recruiting.webp');
+}
+body[data-page='/progreso'] {
+	--section-art: url('assets/art/raid-expedition.webp');
+}
+body:is(
+		[data-page='/nosotros'],
+		[data-page='/contacto'],
+		[data-page='/reclutamiento'],
+		[data-page='/progreso']
+	)
+	.page-title {
+	position: relative;
+	isolation: isolate;
+	max-width: none;
+	min-height: 340px;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	padding: 44px 0;
+	margin-bottom: 28px;
+}
+body:is(
+		[data-page='/nosotros'],
+		[data-page='/contacto'],
+		[data-page='/reclutamiento'],
+		[data-page='/progreso']
+	)
+	.page-title::before {
+	content: '';
+	position: absolute;
+	z-index: -2;
+	inset: 0 calc(-1 * clamp(18px, 4vw, 64px));
+	background: var(--section-art) center 42% / cover;
+}
+body:is(
+		[data-page='/nosotros'],
+		[data-page='/contacto'],
+		[data-page='/reclutamiento'],
+		[data-page='/progreso']
+	)
+	.page-title::after {
+	content: '';
+	position: absolute;
+	z-index: -1;
+	inset: 0 calc(-1 * clamp(18px, 4vw, 64px));
+	background:
+		linear-gradient(90deg, #0b0b0df2, #0b0b0d99 48%, #0b0b0d20),
+		linear-gradient(0deg, var(--bg), transparent 30%);
+}
+body[data-page] .page-title p {
+	color: var(--ink);
+	max-width: 56ch;
+}
+body[data-page='/reclutamiento'] .page-title::before {
+	background-position: 80% 32%;
+}
+body[data-page] .banner {
+	position: relative;
+	isolation: isolate;
+	border: 1px solid #a68a5b70;
+	border-radius: 4px;
+	background:
+		linear-gradient(90deg, #0b0b0dee, #0b0b0d88),
+		url('assets/art/raid-expedition.webp') center 48% / cover;
+	min-height: 210px;
+}
+body[data-page] .banner p {
+	color: #d7cfc3;
+}
+body[data-page] .link-card {
+	border-top: 2px solid #a68a5b;
+	transition:
+		border-color 0.2s ease,
+		background 0.2s ease;
+}
+body[data-page] .link-card:hover {
+	border-color: #d5b483;
+	background: #23191c;
+}
+.week-schedule {
+	gap: 10px;
+}
+.week-day {
+	background: linear-gradient(#181719, #111113);
+	border: 1px solid #a68a5b40;
+	border-radius: 3px;
+}
+.week-day.raid-day {
+	background: linear-gradient(#41171e, #191416);
+	border-top: 2px solid #b98b58;
+}
+.week-day strong {
+	color: #e5c79e;
+}
+.calendar-disclosure.raid-planner {
+	border: 1px solid #a68a5b60;
+	border-radius: 4px;
+	background: linear-gradient(120deg, #24191c, #121214);
+}
+.about-emblem {
+	padding: 28px;
+	border: 1px solid #a68a5b45;
+	background: radial-gradient(ellipse, #6e0f1d30, transparent 70%), #111113;
+}
+.about-emblem img {
+	max-height: 340px;
+	object-fit: contain;
+}
+.about-layout {
+	gap: clamp(24px, 4vw, 56px);
+	align-items: center;
+}
+.recruit-command {
+	border-radius: 4px;
+	border-color: #a68a5b60;
+	background:
+		linear-gradient(90deg, #101012ed, #101012c9),
+		url('assets/art/strategy.webp') center/cover;
+}
+.recruit-expectations {
+	border-radius: 3px;
+	background: #0b0b0de6;
+	border-color: #a68a5b45;
+}
+.recruit-facts article {
+	background: #0b0b0dc9;
+	border-radius: 3px;
+	border-color: #a68a5b45;
+}
+.class-recruit-card {
+	border-radius: 4px;
+	border-color: color-mix(in srgb, var(--class-color) 45%, #302a29);
+	background: linear-gradient(
+		120deg,
+		color-mix(in srgb, var(--class-color) 12%, #151214),
+		#111113 75%
+	);
+	box-shadow: inset 3px 0 var(--class-color);
+}
+.recruit-specs > span {
+	border-radius: 4px;
+	background: #09090c99;
+}
+.recruit-filters button {
+	border-radius: 4px;
+}
+.raid-showcase {
+	border-radius: 4px;
+	border-color: #a68a5b65;
+	background: #131113;
+}
+.raid-art {
+	background:
+		linear-gradient(0deg, #131113, #13111366),
+		url('assets/art/raid-expedition.webp') center/cover;
+}
+.raid-onyxia .raid-art {
+	min-height: 380px;
+	align-items: flex-start;
+	text-align: left;
+	padding: clamp(28px, 5vw, 64px);
+	background:
+		linear-gradient(90deg, #120d0bef 8%, #120d0bb3 40%, #120d0b0a 75%),
+		linear-gradient(0deg, #131113, transparent 35%),
+		url('assets/art/onyxia.webp') right 28% / auto 160% no-repeat,
+		#241610;
+}
+.raid-onyxia .raid-art h2 {
+	max-width: 19ch;
+	font-family: Georgia, serif;
+	font-weight: 400;
+}
+.raid-onyxia .raid-art > img {
+	display: none;
+}
+.contact-card {
+	position: relative;
+	overflow: hidden;
+}
+body[data-page='/contacto'] .contact-card {
+	background:
+		linear-gradient(#111113c9, #111113f5),
+		url('assets/art/tavern.webp') center/cover;
+	border-color: #a68a5b70;
+}
+.contact-notes {
+	padding: 20px 28px;
+	border: 1px solid #a68a5b40;
+	background: #131113;
+}
+body[data-page] input,
+body[data-page] select,
+body[data-page] textarea {
+	background-color: #101012;
+	border-color: #51433d;
+	border-radius: 4px;
+}
+@media (max-width: 600px) {
+	body:is(
+			[data-page='/nosotros'],
+			[data-page='/contacto'],
+			[data-page='/reclutamiento'],
+			[data-page='/progreso']
+		)
+		.page-title {
+		min-height: 400px;
+		justify-content: end;
+		padding-top: 150px;
+	}
+	body:is(
+			[data-page='/nosotros'],
+			[data-page='/contacto'],
+			[data-page='/reclutamiento'],
+			[data-page='/progreso']
+		)
+		.page-title::after {
+		background: linear-gradient(0deg, var(--bg), #0b0b0de6 48%, #0b0b0d20);
+	}
+	.raid-onyxia .raid-art {
+		min-height: 420px;
+		justify-content: end;
+		background:
+			linear-gradient(0deg, #131113, #131113e0 35%, #13111310 75%),
+			url('assets/art/onyxia.webp') center 22% / cover;
+	}
+	.raid-onyxia .raid-art h2 {
+		font-size: 30px;
+	}
+	.about-emblem img {
+		max-height: 230px;
+	}
+	.contact-notes {
+		padding: 20px;
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	body[data-page] .link-card {
+		transition: none;
+	}
+}
+body[data-page='/nosotros'] {
+	--section-art: url('assets/art/castle-journey.webp');
+}
+body[data-page='/'] .banner {
+	background-image:
+		linear-gradient(90deg, #0b0b0dee, #0b0b0d70), url('assets/art/castle-overlook.webp');
+}
+body[data-page='/'] .link-card:nth-child(1) {
+	background:
+		linear-gradient(0deg, #111113 15%, #111113b0),
+		url('assets/art/raid-expedition.webp') center/cover;
+}
+body[data-page='/'] .link-card:nth-child(2) {
+	background:
+		linear-gradient(0deg, #111113 15%, #111113b0),
+		url('assets/art/guild-army.webp') center/cover;
+}
+body[data-page='/'] .link-card:nth-child(3) {
+	background:
+		linear-gradient(0deg, #111113 15%, #111113b0),
+		url('assets/art/recruiting.webp') center/cover;
+}
+body[data-page='/'] .art-campfire {
+	--card-art: url('assets/art/resting-camp.webp');
+}
+body[data-page='/'] .art-landscape {
+	--card-art: url('assets/art/ironforge-gates.webp');
+}
+body[data-page='/nosotros'] .about-emblem {
+	min-height: 360px;
+	display: grid;
+	place-items: center;
+	background:
+		linear-gradient(0deg, #111113aa, #11111311),
+		url('assets/art/resting-camp.webp') center/cover;
+}
+body[data-page='/nosotros'] .about-emblem img {
+	width: 150px;
+	height: 150px;
+	align-self: end;
+	filter: drop-shadow(0 3px 15px #000);
+}
+body[data-page='/contacto'] .contact-card {
+	padding-top: 220px;
+	background:
+		linear-gradient(0deg, #111113 35%, #11111322 85%),
+		url('assets/art/tavern.webp') center top/100% auto no-repeat,
+		#111113;
+}
+body[data-page='/contacto'] .contact-card > img {
+	width: 100px;
+	height: 100px;
+}
+@media (max-width: 600px) {
+	body[data-page='/contacto'] .contact-card {
+		padding-top: 155px;
+	}
+	body[data-page='/nosotros'] .about-emblem {
+		min-height: 280px;
+	}
+}
+.about-layout > *,
+.contact-layout > *,
+.recruit-command > * {
+	min-width: 0;
+}
+@media (max-width: 768px) {
+	.about-layout,
+	.contact-layout {
+		grid-template-columns: minmax(0, 1fr);
+	}
+	.about-emblem {
+		max-width: 100%;
+	}
+}

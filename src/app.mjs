@@ -37,6 +37,16 @@ async function readLocalAsset(file) {
 
 const date = () => new Date().toISOString();
 const files = {
+	'/assets/art/strategy.webp': ['assets/art/strategy.webp', 'image/webp'],
+	'/assets/art/tavern.webp': ['assets/art/tavern.webp', 'image/webp'],
+	'/assets/art/recruiting.webp': ['assets/art/recruiting.webp', 'image/webp'],
+	'/assets/art/castle-journey.webp': ['assets/art/castle-journey.webp', 'image/webp'],
+	'/assets/art/castle-overlook.webp': ['assets/art/castle-overlook.webp', 'image/webp'],
+	'/assets/art/raid-expedition.webp': ['assets/art/raid-expedition.webp', 'image/webp'],
+	'/assets/art/resting-camp.webp': ['assets/art/resting-camp.webp', 'image/webp'],
+	'/assets/art/ironforge-gates.webp': ['assets/art/ironforge-gates.webp', 'image/webp'],
+	'/assets/art/guild-army.webp': ['assets/art/guild-army.webp', 'image/webp'],
+
 	'/assets/art/castle.webp': ['assets/art/castle.webp', 'image/webp'],
 	'/assets/art/onyxia.webp': ['assets/art/onyxia.webp', 'image/webp'],
 	'/assets/art/war-room.webp': ['assets/art/war-room.webp', 'image/webp'],

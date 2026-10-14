@@ -641,3 +641,9 @@ Marco metálico fino con cuatro esquinas ornamentales en CSS e iconos SVG decora
 ## 2026-10-14 — Menú ilustrado propio y encuadre
 
 Iconos SVG de línea decorativos en los siete enlaces públicos y Panel (solo usuarios autorizados). Barra oscura con borde metálico, activo carmesí y foco visible; todos los nombres y destinos conservados. Panel recibe aria-current después de insertar su enlace. Logo alineado y encuadre del castillo ajustado a escritorio/móvil. Menú adaptable con pruebas de abrir/cerrar y Escape a 900/800/768/390 px, siete iconos públicos, siete anchuras sin overflow. 69 pruebas aprobadas; pruebas existentes de ocho rutas también pasan. Sin cambios backend.
+
+## 2026-10-14 — Continuidad visual y segunda serie de ilustraciones
+
+Rediseñados los bloques antiguos señalados en Inicio, Hermandad, Progreso, Reclutamiento y Contacto: superficies carbón/carmesí, marcos metálicos finos, cabeceras ilustradas y tarjetas de clase con acento de su color. Calendario compacto conservado. Los nueve assets nuevos se incorporan con autorización expresa; ubicaciones y originales en docs/design-originals/README.md. Onyxia usa la ilustración del dragón tanto en la referencia vacía como en progreso registrado; reconoce también el nombre existente «Guarida de Onixya». No altera nombres, cifras, estados, prioridades ni formularios.
+
+Nueve WebP añadidos al registro estático y exportadores; sin cambios en APIs, permisos o base de datos. Validación: 69 pruebas aprobadas, incluyendo construcción Pages; navegador en ocho rutas/cinco anchuras, filtros de reclutamiento, persistencia de prioridades y ausencia de errores/recursos fallidos. Capturas de las cinco páginas a 1440/390 en /workspace/pages-validation/finish-*.png. Fixture sintético de Onixya mantiene 0/1 y muestra el fondo del dragón. Corregido desbordamiento móvil del layout antiguo de Hermandad. Publicación autorizada dentro de la iteración visual vigente.
