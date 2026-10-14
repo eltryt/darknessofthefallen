@@ -691,7 +691,8 @@ A petición del propietario (código de afiliado Tryt; su cupón ofrece un 10% d
 - Un único banner discreto (728×90) al final de Inicio, rotulado «Aliado de la hermandad · Enlace de afiliado», hacia https://shop.restedxp.com/ref/Tryt/. Copia local en public/assets/partners/ (la CSP solo admite imágenes propias y así no se carga nada de terceros sin pulsar). Los banners de 160×600 y 320×365 no se usan para no recargar la web.
 - Sin scripts ni seguimiento de terceros; no cambia CSP, analítica, APIs ni datos. Registrado el asset en app.mjs, build y exportador de Pages.
 - Corrección de paso: a más de 1640 px las ilustraciones de cabecera llegan ahora a ambos bordes; el menú de escritorio pasa a segunda fila hasta 1380 px para dejar sitio al botón.
-- Validación: 69 pruebas Node, prueba workerd y build Pages correctos; capturas de las siete páginas a 2560/1920/1440/1381/1280/1100/900/768/390/320 px sin desbordamiento ni errores JS.Publicado: commit `0feb409`; Pages `38648958730`, validación `38648958780` y backend Cloudflare `38648980775` correctos. theme.css y public-layout.js servidos idénticos al local; banner servido (200); capturas reales de siete rutas a 1920/1440/390/320 sin desbordamiento ni errores JS.
+- Validación: 69 pruebas Node, prueba workerd y build Pages correctos; capturas de las siete páginas a 2560/1920/1440/1381/1280/1100/900/768/390/320 px sin desbordamiento ni errores JS.
+Publicado: commit `0feb409`; Pages `38648958730`, validación `38648958780` y backend Cloudflare `38648980775` correctos. theme.css y public-layout.js servidos idénticos al local; banner servido (200); capturas reales de siete rutas a 1920/1440/390/320 sin desbordamiento ni errores JS.
 
 ## 2026-10-15 — Horario semanal legible, lista de valores e icono de Raids
 
@@ -699,4 +700,12 @@ A petición del propietario (código de afiliado Tryt; su cupón ofrece un 10% d
 - Nota del horario reescrita con los mismos hechos y a 15 px.
 - Hermandad: números 01–03 con ancho fijo para alinear los títulos; textos a 15 px. Eliminada la franja clara que la ilustración del campamento trae en sus últimas filas (el fondo se extiende por debajo del marco).
 - Icono de Raids del menú redibujado (dos espadas cruzadas limpias, trazo de línea como el resto).
-- Validación: 69 pruebas Node, prueba workerd y build Pages; siete páginas a 1920/1440/1280/1024/768/390/320 px sin desbordamiento ni errores JS.Publicado: `0e8ee4d`; backend `38650997078`, Pages `38650986419` y validación `38650986410` correctos; theme.css/public-layout.js servidos idénticos y capturas reales de Inicio/Hermandad/Raids a 1440/390 sin incidencias.
+- Validación: 69 pruebas Node, prueba workerd y build Pages; siete páginas a 1920/1440/1280/1024/768/390/320 px sin desbordamiento ni errores JS.
+Publicado: `0e8ee4d`; backend `38650997078`, Pages `38650986419` y validación `38650986410` correctos; theme.css/public-layout.js servidos idénticos y capturas reales de Inicio/Hermandad/Raids a 1440/390 sin incidencias.
+
+## 2026-10-15 — Panel y perfil con la línea visual actual
+
+- Causa: Panel y Perfil no marcaban `data-page` en el body, así que no recibían la capa visual nueva (seguían las tarjetas azul marino antiguas). app.js lo marca ahora para esas dos rutas antes de renderizar; sin cambios de lógica, permisos ni datos.
+- Cabecera ilustrada (sala de guerra en Panel, campamento en Perfil), títulos serif y pestañas en una barra enmarcada con activo carmesí; en móvil, una sola fila deslizable en lugar de cinco filas.
+- Métricas en oro, avisos con filete dorado a 14 px, leyendas y desplegables en oro, casillas de días/clases/roles en cuadrícula compacta, tablas con cabecera dorada a 14 px, grupos del roster con marco y contador carmesí. Filtros en 2 columnas en móvil; contadores de composición en tres columnas.
+- Validación: 69 pruebas Node, prueba workerd y build Pages; las 12 pestañas del Panel y el Perfil con sesión QA de líder (datos sintéticos) a 1440/1024/768/390/320 px sin desbordamiento ni errores JS; páginas públicas sin regresiones.

@@ -2207,3 +2207,281 @@ body[data-page='/nosotros'] .about-emblem::after {
 	z-index: -1;
 	background: linear-gradient(0deg, #111113aa, #11111311);
 }
+
+/* Member areas (panel and profile) share the illustrated guild finish. */
+body[data-page='/panel'] {
+	--section-art: url('assets/art/war-room.webp');
+}
+body[data-page='/perfil'] {
+	--section-art: url('assets/art/campfire.webp');
+}
+body:is([data-page='/panel'], [data-page='/perfil']) .page-title {
+	position: relative;
+	isolation: isolate;
+	max-width: none;
+	min-height: 300px;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	padding: 40px 0;
+	margin-bottom: 24px;
+}
+body:is([data-page='/panel'], [data-page='/perfil']) .page-title::before,
+body:is([data-page='/panel'], [data-page='/perfil']) .page-title::after {
+	content: '';
+	position: absolute;
+	inset: 0 calc(-1 * clamp(18px, 4vw, 64px));
+}
+body:is([data-page='/panel'], [data-page='/perfil']) .page-title::before {
+	z-index: -2;
+	background: var(--section-art) center 40% / cover;
+}
+body:is([data-page='/panel'], [data-page='/perfil']) .page-title::after {
+	z-index: -1;
+	background:
+		linear-gradient(90deg, #0b0b0df2, #0b0b0dbb 50%, #0b0b0d55),
+		linear-gradient(0deg, var(--bg), transparent 35%);
+}
+body:is([data-page='/panel'], [data-page='/perfil']) .page-title h1 {
+	font-size: clamp(36px, 4.4vw, 60px);
+}
+body:is([data-page='/panel'], [data-page='/perfil']) main h2 {
+	font-family: Georgia, serif;
+	font-weight: 400;
+	letter-spacing: -0.015em;
+}
+body:is([data-page='/panel'], [data-page='/perfil']) main h3 {
+	font-family: Georgia, serif;
+	font-weight: 400;
+}
+
+/* Panel sections: one framed tab rail with a crimson active state. */
+body[data-page='/panel'] .panel-tabs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	margin: 0 0 28px;
+	padding: 6px;
+	border: 1px solid #a68a5b45;
+	border-radius: 4px;
+	background: linear-gradient(#17141699, #0e0d10);
+}
+body[data-page='/panel'] .panel-tabs button {
+	flex: 0 0 auto;
+	min-height: 42px;
+	padding: 9px 14px;
+	border: 1px solid transparent;
+	border-radius: 3px;
+	background: transparent;
+	box-shadow: none;
+	color: #c9c2b8;
+	font-size: 14px;
+	font-weight: 600;
+	letter-spacing: 0.01em;
+	transform: none;
+}
+body[data-page='/panel'] .panel-tabs button:hover {
+	background: #a68a5b14;
+	border-color: #a68a5b40;
+	color: #fff3df;
+}
+body[data-page='/panel'] .panel-tabs button[aria-pressed='true'],
+body[data-page='/panel'] .panel-tabs button.active {
+	background: linear-gradient(135deg, #6e0f1d99, #28171c);
+	border-color: #a68a5b70;
+	box-shadow: inset 0 -2px #c25a60;
+	color: #fff1d7;
+}
+body[data-page='/panel'] .panel-tabs button:focus-visible {
+	outline: 2px solid #e1bf8a;
+	outline-offset: 2px;
+}
+
+/* Shared surfaces inside member tools. */
+body:is([data-page='/panel'], [data-page='/perfil']) .metric {
+	font:
+		400 clamp(30px, 3vw, 40px) / 1.1 Georgia,
+		serif;
+	color: #f0d7ae;
+}
+body:is([data-page='/panel'], [data-page='/perfil']) .label {
+	color: #cdb48c;
+}
+body:is([data-page='/panel'], [data-page='/perfil']) .notice {
+	max-width: 80ch;
+	padding: 10px 14px;
+	border-left: 2px solid #a68a5b;
+	background: #a68a5b0d;
+	color: #d7cfc3;
+	font-size: 14px;
+}
+body:is([data-page='/panel'], [data-page='/perfil']) .error {
+	color: #f0a3a8;
+	font-size: 14px;
+}
+body:is([data-page='/panel'], [data-page='/perfil']) details:not(.calendar-disclosure) > summary {
+	color: #ecd2a8;
+	font-size: 15px;
+	font-weight: 600;
+}
+body:is([data-page='/panel'], [data-page='/perfil']) fieldset {
+	border-color: #a68a5b40;
+	border-radius: 4px;
+}
+body:is([data-page='/panel'], [data-page='/perfil']) legend {
+	color: #e3c08f;
+	font-size: 13px;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+body:is([data-page='/panel'], [data-page='/perfil']) .form p,
+body:is([data-page='/panel'], [data-page='/perfil']) .form small {
+	font-size: 14px;
+}
+body:is([data-page='/panel'], [data-page='/perfil']) label {
+	font-size: 14px;
+	color: #ddd6cb;
+}
+body:is([data-page='/panel'], [data-page='/perfil']) .form {
+	max-width: none;
+}
+/* Checkbox groups (raid days, sought classes) read as a compact grid. */
+body:is([data-page='/panel'], [data-page='/perfil'])
+	fieldset:has(> label > input[type='checkbox']) {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+	gap: 6px 16px;
+}
+body:is([data-page='/panel'], [data-page='/perfil']) fieldset > legend {
+	grid-column: 1 / -1;
+}
+body:is([data-page='/panel'], [data-page='/perfil']) label:has(> input[type='checkbox']) {
+	display: flex;
+	align-items: center;
+	min-height: 40px;
+	margin: 0;
+}
+/* Tables: readable type, gold header line and calm row hover. */
+body:is([data-page='/panel'], [data-page='/perfil']) .table-wrap {
+	border: 1px solid #a68a5b45;
+	border-radius: 4px;
+	background: #101012;
+}
+body:is([data-page='/panel'], [data-page='/perfil']) .table-wrap table {
+	font-size: 14px;
+}
+body:is([data-page='/panel'], [data-page='/perfil']) .table-wrap th {
+	background: #19171b;
+	color: #d9bf93;
+	font-size: 12px;
+	letter-spacing: 0.07em;
+	text-transform: uppercase;
+	border-bottom: 1px solid #a68a5b45;
+}
+body:is([data-page='/panel'], [data-page='/perfil']) .table-wrap td {
+	padding-block: 12px;
+}
+body:is([data-page='/panel'], [data-page='/perfil']) .table-wrap tbody tr:hover {
+	background: #a68a5b0d;
+}
+/* Roster boards: role groups framed like the public cards. */
+body:is([data-page='/panel'], [data-page='/perfil']) .roster-role {
+	border: 1px solid #a68a5b45;
+	border-radius: 4px;
+	background: linear-gradient(145deg, #1b1718, #101012);
+}
+body:is([data-page='/panel'], [data-page='/perfil']) .roster-role-heading {
+	border-bottom: 1px solid #a68a5b38;
+	background: #a68a5b0d;
+}
+body:is([data-page='/panel'], [data-page='/perfil']) .roster-role-heading h3 {
+	font-size: 18px;
+	color: #f0d7ae;
+}
+body:is([data-page='/panel'], [data-page='/perfil']) .roster-count {
+	background: #6e0f1d;
+	border: 1px solid #a68a5b60;
+	color: #fff1d7;
+}
+body:is([data-page='/panel'], [data-page='/perfil']) .roster-profile {
+	border-radius: 4px;
+	background: #141215;
+	border-color: #ffffff12;
+}
+body:is([data-page='/panel'], [data-page='/perfil']) .roster-main-badge {
+	border: 1px solid #a68a5b70;
+	background: #a68a5b1a;
+	color: #ecd2a8;
+}
+body:is([data-page='/panel'], [data-page='/perfil']) .pagination {
+	align-items: center;
+	gap: 10px;
+}
+@media (max-width: 700px) {
+	body:is([data-page='/panel'], [data-page='/perfil']) .page-title {
+		min-height: 340px;
+		justify-content: end;
+		padding-top: 120px;
+	}
+	body:is([data-page='/panel'], [data-page='/perfil']) .page-title::after {
+		background: linear-gradient(0deg, var(--bg), #0b0b0de6 50%, #0b0b0d33);
+	}
+	/* Thirteen tabs become one swipeable rail instead of five wrapped rows. */
+	body[data-page='/panel'] .panel-tabs {
+		flex-wrap: nowrap;
+		overflow-x: auto;
+		scrollbar-width: thin;
+		scroll-snap-type: x proximity;
+		margin-inline: calc(-1 * clamp(18px, 4vw, 64px));
+		border-inline: 0;
+		border-radius: 0;
+		padding-inline: clamp(18px, 4vw, 64px);
+	}
+	body[data-page='/panel'] .panel-tabs button {
+		scroll-snap-align: start;
+	}
+	body[data-page='/panel'] #panel-body > .grid {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 8px;
+	}
+	body[data-page='/panel'] #panel-body > .grid > .card {
+		padding: 14px 12px;
+	}
+	body[data-page='/panel'] #panel-body > .grid .metric {
+		font-size: 24px;
+	}
+	body[data-page='/panel'] #panel-body > .grid .label {
+		font-size: 10px;
+		letter-spacing: 0.08em;
+	}
+}
+body[data-page='/panel'] #application-list > .empty {
+	grid-column: 1 / -1;
+}
+@media (max-width: 600px) {
+	/* Member filters pair up on phones; search fields and toggles keep a full row. */
+	body:is([data-page='/panel'], [data-page='/perfil']) .filters {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 10px;
+	}
+	body:is([data-page='/panel'], [data-page='/perfil']) .filters > * {
+		min-width: 0;
+		margin: 0;
+	}
+	body:is([data-page='/panel'], [data-page='/perfil'])
+		.filters
+		> :is(
+			label:has(input:is([type='search'], [type='text'])),
+			label:has(> input[type='checkbox']),
+			button
+		) {
+		grid-column: 1 / -1;
+	}
+}
+@media (max-width: 600px) {
+	body[data-page='/panel'] .application-inbox .filters > label {
+		grid-column: 1 / -1;
+	}
+}

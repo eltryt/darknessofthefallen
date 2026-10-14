@@ -162,6 +162,8 @@ async function boot() {
 		}
 		if (path === '/panel') $('#navigation a[href="/panel"]')?.setAttribute('aria-current', 'page');
 		const context = { ...operationsContext(), $, title, roles, classes, opts, recruitmentChoices };
+		// Member areas share the public visual layer, which is keyed on data-page.
+		if (path === '/perfil' || path === '/panel') document.body.dataset.page = path;
 		if (path === '/perfil') await createProfileView(context).profile();
 		else if (path === '/panel') await createPanelView(context).panel();
 		else await createPublicViews(context).render(path);
