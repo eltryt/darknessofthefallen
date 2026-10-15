@@ -720,6 +720,7 @@ Publicado: `aa1b606`; backend `38652050382`, Pages `38652035269` y validación `
 - Migración 009 aditiva (raid_lineups, raid_lineup_slots, raid_callups); copias en base 9, compatibles con 5–8; las convocatorias restauradas no reenvían privados.
 - Bot: scripts/configure-discord-bot.mjs y paso en backend.yml validan token y presencia en el servidor e instalan DISCORD_BOT_TOKEN y DISCORD_DM_ENABLED como secretos del Worker sin imprimirlos. Guía en docs/DISCORD_BOT.md. Pendiente del propietario: crear el bot, invitarlo y guardar el secreto en GitHub.
 - Validación: 82 pruebas Node (5 nuevas: permisos, validación, concurrencia, envío sin bot, entrega simulada con éxito/fallo/sin confirmar/límite y reenvío), workerd y build; navegador con convocatoria ficticia en memoria: autocompletar, arrastre con ratón y táctil, selector, guardar, enviar, perfil del miembro y anchos 1440/1024/768/390/320 sin desbordamiento ni errores.
+- Publicado: `f1dcf79`; backend 38720564041, Pages 38720544873 y validación 38720545027 correctos. El paso del bot informó «secret not configured» (esperado). Módulos servidos idénticos al local; rutas de alineación y convocatorias responden 401 sin sesión; /api/public conserva los 23 personajes tras la migración 009.
 
 ## 2026-10-15 — Imágenes en WebP
 
