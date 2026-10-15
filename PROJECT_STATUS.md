@@ -718,6 +718,7 @@ Publicado: `aa1b606`; backend `38652050382`, Pages `38652035269` y validación `
 - Menú fijo de secciones (Mi armería, Personajes, Wishlist, Botín, Convocatorias) con URL #sección, historial del navegador, animación de entrada, esqueleto de carga y movimiento reducido respetado. Todo a uno o dos clics.
 - Personajes en tarjetas por clase (Ficha, Editar, Marcar Main, Archivar) y formulario plegable. Se reutilizan las APIs, la wishlist, el historial de loot, el consejo y las convocatorias existentes; sin cambios de backend ni datos.
 - Validación: 77 pruebas Node, workerd y build; navegador con sesión QA a 1440/1024/768/390/320 sin desbordamiento ni errores, navegación por menú, atrás, cambio de personaje, edición y enlace a la lista BiS.
+- Publicado: `fbff490`; backend 38713389293, Pages 38713376625 y validación 38713376874 correctos; módulos servidos idénticos al local; /perfil pide sesión (401). Pendiente de revisión del propietario con su sesión.
 
 ## 2026-10-15 — Armería, listas BiS y guías (rama feature/armeria, sin publicar)
 
