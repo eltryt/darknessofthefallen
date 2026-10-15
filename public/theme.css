@@ -4716,3 +4716,180 @@ a.doll-slot:hover .doll-icon {
 .lineup-groups {
 	grid-template-columns: repeat(auto-fill, minmax(min(100%, 205px), 1fr));
 }
+
+/* Lineup cards: one row of handle, class icon, name, role and menu; flags underneath. */
+.lineup-card {
+	grid-template-columns: auto 28px minmax(0, 1fr) auto auto;
+	gap: 4px 8px;
+	padding: 8px 6px 8px 8px;
+	border-color: color-mix(in srgb, var(--class-color, #a68a5b) 55%, #2a2427);
+	background: linear-gradient(
+		100deg,
+		color-mix(in srgb, var(--class-color, #a68a5b) 20%, #161316),
+		#121013 85%
+	);
+	box-shadow: inset 4px 0 var(--class-color, #a68a5b);
+}
+.lineup-card:hover {
+	border-color: var(--class-color, #a68a5b);
+}
+.lineup-card img {
+	width: 28px;
+	height: 28px;
+	border: 1px solid color-mix(in srgb, var(--class-color, #a68a5b) 70%, #000);
+	border-radius: 5px;
+}
+.lineup-card .lineup-role {
+	margin-right: 0;
+	white-space: nowrap;
+}
+.lineup-move {
+	position: static;
+	grid-column: 5;
+	grid-row: 1;
+}
+.lineup-flags {
+	grid-column: 3 / -1;
+}
+.role-melee {
+	background: #4a1d25;
+	color: #f0b4ba;
+}
+.role-ranged {
+	background: #45301a;
+	color: #f0cf9a;
+}
+/* Free places in a group stay visible as drop targets. */
+.lineup-free {
+	display: grid;
+	place-items: center;
+	min-height: 46px;
+	border: 1px dashed #a68a5b35;
+	border-radius: 4px;
+	font-size: 12px;
+	color: #6f6860;
+}
+.lineup-zone.is-over .lineup-free:first-of-type {
+	border-color: #e1bf8a;
+	color: #e1bf8a;
+}
+.lineup-groups {
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
+}
+/* Role counters in the toolbar. */
+.lineup-count {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px 8px;
+}
+.lineup-chip {
+	padding: 3px 9px;
+	border-radius: 999px;
+	font-size: 12px;
+	font-weight: 700;
+}
+/* Buff coverage: raid-wide strip and per-group icons. */
+.lineup-buffs {
+	margin: 0 0 16px;
+	padding: 12px 14px;
+	border: 1px solid #a68a5b40;
+	border-radius: 4px;
+	background: #111013;
+}
+.lineup-buffs-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 6px 14px;
+	margin-bottom: 10px;
+}
+.lineup-buffs-head h4 {
+	margin: 0;
+	font:
+		400 17px Georgia,
+		serif;
+	color: #f0d7ae;
+}
+.lineup-buffs-head .is-ok {
+	color: #9fdcaf;
+	font-size: 13px;
+	font-weight: 700;
+}
+.lineup-buffs-head .is-warn {
+	color: #f0a3a8;
+	font-size: 13px;
+	font-weight: 700;
+}
+.lineup-buffs-head small {
+	margin-left: auto;
+	font-size: 12px;
+	color: #8f877d;
+	cursor: help;
+}
+.lineup-buffs-list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+.buff-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 3px 10px 3px 3px;
+	border: 1px solid color-mix(in srgb, var(--class-color, #a68a5b) 60%, transparent);
+	border-radius: 999px;
+	background: color-mix(in srgb, var(--class-color, #a68a5b) 16%, #121013);
+	color: #f3e6cf;
+	font-size: 13px;
+	cursor: help;
+}
+.buff-chip img {
+	width: 22px;
+	height: 22px;
+	border-radius: 50%;
+}
+.buff-chip.is-off {
+	border-style: dashed;
+	border-color: #6f686055;
+	background: #121013;
+	color: #7f786f;
+}
+.buff-chip.is-off img {
+	filter: grayscale(1);
+	opacity: 0.45;
+}
+.lineup-group-buffs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	padding: 6px 12px;
+	border-bottom: 1px solid #a68a5b20;
+}
+.lineup-group-buffs .buff-chip {
+	padding: 2px;
+}
+.lineup-group-buffs .buff-chip img {
+	width: 20px;
+	height: 20px;
+}
+/* Name takes the full first row; role and notices share the second. */
+.lineup-card {
+	grid-template-columns: auto 28px minmax(0, 1fr) auto;
+}
+.lineup-move {
+	grid-column: 4;
+}
+.lineup-flags {
+	grid-column: 2 / -1;
+}
+.lineup-noicon {
+	display: grid;
+	place-items: center;
+	width: 28px;
+	height: 28px;
+	border: 1px dashed #6f6860;
+	border-radius: 5px;
+	font-size: 13px;
+	color: #8f877d;
+}

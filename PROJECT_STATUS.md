@@ -711,6 +711,13 @@ Publicado: `0e8ee4d`; backend `38650997078`, Pages `38650986419` y validación `
 - Validación: 69 pruebas Node, prueba workerd y build Pages; las 12 pestañas del Panel y el Perfil con sesión QA de líder (datos sintéticos) a 1440/1024/768/390/320 px sin desbordamiento ni errores JS; páginas públicas sin regresiones.
 Publicado: `aa1b606`; backend `38652050382`, Pages `38652035269` y validación `38652035080` correctos. theme.css y app.js servidos idénticos al local tras la propagación; /panel y /perfil responden 401 sin sesión, como corresponde. No se ha visto el panel de producción con una sesión real: pendiente de revisión del propietario.
 
+## 2026-10-15 — Tablero de alineación: clases, roles y bufos
+
+- Datos reales de la plantilla de Forever: Raid-Helper envía el grupo (Tank/Melee/Ranged/Healer) como clase y la clase real en la especialización. La clase se toma del personaje vinculado o Main en la web; si no, de una especialización inequívoca (Affliction → Brujo, Beastmastery → Cazador…). Holy, Protection y Restoration sin personaje web quedan «?» en lugar de adivinar.
+- Tarjetas con color e icono de clase, nombre completo, rol específico (Tanque, Sanador, Melee, Distancia) y avisos en una segunda línea; contadores por rol; huecos libres visibles en cada grupo; los grupos ocupan todo el ancho.
+- Bufos: franja de bufos de banda (Intelecto Arcano, Entereza, Espíritu divino, Marca de lo Salvaje, Bendiciones) y en cada grupo los de grupo (Grito de batalla, Tótems, Aura de paladín, Pacto de sangre, Aura de disparo certero con Puntería), cubiertos o ausentes con su motivo. Catálogo editable en public/raid-buffs.js, marcado como provisional: WoW Forever está en beta y las fuentes (Classic Era y guías de la comunidad: nivel 60, 9 clases en ambas facciones, algunos bufos de talento pasan a básicos) no son oficiales.
+- Validación: 82 pruebas Node, workerd y build; navegador con convocatoria ficticia en formato Forever a 1440/1024/768/390/320 sin desbordamiento ni errores.
+
 ## 2026-10-15 — Alineaciones de raid y convocatorias por privado
 
 - Decisión del propietario (sustituye a «sin bot ni avisos a Discord»): bot propio para mensajes privados de convocatoria; estado «Convocado» que se confirma tras la raid; grupos de 5 más banquillo.

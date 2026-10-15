@@ -1,4 +1,5 @@
 import { ClassIcon } from './components.js';
+import { buffCoverage, buffSource } from './raid-buffs.js';
 
 // Raid-Helper class names arrive in English; the web shows class colours by key.
 const classKeys = {
@@ -32,13 +33,51 @@ const spanishClass = {
 	warlock: 'Brujo',
 	druid: 'Druida',
 };
-const roleKind = (role = '') => {
-	const r = role.toLowerCase();
-	if (/tank|tanque/.test(r)) return 'tank';
-	if (/heal|sanad/.test(r)) return 'healer';
-	return 'dps';
+// Specializations that identify a single class. Forever's Raid-Helper template sends the
+// role group (Tank/Melee/Ranged/Healer) as the class, so the spec carries the class.
+const specClasses = {
+	arms: 'warrior',
+	fury: 'warrior',
+	retribution: 'paladin',
+	beastmastery: 'hunter',
+	'beast mastery': 'hunter',
+	marksmanship: 'hunter',
+	survival: 'hunter',
+	assassination: 'rogue',
+	combat: 'rogue',
+	subtlety: 'rogue',
+	discipline: 'priest',
+	shadow: 'priest',
+	elemental: 'shaman',
+	enhancement: 'shaman',
+	arcane: 'mage',
+	fire: 'mage',
+	frost: 'mage',
+	affliction: 'warlock',
+	demonology: 'warlock',
+	destruction: 'warlock',
+	balance: 'druid',
+	feral: 'druid',
+	guardian: 'druid',
 };
-const roleLabels = { tank: 'Tanque', healer: 'Sanador', dps: 'DPS' };
+const webClasses = Object.fromEntries(Object.entries(spanishClass).map(([k, v]) => [v, k]));
+// The web character's class wins; then the Raid-Helper class; then an unambiguous spec.
+const classOf = (s) =>
+	webClasses[s.characterClass] ||
+	classKeys[(s.className || '').toLowerCase()] ||
+	specClasses[(s.specName || '').toLowerCase().replace(/d+$/, '')] ||
+	'unknown';
+const specOf = (s) => (s.specName || '').toLowerCase().replace(/d+$/, '').replace(/s+/g, '');
+const roleKind = (s) => {
+	const text = [s.role, s.className].join(' ').toLowerCase();
+	if (/tank|tanque/.test(text)) return 'tank';
+	if (/heal|sanad/.test(text)) return 'healer';
+	if (/ranged|distancia/.test(text)) return 'ranged';
+	if (/melee/.test(text)) return 'melee';
+	const key = classOf(s);
+	return ['mage', 'warlock', 'hunter'].includes(key) ? 'ranged' : 'melee';
+};
+const roleLabels = { tank: 'Tanque', healer: 'Sanador', melee: 'Melee', ranged: 'Distancia' };
 const dmLabels = {
 	pending: 'En cola',
 	sending: 'Enviando',
@@ -64,7 +103,7 @@ export async function mountLineup(target, eventId, { api, esc, toast }, onClose)
 		dirty = false;
 		render();
 	}
-	const classKey = (s) => classKeys[(s.className || '').toLowerCase()] || 'unknown';
+	const classKey = classOf;
 	const zoneOf = (id) => assign.get(id) || 'pool';
 	const members = (zone) =>
 		view.signups.filter((s) => zoneOf(s.id) === zone).sort((a, b) => order(a.id) - order(b.id));
@@ -85,26 +124,53 @@ export async function mountLineup(target, eventId, { api, esc, toast }, onClose)
 			.join('');
 		return `<article class="lineup-card class-${key}" data-card="${esc(s.id)}" tabindex="-1">
 			<span class="lineup-handle" data-handle aria-hidden="true">⠿</span>
-			${spanishClass[key] ? ClassIcon({ className: spanishClass[key], size: 'small' }) : ''}
-			<span class="lineup-who"><strong>${esc(s.name)}</strong><small>${esc([s.specName, s.className].filter(Boolean).join(' · '))}</small></span>
-			<span class="lineup-role role-${roleKind(s.role)}" title="${esc(s.role || 'Sin rol')}">${roleLabels[roleKind(s.role)]}</span>
-			<span class="lineup-flags">${s.status !== 'Confirmado' ? `<span class="lineup-flag">${esc(s.status)}</span>` : ''}
+			${spanishClass[key] ? ClassIcon({ className: spanishClass[key], size: 'small' }) : '<span class="lineup-noicon" title="Clase sin identificar: especialización compartida por varias clases">?</span>'}
+			<span class="lineup-who"><strong>${esc(s.name)}</strong><small>${esc([s.specName, spanishClass[key] || s.className].filter(Boolean).join(' · '))}</small></span>
+			<span class="lineup-flags"><span class="lineup-role role-${roleKind(s)}" title="${esc([s.role, s.className].filter(Boolean).join(' · ') || 'Sin rol')}">${roleLabels[roleKind(s)]}</span>${s.status !== 'Confirmado' ? `<span class="lineup-flag">${esc(s.status)}</span>` : ''}
 			${s.registered ? '' : '<span class="lineup-flag is-muted" title="Inscrito en Discord sin cuenta en la web: no cuenta para la asistencia">Sin cuenta</span>'}
 			${callup && callup.slot !== 'removed' ? `<span class="lineup-dm dm-${esc(callup.dm_status)}" title="${esc(callup.dm_error || (callup.dm_status === 'skipped' ? 'Bot de Discord sin configurar: no se envió mensaje privado' : dmLabels[callup.dm_status]))}">${esc(dmLabels[callup.dm_status])}</span>` : ''}</span>
 			<label class="lineup-move"><span class="visually-hidden">Mover a ${esc(s.name)}</span><select data-move="${esc(s.id)}">${options}</select></label>
 		</article>`;
 	}
+	let coverage = null;
+	const buffChip = (b, compact = false) =>
+		`<span class="buff-chip ${b.covered ? 'is-on' : 'is-off'} class-${b.classKey}" title="${esc(
+			b.name +
+				(b.covered
+					? b.detail
+						? ' · ' + b.detail
+						: ' · cubierto'
+					: ' · falta: nadie de ' + (spanishClass[b.classKey] || b.classKey)) +
+				(b.scope === 'group' ? ' en este grupo' : ''),
+		)}">${ClassIcon({ className: spanishClass[b.classKey], size: 'small' })}${compact ? '' : `<span>${esc(b.name)}</span>`}</span>`;
 	function zone(id, title, list, { capacity = null, extra = '' } = {}) {
 		const full = capacity !== null && list.length >= capacity;
 		return `<section class="lineup-zone ${id.startsWith('group') ? 'is-group' : 'is-' + id} ${full ? 'is-full' : ''}" data-zone="${id}">
-			<header><h4>${title}</h4><span>${capacity === null ? list.length : `${list.length} / ${capacity}`}</span></header>
-			<div class="lineup-cards">${list.map(card).join('') || `<p class="lineup-empty">${extra || 'Arrastra aquí'}</p>`}</div>
+			<header><h4>${title}</h4><span>${capacity === null ? list.length : `${list.length} / ${capacity}`}</span></header>${
+				id.startsWith('group') && list.length
+					? `<div class="lineup-group-buffs" aria-label="Bufos de grupo">${coverage
+							.group(list)
+							.map((b) => buffChip(b, true))
+							.join('')}</div>`
+					: ''
+			}
+			<div class="lineup-cards">${list.map(card).join('')}${
+				capacity !== null
+					? '<span class="lineup-free">Hueco libre</span>'.repeat(
+							Math.max(0, capacity - list.length),
+						)
+					: list.length
+						? ''
+						: `<p class="lineup-empty">${extra || 'Arrastra aquí'}</p>`
+			}</div>
 		</section>`;
 	}
 	function render() {
 		const placed = view.signups.filter((s) => zoneOf(s.id).startsWith('group'));
-		const roles = { tank: 0, healer: 0, dps: 0 };
-		for (const s of placed) roles[roleKind(s.role)]++;
+		const roles = { tank: 0, healer: 0, melee: 0, ranged: 0 };
+		for (const s of placed) roles[roleKind(s)]++;
+		coverage = buffCoverage(placed, classOf, specOf);
+		const missing = coverage.raid.filter((b) => !b.covered).length;
 		const status = dirty
 			? 'Cambios sin guardar'
 			: view.lineup.pendingChanges
@@ -130,8 +196,11 @@ export async function mountLineup(target, eventId, { api, esc, toast }, onClose)
 			</header>
 			<div class="lineup-toolbar">
 				<span class="lineup-count"
-					>En grupos: <b>${placed.length}</b> · Tanques <b>${roles.tank}</b> · Sanadores
-					<b>${roles.healer}</b> · DPS <b>${roles.dps}</b></span
+					><b>${placed.length}</b> en grupos<span class="lineup-chip role-tank"
+						>Tanques ${roles.tank}</span
+					><span class="lineup-chip role-healer">Sanadores ${roles.healer}</span
+					><span class="lineup-chip role-melee">Melee ${roles.melee}</span
+					><span class="lineup-chip role-ranged">Distancia ${roles.ranged}</span></span
 				>
 				<div class="actions">
 					<button type="button" class="secondary" data-auto>Autocompletar</button>
@@ -144,6 +213,16 @@ export async function mountLineup(target, eventId, { api, esc, toast }, onClose)
 					<button type="button" class="secondary" data-close>Cerrar</button>
 				</div>
 			</div>
+			<section class="lineup-buffs" aria-label="Bufos de banda">
+				<div class="lineup-buffs-head">
+					<h4>Bufos de banda</h4>
+					<span class="${missing ? 'is-warn' : 'is-ok'}"
+						>${missing ? missing + ' sin cubrir' : 'Todos cubiertos'}</span
+					>
+					<small title="${esc(buffSource)}">Provisional · WoW Forever en beta</small>
+				</div>
+				<div class="lineup-buffs-list">${coverage.raid.map((b) => buffChip(b)).join('')}</div>
+			</section>
 			${view.signups.length ? '' : '<div class="empty-note"><strong>Todavía no hay inscripciones</strong><p>Las inscripciones de Raid-Helper aparecerán aquí tras la siguiente sincronización.</p></div>'}
 			<div class="lineup-board">
 				<div class="lineup-side">
@@ -202,8 +281,8 @@ export async function mountLineup(target, eventId, { api, esc, toast }, onClose)
 	// Fill groups so each gets a tank and a healer first, then damage; the rest go to the bench.
 	function autoFill() {
 		const pool = view.signups.filter((s) => s.status !== 'Suplente');
-		const byRole = { tank: [], healer: [], dps: [] };
-		for (const s of pool) byRole[roleKind(s.role)].push(s);
+		const byRole = { tank: [], healer: [], melee: [], ranged: [] };
+		for (const s of pool) byRole[roleKind(s)].push(s);
 		assign = new Map();
 		const gs = groups(),
 			fill = Object.fromEntries(gs.map((g) => [g, 0]));
@@ -224,7 +303,7 @@ export async function mountLineup(target, eventId, { api, esc, toast }, onClose)
 					assign.set(s.id, g);
 				} else place(s);
 			});
-		byRole.dps.forEach(place);
+		[...byRole.melee, ...byRole.ranged].forEach(place);
 		for (const s of view.signups) if (s.status === 'Suplente') assign.set(s.id, 'bench');
 		dirty = true;
 		render();

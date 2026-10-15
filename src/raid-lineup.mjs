@@ -113,7 +113,12 @@ export function lineupView(db, row, user, env) {
 		},
 		signups: signups.map((s) => {
 			const character = characterFor(db, row.id, s);
-			return { ...s, registered: users.has(s.userId), characterId: character?.id || null };
+			return {
+				...s,
+				registered: users.has(s.userId),
+				characterId: character?.id || null,
+				characterClass: character?.class || null,
+			};
 		}),
 		slots,
 		callups: db
