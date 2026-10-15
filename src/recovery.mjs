@@ -5,6 +5,13 @@ import { transaction } from './database-core.mjs';
 export const recoveryTables = [
 	'users',
 	'characters',
+	'character_equipment',
+	'bis_lists',
+	'bis_entries',
+	'guide_providers',
+	'guide_links',
+	'character_reviews',
+	'character_officer_notes',
 	'applications',
 	'raids',
 	'attendance',
@@ -22,23 +29,45 @@ export const recoveryTables = [
 	'gm_messages',
 	'gm_notifications',
 ];
+const armoryTables = [
+	'character_equipment',
+	'bis_lists',
+	'bis_entries',
+	'guide_providers',
+	'guide_links',
+	'character_reviews',
+	'character_officer_notes',
+];
+// Columns added by migration 007; older snapshots restore them with their defaults.
+const characterDefaults = {
+	game_version: 'forever',
+	realm: '',
+	region: '',
+	faction: '',
+	race: '',
+	secondary_spec: '',
+	level: null,
+	avatar_url: '',
+	updated_at: null,
+	synced_at: null,
+};
+const tablesFor = (version) =>
+	recoveryTables.filter(
+		(t) => (version >= 6 || !t.startsWith('gm_')) && (version >= 7 || !armoryTables.includes(t)),
+	);
 const digest = (value) => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const content = (s) => ({
 	schemaVersion: s.schemaVersion,
 	databaseVersion: s.databaseVersion,
 	exportedAt: s.exportedAt,
 	settings: s.settings,
-	...Object.fromEntries(
-		recoveryTables
-			.filter((t) => s.databaseVersion >= 6 || !t.startsWith('gm_'))
-			.map((t) => [t, s[t]]),
-	),
+	...Object.fromEntries(tablesFor(s.databaseVersion).map((t) => [t, s[t]])),
 });
 export function exportRecovery(db) {
 	return transaction(db, () => {
 		const snapshot = {
 			schemaVersion: 2,
-			databaseVersion: 6,
+			databaseVersion: 7,
 			exportedAt: new Date().toISOString(),
 			settings: JSON.parse(db.prepare('SELECT data FROM settings WHERE id=1').get().data),
 		};
@@ -49,7 +78,7 @@ export function exportRecovery(db) {
 	});
 }
 export function validateRecovery(snapshot) {
-	if (!snapshot || snapshot.schemaVersion !== 2 || ![5, 6].includes(snapshot.databaseVersion))
+	if (!snapshot || snapshot.schemaVersion !== 2 || ![5, 6, 7].includes(snapshot.databaseVersion))
 		throw new Error('Formato no compatible: descarga una nueva exportación JSON desde el panel.');
 	if (
 		!snapshot.settings ||
@@ -57,9 +86,7 @@ export function validateRecovery(snapshot) {
 		Array.isArray(snapshot.settings)
 	)
 		throw new Error('Configuración inválida.');
-	for (const table of recoveryTables.filter(
-		(t) => snapshot.databaseVersion >= 6 || !t.startsWith('gm_'),
-	))
+	for (const table of tablesFor(snapshot.databaseVersion))
 		if (!Array.isArray(snapshot[table])) throw new Error(`Falta la tabla ${table}.`);
 	if (
 		snapshot.integrity?.algorithm !== 'sha256' ||
@@ -71,7 +98,8 @@ export function restoreRecovery(db, snapshot) {
 	validateRecovery(snapshot);
 	// Refuse to merge into an existing database, even one containing only sessions.
 	for (const table of [...recoveryTables, 'sessions', 'oauth_states']) {
-		if (table === 'raid_sync') continue;
+		// Both start with migration-seeded rows that the snapshot replaces.
+		if (table === 'raid_sync' || table === 'guide_providers') continue;
 		if (
 			db
 				.prepare(
@@ -84,7 +112,10 @@ export function restoreRecovery(db, snapshot) {
 	return transaction(db, () => {
 		db.prepare('UPDATE settings SET data=? WHERE id=1').run(JSON.stringify(snapshot.settings));
 		db.exec('DELETE FROM raid_sync; DELETE FROM audit;');
+		// Older snapshots keep the providers seeded by migration 007.
+		if (snapshot.databaseVersion >= 7) db.exec('DELETE FROM guide_providers;');
 		for (const table of recoveryTables) {
+			if (!tablesFor(snapshot.databaseVersion).includes(table)) continue;
 			const columns = db
 				.prepare(`PRAGMA table_info(${table})`)
 				.all()
@@ -92,7 +123,14 @@ export function restoreRecovery(db, snapshot) {
 			const insert = db.prepare(
 				`INSERT INTO ${table} (${columns.map((c) => `"${c}"`).join(',')}) VALUES (${columns.map(() => '?').join(',')})`,
 			);
-			for (const original of snapshot[table] || []) {
+			for (const stored of snapshot[table] || []) {
+				const original =
+					table === 'characters' &&
+					snapshot.databaseVersion < 7 &&
+					stored &&
+					typeof stored === 'object'
+						? { ...characterDefaults, ...stored }
+						: stored;
 				if (
 					!original ||
 					typeof original !== 'object' ||

@@ -742,6 +742,7 @@ export async function operationTab(tab, el, ctx) {
 							privateDetails: true,
 							rankLabel,
 							editable: permitted('roster.manage'),
+							sheetLinks: permitted('armory.read'),
 						}),
 				},
 			);

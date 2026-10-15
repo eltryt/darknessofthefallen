@@ -2,6 +2,7 @@ import { gmInbox } from './gm-ui.js';
 import { mountRaidEvents } from './raid-events-ui.js';
 import { operationTab } from './operations-ui.js';
 import { applicationInbox } from './recruitment-ui.js';
+import { guideAdmin } from './armory-admin-ui.js';
 export function createPanelView(context) {
 	const {
 		$,
@@ -33,6 +34,7 @@ export function createPanelView(context) {
 			['community.read', 'council', 'Consejo'],
 			['progress.manage', 'progress', 'Progreso'],
 			['settings.manage', 'settings', 'Configuración'],
+			['armory.configure', 'guides', 'Guías externas'],
 			['audit.read', 'audit', 'Auditoría'],
 			['backup.export', 'export', 'Exportación'],
 		].filter((t) => me.permissions.includes(t[0]));
@@ -89,6 +91,10 @@ export function createPanelView(context) {
 		}
 		if (tab === 'raids') {
 			await mountRaidEvents(el, operationsContext(), { manage: true });
+			return;
+		}
+		if (tab === 'guides') {
+			await guideAdmin(el, context);
 			return;
 		}
 		if (await operationTab(tab, el, operationsContext())) return;

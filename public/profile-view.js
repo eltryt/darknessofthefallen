@@ -67,7 +67,13 @@ export function createProfileView(context) {
 									rows.map(
 										(c) =>
 											/* HTML */ `<tr>
-												<td>${esc(c.name)} ${esc(c.surname)}</td>
+												<td>
+													${esc(c.name)} ${esc(c.surname)}<a
+														class="cell-detail armory-link"
+														href="/armeria?personaje=${encodeURIComponent(c.id)}"
+														>Ver ficha de armería →</a
+													>
+												</td>
 												<td>${esc(c.class)}</td>
 												<td>${esc(c.role)}</td>
 												<td>
