@@ -162,7 +162,13 @@ const armoryTables = [
 	'character_reviews',
 	'character_officer_notes',
 ];
-const lineupTables = ['raid_lineups', 'raid_lineup_slots', 'raid_callups'];
+const lineupTables = [
+	'raid_lineups',
+	'raid_lineup_slots',
+	'raid_callups',
+	'raid_boss_plans',
+	'raid_boss_assignments',
+];
 function resign(snapshot) {
 	delete snapshot.integrity;
 	snapshot.integrity = {

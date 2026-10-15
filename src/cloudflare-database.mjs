@@ -13,6 +13,7 @@ export function durableDatabase(
 	armorySchema,
 	statsSchema,
 	lineupSchema,
+	wishlistSchema,
 ) {
 	const execute = (sql, parameters = []) => storage.sql.exec(sql, ...parameters);
 	const db = {
@@ -57,6 +58,8 @@ export function durableDatabase(
 			db.exec(statsSchema);
 		if (!db.prepare('SELECT version FROM schema_migrations WHERE version=9').get())
 			db.exec(lineupSchema);
+		if (!db.prepare('SELECT version FROM schema_migrations WHERE version=10').get())
+			db.exec(wishlistSchema);
 	});
 	return db;
 }

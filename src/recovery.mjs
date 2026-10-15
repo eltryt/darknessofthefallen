@@ -31,6 +31,8 @@ export const recoveryTables = [
 	'raid_lineups',
 	'raid_lineup_slots',
 	'raid_callups',
+	'raid_boss_plans',
+	'raid_boss_assignments',
 ];
 const armoryTables = [
 	'character_equipment',
@@ -61,7 +63,8 @@ const tablesFor = (version) =>
 		(t) =>
 			(version >= 6 || !t.startsWith('gm_')) &&
 			(version >= 7 || !armoryTables.includes(t)) &&
-			(version >= 9 || !lineupTables.includes(t)),
+			(version >= 9 || !lineupTables.includes(t)) &&
+			(version >= 10 || !t.startsWith('raid_boss_')),
 	);
 const digest = (value) => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const content = (s) => ({
@@ -75,7 +78,7 @@ export function exportRecovery(db) {
 	return transaction(db, () => {
 		const snapshot = {
 			schemaVersion: 2,
-			databaseVersion: 9,
+			databaseVersion: 10,
 			exportedAt: new Date().toISOString(),
 			settings: JSON.parse(db.prepare('SELECT data FROM settings WHERE id=1').get().data),
 		};
@@ -89,7 +92,7 @@ export function validateRecovery(snapshot) {
 	if (
 		!snapshot ||
 		snapshot.schemaVersion !== 2 ||
-		![5, 6, 7, 8, 9].includes(snapshot.databaseVersion)
+		![5, 6, 7, 8, 9, 10].includes(snapshot.databaseVersion)
 	)
 		throw new Error('Formato no compatible: descarga una nueva exportación JSON desde el panel.');
 	if (

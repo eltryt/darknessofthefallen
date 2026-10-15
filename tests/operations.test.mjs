@@ -394,7 +394,7 @@ test('migration runs once and preserves existing records on reopening', () => {
 		db.prepare('INSERT INTO users VALUES(?,?,?,?)').run('id', 'Miembro', 'member', '2026-10-07');
 		db.close();
 		db = openDatabase(file);
-		assert.equal(db.prepare('SELECT count(*) n FROM schema_migrations').get().n, 9);
+		assert.equal(db.prepare('SELECT count(*) n FROM schema_migrations').get().n, 10);
 		assert.equal(
 			db.prepare('SELECT display_name FROM users WHERE id=?').get('id').display_name,
 			'Miembro',
@@ -517,6 +517,48 @@ test('only the leader can delete active or voided loot, with CSRF protection and
 			f.db.prepare("SELECT count(*) n FROM audit WHERE action='loot.deleted'").get().n,
 			2,
 		);
+	} finally {
+		await f.close();
+	}
+});
+
+test('wishlist states are edited by the owner only and keep the original data', async () => {
+	const f = await fixture();
+	try {
+		const a = await f.character('member');
+		const created = await f.request('/api/wishlists', 'member', 'POST', {
+			characterId: a,
+			item: 'Objeto escrito por el jugador',
+			raid: 'Raid manual',
+			boss: 'Jefe manual',
+			priority: 2,
+			notes: 'nota',
+			status: 'BiS',
+		});
+		assert.equal(created.status, 201);
+		assert.equal(
+			(
+				await f.request('/api/wishlists', 'member', 'POST', {
+					characterId: a,
+					item: 'x',
+					priority: 2,
+					status: 'Imprescindible',
+				})
+			).status,
+			400,
+		);
+		const path = '/api/wishlists/' + created.body.id;
+		assert.equal((await f.request(path, 'raider', 'PATCH', { status: 'Pasar' })).status, 404);
+		assert.equal((await f.request(path, 'officer', 'PATCH', { status: 'Pasar' })).status, 404);
+		assert.equal((await f.request(path, 'member', 'PATCH', { status: 'Otro' })).status, 400);
+		const updated = await f.request(path, 'member', 'PATCH', { status: 'Pasar', obtained: true });
+		assert.equal(updated.status, 200);
+		const row = (await f.request('/api/wishlists', 'member')).body[0].data;
+		assert.equal(row.status, 'Pasar');
+		assert.equal(row.obtained, true);
+		assert.equal(row.boss, 'Jefe manual');
+		assert.equal(row.notes, 'nota');
+		assert.equal(row.priority, 2);
 	} finally {
 		await f.close();
 	}
