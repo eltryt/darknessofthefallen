@@ -22,7 +22,7 @@ const classKeys = {
 	brujo: 'warlock',
 	druida: 'druid',
 };
-const spanishClass = {
+export const spanishClass = {
 	warrior: 'Guerrero',
 	paladin: 'Paladín',
 	hunter: 'Cazador',
@@ -62,13 +62,13 @@ const specClasses = {
 };
 const webClasses = Object.fromEntries(Object.entries(spanishClass).map(([k, v]) => [v, k]));
 // The web character's class wins; then the Raid-Helper class; then an unambiguous spec.
-const classOf = (s) =>
+export const classOf = (s) =>
 	webClasses[s.characterClass] ||
 	classKeys[(s.className || '').toLowerCase()] ||
-	specClasses[(s.specName || '').toLowerCase().replace(/d+$/, '')] ||
+	specClasses[(s.specName || '').toLowerCase().replace(/\d+$/, '')] ||
 	'unknown';
-const specOf = (s) => (s.specName || '').toLowerCase().replace(/d+$/, '').replace(/s+/g, '');
-const roleKind = (s) => {
+const specOf = (s) => (s.specName || '').toLowerCase().replace(/\d+$/, '').replace(/\s+/g, '');
+export const roleKind = (s) => {
 	const text = [s.role, s.className].join(' ').toLowerCase();
 	if (/tank|tanque/.test(text)) return 'tank';
 	if (/heal|sanad/.test(text)) return 'healer';
@@ -77,7 +77,12 @@ const roleKind = (s) => {
 	const key = classOf(s);
 	return ['mage', 'warlock', 'hunter'].includes(key) ? 'ranged' : 'melee';
 };
-const roleLabels = { tank: 'Tanque', healer: 'Sanador', melee: 'Melee', ranged: 'Distancia' };
+export const roleLabels = {
+	tank: 'Tanque',
+	healer: 'Sanador',
+	melee: 'Melee',
+	ranged: 'Distancia',
+};
 const dmLabels = {
 	pending: 'En cola',
 	sending: 'Enviando',
@@ -90,17 +95,24 @@ const slotName = (slot) =>
 	slot === 'bench' ? 'Banquillo' : slot === 'removed' ? 'Retirado' : `Grupo ${slot.split(':')[1]}`;
 
 // Drag-and-drop lineup built from the Raid-Helper sign-ups of one event.
-export async function mountLineup(target, eventId, { api, esc, toast }, onClose) {
+export async function mountLineup(target, eventId, { api, esc, toast, data }, onClose) {
 	let view,
 		assign = new Map(),
 		dirty = false,
-		drag = null;
+		drag = null,
+		bosses = [],
+		bossDirty = false;
 	const url = `/api/events/${encodeURIComponent(eventId)}/lineup`;
 
 	async function load(next) {
 		view = next || (await api(url));
 		assign = new Map(Object.entries(view.slots));
 		dirty = false;
+		if (!bossDirty)
+			bosses = (view.bosses || []).map((b) => ({
+				boss: b.boss,
+				assignments: { ...b.assignments },
+			}));
 		render();
 	}
 	const classKey = classOf;
@@ -235,9 +247,151 @@ export async function mountLineup(target, eventId, { api, esc, toast }, onClose)
 						.join('')}
 				</div>
 			</div>
-			${attendanceForm()}
+			${bossPlanner()} ${attendanceForm()}
 		</section>`;
 		bind();
+		bindBosses();
+	}
+	// Per-boss participation, planned here by the organisers. It is web-only:
+	// Raid-Helper and Discord know nothing about it. No assignment = pending.
+	const bossCycle = { pending: 'in', in: 'bench', bench: 'pending' };
+	const bossLabels = { in: ['✓', 'Dentro'], bench: ['⏸', 'Reserva'], pending: ['…', 'Pendiente'] };
+	function bossPlanner() {
+		const players = view.signups.filter((s) => zoneOf(s.id) !== 'pool');
+		const known = [
+			...new Set((data?.progress || []).flatMap((p) => p.bosses.map((b) => b.name))),
+		].filter((name) => !bosses.some((b) => b.boss.toLowerCase() === name.toLowerCase()));
+		return /* HTML */ `<section class="card boss-planner" aria-label="Participación por jefe">
+			<div class="boss-planner-head">
+				<div>
+					<h4>Participación por jefe</h4>
+					<p>
+						Planificado en la web. No se sincroniza con Raid-Helper ni con Discord. Sin asignar =
+						pendiente.
+					</p>
+				</div>
+				<button type="button" data-boss-save ${bossDirty ? '' : 'disabled'}>
+					Guardar plan por jefe
+				</button>
+			</div>
+			<form class="boss-add" data-boss-add>
+				<label
+					>Añadir jefe<input
+						name="boss"
+						list="boss-known"
+						maxlength="120"
+						required
+						placeholder="Nombre del jefe"
+				/></label>
+				<datalist id="boss-known">
+					${known.map((n) => `<option value="${esc(n)}"></option>`).join('')}
+				</datalist>
+				<button type="submit" class="secondary">Añadir</button>
+				${known.length ? `<button type="button" class="secondary" data-boss-all>Añadir los ${known.length} del progreso</button>` : ''}
+			</form>
+			${
+				bosses.length && players.length
+					? `<div class="boss-table-wrap"><table class="boss-table"><thead><tr><th scope="col">Jugador</th>${bosses
+							.map(
+								(b, i) =>
+									`<th scope="col"><span>${esc(b.boss)}</span><span class="boss-col-actions"><button type="button" class="link" data-boss-fill="${i}">Según grupos</button><button type="button" class="link" data-boss-remove="${i}" aria-label="Quitar ${esc(b.boss)}">Quitar</button></span></th>`,
+							)
+							.join('')}</tr></thead><tbody>${players
+							.map(
+								(p) =>
+									`<tr class="class-${classKey(p)}"><th scope="row">${esc(p.name)}<small>${esc(slotName(zoneOf(p.id)))}</small></th>${bosses
+										.map((b, i) => {
+											const st = b.assignments[p.userId] || 'pending';
+											return `<td><button type="button" class="boss-cell is-${st}" data-boss-cell="${i}" data-user="${esc(p.userId)}" aria-label="${esc(p.name)} en ${esc(b.boss)}: ${bossLabels[st][1]}. Cambiar"><span aria-hidden="true">${bossLabels[st][0]}</span>${bossLabels[st][1]}</button></td>`;
+										})
+										.join('')}</tr>`,
+							)
+							.join('')}</tbody></table></div>`
+					: `<p class="muted">${bosses.length ? 'Coloca jugadores en grupos o en el banquillo para planificar cada jefe.' : 'Sin jefes planificados: los jugadores verán su plaza general.'}</p>`
+			}
+		</section>`;
+	}
+	function bindBosses() {
+		const touch = () => {
+			bossDirty = true;
+			render();
+		};
+		const addBoss = (name) => {
+			name = name.trim();
+			if (!name || bosses.some((b) => b.boss.toLowerCase() === name.toLowerCase())) return false;
+			bosses.push({ boss: name, assignments: {} });
+			return true;
+		};
+		target.querySelector('[data-boss-add]')?.addEventListener('submit', (e) => {
+			e.preventDefault();
+			if (addBoss(new FormData(e.target).get('boss'))) touch();
+		});
+		target.querySelector('[data-boss-all]')?.addEventListener('click', () => {
+			for (const p of data?.progress || []) for (const b of p.bosses) addBoss(b.name);
+			touch();
+		});
+		target.querySelectorAll('[data-boss-remove]').forEach(
+			(b) =>
+				(b.onclick = () => {
+					bosses.splice(Number(b.dataset.bossRemove), 1);
+					touch();
+				}),
+		);
+		target.querySelectorAll('[data-boss-fill]').forEach(
+			(b) =>
+				(b.onclick = () => {
+					const plan = bosses[Number(b.dataset.bossFill)];
+					plan.assignments = {};
+					for (const s of view.signups) {
+						const z = zoneOf(s.id);
+						if (z.startsWith('group')) plan.assignments[s.userId] = 'in';
+						else if (z === 'bench') plan.assignments[s.userId] = 'bench';
+					}
+					touch();
+				}),
+		);
+		target.querySelectorAll('[data-boss-cell]').forEach(
+			(b) =>
+				(b.onclick = () => {
+					const plan = bosses[Number(b.dataset.bossCell)],
+						next = bossCycle[plan.assignments[b.dataset.user] || 'pending'];
+					if (next === 'pending') delete plan.assignments[b.dataset.user];
+					else plan.assignments[b.dataset.user] = next;
+					touch();
+					target
+						.querySelector(
+							`[data-boss-cell="${b.dataset.bossCell}"][data-user="${CSS.escape(b.dataset.user)}"]`,
+						)
+						?.focus({ preventScroll: true });
+				}),
+		);
+		target.querySelector('[data-boss-save]')?.addEventListener('click', async () => {
+			try {
+				// Players removed from the lineup drop out of the plan instead of failing validation.
+				const placed = new Set(
+					view.signups.filter((s) => zoneOf(s.id) !== 'pool').map((s) => s.userId),
+				);
+				const next = await api(url + '/bosses', 'PUT', {
+					bosses: bosses.map((b) => ({
+						boss: b.boss,
+						assignments: Object.fromEntries(
+							Object.entries(b.assignments).filter(([id]) => placed.has(id)),
+						),
+					})),
+				});
+				bossDirty = false;
+				const keep = dirty ? new Map(assign) : null;
+				await load(next);
+				if (keep) {
+					assign = keep;
+					dirty = true;
+					render();
+				}
+				toast('Plan por jefe guardado');
+			} catch (e) {
+				toast(e.message);
+			}
+		});
 	}
 	function attendanceForm() {
 		const called = view.callups.filter((c) => c.slot !== 'removed');

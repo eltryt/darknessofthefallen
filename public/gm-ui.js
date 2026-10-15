@@ -1,14 +1,16 @@
-export function contactForm(host, ctx, kind = 'contact') {
+export function contactForm(host, ctx, kind = 'contact', { subject = '', heading = '' } = {}) {
 	const { field, area, formHandler, api, toast } = ctx;
 	host.innerHTML = /* HTML */ `<h2>
-			${kind === 'incident' ? 'Registrar incidencia' : 'Contactar con el equipo'}
+			${heading || (kind === 'incident' ? 'Registrar incidencia' : 'Contactar con el equipo')}
 		</h2>
 		<p>
 			El mensaje quedará en el panel privado del GM y oficiales. No incluyas contraseñas ni
 			secretos.
 		</p>
 		<form id="gm-contact" class="card form">
-			${field('Asunto', 'subject')}${area('Mensaje', 'message')}<button type="submit">
+			${field('Asunto', 'subject', 'text', subject)}${area('Mensaje', 'message')}<button
+				type="submit"
+			>
 				Enviar mensaje
 			</button>
 		</form>

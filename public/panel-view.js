@@ -25,15 +25,15 @@ export function createPanelView(context) {
 	const operationsContext = () => context;
 	async function panel() {
 		const tabs = [
-			['roster.read', 'roster', 'Roster'],
+			['roster.read', 'roster', 'Gestión del roster'],
 			['recruitment.manage', 'applications', 'Candidaturas'],
 			['recruitment.manage', 'messages', 'Mensajes y avisos'],
-			['attendance.manage', 'raids', 'Raids'],
+			['attendance.manage', 'raids', 'Convocatorias'],
 			['attendance.manage', 'attendance', 'Asistencia'],
-			['loot.manage', 'loot', 'Loot'],
-			['loot.manage', 'wishlists', 'Wishlists'],
-			['community.read', 'council', 'Consejo'],
-			['progress.manage', 'progress', 'Progreso'],
+			['loot.manage', 'loot', 'Registrar botín'],
+			['loot.manage', 'wishlists', 'Wishlists de la hermandad'],
+			['settings.manage', 'council', 'Consejo de botín'],
+			['progress.manage', 'progress', 'Registrar progreso'],
 			['settings.manage', 'settings', 'Configuración'],
 			['armory.configure', 'guides', 'Guías externas'],
 			['audit.read', 'audit', 'Auditoría'],

@@ -17,10 +17,13 @@ ni listas BiS precargadas. Todo empieza vacío y se rellena con información fia
 
 ## Navegación
 
-Perfil → Mis personajes → «Ver ficha de armería» → `/armeria?personaje=<id>`.
-Pestañas: Resumen | Equipamiento | Mi BiS | Guías | Revisiones. Selector para cambiar de
-personaje y enlace para volver. En Panel → Roster, «Ficha de armería» en cada personaje.
-Panel → Guías externas gestiona proveedores y enlaces.
+Desde el 16-10-2026 la ficha propia vive en **Mi perfil → Armería** (equipo, datos de la ficha y guías) y la
+lista BiS se unificó con la wishlist (**Mi perfil → Wishlist / BiS**, estado BiS / Me interesa / Pasar por
+objeto; migración 010). `/armeria?personaje=<id>` redirige al perfil si el personaje es tuyo; con
+`armory.read` muestra una ficha de solo lectura (Resumen, Equipamiento, Guías) enlazada desde el roster.
+Las revisiones y notas internas ya no aparecen en la interfaz, pero sus tablas y su API se conservan.
+Cada hueco de equipo abre un panel; solo el propietario registra el objeto a mano. Panel → Guías externas
+gestiona proveedores y enlaces.
 
 ## Modelo de datos (migración 007, solo aditiva)
 

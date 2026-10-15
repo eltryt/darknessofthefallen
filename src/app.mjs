@@ -74,6 +74,8 @@ const files = {
 	'/gm-ui.js': ['gm-ui.js', 'text/javascript'],
 	'/roster-ui.js': ['roster-ui.js', 'text/javascript'],
 	'/wishlist-ui.js': ['wishlist-ui.js', 'text/javascript'],
+	'/sheet-parts.js': ['sheet-parts.js', 'text/javascript'],
+	'/my-callups.js': ['my-callups.js', 'text/javascript'],
 	'/encounter-catalog.js': ['encounter-catalog.js', 'text/javascript'],
 	'/public-views.js': ['public-views.js', 'text/javascript'],
 	'/public-layout.js': ['public-layout.js', 'text/javascript'],

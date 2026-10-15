@@ -44,6 +44,8 @@ for (const file of [
 	'home-events.js',
 	'roster-ui.js',
 	'wishlist-ui.js',
+	'sheet-parts.js',
+	'my-callups.js',
 	'encounter-catalog.js',
 	'gm-ui.js',
 	'public-views.js',

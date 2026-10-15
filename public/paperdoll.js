@@ -13,10 +13,14 @@ const localImage = (value) =>
 const emptyIcon =
 	'<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9Z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg>';
 
-function slot(name, item, side, href) {
+function slot(name, item, side, href, buttons) {
 	const label = slotLabels[name] || name;
-	const tag = href ? 'a' : 'div';
-	const link = href ? ` href="${escape(href)}"` : '';
+	const tag = buttons ? 'button' : href ? 'a' : 'div';
+	const link = buttons
+		? ` type="button" data-slot="${escape(name)}" aria-haspopup="dialog" aria-label="${escape(label)}: ${escape(item?.item_name || 'sin datos')}. Abrir detalles"`
+		: href
+			? ` href="${escape(href)}"`
+			: '';
 	if (!item)
 		return `<${tag} class="doll-slot is-empty side-${side}"${link} title="${escape(label)} · Sin datos"><span class="doll-icon">${emptyIcon}</span><span class="doll-text"><span class="doll-slot-name">${escape(label)}</span><small>Sin datos</small></span></${tag}>`;
 	const icon = localImage(item.icon);
@@ -29,7 +33,9 @@ function slot(name, item, side, href) {
 
 // Character "paper doll": item columns around the character portrait, weapons
 // below and statistics at the foot. Empty slots render a calm placeholder.
-export function paperdoll(sheet, { href = '' } = {}) {
+// slotButtons turns each slot into a button that opens its detail panel;
+// target shows BiS goals (from the wishlist) instead of current equipment.
+export function paperdoll(sheet, { href = '', slotButtons = false, target = false } = {}) {
 	const c = sheet.character,
 		version = gameVersions[c.game_version] || Object.values(gameVersions)[0],
 		layout = version.paperdoll,
@@ -41,12 +47,17 @@ export function paperdoll(sheet, { href = '' } = {}) {
 	const portrait = localImage(c.avatar_url);
 	const stats = sheet.stats || {};
 	const column = (side) =>
-		`<div class="doll-column doll-${side}">${layout[side].map((name) => slot(name, items.get(name), side, href)).join('')}</div>`;
-	return `<section class="paperdoll" aria-label="Equipamiento de ${escape(c.name)}">
-		<header class="doll-summary">
-			<span><small>Nivel de objeto medio</small><strong>${average ?? '—'}</strong></span>
+		`<div class="doll-column doll-${side}">${layout[side].map((name) => slot(name, items.get(name), side, href, slotButtons)).join('')}</div>`;
+	return `<section class="paperdoll${target ? ' is-target' : ''}" aria-label="${target ? 'Objetivo BiS' : 'Equipamiento'} de ${escape(c.name)}">
+		<header class="doll-summary">${
+			target
+				? `<span><small>Huecos con objetivo BiS</small><strong>${sheet.equipment.length} / ${version.slots.length}</strong></span>
+			<span><small>Conseguidos</small><strong>${sheet.equipment.filter((e) => e.obtained).length}</strong></span>
+			<span><small>Origen</small><strong>Tu wishlist</strong></span>`
+				: `<span><small>Nivel de objeto medio</small><strong>${average ?? '—'}</strong></span>
 			<span><small>Ranuras registradas</small><strong>${sheet.equipment.length} / ${version.slots.length}</strong></span>
-			<span><small>Origen</small><strong>${sheet.equipment.some((e) => e.origin === 'provider') ? 'Proveedor' : sheet.equipment.length ? 'Manual' : 'Sin datos'}</strong></span>
+			<span><small>Origen</small><strong>${sheet.equipment.some((e) => e.origin === 'provider') ? 'Proveedor' : sheet.equipment.length ? 'Manual' : 'Sin datos'}</strong></span>`
+		}
 		</header>
 		<div class="doll-stage">
 			${column('left')}
@@ -60,7 +71,7 @@ export function paperdoll(sheet, { href = '' } = {}) {
 			</figure>
 			${column('right')}
 		</div>
-		<div class="doll-weapons">${layout.bottom.map((name, i) => slot(name, items.get(name), i ? 'left' : 'right', href)).join('')}</div>
+		<div class="doll-weapons">${layout.bottom.map((name, i) => slot(name, items.get(name), i ? 'left' : 'right', href, slotButtons)).join('')}</div>
 		<dl class="doll-stats">${version.stats
 			.map(
 				([key, label]) =>

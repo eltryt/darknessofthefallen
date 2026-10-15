@@ -615,10 +615,10 @@ export async function operationTab(tab, el, ctx) {
 	if (tab === 'wishlists') {
 		const rows = await api('/api/wishlists?all=true');
 		el.innerHTML =
-			'<h2>Wishlists de la hermandad</h2><p>Prioridades personales del 1 (más alta) al 5. No implican una asignación automática.</p><div id="wishlist-table"></div>';
+			'<h2>Wishlists de la hermandad</h2><p>Estado que marca cada jugador (BiS, Me interesa o Pasar) y prioridad del 1 (más alta) al 5. No implican una asignación automática.</p><div id="wishlist-table"></div>';
 		paginated(
 			el.querySelector('#wishlist-table'),
-			['Personaje', 'Objeto', 'Raid / boss', 'Prioridad', 'Notas'],
+			['Personaje', 'Objeto', 'Raid / boss', 'Estado', 'Prioridad', 'Notas'],
 			rows,
 			(r) =>
 				/* HTML */ `<tr>
@@ -626,6 +626,9 @@ export async function operationTab(tab, el, ctx) {
 					<td>${esc(r.data.item)}</td>
 					<td>
 						${esc(r.data.raid || 'Sin raid')}<small class="cell-detail">${esc(r.data.boss)}</small>
+					</td>
+					<td>
+						${esc(r.data.status || 'Me interesa')}${r.data.obtained ? '<small class="cell-detail">Conseguido</small>' : ''}
 					</td>
 					<td>${r.data.priority}</td>
 					<td>${esc(r.data.notes)}</td>

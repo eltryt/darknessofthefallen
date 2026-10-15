@@ -1,11 +1,19 @@
 import { attachCharacterEditor } from './character-editor.js';
-import { mountMemberLoot } from './operations-ui.js';
+import { operationTab } from './operations-ui.js';
 import { mountWishlist } from './wishlist-ui.js';
-import { mountRaidEvents } from './raid-events-ui.js';
+import { mountMyCallups } from './my-callups.js';
+import { contactForm } from './gm-ui.js';
 import { ClassIcon } from './components.js';
 import { classKey } from './roster-ui.js';
-import { getSpecsForClass, normalizeSpecValue } from './specs.js';
 import { paperdoll } from './paperdoll.js';
+import {
+	sheetHelpers,
+	factsList,
+	sheetForm,
+	bindSheetForm,
+	renderGuides,
+	openSlotDialog,
+} from './sheet-parts.js';
 
 const icons = {
 	armeria: '<path d="M12 3 4 6v6c0 4.5 3.4 8.2 8 9 4.6-.8 8-4.5 8-9V6Z"/><path d="M9 12l2 2 4-4"/>',
@@ -17,13 +25,13 @@ const icons = {
 		'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
 };
 const sections = [
-	['armeria', 'Mi armería'],
+	['armeria', 'Armería'],
 	['personajes', 'Personajes'],
-	['wishlist', 'Wishlist'],
+	['wishlist', 'Wishlist / BiS'],
 	['botin', 'Botín'],
 	['convocatorias', 'Convocatorias'],
 ];
-const rankLabels = {
+export const rankLabels = {
 	visitor: 'Visitante',
 	member: 'Miembro',
 	raider: 'Raider',
@@ -33,22 +41,38 @@ const rankLabels = {
 };
 const svg = (name) =>
 	`<svg class="hub-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${icons[name]}</svg>`;
+const STORAGE_KEY = 'profile-character';
+const remember = (id) => {
+	try {
+		localStorage.setItem(STORAGE_KEY, id);
+	} catch {
+		/* storage unavailable: the URL still keeps the choice */
+	}
+};
+const recalled = () => {
+	try {
+		return localStorage.getItem(STORAGE_KEY);
+	} catch {
+		return null;
+	}
+};
 
-// Profile hub: the main character's armory first, everything else one click away.
+// Mi perfil: one place for the player's characters. The selected character
+// drives every section and survives reloads (URL first, then this browser).
 export function createProfileView(context) {
 	const { $, api, esc, field, select, area, formHandler, toast, me, roles, classes } = context;
+	const { specName } = sheetHelpers(esc);
 	let rows = [],
 		attendance,
 		selected = null,
 		sheetCache = new Map(),
+		wishCache = null,
+		armoryMode = 'equipped',
+		guideState = {},
 		renderToken = 0;
 
-	const specName = (className, id) => {
-		const specs = getSpecsForClass(classKey(className)),
-			key = normalizeSpecValue(id || '');
-		return Object.hasOwn(specs, key) ? specs[key].name : id || '';
-	};
 	const current = () => location.hash.slice(1) || 'armeria';
+	const selectedCharacter = () => rows.find((c) => c.id === selected) || null;
 
 	async function profile() {
 		[rows, attendance] = await Promise.all([
@@ -56,13 +80,33 @@ export function createProfileView(context) {
 			api('/api/attendance?userId=me'),
 		]);
 		sheetCache = new Map();
-		if (!rows.some((c) => c.id === selected))
-			selected = rows.find((c) => c.is_main)?.id || rows[0]?.id || null;
+		wishCache = null;
+		const wanted = [new URLSearchParams(location.search).get('personaje'), selected, recalled()];
+		selected =
+			wanted.find((id) => id && rows.some((c) => c.id === id)) ||
+			rows.find((c) => c.is_main)?.id ||
+			rows[0]?.id ||
+			null;
+		syncUrl();
+		render();
+	}
+	function syncUrl() {
+		const url = new URL(location.href);
+		if (selected) url.searchParams.set('personaje', selected);
+		else url.searchParams.delete('personaje');
+		history.replaceState(null, '', url);
+		if (selected) remember(selected);
+	}
+	function choose(id) {
+		if (id === selected) return;
+		selected = id;
+		guideState = {};
+		syncUrl();
 		render();
 	}
 
 	function render() {
-		const main = rows.find((c) => c.id === selected);
+		const main = selectedCharacter();
 		const metrics = attendance.metrics;
 		const rank = rankLabels[me.user.rank] || me.user.rank;
 		const corners = ['tl', 'tr', 'bl', 'br']
@@ -76,7 +120,7 @@ export function createProfileView(context) {
 					<div class="hub-crest">
 						<span class="hub-crest-ring" aria-hidden="true"></span>
 						${main ? ClassIcon({ className: main.class, size: 'large' }) : svg('personajes')}
-						${main?.is_main ? '<span class="hub-crest-tag">Main</span>' : ''}
+						${main ? `<span class="hub-crest-tag">${main.is_main ? 'Main' : 'Alter'}</span>` : ''}
 					</div>
 					<div class="hub-hero-text">
 						<span class="eyebrow">Tu espacio en la hermandad</span>
@@ -97,7 +141,7 @@ export function createProfileView(context) {
 					<div>
 						<span
 							class="hub-ring"
-							style="--value:${Number(metrics.percentage) || 0}"
+							data-value="${Number(metrics.percentage) || 0}"
 							aria-hidden="true"
 						></span>
 						<dt>Asistencia</dt>
@@ -117,11 +161,11 @@ export function createProfileView(context) {
 				</button>
 			</section>
 			${
-				rows.length > 1
-					? `<div class="hub-chars" role="group" aria-label="Elegir personaje">${rows
+				rows.length
+					? `<div class="hub-chars" role="group" aria-label="Personaje seleccionado"><span class="hub-chars-label">Personaje</span>${rows
 							.map(
 								(c) =>
-									`<button type="button" class="hub-char class-${classKey(c.class)}" data-select-character="${esc(c.id)}" aria-pressed="${c.id === selected}">${ClassIcon({ className: c.class, size: 'small' })}<span>${esc(c.name)}</span>${c.is_main ? '<small>Main</small>' : ''}</button>`,
+									`<button type="button" class="hub-char class-${classKey(c.class)}" data-select-character="${esc(c.id)}" aria-pressed="${c.id === selected}">${ClassIcon({ className: c.class, size: 'small' })}<span>${esc(c.name)}</span><small>${c.is_main ? 'Main' : 'Alter'}</small></button>`,
 							)
 							.join('')}</div>`
 					: ''
@@ -135,17 +179,16 @@ export function createProfileView(context) {
 					.join('')}
 			</nav>
 			<section id="hub-body" class="hub-body" aria-live="polite"></section>`;
+		// The CSP forbids style attributes; the ring value is set through the DOM.
+		const ring = $('.hub-ring');
+		if (ring) ring.style.setProperty('--value', ring.dataset.value);
 		$('#logout').onclick = async () => {
 			await api('/api/logout', 'POST', {});
 			location.href = '/';
 		};
-		document.querySelectorAll('[data-select-character]').forEach(
-			(b) =>
-				(b.onclick = () => {
-					selected = b.dataset.selectCharacter;
-					render();
-				}),
-		);
+		document
+			.querySelectorAll('[data-select-character]')
+			.forEach((b) => (b.onclick = () => choose(b.dataset.selectCharacter)));
 		void show(current());
 	}
 
@@ -175,54 +218,23 @@ export function createProfileView(context) {
 			if (id === 'personajes') characters(host);
 			if (id === 'wishlist') {
 				if (!me.permissions.includes('community.read')) return locked(host);
-				await mountWishlist(host, rows, profile, context);
+				await mountWishlist(host, selectedCharacter(), refreshWishlist, context);
 			}
 			if (id === 'botin') {
 				if (!me.permissions.includes('community.read')) return locked(host);
-				await mountMemberLoot(host, context);
+				await loot(host);
 			}
-			if (id === 'convocatorias') {
-				const callups = await api('/api/callups/mine');
-				if (!host.isConnected) return;
-				host.innerHTML = `${callupList(callups)}<div data-hub-events></div>`;
-				await mountRaidEvents(host.querySelector('[data-hub-events]'), context, { mine: true });
-			}
+			if (id === 'convocatorias') await mountMyCallups(host, context);
 		} catch (error) {
-			if (token === renderToken)
+			if (token === renderToken && host.isConnected)
 				host.innerHTML = `<div class="empty-note" role="alert"><strong>No se pudo cargar esta sección</strong><p>${esc(error.message)}</p></div>`;
 		} finally {
 			requestAnimationFrame(() => host.classList.remove('is-entering'));
 		}
 	}
-	// Call-ups sent from a lineup: group, delivery of the Discord notice and recorded attendance.
-	function callupList(callups) {
-		if (!callups.length) return '';
-		const when = (value) =>
-			new Date(value).toLocaleString('es-ES', {
-				timeZone: 'Europe/Madrid',
-				weekday: 'short',
-				day: 'numeric',
-				month: 'short',
-				hour: '2-digit',
-				minute: '2-digit',
-			});
-		const upcoming = (c) => Date.parse(c.starts_at) > Date.now();
-		return /* HTML */ `<section class="hub-callups">
-			<div class="hub-section-head">
-				<div>
-					<h2>Mis convocatorias</h2>
-					<p>Alineaciones en las que te han colocado los responsables de raid.</p>
-				</div>
-			</div>
-			<ul>
-				${callups
-					.map(
-						(c) =>
-							`<li class="hub-callup ${upcoming(c) ? 'is-upcoming' : ''} ${c.slot === 'removed' ? 'is-removed' : ''}"><span class="hub-callup-slot">${esc(c.slotLabel)}</span><span class="hub-callup-main"><strong>${esc(c.title)}</strong><small>${esc(when(c.starts_at))}</small></span><span class="hub-callup-state">${c.attendance ? `Asistencia: ${esc(c.attendance)}` : upcoming(c) ? (c.slot === 'removed' ? 'Ya no estás convocado' : 'Convocado') : 'Pendiente de confirmar'}</span></li>`,
-					)
-					.join('')}
-			</ul>
-		</section>`;
+	async function refreshWishlist() {
+		wishCache = null;
+		await show('wishlist');
 	}
 	function locked(host) {
 		host.innerHTML =
@@ -230,28 +242,35 @@ export function createProfileView(context) {
 	}
 
 	async function armory(host) {
-		const c = rows.find((x) => x.id === selected);
+		const c = selectedCharacter();
 		if (!c) {
 			host.innerHTML = /* HTML */ `<div class="hub-empty">
 				<h2>Tu historia empieza aquí</h2>
-				<p>Registra tu primer personaje y tendrás su ficha, su lista BiS y sus guías.</p>
+				<p>Registra tu primer personaje y tendrás su equipo, su wishlist y sus guías.</p>
 				<a class="button" href="#personajes">Añadir personaje</a>
 			</div>`;
 			return;
 		}
-		if (!sheetCache.has(c.id))
-			sheetCache.set(c.id, await api('/api/armory/characters/' + encodeURIComponent(c.id)));
-		if (!host.isConnected) return;
-		const sheet = sheetCache.get(c.id),
-			ch = sheet.character;
-		const entries = sheet.lists.flatMap((l) => l.entries),
-			got = entries.filter((e) => e.status === 'Conseguido').length,
-			priority = entries.filter((e) => e.status === 'Prioritario').length,
-			percent = entries.length ? Math.round((got / entries.length) * 100) : 0;
-		const guides = Object.values(sheet.guides)
-			.flat()
-			.reduce((n, p) => n + p.sections.reduce((m, s) => m + s.links.length, 0), 0);
-		const link = (tab) => `/armeria?personaje=${encodeURIComponent(c.id)}&tab=${tab}`;
+		const [sheet, wishes] = await Promise.all([
+			sheetCache.get(c.id) || api('/api/armory/characters/' + encodeURIComponent(c.id)),
+			wishCache ||
+				(me.permissions.includes('community.read') ? api('/api/wishlists') : Promise.resolve([])),
+		]);
+		sheetCache.set(c.id, sheet);
+		wishCache = wishes;
+		if (!host.isConnected || selected !== c.id) return;
+		const own = wishes.filter((w) => w.data.characterId === c.id);
+		// BiS goals per slot: the same wishlist data, never a second list.
+		const targets = own
+			.filter((w) => w.data.slot && w.data.status === 'BiS')
+			.map((w) => ({
+				slot: w.data.slot,
+				item_name: w.data.item,
+				obtained: w.data.obtained,
+				quality: '',
+			}));
+		const view = armoryMode === 'target' ? { ...sheet, equipment: dedupe(targets) } : sheet;
+		const ch = sheet.character;
 		const missing = [
 			['Reino', ch.realm],
 			['Raza', ch.race],
@@ -261,58 +280,134 @@ export function createProfileView(context) {
 		host.innerHTML = /* HTML */ `<div class="hub-armory">
 			<div class="hub-armory-gear">
 				<header>
-					<h2>Equipamiento</h2>
-					<a href="${link('gear')}">Ver ficha completa →</a>
+					<h2>
+						${esc(ch.name)}
+						<span class="pill ${ch.is_main ? 'gold' : ''}">${ch.is_main ? 'Main' : 'Alter'}</span>
+					</h2>
+					<div class="hub-segment" role="group" aria-label="Qué mostrar">
+						<button
+							type="button"
+							data-armory-mode="equipped"
+							aria-pressed="${armoryMode === 'equipped'}"
+						>
+							Equipo actual
+						</button>
+						<button
+							type="button"
+							data-armory-mode="target"
+							aria-pressed="${armoryMode === 'target'}"
+						>
+							Objetivo BiS
+						</button>
+					</div>
 				</header>
-				${paperdoll(sheet, { href: link('gear') })}
+				${paperdoll(view, { slotButtons: true, target: armoryMode === 'target' })}
+				<p class="muted hub-armory-hint">
+					${
+						armoryMode === 'target'
+							? 'Objetos marcados como BiS en tu wishlist con un hueco indicado. Se editan en Wishlist / BiS.'
+							: 'Pulsa un hueco para ver el objeto y, si es tuyo, registrarlo a mano.'
+					}
+				</p>
 			</div>
 			<div class="hub-armory-side">
-				<a class="hub-card" href="${link('bis')}">
-					<span class="hub-card-label">${svg('wishlist')} Mi lista BiS</span>
-					${
-						entries.length
-							? `<strong>${got} / ${entries.length}</strong><span>conseguidos · ${priority} prioritarios</span><span class="hub-progress" role="img" aria-label="${percent}% conseguido"><i style="width:${percent}%"></i></span>`
-							: '<strong>Vacía</strong><span>Crea tu primera lista por especialización y fase.</span>'
-					}
-					<em>${entries.length ? 'Abrir lista' : 'Empezar lista'} →</em>
-				</a>
-				<a class="hub-card" href="${link('guides')}">
-					<span class="hub-card-label">${svg('armeria')} Guías de ${esc(ch.class)}</span>
-					<strong>${guides || 'Sin enlaces'}</strong>
-					<span
-						>${
-							guides
-								? 'enlaces comprobados por la hermandad'
-								: 'Ninguna guía verificada todavía para tu clase.'
-						}</span
-					>
-					<em>Ver guías →</em>
-				</a>
-				<a class="hub-card ${missing.length ? 'is-pending' : ''}" href="${link('summary')}">
-					<span class="hub-card-label">${svg('personajes')} Datos de la ficha</span>
-					<strong>${missing.length ? missing.length + ' por completar' : 'Completa'}</strong>
-					<span
-						>${
-							missing.length
-								? esc(missing.map(([k]) => k).join(' · '))
-								: esc(
-										[ch.realm, ch.race, ch.level ? 'Nivel ' + ch.level : '']
-											.filter(Boolean)
-											.join(' · '),
-									)
-						}</span
-					>
-					<em>Editar ficha →</em>
-				</a>
+				<details class="card hub-sheet">
+					<summary>
+						<span>${svg('personajes')} Datos de la ficha</span>
+						<small
+							>${missing.length ? missing.length + ' por completar: ' + esc(missing.map(([k]) => k).join(', ')) : 'Completa'}</small
+						>
+					</summary>
+					${factsList(ch, esc)}
+					${sheet.canEdit ? `<details class="hub-sheet-edit"><summary>Editar datos</summary>${sheetForm(ch, context)}</details>` : ''}
+				</details>
+				<section class="card hub-guides">
+					<h3>${svg('armeria')} Guías de ${esc(ch.class)}</h3>
+					<div data-guides></div>
+				</section>
 			</div>
 		</div>`;
+		renderGuides(host.querySelector('[data-guides]'), sheet, context, guideState);
+		const form = host.querySelector('#armory-sheet');
+		if (form)
+			bindSheetForm(form, ch, context, async () => {
+				await profile();
+			});
+		host.querySelectorAll('[data-armory-mode]').forEach(
+			(b) =>
+				(b.onclick = () => {
+					armoryMode = b.dataset.armoryMode;
+					void armory(host);
+				}),
+		);
+		host.querySelectorAll('[data-slot]').forEach(
+			(b) =>
+				(b.onclick = () =>
+					openSlotDialog({
+						slot: b.dataset.slot,
+						sheet,
+						wishes: own,
+						canEdit: sheet.canEdit && armoryMode === 'equipped',
+						ctx: context,
+						onSaved: async () => {
+							sheetCache.delete(c.id);
+							if (host.isConnected) await armory(host);
+						},
+					})),
+		);
+	}
+	const dedupe = (items) => [...new Map(items.map((i) => [i.slot, i])).values()];
+
+	async function loot(host) {
+		const council = await api('/api/council');
+		if (!host.isConnected) return;
+		host.innerHTML = /* HTML */ `<div class="hub-section-head">
+				<div>
+					<h2>Botín</h2>
+					<p>Qué se ha repartido y quién decide en el consejo actual.</p>
+				</div>
+			</div>
+			<section class="loot-council">
+				<h3>Consejo de botín</h3>
+				${
+					council.length
+						? `<ul class="council-cards">${council
+								.map(
+									(m) =>
+										`<li class="card"><strong>${esc(m.display_name)}</strong><span class="pill">${esc(rankLabels[m.rank] || m.rank)}</span>${m.discordUrl ? `<a class="link" href="${esc(m.discordUrl)}" target="_blank" rel="noopener noreferrer">Perfil de Discord ↗</a>` : ''}</li>`,
+								)
+								.join('')}</ul>`
+						: '<p class="muted">El Líder todavía no ha designado el consejo de botín.</p>'
+				}
+				<details class="loot-question">
+					<summary>¿Dudas sobre el botín?</summary>
+					<div data-loot-contact></div>
+				</details>
+			</section>
+			<section class="loot-history">
+				<h3>Historial de botín</h3>
+				<div data-loot-history></div>
+			</section>`;
+		contactForm(host.querySelector('[data-loot-contact]'), context, 'contact', {
+			subject: 'Consulta sobre botín',
+			heading: 'Consulta sobre botín',
+		});
+		await operationTab('loot', host.querySelector('[data-loot-history]'), {
+			...context,
+			me: {
+				...me,
+				permissions: me.permissions.filter(
+					(p) => !['loot.manage', 'loot.delete', 'settings.manage'].includes(p),
+				),
+			},
+		});
 	}
 
 	function characters(host) {
 		host.innerHTML = /* HTML */ `<div class="hub-section-head">
 				<div>
 					<h2>Mis personajes</h2>
-					<p>Un Main y todos tus Alters. La ficha de cada uno abre su armería.</p>
+					<p>Un Main y todos tus Alters. Elige uno para ver su armería, su wishlist y sus guías.</p>
 				</div>
 				${
 					me.permissions.includes('character.write')
@@ -325,7 +420,7 @@ export function createProfileView(context) {
 					? `<div class="hub-char-grid">${rows
 							.map(
 								(c) =>
-									`<article class="hub-char-card class-${classKey(c.class)}"><div class="hub-char-top">${ClassIcon({ className: c.class, size: 'large' })}<div><h3>${esc(c.name)} ${esc(c.surname)}</h3><p>${esc(c.class)}${c.spec ? ' · ' + esc(specName(c.class, c.spec)) : ''} · ${esc(c.role)}</p></div>${c.is_main ? '<span class="pill gold">Main</span>' : ''}</div><div class="hub-char-actions"><a class="button secondary" href="/armeria?personaje=${encodeURIComponent(c.id)}">Ver ficha</a><details class="hub-settings"><summary aria-label="Ajustes de ${esc(c.name)}"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg><span>Ajustes</span></summary><div class="hub-menu"><button type="button" data-character-edit="${esc(c.id)}">Editar datos</button>${c.is_main ? '' : `<button type="button" data-main="${esc(c.id)}">Marcar como Main</button>`}<button type="button" class="is-danger" data-character-archive="${esc(c.id)}">Archivar personaje</button></div></details></div></article>`,
+									`<article class="hub-char-card class-${classKey(c.class)} ${c.id === selected ? 'is-selected' : ''}"><div class="hub-char-top">${ClassIcon({ className: c.class, size: 'large' })}<div><h3>${esc(c.name)} ${esc(c.surname)}</h3><p>${esc(c.class)}${c.spec ? ' · ' + esc(specName(c.class, c.spec)) : ''} · ${esc(c.role)}</p></div><span class="pill ${c.is_main ? 'gold' : ''}">${c.is_main ? 'Main' : 'Alter'}</span></div><div class="hub-char-actions"><button type="button" class="button secondary" data-open-armory="${esc(c.id)}">${c.id === selected ? 'Seleccionado · ver armería' : 'Ver armería'}</button><details class="hub-settings"><summary aria-label="Ajustes de ${esc(c.name)}"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg><span>Ajustes</span></summary><div class="hub-menu"><button type="button" data-character-edit="${esc(c.id)}">Editar datos básicos</button>${c.is_main ? '' : `<button type="button" data-main="${esc(c.id)}">Marcar como Main</button>`}<button type="button" class="is-danger" data-character-archive="${esc(c.id)}">Archivar personaje</button></div></details></div></article>`,
 							)
 							.join('')}</div>`
 					: '<div class="empty-note" role="status"><strong>Todavía no tienes personajes</strong><p>Añade el primero para incorporarte al roster y abrir su armería.</p></div>'
@@ -339,6 +434,10 @@ export function createProfileView(context) {
 								<div class="form-grid">
 									${field('Nombre', 'name')}${field('Apellido', 'surname', 'text', '', false)}${select('Clase', 'class', classes)}${select('Rol', 'role', roles)}${field('Especialización', 'spec', 'text', '', false)}${field('Profesiones', 'professions', 'text', '', false)}${area('Disponibilidad', 'availability', false)}${area('Notas personales', 'notes', false)}
 								</div>
+								<p class="muted">
+									Reino, raza, nivel y el resto de la ficha se completan después en Armería → Datos
+									de la ficha.
+								</p>
 								<label class="armory-check"
 									><input type="checkbox" name="isMain" />Marcar como Main</label
 								><button type="submit">Guardar personaje</button>
@@ -361,8 +460,12 @@ export function createProfileView(context) {
 		});
 		attachCharacterEditor({ rows, api, refresh: profile, toast });
 		formHandler('#character', async (v) => {
-			await api('/api/characters', 'POST', { ...v, isMain: !!v.isMain });
+			const created = await api('/api/characters', 'POST', { ...v, isMain: !!v.isMain });
 			toast('Personaje guardado');
+			if (created?.id) {
+				selected = created.id;
+				remember(created.id);
+			}
 			await profile();
 		});
 		host.querySelector('[data-open-new]')?.addEventListener('click', () => {
@@ -371,6 +474,16 @@ export function createProfileView(context) {
 			details.scrollIntoView({ block: 'start', behavior: 'smooth' });
 			details.querySelector('input[name=name]')?.focus({ preventScroll: true });
 		});
+		host.querySelectorAll('[data-open-armory]').forEach(
+			(b) =>
+				(b.onclick = () => {
+					selected = b.dataset.openArmory;
+					guideState = {};
+					syncUrl();
+					history.replaceState(null, '', '#armeria');
+					render();
+				}),
+		);
 		host.querySelectorAll('[data-main]').forEach(
 			(b) =>
 				(b.onclick = async () => {

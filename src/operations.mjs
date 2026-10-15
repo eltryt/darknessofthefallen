@@ -276,7 +276,14 @@ export async function operations(ctx) {
 				200,
 				can(user, 'loot.manage')
 					? rows
-					: rows.map((r) => ({ display_name: r.display_name, rank: r.rank })),
+					: rows.map((r) => ({
+							display_name: r.display_name,
+							rank: r.rank,
+							// Only real Discord accounts get a profile link; it does not open a conversation.
+							discordUrl: /^\d{17,20}$/.test(r.user_id)
+								? 'https://discord.com/users/' + r.user_id
+								: null,
+						})),
 			);
 			return true;
 		}
