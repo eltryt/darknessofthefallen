@@ -717,6 +717,7 @@ Publicado: `aa1b606`; backend `38652050382`, Pages `38652035269` y validación `
 - Se conserva guild-logo.png únicamente para og:image (vista previa en redes, compatibilidad). night-sanctum.svg sigue en SVG por ser vectorial. Las ilustraciones ya eran WebP.
 - Actualizadas rutas del servidor (image/webp), build, exportador, favicon y pruebas (la de iconos verifica ahora la firma RIFF/WEBP). Originales eliminados del árbol; quedan en el historial de Git.
 - Validación: 77 pruebas Node, workerd y build; 76 imágenes en 11 páginas (públicas, perfil, armería y panel) cargadas en WebP sin roturas.
+- Publicado: `96bfb59`; backend 38716891939, Pages 38716871708 y validación 38716871683 correctos. En producción las 7 páginas públicas cargan solo WebP, sin imágenes rotas; los .jpg antiguos responden 404.
 
 ## 2026-10-15 — Armería estilo «paperdoll», cabecera y ajustes de personaje
 
