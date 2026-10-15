@@ -717,6 +717,7 @@ Publicado: `aa1b606`; backend `38652050382`, Pages `38652035269` y validación `
 - Tarjetas con color e icono de clase, nombre completo, rol específico (Tanque, Sanador, Melee, Distancia) y avisos en una segunda línea; contadores por rol; huecos libres visibles en cada grupo; los grupos ocupan todo el ancho.
 - Bufos: franja de bufos de banda (Intelecto Arcano, Entereza, Espíritu divino, Marca de lo Salvaje, Bendiciones) y en cada grupo los de grupo (Grito de batalla, Tótems, Aura de paladín, Pacto de sangre, Aura de disparo certero con Puntería), cubiertos o ausentes con su motivo. Catálogo editable en public/raid-buffs.js, marcado como provisional: WoW Forever está en beta y las fuentes (Classic Era y guías de la comunidad: nivel 60, 9 clases en ambas facciones, algunos bufos de talento pasan a básicos) no son oficiales.
 - Validación: 82 pruebas Node, workerd y build; navegador con convocatoria ficticia en formato Forever a 1440/1024/768/390/320 sin desbordamiento ni errores.
+- Publicado: `06f3ab4`; backend 38726550548 (bot sigue activo), Pages 38726535542 y validación 38726535510; módulos servidos idénticos al local.
 
 ## 2026-10-15 — Alineaciones de raid y convocatorias por privado
 
