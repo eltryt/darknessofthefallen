@@ -714,10 +714,11 @@ Publicado: `aa1b606`; backend `38652050382`, Pages `38652035269` y validación `
 ## 2026-10-15 — Reclutamiento por especialización
 
 - Petición de un miembro de la hermandad: prioridades por especialización y no por clase.
-- Ajustes: nuevo specPriorities ( → abierta/alta/media/baja), validado en backend (clase existente, especialización de esa clase, prioridad permitida) y auditado. Sin prioridad propia, la especialización hereda la de su clase, así que la configuración anterior se conserva. No se cambian prioridades reales.
+- Ajustes: nuevo specPriorities (`Clase:specId` → abierta/alta/media/baja), validado en backend (clase existente, especialización de esa clase, prioridad permitida) y auditado. Sin prioridad propia, la especialización hereda la de su clase, así que la configuración anterior se conserva. No se cambian prioridades reales.
 - Reclutamiento público: 28 tarjetas de especialización agrupadas por rol (Tanques, Sanadores, DPS cuerpo a cuerpo, DPS a distancia), con icono de especialización y de clase, color de clase y prioridad; las altas primero. Filtros de prioridad y rol conservados; los grupos vacíos se ocultan.
 - Panel → Configuración: un selector por especialización, agrupados por clase.
 - Validación: 83 pruebas Node (herencia y orden por prioridad, validación de especialización ajena e intento __proto__), workerd y build; navegador: guardar en el panel, ver en Reclutamiento, filtros combinados y mensaje vacío, 1440/390 sin desbordamiento ni errores.
+- Publicado: `04249ac`; backend 38731593684, Pages 38731560213 y validación 38731560265 correctos. En producción Reclutamiento muestra las 28 especializaciones en 4 grupos, todas «abierta» (sin prioridades configuradas aún), sin errores JS.
 
 ## 2026-10-15 — Tablero de alineación: clases, roles y bufos
 
