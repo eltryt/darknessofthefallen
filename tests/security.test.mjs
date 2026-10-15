@@ -7,6 +7,7 @@ test('only leaders change recruitment priorities; validation is atomic and chang
 		const choices = {
 			soughtClasses: ['Mago', 'Sacerdote'],
 			classPriorities: { Mago: 'alta', Sacerdote: 'media' },
+			specPriorities: { 'Sacerdote:holy': 'alta', 'Sacerdote:shadow': 'baja' },
 			soughtRoles: ['Sanador'],
 			about: 'Nuestra hermandad',
 		};
@@ -21,6 +22,8 @@ test('only leaders change recruitment priorities; validation is atomic and chang
 			{ classPriorities: { Mago: 'urgente' } },
 			{ classPriorities: { Inventada: 'alta' } },
 			{ classPriorities: [] },
+			{ specPriorities: { 'Mago:fury': 'alta' } },
+			{ specPriorities: { 'Sacerdote:__proto__': 'alta' } },
 		])
 			assert.equal(
 				(await f.request('/api/settings', 'leader', 'PUT', { about: 'Do not save', ...bad }))
@@ -30,6 +33,7 @@ test('only leaders change recruitment priorities; validation is atomic and chang
 		const actual = (await f.request('/api/public')).body.settings;
 		assert.deepEqual(actual.soughtClasses, choices.soughtClasses);
 		assert.deepEqual(actual.classPriorities, choices.classPriorities);
+		assert.deepEqual(actual.specPriorities, choices.specPriorities);
 		assert.deepEqual(actual.soughtRoles, choices.soughtRoles);
 		assert.equal(actual.about, choices.about);
 		assert.ok(f.db.prepare("SELECT 1 FROM audit WHERE action='settings.updated'").get());

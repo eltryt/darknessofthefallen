@@ -711,6 +711,14 @@ Publicado: `0e8ee4d`; backend `38650997078`, Pages `38650986419` y validación `
 - Validación: 69 pruebas Node, prueba workerd y build Pages; las 12 pestañas del Panel y el Perfil con sesión QA de líder (datos sintéticos) a 1440/1024/768/390/320 px sin desbordamiento ni errores JS; páginas públicas sin regresiones.
 Publicado: `aa1b606`; backend `38652050382`, Pages `38652035269` y validación `38652035080` correctos. theme.css y app.js servidos idénticos al local tras la propagación; /panel y /perfil responden 401 sin sesión, como corresponde. No se ha visto el panel de producción con una sesión real: pendiente de revisión del propietario.
 
+## 2026-10-15 — Reclutamiento por especialización
+
+- Petición de un miembro de la hermandad: prioridades por especialización y no por clase.
+- Ajustes: nuevo specPriorities ( → abierta/alta/media/baja), validado en backend (clase existente, especialización de esa clase, prioridad permitida) y auditado. Sin prioridad propia, la especialización hereda la de su clase, así que la configuración anterior se conserva. No se cambian prioridades reales.
+- Reclutamiento público: 28 tarjetas de especialización agrupadas por rol (Tanques, Sanadores, DPS cuerpo a cuerpo, DPS a distancia), con icono de especialización y de clase, color de clase y prioridad; las altas primero. Filtros de prioridad y rol conservados; los grupos vacíos se ocultan.
+- Panel → Configuración: un selector por especialización, agrupados por clase.
+- Validación: 83 pruebas Node (herencia y orden por prioridad, validación de especialización ajena e intento __proto__), workerd y build; navegador: guardar en el panel, ver en Reclutamiento, filtros combinados y mensaje vacío, 1440/390 sin desbordamiento ni errores.
+
 ## 2026-10-15 — Tablero de alineación: clases, roles y bufos
 
 - Datos reales de la plantilla de Forever: Raid-Helper envía el grupo (Tank/Melee/Ranged/Healer) como clase y la clase real en la especialización. La clase se toma del personaje vinculado o Main en la web; si no, de una especialización inequívoca (Affliction → Brujo, Beastmastery → Cazador…). Holy, Protection y Restoration sin personaje web quedan «?» en lugar de adivinar.

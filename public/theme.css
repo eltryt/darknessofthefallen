@@ -4893,3 +4893,175 @@ a.doll-slot:hover .doll-icon {
 	font-size: 13px;
 	color: #8f877d;
 }
+
+/* Recruitment by specialization: role groups with spec cards sorted by priority. */
+.spec-recruit-group {
+	margin-top: 26px;
+}
+.spec-recruit-group h3 {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin: 0 0 12px;
+	padding-bottom: 8px;
+	border-bottom: 1px solid #a68a5b38;
+	font:
+		400 22px Georgia,
+		serif;
+	color: #f0d7ae;
+}
+.spec-recruit-group h3 span {
+	padding: 1px 9px;
+	border: 1px solid #a68a5b55;
+	border-radius: 999px;
+	font: 700 12px/1.6 inherit;
+	font-family: inherit;
+	color: #cdb48c;
+}
+.spec-recruit-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr));
+	gap: 10px;
+}
+.spec-recruit-card {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	align-items: center;
+	gap: 12px;
+	padding: 12px 14px;
+	border: 1px solid color-mix(in srgb, var(--class-color, #a68a5b) 45%, #302a29);
+	border-radius: 4px;
+	background: linear-gradient(
+		110deg,
+		color-mix(in srgb, var(--class-color, #a68a5b) 16%, #151214),
+		#111113 80%
+	);
+	box-shadow: inset 3px 0 var(--class-color, #a68a5b);
+	transition:
+		transform 0.18s ease,
+		border-color 0.18s ease;
+}
+.spec-recruit-card:hover {
+	transform: translateY(-2px);
+	border-color: var(--class-color, #a68a5b);
+}
+.spec-recruit-card[hidden],
+.spec-recruit-group[hidden] {
+	display: none;
+}
+.spec-recruit-icons {
+	position: relative;
+	width: 44px;
+	height: 44px;
+}
+.spec-recruit-icons img:first-child {
+	width: 44px;
+	height: 44px;
+	border: 1px solid color-mix(in srgb, var(--class-color, #a68a5b) 70%, #000);
+	border-radius: 6px;
+}
+.spec-recruit-icons img:last-child:not(:first-child) {
+	position: absolute;
+	right: -6px;
+	bottom: -6px;
+	width: 20px;
+	height: 20px;
+	border: 1px solid #0b0b0d;
+	border-radius: 50%;
+}
+.spec-recruit-text {
+	display: grid;
+	min-width: 0;
+	line-height: 1.3;
+}
+.spec-recruit-text h4 {
+	margin: 0;
+	font-size: 16px;
+	font-weight: 650;
+	color: var(--class-color, #f3e6cf);
+}
+.spec-recruit-text small {
+	font-size: 13px;
+	color: #b8b2ad;
+}
+.spec-recruit-card .recruit-priority {
+	padding: 3px 10px;
+	border: 1px solid #a68a5b45;
+	border-radius: 999px;
+	font-size: 12px;
+	font-weight: 700;
+	color: #cfc7bb;
+	white-space: nowrap;
+}
+.spec-recruit-card.priority-alta .recruit-priority {
+	border-color: #e1bf8a;
+	background: #6e0f1d;
+	color: #fff1d7;
+}
+.spec-recruit-card.priority-media .recruit-priority {
+	border-color: #c99a62;
+	color: #f0cf9a;
+}
+.spec-recruit-card.priority-baja .recruit-priority {
+	color: #9a948c;
+}
+.spec-recruit-card.priority-alta {
+	border-color: color-mix(in srgb, var(--class-color, #a68a5b) 80%, #e1bf8a);
+	box-shadow:
+		inset 3px 0 var(--class-color, #a68a5b),
+		0 0 18px color-mix(in srgb, var(--class-color, #a68a5b) 25%, transparent);
+}
+/* Panel editor: one compact block per class. */
+.spec-priority-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr));
+	gap: 12px;
+}
+.spec-priority-class {
+	display: grid;
+	gap: 8px;
+	padding: 12px;
+	border: 1px solid #a68a5b38;
+	border-radius: 4px;
+	background: #111013;
+}
+.spec-priority-class h4 {
+	margin: 0;
+	font:
+		400 17px Georgia,
+		serif;
+	color: #f0d7ae;
+}
+.spec-priority-class label {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 120px;
+	align-items: center;
+	gap: 8px;
+	margin: 0;
+	font-size: 14px;
+}
+.spec-priority-class select {
+	min-width: 0;
+	padding: 6px 8px;
+}
+@media (prefers-reduced-motion: reduce) {
+	.spec-recruit-card {
+		transition: none;
+	}
+	.spec-recruit-card:hover {
+		transform: none;
+	}
+}
+.spec-priority-class {
+	align-content: start;
+}
+.spec-priority-class label {
+	grid-template-columns: minmax(0, 1fr) 108px;
+	overflow-wrap: normal;
+	word-break: normal;
+	hyphens: auto;
+}
+.spec-priority-class select {
+	width: 100%;
+	margin: 0;
+}

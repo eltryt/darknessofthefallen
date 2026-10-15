@@ -15,29 +15,56 @@ const classNames = [
 ];
 const priorities = { abierta: 'Abierta', alta: 'Alta', media: 'Media', baja: 'Baja' };
 
+const roleGroups = [
+	['Tanque', 'Tanques'],
+	['Sanador', 'Sanadores'],
+	['DPS melee', 'DPS cuerpo a cuerpo'],
+	['DPS distancia', 'DPS a distancia'],
+];
+const priorityOrder = { alta: 0, media: 1, baja: 2, abierta: 3 };
+// A specialization's own priority wins; otherwise it inherits its class priority.
+export function specPriority(settings, className, specId) {
+	return (
+		settings.specPriorities?.[`${className}:${specId}`] ||
+		settings.classPriorities?.[className] ||
+		'abierta'
+	);
+}
+export function recruitmentSpecs(settings) {
+	return classNames.flatMap((name) =>
+		Object.entries(getSpecsForClass(classKey(name))).map(([id, spec]) => ({
+			className: name,
+			id,
+			name: spec.name,
+			role: spec.category,
+			priority: specPriority(settings, name, id),
+		})),
+	);
+}
+
 export function recruitmentShowcase(settings, esc, applicationUrl = '') {
 	const open = settings.recruitmentOpen;
 	const href = applicationUrl || '#application';
+	const specs = recruitmentSpecs(settings);
+	const card = (s) =>
+		`<article class="spec-recruit-card class-${classKey(s.className)} priority-${esc(s.priority)}" data-recruit-priority="${esc(s.priority)}" data-recruit-roles="${esc(s.role)}|${s.role.startsWith('DPS') ? 'DPS' : ''}"><span class="spec-recruit-icons">${SpecIcon({ className: s.className, specId: s.id, size: 'large' })}${ClassIcon({ className: s.className, size: 'small' })}</span><span class="spec-recruit-text"><h4>${esc(s.name)}</h4><small>${esc(s.className)}${settings.soughtClasses?.includes(s.className) ? ' · Clase buscada' : ''}</small></span><span class="recruit-priority">${open ? priorities[s.priority] : 'Cerrado'}</span></article>`;
 	return `<section class="recruit-showcase" aria-labelledby="classes-heading">
-		<div class="section-head"><div><span class="eyebrow">Un lugar para cada forma de jugar</span><h2 id="classes-heading">Tu clase. Tu lugar en la banda.</h2><p>${open ? 'Todas las clases son bienvenidas. Las prioridades orientan, no excluyen.' : 'Consulta nuestras clases. Las candidaturas están cerradas por ahora.'}</p></div></div>
-		<div class="recruit-controls" role="group" aria-label="Filtrar clases por prioridad">${['todas', ...Object.keys(priorities)].map((key) => `<button type="button" class="secondary" data-priority-filter="${key}" aria-pressed="${key === 'todas'}">${key === 'todas' ? 'Todas' : priorities[key]}</button>`).join('')}</div>
-		<div class="recruit-controls" role="group" aria-label="Filtrar clases por rol">${['todos', 'Tanque', 'Sanador', 'DPS'].map((role) => `<button type="button" class="secondary" data-recruit-role="${role}" aria-pressed="${role === 'todos'}">${role === 'todos' ? 'Todos los roles' : role}</button>`).join('')}</div>
-		<div class="class-recruit-grid">${classNames
-			.map((name) => {
-				const priority = settings.classPriorities?.[name] || 'abierta';
-				const specs = getSpecsForClass(classKey(name));
-				return `<article class="class-recruit-card class-${classKey(name)}" data-recruit-priority="${esc(priority)}" data-recruit-roles="${esc([...new Set(Object.values(specs).map((spec) => (spec.category.startsWith('DPS') ? 'DPS' : spec.category)))].join('|'))}"><div class="class-recruit-heading">${ClassIcon({ className: name, size: 'large' })}<div><h3>${esc(name)}</h3><span class="recruit-priority">${open ? 'Prioridad · ' + priorities[priority] : 'Candidaturas cerradas'}${settings.soughtClasses?.includes(name) ? ' · Clase buscada' : ''}</span></div></div><div class="recruit-specs">${Object.entries(
-					specs,
-				)
-					.map(
-						([id, spec]) =>
-							`<span>${SpecIcon({ className: name, specId: id })}${esc(spec.name)}</span>`,
-					)
-					.join('')}</div></article>`;
+		<div class="section-head"><div><span class="eyebrow">Un lugar para cada forma de jugar</span><h2 id="classes-heading">Tu especialización. Tu lugar en la banda.</h2><p>${open ? 'Todas las especializaciones son bienvenidas. Las prioridades orientan, no excluyen.' : 'Consulta nuestras especializaciones. Las candidaturas están cerradas por ahora.'}</p></div></div>
+		<div class="recruit-controls" role="group" aria-label="Filtrar por prioridad">${['todas', ...Object.keys(priorities)].map((key) => `<button type="button" class="secondary" data-priority-filter="${key}" aria-pressed="${key === 'todas'}">${key === 'todas' ? 'Todas' : priorities[key]}</button>`).join('')}</div>
+		<div class="recruit-controls" role="group" aria-label="Filtrar por rol">${['todos', 'Tanque', 'Sanador', 'DPS'].map((role) => `<button type="button" class="secondary" data-recruit-role="${role}" aria-pressed="${role === 'todos'}">${role === 'todos' ? 'Todos los roles' : role}</button>`).join('')}</div>
+		${roleGroups
+			.map(([role, title]) => {
+				const list = specs
+					.filter((s) => s.role === role)
+					.sort(
+						(a, b) =>
+							priorityOrder[a.priority] - priorityOrder[b.priority] ||
+							a.className.localeCompare(b.className, 'es'),
+					);
+				return `<section class="spec-recruit-group" data-recruit-group><h3>${title}<span>${list.length}</span></h3><div class="spec-recruit-grid">${list.map(card).join('')}</div></section>`;
 			})
-			.join(
-				'',
-			)}</div><p data-recruit-empty hidden role="status">No hay clases que coincidan con estos filtros.</p>
+			.join('')}
+		<p data-recruit-empty hidden role="status">No hay especializaciones que coincidan con estos filtros.</p>
 		${open || applicationUrl ? `<div class="recruit-cta"><a class="button" href="${esc(href)}">Presentar mi candidatura <span aria-hidden="true">→</span></a><p>No necesitas una cuenta en la web para dar el primer paso.</p></div>` : ''}
 	</section>`;
 }
@@ -57,7 +84,11 @@ export function attachRecruitmentFilters(root) {
 				(role !== 'todos' && !card.dataset.recruitRoles.split('|').includes(role));
 			if (!card.hidden) count++;
 		});
-		root.querySelector('[data-recruit-empty]').hidden = count !== 0;
+		root.querySelectorAll('[data-recruit-group]').forEach((group) => {
+			group.hidden = !group.querySelector('[data-recruit-priority]:not([hidden])');
+		});
+		const empty = root.querySelector('[data-recruit-empty]');
+		if (empty) empty.hidden = count !== 0;
 	};
 	for (const attr of ['data-priority-filter', 'data-recruit-role']) {
 		root.querySelectorAll(`[${attr}]`).forEach((button) => {

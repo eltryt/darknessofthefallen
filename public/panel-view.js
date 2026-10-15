@@ -3,6 +3,7 @@ import { mountRaidEvents } from './raid-events-ui.js';
 import { operationTab } from './operations-ui.js';
 import { applicationInbox } from './recruitment-ui.js';
 import { guideAdmin } from './armory-admin-ui.js';
+import { recruitmentSpecs } from './guild-showcase.js';
 export function createPanelView(context) {
 	const {
 		$,
@@ -204,13 +205,24 @@ ${esc(s.about)}</textarea></label
 					pueden presentar candidatura. Si no marcas ninguna opción, no se anunciará una prioridad.
 				</p>
 				<fieldset>
-					<legend>Prioridades por clase</legend>
+					<legend>Prioridades por especialización</legend>
 					<p>
 						Informativas: no impiden presentar candidatura. Abierta mantiene el reclutamiento sin
-						preferencias.
+						preferencias. Se muestran así en Reclutamiento.
 					</p>
-					<div class="form-grid">
-						${classes.map((name) => select(name, 'priority_' + name, ['abierta', 'alta', 'media', 'baja'])).join('')}
+					<div class="spec-priority-grid">
+						${classes
+							.map(
+								(name) =>
+									`<div class="spec-priority-class"><h4>${esc(name)}</h4>${recruitmentSpecs(s)
+										.filter((x) => x.className === name)
+										.map(
+											(x) =>
+												`<label>${esc(x.name)}<select name="spec_${esc(name)}:${esc(x.id)}">${['abierta', 'alta', 'media', 'baja'].map((o) => `<option value="${o}" ${o === x.priority ? 'selected' : ''}>${o[0].toUpperCase() + o.slice(1)}</option>`).join('')}</select></label>`,
+										)
+										.join('')}</div>`,
+							)
+							.join('')}
 					</div>
 				</fieldset>
 				${recruitmentChoices('Clases buscadas', 'soughtClasses', classes, s.soughtClasses || [])}${recruitmentChoices('Roles buscados', 'soughtRoles', roles, s.soughtRoles || [])}<label
@@ -221,16 +233,19 @@ ${esc(s.about)}</textarea></label
 					/>Reclutamiento abierto</label
 				><button type="submit">Guardar configuración</button>
 			</form>`;
-			for (const name of classes)
-				$('#settings').elements['priority_' + name].value = s.classPriorities?.[name] || 'abierta';
 			$('#settings').elements.ruleset.value = s.ruleset;
 			$('#settings').elements.lootMethod.value = s.lootMethod;
 			formHandler('#settings', async (v, f) => {
+				const fields = Object.fromEntries(
+					Object.entries(v).filter(([k]) => !k.startsWith('spec_')),
+				);
 				data.settings = await api('/api/settings', 'PUT', {
-					...v,
+					...fields,
 					raidDays: new FormData(f).getAll('days'),
-					classPriorities: Object.fromEntries(
-						classes.map((name) => [name, new FormData(f).get('priority_' + name)]),
+					specPriorities: Object.fromEntries(
+						Object.entries(v)
+							.filter(([k]) => k.startsWith('spec_'))
+							.map(([k, value]) => [k.slice(5), value]),
 					),
 					soughtClasses: new FormData(f).getAll('soughtClasses'),
 					soughtRoles: new FormData(f).getAll('soughtRoles'),

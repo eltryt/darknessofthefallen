@@ -18,7 +18,9 @@ import {
 	armoryValues,
 	publicCharacter,
 	attendanceMetrics,
+	classKeys,
 } from './domain.mjs';
+import { isValidSpecForClass } from '../public/specs.js';
 import { armoryApi } from './armory.mjs';
 import { raidLineupApi } from './raid-lineup.mjs';
 import {
@@ -617,6 +619,28 @@ export function createApp(db, env, { readAsset = readLocalAsset } = {}) {
 					for (const [name, priority] of Object.entries(v.classPriorities)) {
 						choice(name, classes, 'clase');
 						next.classPriorities[name] = choice(
+							priority,
+							['abierta', 'alta', 'media', 'baja'],
+							'prioridad',
+						);
+					}
+				}
+				// Per-specialization priorities, keyed "Clase:specId"; unset specs inherit the class.
+				if ('specPriorities' in v) {
+					if (
+						!v.specPriorities ||
+						typeof v.specPriorities !== 'object' ||
+						Array.isArray(v.specPriorities) ||
+						Object.keys(v.specPriorities).length > 60
+					)
+						throw new HttpError(400, 'Prioridades no válidas.');
+					next.specPriorities = {};
+					for (const [key, priority] of Object.entries(v.specPriorities)) {
+						const [name, spec] = String(key).split(':');
+						choice(name, classes, 'clase');
+						if (!isValidSpecForClass(spec, classKeys[name]))
+							throw new HttpError(400, 'Especialización no válida.');
+						next.specPriorities[`${name}:${spec}`] = choice(
 							priority,
 							['abierta', 'alta', 'media', 'baja'],
 							'prioridad',
