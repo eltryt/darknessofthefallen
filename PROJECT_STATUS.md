@@ -718,6 +718,7 @@ Publicado: `aa1b606`; backend `38652050382`, Pages `38652035269` y validación `
 - Migración 008 aditiva: `characters.stats` (JSON, solo para un futuro proveedor). Copias de seguridad en base 8, compatibles con 5–7.
 - Cabecera del perfil rediseñada (marco con esquinas, emblema circular con distintivo Main, indicadores en franja con anillo de asistencia, botón «Salir» compacto). Tarjetas de personaje con «Ver ficha» y menú «Ajustes» (editar, marcar Main, archivar) que se cierra al pulsar fuera o con Escape.
 - Validación: 77 pruebas Node, workerd y build; navegador con sesión QA y objetos ficticios solo en memoria a 1440/1024/768/390/320 sin desbordamiento ni errores.
+- Publicado: `1c039e4`; backend 38715402437, Pages 38715383010 y validación 38715383021 correctos. Módulos servidos idénticos al local; /api/public conserva 23 personajes y el progreso tras la migración 008; /perfil pide sesión.
 
 ## 2026-10-15 — Perfil convertido en panel personal
 
