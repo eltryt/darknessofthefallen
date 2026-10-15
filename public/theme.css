@@ -3079,3 +3079,615 @@ body[data-page='/armeria'] details:not(.calendar-disclosure) > summary {
 .armory-tabs {
 	flex-direction: row;
 }
+
+/* Profile hub: hero with the selected character, quick stats and one-click sections. */
+body[data-page='/perfil'] .hub-body h2,
+body[data-page='/perfil'] .hub-body h3 {
+	font-family: Georgia, serif;
+	font-weight: 400;
+}
+.hub-hero {
+	position: relative;
+	isolation: isolate;
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto auto;
+	align-items: center;
+	gap: 24px;
+	margin: 28px 0 16px;
+	padding: clamp(22px, 3vw, 36px);
+	border: 1px solid #a68a5b70;
+	border-radius: 4px;
+	overflow: hidden;
+	background: #111113;
+}
+.hub-hero::before,
+.hub-hero::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+}
+.hub-hero::before {
+	z-index: -2;
+	background: url('assets/art/campfire.webp') center 40% / cover;
+	opacity: 0.6;
+	transform: scale(1.04);
+	animation: hub-drift 18s ease-in-out infinite alternate;
+}
+.hub-hero::after {
+	z-index: -1;
+	background:
+		linear-gradient(90deg, #0b0b0df5 25%, #0b0b0dc4 60%, #0b0b0d80),
+		radial-gradient(
+			ellipse at 6% 50%,
+			color-mix(in srgb, var(--class-color, #a68a5b) 26%, transparent),
+			transparent 55%
+		);
+}
+@keyframes hub-drift {
+	to {
+		transform: scale(1.1) translateX(-2%);
+	}
+}
+.hub-hero-main {
+	display: flex;
+	align-items: center;
+	gap: 20px;
+	min-width: 0;
+}
+.hub-crest {
+	display: grid;
+	flex: 0 0 auto;
+	place-items: center;
+	width: 84px;
+	height: 84px;
+	border: 1px solid color-mix(in srgb, var(--class-color, #a68a5b) 70%, #a68a5b);
+	border-radius: 6px;
+	background: #0b0b0d;
+	box-shadow: 0 0 30px color-mix(in srgb, var(--class-color, #a68a5b) 30%, transparent);
+}
+.hub-crest img {
+	width: 60px;
+	height: 60px;
+	border-radius: 4px;
+}
+.hub-crest .hub-icon {
+	width: 36px;
+	height: 36px;
+}
+.hub-hero h1 {
+	margin: 6px 0 2px;
+	font-size: clamp(30px, 4vw, 46px);
+	line-height: 1.1;
+	overflow-wrap: anywhere;
+}
+.hub-hero-line {
+	margin: 0;
+	font-size: 16px;
+	color: var(--class-color, #ddd6cb);
+}
+.hub-stats {
+	display: flex;
+	gap: 8px;
+	margin: 0;
+}
+.hub-stats > div {
+	min-width: 104px;
+	padding: 10px 14px;
+	border: 1px solid #a68a5b40;
+	border-radius: 4px;
+	background: #0b0b0dcc;
+	backdrop-filter: blur(4px);
+}
+.hub-stats dt {
+	font-size: 11px;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: #cdb48c;
+}
+.hub-stats dd {
+	margin: 2px 0 0;
+	font:
+		400 22px/1.2 Georgia,
+		serif;
+	color: #fff1d7;
+}
+.hub-stats small {
+	font-size: 11px;
+	color: #9a948c;
+}
+.hub-logout {
+	align-self: start;
+	min-height: 38px;
+	padding: 7px 14px;
+	font-size: 13px;
+}
+.hub-chars {
+	display: flex;
+	gap: 8px;
+	margin-bottom: 14px;
+	padding-bottom: 4px;
+	overflow-x: auto;
+	scrollbar-width: thin;
+}
+.hub-chars .hub-char {
+	flex: 0 0 auto;
+	gap: 8px;
+	min-height: 40px;
+	padding: 6px 14px 6px 6px;
+	border: 1px solid color-mix(in srgb, var(--class-color, #a68a5b) 40%, #302a29);
+	border-radius: 999px;
+	background: #121113;
+	box-shadow: none;
+	color: #ddd6cb;
+	font-size: 14px;
+}
+.hub-chars .hub-char::before,
+.hub-segment button::before {
+	display: none;
+}
+.hub-chars .hub-char img {
+	width: 26px;
+	height: 26px;
+	border-radius: 50%;
+}
+.hub-chars .hub-char small {
+	color: #e3c08f;
+	font-size: 11px;
+}
+.hub-chars .hub-char[aria-pressed='true'] {
+	border-color: var(--class-color, #e1bf8a);
+	background: color-mix(in srgb, var(--class-color, #a68a5b) 18%, #121113);
+	color: #fff;
+}
+/* Section menu: sticky, icon + label, active section underlined in crimson. */
+.hub-nav {
+	position: sticky;
+	top: 0;
+	z-index: 5;
+	display: flex;
+	flex-direction: row;
+	gap: 4px;
+	margin: 0 0 24px;
+	padding: 6px;
+	border: 1px solid #a68a5b45;
+	border-radius: 4px;
+	background: #0e0d10f2;
+	backdrop-filter: blur(6px);
+	overflow-x: auto;
+	scrollbar-width: none;
+}
+.hub-nav a {
+	position: relative;
+	display: inline-flex;
+	flex: 1 0 auto;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	min-height: 46px;
+	padding: 8px 16px;
+	border-radius: 3px;
+	color: #c9c2b8;
+	font-size: 14px;
+	font-weight: 600;
+	text-decoration: none;
+	white-space: nowrap;
+	transition:
+		background 0.2s ease,
+		color 0.2s ease;
+}
+.hub-nav a::after {
+	content: '';
+	position: absolute;
+	left: 16px;
+	right: 16px;
+	bottom: 4px;
+	height: 2px;
+	border-radius: 2px;
+	background: #c25a60;
+	transform: scaleX(0);
+	transition: transform 0.25s ease;
+}
+.hub-nav a:hover {
+	background: #a68a5b14;
+	color: #fff3df;
+}
+.hub-nav a[aria-current='page'] {
+	background: linear-gradient(135deg, #6e0f1d99, #28171c);
+	color: #fff1d7;
+}
+.hub-nav a[aria-current='page']::after {
+	transform: scaleX(1);
+}
+.hub-nav a:focus-visible {
+	outline: 2px solid #e1bf8a;
+	outline-offset: 2px;
+}
+.hub-icon {
+	width: 18px;
+	height: 18px;
+	flex: 0 0 18px;
+	fill: none;
+	stroke: #c9ac81;
+	stroke-width: 1.6;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+.hub-nav a[aria-current='page'] .hub-icon {
+	stroke: #ed8f90;
+}
+.hub-nav b {
+	min-width: 22px;
+	padding: 1px 6px;
+	border-radius: 999px;
+	background: #6e0f1d;
+	color: #fff1d7;
+	font-size: 11px;
+	text-align: center;
+}
+.hub-body {
+	min-height: 320px;
+	transition:
+		opacity 0.28s ease,
+		transform 0.28s ease;
+}
+.hub-body.is-entering {
+	opacity: 0;
+	transform: translateY(8px);
+}
+.hub-skeleton {
+	display: grid;
+	gap: 12px;
+}
+.hub-skeleton span:not(.visually-hidden) {
+	height: 72px;
+	border-radius: 4px;
+	background: linear-gradient(90deg, #151316 25%, #221c1f 50%, #151316 75%);
+	background-size: 200% 100%;
+	animation: hub-shimmer 1.2s linear infinite;
+}
+@keyframes hub-shimmer {
+	to {
+		background-position: -200% 0;
+	}
+}
+/* Armory overview: equipment mosaic plus BiS, guides and sheet cards. */
+.hub-armory {
+	display: grid;
+	grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+	gap: 20px;
+	align-items: start;
+}
+.hub-armory-gear > header,
+.hub-section-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: end;
+	justify-content: space-between;
+	gap: 12px;
+	margin-bottom: 14px;
+	padding: 0;
+	border: 0;
+	background: none;
+}
+.hub-armory-gear h2,
+.hub-section-head h2 {
+	margin: 0;
+}
+.hub-section-head p {
+	margin: 4px 0 0;
+}
+.hub-armory-gear > header a {
+	color: #e3c08f;
+	font-weight: 600;
+	text-decoration: none;
+}
+.hub-slots {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+	gap: 8px;
+}
+.hub-slot {
+	display: grid;
+	gap: 2px;
+	min-height: 62px;
+	padding: 10px 12px;
+	border: 1px solid #a68a5b30;
+	border-radius: 4px;
+	background: linear-gradient(140deg, #171416, #0f0e10);
+	text-decoration: none;
+	transition:
+		transform 0.18s ease,
+		border-color 0.18s ease;
+}
+.hub-slot:hover {
+	transform: translateY(-2px);
+	border-color: #a68a5b90;
+}
+.hub-slot span {
+	font-size: 12px;
+	letter-spacing: 0.04em;
+	color: #cdb48c;
+}
+.hub-slot strong {
+	overflow: hidden;
+	font-size: 13px;
+	font-weight: 500;
+	color: #7f786f;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.hub-slot.has-item strong {
+	color: #f3e6cf;
+}
+.hub-armory-side {
+	display: grid;
+	gap: 12px;
+}
+.hub-card {
+	display: grid;
+	gap: 4px;
+	padding: 18px 20px;
+	border: 1px solid #a68a5b45;
+	border-radius: 4px;
+	background: linear-gradient(145deg, #1d1719, #111113);
+	color: #ddd6cb;
+	text-decoration: none;
+	transition:
+		transform 0.2s ease,
+		border-color 0.2s ease,
+		box-shadow 0.2s ease;
+}
+.hub-card:hover {
+	transform: translateY(-3px);
+	border-color: #d5b483;
+	box-shadow: 0 10px 28px #0006;
+}
+.hub-card.is-pending {
+	border-left: 3px solid #c25a60;
+}
+.hub-card-label {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 12px;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: #cdb48c;
+}
+.hub-card strong {
+	font:
+		400 26px/1.2 Georgia,
+		serif;
+	color: #fff1d7;
+}
+.hub-card > span:not(.hub-card-label):not(.hub-progress) {
+	font-size: 14px;
+	color: #b8b2ad;
+}
+.hub-card em {
+	margin-top: 6px;
+	font-size: 14px;
+	font-style: normal;
+	font-weight: 600;
+	color: #e3c08f;
+}
+.hub-progress {
+	display: block;
+	height: 6px;
+	margin-top: 6px;
+	border-radius: 999px;
+	background: #2a2427;
+	overflow: hidden;
+}
+.hub-progress i {
+	display: block;
+	height: 100%;
+	background: linear-gradient(90deg, #8f1f2d, #e1bf8a);
+	transition: width 0.6s ease;
+}
+.hub-hint {
+	margin: 12px 0 0;
+	font-size: 14px;
+	color: #9a948c;
+}
+.hub-empty {
+	padding: 36px;
+	border: 1px dashed #a68a5b60;
+	border-radius: 4px;
+	text-align: center;
+	background: radial-gradient(ellipse at 50% 0%, #6e0f1d30, transparent 70%), #111113;
+}
+/* Character cards. */
+.hub-char-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+	gap: 12px;
+	margin-bottom: 20px;
+}
+.hub-char-card {
+	padding: 16px;
+	border: 1px solid color-mix(in srgb, var(--class-color, #a68a5b) 45%, #302a29);
+	border-radius: 4px;
+	background: linear-gradient(
+		120deg,
+		color-mix(in srgb, var(--class-color, #a68a5b) 12%, #151214),
+		#111113 75%
+	);
+	box-shadow: inset 3px 0 var(--class-color, #a68a5b);
+	transition: transform 0.2s ease;
+}
+.hub-char-card:hover {
+	transform: translateY(-2px);
+}
+.hub-char-top {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+.hub-char-top img {
+	width: 46px;
+	height: 46px;
+	border-radius: 6px;
+}
+.hub-char-top > div {
+	flex: 1;
+	min-width: 0;
+}
+.hub-char-top h3 {
+	margin: 0;
+	font-size: 19px;
+	color: var(--class-color, #f3e6cf);
+}
+.hub-char-top p {
+	margin: 2px 0 0;
+	font-size: 14px;
+}
+.hub-char-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin-top: 14px;
+}
+.hub-char-actions > * {
+	min-height: 36px;
+	padding: 6px 12px;
+	font-size: 13px;
+}
+.hub-new > summary {
+	color: #ecd2a8;
+	font-size: 15px;
+	font-weight: 600;
+	cursor: pointer;
+}
+.hub-new[open] > summary {
+	display: none;
+}
+.hub-new h3 {
+	margin-top: 0;
+}
+.hub-segment {
+	display: inline-flex;
+	gap: 4px;
+	margin-bottom: 18px;
+	padding: 4px;
+	border: 1px solid #a68a5b45;
+	border-radius: 999px;
+	background: #121113;
+}
+.hub-segment button {
+	min-height: 38px;
+	padding: 6px 16px;
+	border: 0;
+	border-radius: 999px;
+	background: transparent;
+	box-shadow: none;
+	color: #cfc7bb;
+	font-size: 14px;
+}
+.hub-segment button[aria-pressed='true'] {
+	background: linear-gradient(135deg, #6e0f1d, #3a141b);
+	color: #fff1d7;
+}
+@media (max-width: 1100px) {
+	.hub-hero {
+		grid-template-columns: minmax(0, 1fr) auto;
+	}
+	.hub-stats {
+		grid-column: 1 / -1;
+		grid-row: 2;
+	}
+	.hub-armory {
+		grid-template-columns: minmax(0, 1fr);
+	}
+	.hub-armory-side {
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+	}
+}
+@media (max-width: 600px) {
+	.hub-hero {
+		gap: 16px;
+		padding: 18px;
+	}
+	.hub-crest {
+		width: 60px;
+		height: 60px;
+	}
+	.hub-crest img {
+		width: 44px;
+		height: 44px;
+	}
+	.hub-stats > div {
+		flex: 1;
+		min-width: 0;
+		padding: 8px 10px;
+	}
+	.hub-stats dd {
+		font-size: 19px;
+	}
+	.hub-nav {
+		margin-inline: calc(-1 * clamp(18px, 4vw, 64px));
+		border-inline: 0;
+		border-radius: 0;
+	}
+	.hub-nav a {
+		flex: 0 0 auto;
+		padding: 8px 12px;
+	}
+	.hub-slots {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.hub-hero::before,
+	.hub-skeleton span {
+		animation: none;
+	}
+	.hub-body,
+	.hub-card,
+	.hub-slot,
+	.hub-char-card,
+	.hub-nav a::after,
+	.hub-progress i {
+		transition: none;
+	}
+	.hub-card:hover,
+	.hub-slot:hover,
+	.hub-char-card:hover {
+		transform: none;
+	}
+}
+/* Overflowing centred flex items become unreachable; the legacy nav rule centres them. */
+.hub-nav {
+	justify-content: flex-start;
+}
+.hub-hero h1 {
+	overflow-wrap: break-word;
+}
+@media (max-width: 600px) {
+	.hub-nav {
+		width: calc(100% + 2 * clamp(18px, 4vw, 64px));
+		box-sizing: border-box;
+	}
+	.hub-hero {
+		grid-template-columns: minmax(0, 1fr);
+	}
+	.hub-stats {
+		grid-row: auto;
+	}
+	.hub-logout {
+		position: absolute;
+		top: 12px;
+		right: 12px;
+		min-height: 32px;
+		padding: 5px 10px;
+		font-size: 12px;
+	}
+	.hub-hero-main {
+		align-items: flex-start;
+		padding-top: 28px;
+	}
+	.hub-hero h1 {
+		font-size: 30px;
+	}
+}

@@ -711,6 +711,14 @@ Publicado: `0e8ee4d`; backend `38650997078`, Pages `38650986419` y validación `
 - Validación: 69 pruebas Node, prueba workerd y build Pages; las 12 pestañas del Panel y el Perfil con sesión QA de líder (datos sintéticos) a 1440/1024/768/390/320 px sin desbordamiento ni errores JS; páginas públicas sin regresiones.
 Publicado: `aa1b606`; backend `38652050382`, Pages `38652035269` y validación `38652035080` correctos. theme.css y app.js servidos idénticos al local tras la propagación; /panel y /perfil responden 401 sin sesión, como corresponde. No se ha visto el panel de producción con una sesión real: pendiente de revisión del propietario.
 
+## 2026-10-15 — Perfil convertido en panel personal
+
+- /perfil abre directamente la armería del personaje Main: mosaico de ranuras y tarjetas de lista BiS (progreso conseguido/prioritario), guías comprobadas y datos pendientes de la ficha, todas enlazadas a la ficha completa.
+- Cabecera con emblema de clase, rango, asistencia y número de personajes como indicadores compactos; selector de personaje sin recarga.
+- Menú fijo de secciones (Mi armería, Personajes, Wishlist, Botín, Convocatorias) con URL #sección, historial del navegador, animación de entrada, esqueleto de carga y movimiento reducido respetado. Todo a uno o dos clics.
+- Personajes en tarjetas por clase (Ficha, Editar, Marcar Main, Archivar) y formulario plegable. Se reutilizan las APIs, la wishlist, el historial de loot, el consejo y las convocatorias existentes; sin cambios de backend ni datos.
+- Validación: 77 pruebas Node, workerd y build; navegador con sesión QA a 1440/1024/768/390/320 sin desbordamiento ni errores, navegación por menú, atrás, cambio de personaje, edición y enlace a la lista BiS.
+
 ## 2026-10-15 — Armería, listas BiS y guías (rama feature/armeria, sin publicar)
 
 - Ficha por personaje en `/armeria` (Resumen, Equipamiento, Mi BiS, Guías, Revisiones), enlazada desde el perfil y el roster del panel; Panel → Guías externas para el Líder.

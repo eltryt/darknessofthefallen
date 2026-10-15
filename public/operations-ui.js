@@ -1,7 +1,5 @@
 import { mountManualRoster } from './manual-roster-ui.js';
 import { rosterCards } from './roster-ui.js';
-import { mountWishlist } from './wishlist-ui.js';
-import { mountRaidEvents } from './raid-events-ui.js';
 const rankLabel = (rank) =>
 	({
 		visitor: 'Visitante',
@@ -781,47 +779,32 @@ export async function operationTab(tab, el, ctx) {
 	return false;
 }
 
-export async function attachMemberOperations({ rows, refresh, ...ctx }) {
-	const { api, me, esc, empty, table, field, select, area, formHandler, toast } = ctx;
-	if (!me.permissions.includes('community.read')) return;
-	const host = document.createElement('section');
-	host.className = 'section';
-	host.id = 'member-operations';
-	document.querySelector('#content').append(host);
-	host.innerHTML = `<div id="member-wishlist"></div><div class="panel-tabs"><button data-member-tab="loot" class="active" aria-pressed="true">Historial de loot</button><button data-member-tab="council" aria-pressed="false" class="secondary">Consejo actual</button></div><div id="member-loot"></div>`;
-	await mountWishlist(host.querySelector('#member-wishlist'), rows, refresh, ctx);
-
+// Member loot history and current council, without management permissions.
+export async function mountMemberLoot(host, ctx) {
+	const { me, toast } = ctx;
+	host.innerHTML = `<div class="hub-segment" role="group" aria-label="Botín"><button type="button" data-member-tab="loot" aria-pressed="true">Historial de loot</button><button type="button" data-member-tab="council" aria-pressed="false">Consejo actual</button></div><div data-member-loot></div>`;
+	const target = host.querySelector('[data-member-loot]');
+	const memberCtx = {
+		...ctx,
+		me: {
+			...me,
+			permissions: me.permissions.filter(
+				(p) => !['loot.manage', 'loot.delete', 'settings.manage'].includes(p),
+			),
+		},
+	};
 	host.querySelectorAll('[data-member-tab]').forEach(
 		(b) =>
 			(b.onclick = async () => {
+				host
+					.querySelectorAll('[data-member-tab]')
+					.forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
 				try {
-					host.querySelectorAll('[data-member-tab]').forEach((x) => {
-						x.classList.toggle('active', x === b);
-						x.setAttribute('aria-pressed', String(x === b));
-					});
-					await operationTab(b.dataset.memberTab, host.querySelector('#member-loot'), {
-						...ctx,
-						me: {
-							...me,
-							permissions: me.permissions.filter(
-								(p) => !['loot.manage', 'loot.delete', 'settings.manage'].includes(p),
-							),
-						},
-					});
+					await operationTab(b.dataset.memberTab, target, memberCtx);
 				} catch (error) {
 					toast(error.message);
 				}
 			}),
 	);
-	await operationTab('loot', host.querySelector('#member-loot'), {
-		...ctx,
-		me: {
-			...me,
-			permissions: me.permissions.filter((p) => !['loot.manage', 'loot.delete'].includes(p)),
-		},
-	});
-	const events = document.createElement('section');
-	events.className = 'section';
-	host.append(events);
-	await mountRaidEvents(events, ctx, { mine: true });
+	await operationTab('loot', target, memberCtx);
 }

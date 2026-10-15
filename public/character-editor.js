@@ -24,20 +24,10 @@ export function attachCharacterEditor({ rows, api, refresh, toast }) {
 		cancel.hidden = true;
 	}
 	cancel.onclick = reset;
-	const table = document.querySelector('.table-wrap table');
-	if (table) {
-		const th = document.createElement('th');
-		th.scope = 'col';
-		th.textContent = 'Acciones';
-		table.querySelector('thead tr').append(th);
-		for (const [index, tr] of [...table.querySelectorAll('tbody tr')].entries()) {
-			const character = rows[index],
-				td = document.createElement('td'),
-				button = document.createElement('button');
-			button.type = 'button';
-			button.className = 'secondary';
-			button.textContent = 'Editar';
-			button.setAttribute('aria-label', `Editar ${character.name}`);
+	// Profile cards expose edit/archive buttons; the form keeps the owner-protected API.
+	for (const character of rows) {
+		const button = document.querySelector(`[data-character-edit="${CSS.escape(character.id)}"]`);
+		if (button)
 			button.onclick = () => {
 				editing = character.id;
 				for (const key of [
@@ -56,15 +46,16 @@ export function attachCharacterEditor({ rows, api, refresh, toast }) {
 				cancel.hidden = false;
 				heading.textContent = `Editar ${character.name}`;
 				submit.textContent = 'Guardar cambios';
-				form.elements.name.focus();
-
-				// Update specialization dropdown when editing
+				const details = form.closest('details');
+				if (details) details.open = true;
 				updateSpecOptions(form.elements.class.value, character.spec || '');
+				form.scrollIntoView({ block: 'center', behavior: 'smooth' });
+				form.elements.name.focus({ preventScroll: true });
 			};
-			const archive = document.createElement('button');
-			archive.type = 'button';
-			archive.className = 'secondary danger';
-			archive.textContent = 'Archivar';
+		const archive = document.querySelector(
+			`[data-character-archive="${CSS.escape(character.id)}"]`,
+		);
+		if (archive)
 			archive.onclick = async () => {
 				if (
 					!confirm(
@@ -82,9 +73,6 @@ export function attachCharacterEditor({ rows, api, refresh, toast }) {
 					archive.disabled = false;
 				}
 			};
-			td.append(button, archive);
-			tr.append(td);
-		}
 	}
 
 	const oldSpec = form.elements.spec;
