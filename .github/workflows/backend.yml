@@ -59,6 +59,8 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || vars.CLOUDFLARE_ACCOUNT_ID }}
       - name: Configure Discord bot private messages when its secret is present
+        # A bot problem must not block the site deploy; call-ups still save without messages.
+        continue-on-error: true
         shell: bash
         run: |
           if [ -n "$DISCORD_BOT_TOKEN" ]; then
