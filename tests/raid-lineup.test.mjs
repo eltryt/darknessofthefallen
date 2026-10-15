@@ -255,3 +255,59 @@ test('call-up messages describe the place without mentions', () => {
 		false,
 	);
 });
+
+test('members see only a sent lineup; drafts stay with the organisers', async () => {
+	const f = await fixture();
+	try {
+		await f.request('/api/events/e1/lineup', 'rl', 'PUT', {
+			revision: 0,
+			slots: [
+				{ signupId: 's1', slot: 'group:1' },
+				{ signupId: 's2', slot: 'bench' },
+			],
+		});
+		assert.equal((await f.request('/api/events/e1', 'm1')).body.lineup, undefined);
+		await f.request('/api/events/e1/lineup/send', 'rl', 'POST', { revision: 1 });
+		const event = (await f.request('/api/events/e1', 'm1')).body;
+		assert.equal(event.lineup.players.length, 2);
+		assert.equal(event.lineup.players.find((p) => p.own).slot, 'group:1');
+		assert.equal(event.lineup.pendingChanges, false);
+		assert.equal((await f.request('/api/events/e1')).body.lineup, undefined);
+	} finally {
+		await f.close();
+	}
+});
+
+test('per-boss plans are managed by organisers; unassigned players stay pending', async () => {
+	const f = await fixture();
+	try {
+		const save = (who, bosses) => f.request('/api/events/e1/lineup/bosses', who, 'PUT', { bosses });
+		assert.equal((await save('m1', [{ boss: 'Onyxia' }])).status, 403);
+		assert.equal((await save('other-rl', [{ boss: 'Onyxia' }])).status, 403);
+		assert.equal((await save('rl', [{ boss: 'Onyxia' }, { boss: 'onyxia' }])).status, 400);
+		assert.equal(
+			(await save('rl', [{ boss: 'Onyxia', assignments: { stranger: 'in' } }])).status,
+			400,
+		);
+		assert.equal((await save('rl', [{ boss: 'Onyxia', assignments: { m1: 'out' } }])).status, 400);
+		// An old event without a plan keeps working and reports no bosses.
+		assert.deepEqual((await f.request('/api/events/e1', 'm1')).body.bossPlan, []);
+		const ok = await save('rl', [
+			{ boss: 'Onyxia', assignments: { m1: 'in', m2: 'bench' } },
+			{ boss: 'Segundo jefe', assignments: { m2: 'in' } },
+		]);
+		assert.equal(ok.status, 200);
+		assert.deepEqual(ok.body.bosses[0].assignments, { m1: 'in', m2: 'bench' });
+		const plan = (await f.request('/api/events/e1', 'm1')).body.bossPlan;
+		assert.deepEqual(
+			plan.map((b) => [b.boss, b.mine]),
+			[
+				['Onyxia', 'in'],
+				['Segundo jefe', 'pending'],
+			],
+		);
+		assert.equal(plan[0].bench, 1);
+	} finally {
+		await f.close();
+	}
+});

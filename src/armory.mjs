@@ -7,6 +7,7 @@ import {
 	bisContents,
 	guideContentTypes,
 	hostAllowed,
+	itemQualities,
 } from '../public/armory-catalog.js';
 import { normalizeSpecValue, isValidSpecForClass } from '../public/specs.js';
 
@@ -216,6 +217,67 @@ export async function armoryApi({
 	if ((m = path.match(/^\/api\/armory\/characters\/([^/]+)$/)) && method === 'GET') {
 		send(200, sheet(db, user, viewable(db, user, m[1])));
 		return true;
+	}
+	// Manual equipment: there is no verified Forever item catalogue, so the owner
+	// types what is equipped. Rows stay marked as manual.
+	if ((m = path.match(/^\/api\/armory\/characters\/([^/]+)\/equipment\/([\w]+)$/))) {
+		const c = owned(db, user, m[1]),
+			slot = choice(m[2], gameVersions[c.game_version]?.slots || [], 'ranura'),
+			previous =
+				db
+					.prepare('SELECT * FROM character_equipment WHERE character_id=? AND slot=?')
+					.get(c.id, slot) || null;
+		if (method === 'DELETE') {
+			if (previous?.origin === 'provider')
+				throw new HttpError(409, 'Este hueco lo actualiza el proveedor de datos.');
+			transaction(db, () => {
+				db.prepare('DELETE FROM character_equipment WHERE character_id=? AND slot=?').run(
+					c.id,
+					slot,
+				);
+				audit(db, user.id, 'armory.equipment.cleared', c.id, { previous, next: null });
+			});
+			send(200, { ok: true });
+			return true;
+		}
+		if (method === 'PUT') {
+			if (previous?.origin === 'provider')
+				throw new HttpError(409, 'Este hueco lo actualiza el proveedor de datos.');
+			const v = await body();
+			const level = v.item_level === '' || v.item_level == null ? null : Number(v.item_level);
+			if (level !== null && (!Number.isInteger(level) || level < 1 || level > 1000))
+				throw new HttpError(400, 'Nivel de objeto no válido.');
+			const quality = text(v.quality ?? '', 'calidad', 20, false);
+			if (quality && !(quality in itemQualities)) throw new HttpError(400, 'Calidad no válida.');
+			const row = {
+				item_name: text(v.item_name, 'nombre del objeto', 160),
+				quality,
+				item_level: level,
+				enchant: text(v.enchant ?? '', 'encantamiento', 120, false),
+				source_label: text(v.source_label ?? '', 'origen', 120, false),
+			};
+			transaction(db, () => {
+				db.prepare(
+					`INSERT INTO character_equipment(id,character_id,slot,item_name,quality,item_level,enchant,source_label,origin,updated_at)
+					 VALUES(?,?,?,?,?,?,?,?,'manual',?)
+					 ON CONFLICT(character_id,slot) DO UPDATE SET item_name=excluded.item_name,quality=excluded.quality,
+					 item_level=excluded.item_level,enchant=excluded.enchant,source_label=excluded.source_label,updated_at=excluded.updated_at`,
+				).run(
+					randomUUID(),
+					c.id,
+					slot,
+					row.item_name,
+					row.quality,
+					row.item_level,
+					row.enchant,
+					row.source_label,
+					now(),
+				);
+				audit(db, user.id, 'armory.equipment.saved', c.id, { previous, next: { slot, ...row } });
+			});
+			send(200, { slot, ...row });
+			return true;
+		}
 	}
 	if ((m = path.match(/^\/api\/armory\/characters\/([^/]+)\/bis-lists$/)) && method === 'POST') {
 		const c = owned(db, user, m[1]),

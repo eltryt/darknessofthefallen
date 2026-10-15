@@ -92,7 +92,7 @@ test('migration 007 keeps existing characters and applies empty armory defaults'
 		db.close();
 		// Reopening must not run the migration twice.
 		const again = openDatabase(file);
-		assert.equal(again.prepare('SELECT COUNT(*) n FROM schema_migrations').get().n, 9);
+		assert.equal(again.prepare('SELECT COUNT(*) n FROM schema_migrations').get().n, 10);
 		again.close();
 	} finally {
 		rmSync(dir, { recursive: true, force: true });
@@ -368,5 +368,92 @@ test('guide links are configured by the leader, host-checked and shown only when
 		);
 	} finally {
 		await f.close();
+	}
+});
+
+test('only the owner records equipment by hand, per valid slot', async () => {
+	const f = await fixture();
+	try {
+		const id = await f.character('member');
+		const item = { item_name: 'Objeto escrito a mano', quality: 'epic', item_level: 60 };
+		for (const rank of ['raider', 'officer', 'leader'])
+			assert.equal(
+				(await f.request(`/api/armory/characters/${id}/equipment/head`, rank, 'PUT', item)).status,
+				404,
+			);
+		assert.equal(
+			(await f.request(`/api/armory/characters/${id}/equipment/tabard`, 'member', 'PUT', item))
+				.status,
+			400,
+		);
+		assert.equal(
+			(
+				await f.request(`/api/armory/characters/${id}/equipment/head`, 'member', 'PUT', {
+					...item,
+					quality: 'mythic-plus',
+				})
+			).status,
+			400,
+		);
+		assert.equal(
+			(await f.request(`/api/armory/characters/${id}/equipment/head`, 'member', 'PUT', item))
+				.status,
+			200,
+		);
+		await f.request(`/api/armory/characters/${id}/equipment/head`, 'member', 'PUT', {
+			...item,
+			item_level: 62,
+		});
+		const sheet = (await f.request(`/api/armory/characters/${id}`, 'member')).body;
+		assert.equal(sheet.equipment.length, 1);
+		assert.equal(sheet.equipment[0].item_level, 62);
+		assert.equal(sheet.equipment[0].origin, 'manual');
+		assert.equal(
+			(await f.request(`/api/armory/characters/${id}/equipment/head`, 'member', 'DELETE', {}))
+				.status,
+			200,
+		);
+		assert.equal(
+			(await f.request(`/api/armory/characters/${id}`, 'member')).body.equipment.length,
+			0,
+		);
+	} finally {
+		await f.close();
+	}
+});
+
+test('migration 010 copies BiS entries into the wishlist without touching the originals', () => {
+	const db = openDatabase(':memory:');
+	try {
+		db.exec(`INSERT INTO users VALUES('u','Jugador','member','2026-10-15');
+		 INSERT INTO characters(id,user_id,name,class,role,created_at) VALUES('c','u','Main','Mago','DPS distancia','2026-10-15');
+		 INSERT INTO bis_lists VALUES('l','c','arcane','Banda','Fase 1','','2026-10-15','2026-10-15');
+		 INSERT INTO bis_entries(id,list_id,slot,item_name,source,boss,status,is_primary,priority,notes,updated_at) VALUES
+		  ('p','l','head','Principal','Raid A','Jefe A','Pendiente',1,1,'nota','2026-10-15'),
+		  ('a','l','head','Alternativa','Raid A','Jefe A','Alternativa',0,3,'','2026-10-15'),
+		  ('g','l','neck','Conseguido','Raid B','','Conseguido',0,2,'','2026-10-15');
+		 INSERT INTO wishlists VALUES('w','u','{"item":"Ya existente","priority":2}');
+		 DELETE FROM schema_migrations WHERE version=10;
+		 DROP TABLE raid_boss_assignments; DROP TABLE raid_boss_plans;`);
+		db.exec(
+			readFileSync(new URL('../migrations/010_unified_wishlist.sql', import.meta.url), 'utf8'),
+		);
+		const rows = Object.fromEntries(
+			db
+				.prepare('SELECT id,data FROM wishlists')
+				.all()
+				.map((r) => [r.id, JSON.parse(r.data)]),
+		);
+		assert.equal(Object.keys(rows).length, 4);
+		assert.equal(rows.w.item, 'Ya existente');
+		assert.equal(rows['bis-p'].status, 'BiS');
+		assert.equal(rows['bis-p'].notes, 'nota');
+		assert.equal(rows['bis-p'].boss, 'Jefe A');
+		assert.equal(rows['bis-p'].characterId, 'c');
+		assert.equal(rows['bis-a'].status, 'Me interesa');
+		assert.equal(rows['bis-g'].obtained, true);
+		assert.equal(db.prepare('SELECT COUNT(*) n FROM bis_entries').get().n, 3);
+	} finally {
+		db.close();
 	}
 });

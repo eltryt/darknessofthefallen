@@ -23,6 +23,8 @@ const list = (value, max, label) => {
 	return value;
 };
 const progressStates = ['No intentado', 'En progreso', 'Derrotado'];
+const wishStates = ['BiS', 'Me interesa', 'Pasar'];
+const wishStatus = (value) => choice(value, wishStates, 'estado');
 const methods = ['Loot Council', 'Roll', 'Soft Reserve', 'DKP', 'Híbrido'];
 
 export function publicProgress(db) {
@@ -327,7 +329,10 @@ export async function operations(ctx) {
 				item: text(v.item, 'objeto', 160),
 				raid: text(v.raid ?? '', 'raid', 120, false),
 				boss: text(v.boss ?? '', 'boss', 120, false),
+				slot: text(v.slot ?? '', 'hueco', 40, false),
 				priority,
+				status: wishStatus(v.status ?? 'Me interesa'),
+				obtained: v.obtained === true,
 				notes: text(v.notes ?? '', 'notas', 1000, false),
 			};
 			const id = randomUUID();
@@ -344,6 +349,32 @@ export async function operations(ctx) {
 		}
 	}
 	const wishMatch = path.match(/^\/api\/wishlists\/([^/]+)$/);
+	if (wishMatch && method === 'PATCH') {
+		requirePermission('community.read');
+		const id = wishMatch[1],
+			previous = requireRecord(
+				db.prepare('SELECT * FROM wishlists WHERE id=? AND user_id=?').get(id, user.id),
+			),
+			v = await body(),
+			old = JSON.parse(previous.data),
+			next = { ...old };
+		if ('status' in v) next.status = wishStatus(v.status);
+		if ('obtained' in v) next.obtained = v.obtained === true;
+		if ('notes' in v) next.notes = text(v.notes ?? '', 'notas', 1000, false);
+		if ('slot' in v) next.slot = text(v.slot ?? '', 'hueco', 40, false);
+		if ('priority' in v) {
+			const priority = Number(v.priority);
+			if (!Number.isInteger(priority) || priority < 1 || priority > 5)
+				throw new HttpError(400, 'La prioridad debe estar entre 1 y 5.');
+			next.priority = priority;
+		}
+		transaction(db, () => {
+			db.prepare('UPDATE wishlists SET data=? WHERE id=?').run(JSON.stringify(next), id);
+			log('wishlist.updated', id, old, next);
+		});
+		send(200, { ...next, id });
+		return true;
+	}
 	if (wishMatch && method === 'DELETE') {
 		requirePermission('community.read');
 		const id = wishMatch[1],

@@ -134,7 +134,42 @@ export function lineupView(db, row, user, env) {
 		),
 		dm: { ready: dmReady(env) },
 		started: Date.parse(row.starts_at) <= Date.now(),
+		bosses: bossAssignments(db, row.id),
 	};
+}
+function bossAssignments(db, eventId) {
+	const rows = db
+		.prepare('SELECT boss,user_id,status FROM raid_boss_assignments WHERE event_id=?')
+		.all(eventId);
+	return db
+		.prepare('SELECT boss FROM raid_boss_plans WHERE event_id=? ORDER BY position')
+		.all(eventId)
+		.map(({ boss }) => ({
+			boss,
+			assignments: Object.fromEntries(
+				rows.filter((r) => r.boss === boss).map((r) => [r.user_id, r.status]),
+			),
+		}));
+}
+const MAX_BOSSES = 20;
+function validBosses(row, value) {
+	if (!Array.isArray(value) || value.length > MAX_BOSSES)
+		throw new HttpError(400, `Indica como máximo ${MAX_BOSSES} jefes.`);
+	const users = new Set(eligibleSignups(row).map((s) => s.userId)),
+		names = new Set();
+	return value.map((entry) => {
+		const boss = String(entry?.boss ?? '').trim();
+		if (!boss || boss.length > 120) throw new HttpError(400, 'Nombre de jefe no válido.');
+		if (names.has(boss.toLowerCase())) throw new HttpError(400, `${boss} aparece dos veces.`);
+		names.add(boss.toLowerCase());
+		const assignments = Object.entries(entry.assignments || {});
+		for (const [userId, status] of assignments) {
+			if (!users.has(userId))
+				throw new HttpError(400, 'Hay un jugador que ya no está inscrito. Recarga la alineación.');
+			if (!['in', 'bench'].includes(status)) throw new HttpError(400, 'Estado no válido.');
+		}
+		return { boss, assignments };
+	});
 }
 function validSlots(row, value) {
 	if (!Array.isArray(value) || value.length > 200)
@@ -182,10 +217,28 @@ export async function raidLineupApi({ db, user, path, method, body, send, env, r
 		);
 		return true;
 	}
-	if (!(m = path.match(/^\/api\/events\/([^/]+)\/lineup(?:\/(send|retry))?$/))) return false;
+	if (!(m = path.match(/^\/api\/events\/([^/]+)\/lineup(?:\/(send|retry|bosses))?$/))) return false;
 	requireUser();
 	const row = managedEvent(db, user, m[1]),
 		action = m[2];
+	if (action === 'bosses' && method === 'PUT') {
+		const bosses = validBosses(row, (await body()).bosses);
+		transaction(db, () => {
+			db.prepare('DELETE FROM raid_boss_assignments WHERE event_id=?').run(row.id);
+			db.prepare('DELETE FROM raid_boss_plans WHERE event_id=?').run(row.id);
+			const plan = db.prepare('INSERT INTO raid_boss_plans(event_id,position,boss) VALUES(?,?,?)'),
+				assign = db.prepare(
+					'INSERT INTO raid_boss_assignments(event_id,boss,user_id,status) VALUES(?,?,?,?)',
+				);
+			bosses.forEach((b, position) => {
+				plan.run(row.id, position, b.boss);
+				for (const [userId, status] of b.assignments) assign.run(row.id, b.boss, userId, status);
+			});
+			audit(db, user.id, 'raid.bosses.saved', row.id, { bosses: bosses.map((b) => b.boss) });
+		});
+		send(200, lineupView(db, row, user, env));
+		return true;
+	}
 	if (!action && method === 'GET') {
 		send(200, lineupView(db, row, user, env));
 		return true;

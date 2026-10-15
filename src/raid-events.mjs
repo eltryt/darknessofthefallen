@@ -152,7 +152,55 @@ export function projectEvent(db, row, user, env) {
 			status: result.job.status,
 			error: 'Hay una actualización pendiente de sincronización.',
 		};
+	// Only a lineup that was sent is shown to members: drafts stay with the organisers.
+	const lineup = db
+		.prepare('SELECT sent_at,sent_revision,revision FROM raid_lineups WHERE event_id=?')
+		.get(row.id);
+	if (lineup?.sent_at) {
+		const bySignup = new Map(result.signups.map((s) => [s.id, s]));
+		result.lineup = {
+			sentAt: lineup.sent_at,
+			pendingChanges: lineup.revision !== lineup.sent_revision,
+			players: db
+				.prepare(
+					"SELECT user_id,signup_id,name,slot FROM raid_callups WHERE event_id=? AND slot!='removed' ORDER BY name",
+				)
+				.all(row.id)
+				.map((c) => {
+					const s = bySignup.get(c.signup_id);
+					return {
+						name: c.name,
+						slot: c.slot,
+						className: s?.className || '',
+						specName: s?.specName || '',
+						characterClass: s?.registeredClass || null,
+						own: c.user_id === user.id,
+					};
+				}),
+		};
+	}
+	result.bossPlan = bossPlan(db, row.id, user.id);
 	return result;
+}
+// Per-boss participation planned on the web. Raid-Helper has no such data; a
+// player without an assignment is "pending", never "out".
+export function bossPlan(db, eventId, userId) {
+	const bosses = db
+		.prepare('SELECT boss FROM raid_boss_plans WHERE event_id=? ORDER BY position')
+		.all(eventId);
+	if (!bosses.length) return [];
+	const rows = db
+		.prepare('SELECT boss,user_id,status FROM raid_boss_assignments WHERE event_id=?')
+		.all(eventId);
+	return bosses.map(({ boss }) => {
+		const own = rows.filter((r) => r.boss === boss);
+		return {
+			boss,
+			mine: own.find((r) => r.user_id === userId)?.status || 'pending',
+			in: own.filter((r) => r.status === 'in').length,
+			bench: own.filter((r) => r.status === 'bench').length,
+		};
+	});
 }
 function getEvent(db, id) {
 	const row = db.prepare('SELECT * FROM raid_events WHERE id=?').get(id);
