@@ -2510,3 +2510,572 @@ body[data-page='/panel'] #application-list > .empty {
 	line-height: 1.6;
 	color: #cfc7bb;
 }
+
+/* Armory: character sheet, equipment slots, BiS lists, guides and officer reviews. */
+body[data-page='/armeria'] {
+	--section-art: url('assets/art/war-room.webp');
+}
+body[data-page='/armeria'] main h2,
+body[data-page='/armeria'] main h3 {
+	font-family: Georgia, serif;
+	font-weight: 400;
+}
+.armory-toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: end;
+	justify-content: space-between;
+	gap: 12px 24px;
+	margin: 28px 0 16px;
+}
+.armory-back {
+	color: #e3c08f;
+	font-weight: 600;
+	text-decoration: none;
+}
+.armory-back:hover {
+	text-decoration: underline;
+}
+.armory-switch {
+	display: grid;
+	gap: 6px;
+	min-width: min(100%, 320px);
+	font-size: 13px;
+	color: #b8b2ad;
+}
+.armory-head {
+	position: relative;
+	isolation: isolate;
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	align-items: center;
+	gap: 24px;
+	padding: clamp(20px, 3vw, 32px);
+	border: 1px solid #a68a5b70;
+	border-radius: 4px;
+	overflow: hidden;
+	background: #111113;
+}
+.armory-head::before,
+.armory-head::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+}
+.armory-head::before {
+	z-index: -2;
+	background: var(--section-art) center 35% / cover;
+	opacity: 0.55;
+}
+.armory-head::after {
+	background:
+		linear-gradient(90deg, #0b0b0df5 30%, #0b0b0dcc 65%, #0b0b0d88),
+		radial-gradient(
+			ellipse at 8% 50%,
+			color-mix(in srgb, var(--class-color, #a68a5b) 22%, transparent),
+			transparent 60%
+		);
+}
+.armory-crest {
+	display: grid;
+	place-items: center;
+	width: 88px;
+	height: 88px;
+	border: 1px solid color-mix(in srgb, var(--class-color, #a68a5b) 70%, #a68a5b);
+	border-radius: 6px;
+	background: #0b0b0d;
+	box-shadow: 0 0 28px color-mix(in srgb, var(--class-color, #a68a5b) 25%, transparent);
+}
+.armory-crest img {
+	width: 64px;
+	height: 64px;
+	border-radius: 4px;
+}
+.armory-identity h1 {
+	margin: 6px 0 4px;
+	font-size: clamp(32px, 4vw, 48px);
+	line-height: 1.1;
+}
+.armory-identity p {
+	margin: 2px 0;
+	color: #ddd6cb;
+}
+.armory-line {
+	font-size: 17px;
+	color: var(--class-color, #f3e6cf) !important;
+}
+.armory-meta {
+	font-size: 15px;
+}
+.armory-owner {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-top: 10px !important;
+	font-size: 14px;
+	color: #b8b2ad !important;
+}
+.armory-owner svg {
+	width: 16px;
+	height: 16px;
+	fill: none;
+	stroke: #e3c08f;
+	stroke-width: 1.8;
+}
+.armory-badges {
+	display: grid;
+	justify-items: end;
+	gap: 8px;
+	align-self: start;
+}
+.armory-badges small {
+	color: #9a948c;
+	font-size: 12px;
+	text-align: right;
+}
+.armory-tabs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 22px 0;
+}
+.armory-tabs button {
+	min-height: 44px;
+	padding: 9px 20px;
+	border: 1px solid #a68a5b45;
+	border-radius: 999px;
+	background: #141215;
+	box-shadow: none;
+	color: #d7cfc3;
+	font-size: 14px;
+	font-weight: 600;
+}
+.armory-tabs button[aria-pressed='true'] {
+	border-color: #e1bf8a;
+	background: linear-gradient(135deg, #6e0f1d, #3a141b);
+	color: #fff1d7;
+}
+.armory-body {
+	min-height: 240px;
+}
+.armory-summary {
+	display: grid;
+	grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+	gap: 20px;
+	align-items: start;
+	margin-bottom: 24px;
+}
+.armory-facts {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 1px;
+	margin: 0;
+	border: 1px solid #a68a5b40;
+	border-radius: 4px;
+	overflow: hidden;
+	background: #a68a5b26;
+}
+.armory-facts > div {
+	padding: 12px 16px;
+	background: #121113;
+}
+.armory-facts dt {
+	font-size: 12px;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: #cdb48c;
+}
+.armory-facts dd {
+	margin: 2px 0 0;
+	font-size: 15px;
+	color: #f3e6cf;
+}
+.armory-facts .muted,
+.guide-provider em {
+	color: #8f877d;
+	font-style: normal;
+}
+.armory-form h2 {
+	margin-top: 0;
+}
+.armory-check {
+	display: flex !important;
+	align-items: center;
+	gap: 8px;
+	min-height: 44px;
+}
+/* Equipment and BiS slots share the framed two-column layout. */
+.gear-grid,
+.bis-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 10px;
+	margin-bottom: 20px;
+}
+.gear-slot,
+.bis-slot {
+	border: 1px solid #a68a5b38;
+	border-radius: 4px;
+	background: linear-gradient(110deg, #171416, #101012);
+}
+.gear-slot {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	min-height: 64px;
+	padding: 10px 14px;
+}
+.gear-slot strong,
+.bis-slot h3 {
+	color: #f3e6cf;
+	font-size: 15px;
+}
+.gear-slot small {
+	display: block;
+	color: #8f877d;
+	font-size: 13px;
+}
+.gear-icon {
+	display: grid;
+	flex: 0 0 40px;
+	place-items: center;
+	width: 40px;
+	height: 40px;
+	border: 1px solid #a68a5b40;
+	border-radius: 4px;
+	background: #0b0b0d;
+}
+.gear-icon svg {
+	width: 20px;
+	height: 20px;
+	fill: none;
+	stroke: #8f877d;
+	stroke-width: 1.5;
+	stroke-linejoin: round;
+}
+.gear-item {
+	display: block;
+	color: #f3e6cf;
+}
+.quality-uncommon .gear-item {
+	color: #4fd06b;
+}
+.quality-rare .gear-item {
+	color: #3d9bff;
+}
+.quality-epic .gear-item {
+	color: #b46cff;
+}
+.quality-legendary .gear-item {
+	color: #ff9a3d;
+}
+.bis-lists {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-bottom: 18px;
+}
+.bis-lists button[aria-pressed='true'] {
+	border-color: #e1bf8a;
+	background: #643345;
+	color: #fff;
+}
+.bis-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: end;
+	justify-content: space-between;
+	gap: 12px;
+	margin-bottom: 14px;
+}
+.bis-head h2 {
+	margin: 0;
+}
+.bis-head p {
+	margin: 4px 0 0;
+	font-size: 14px;
+}
+.bis-slot {
+	padding: 12px 14px;
+}
+.bis-slot header {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+.bis-slot h3 {
+	flex: 1;
+	margin: 0;
+	font-family: inherit !important;
+	font-weight: 650 !important;
+}
+.bis-count {
+	font-size: 12px;
+	color: #8f877d;
+}
+.bis-slot ul {
+	display: grid;
+	gap: 8px;
+	margin: 12px 0 0;
+	padding: 0;
+	list-style: none;
+}
+.bis-entry {
+	padding: 10px 12px;
+	border: 1px solid #ffffff10;
+	border-radius: 4px;
+	background: #0d0c0f;
+}
+.bis-entry.is-primary {
+	border-color: #a68a5b70;
+	background: linear-gradient(110deg, #2a1418, #120d10);
+}
+.bis-entry-main {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+.bis-entry-main strong {
+	color: #f3e6cf;
+	font-size: 15px;
+}
+.bis-entry small {
+	display: block;
+	margin-top: 4px;
+	color: #b8b2ad;
+	font-size: 13px;
+}
+.bis-badge {
+	padding: 2px 7px;
+	border-radius: 3px;
+	background: #e1bf8a;
+	color: #1a1214;
+	font-size: 11px;
+	font-weight: 800;
+	letter-spacing: 0.04em;
+}
+.bis-badge.alt {
+	background: #2a2729;
+	color: #cfc7bb;
+}
+.bis-priority {
+	color: #e3c08f;
+	font-size: 12px;
+	font-weight: 700;
+}
+.bis-notes {
+	margin: 6px 0 0;
+	font-size: 13px;
+}
+.bis-notes span {
+	color: #cdb48c;
+}
+.bis-entry .actions {
+	margin-top: 8px;
+	gap: 6px;
+}
+.bis-entry .actions button {
+	min-height: 36px;
+	padding: 6px 12px;
+	font-size: 13px;
+}
+.armory-new-list {
+	margin-top: 20px;
+}
+/* External guides: one framed card per provider, sections as rows. */
+.guide-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+	gap: 14px;
+	margin: 18px 0;
+}
+.guide-provider {
+	border: 1px solid #a68a5b45;
+	border-radius: 4px;
+	background: linear-gradient(145deg, #1b1718, #101012);
+}
+.guide-provider header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 14px 16px;
+	border-bottom: 1px solid #a68a5b38;
+}
+.guide-provider header h3 {
+	margin: 0;
+	color: #f0d7ae;
+}
+.guide-provider header a {
+	color: #e3c08f;
+	font-size: 13px;
+}
+.guide-provider ul {
+	margin: 0;
+	padding: 6px 16px 12px;
+	list-style: none;
+}
+.guide-provider li {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 6px 12px;
+	padding: 9px 0;
+	border-bottom: 1px solid #ffffff0a;
+	font-size: 14px;
+}
+.guide-provider li:last-child {
+	border-bottom: 0;
+}
+.guide-link {
+	padding: 4px 10px;
+	border: 1px solid #a68a5b70;
+	border-radius: 999px;
+	color: #fff1d7;
+	font-size: 13px;
+	text-decoration: none;
+}
+.guide-link:hover {
+	background: #6e0f1d;
+}
+.review-layout {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 24px;
+}
+.review-list {
+	display: grid;
+	gap: 10px;
+	margin: 0 0 14px;
+	padding: 0;
+	list-style: none;
+}
+.review-list .card {
+	padding: 14px 16px;
+}
+.review-list p {
+	margin: 8px 0;
+}
+.review-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+.review-head small,
+.review-list small {
+	color: #9a948c;
+	font-size: 13px;
+}
+.armory-link {
+	color: #e3c08f;
+	font-size: 13px;
+}
+.guide-admin-providers {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+	gap: 10px;
+}
+.guide-admin-providers label {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+	padding: 14px 16px;
+}
+.guide-admin-providers small {
+	display: block;
+	color: #9a948c;
+}
+@media (max-width: 900px) {
+	.armory-summary,
+	.review-layout {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+@media (max-width: 700px) {
+	.armory-head {
+		grid-template-columns: auto minmax(0, 1fr);
+		gap: 16px;
+	}
+	.armory-badges {
+		grid-column: 1 / -1;
+		grid-auto-flow: column;
+		justify-content: start;
+		align-items: center;
+	}
+	.armory-crest {
+		width: 64px;
+		height: 64px;
+	}
+	.armory-crest img {
+		width: 48px;
+		height: 48px;
+	}
+	.gear-grid,
+	.bis-grid,
+	.armory-facts {
+		grid-template-columns: minmax(0, 1fr);
+	}
+	.armory-tabs {
+		flex-wrap: nowrap;
+		overflow-x: auto;
+		scrollbar-width: thin;
+		padding-bottom: 4px;
+	}
+	.armory-tabs button {
+		flex: 0 0 auto;
+	}
+}
+/* The site-wide header rule must not style card headers inside the armory. */
+.bis-slot > header,
+.guide-provider > header {
+	padding: 0;
+	border-bottom: 0;
+	background: none;
+	gap: 12px;
+}
+.guide-provider > header {
+	padding: 14px 16px;
+	border-bottom: 1px solid #a68a5b38;
+}
+.bis-grid {
+	align-items: start;
+}
+.armory-tabs button {
+	width: auto;
+}
+.armory-owner {
+	display: block;
+}
+.armory-owner svg {
+	display: inline-block;
+	margin-right: 6px;
+	vertical-align: -3px;
+}
+body[data-page='/armeria'] .notice {
+	max-width: 80ch;
+	padding: 10px 14px;
+	border-left: 2px solid #a68a5b;
+	background: #a68a5b0d;
+	color: #d7cfc3;
+	font-size: 14px;
+}
+body[data-page='/armeria'] label {
+	font-size: 14px;
+	color: #ddd6cb;
+}
+body[data-page='/armeria'] .form {
+	max-width: none;
+}
+body[data-page='/armeria'] details:not(.calendar-disclosure) > summary {
+	color: #ecd2a8;
+	font-size: 15px;
+	font-weight: 600;
+}
+.armory-tabs {
+	flex-direction: row;
+}

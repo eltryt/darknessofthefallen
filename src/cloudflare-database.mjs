@@ -10,6 +10,7 @@ export function durableDatabase(
 	recruitmentSchema,
 	raidEventsSchema,
 	gmSchema,
+	armorySchema,
 ) {
 	const execute = (sql, parameters = []) => storage.sql.exec(sql, ...parameters);
 	const db = {
@@ -48,6 +49,8 @@ export function durableDatabase(
 			db.exec(raidEventsSchema);
 		if (!db.prepare('SELECT version FROM schema_migrations WHERE version=6').get())
 			db.exec(gmSchema);
+		if (!db.prepare('SELECT version FROM schema_migrations WHERE version=7').get())
+			db.exec(armorySchema);
 	});
 	return db;
 }

@@ -14,9 +14,12 @@ import {
 	classes,
 	combatRoles,
 	characterInput,
+	armoryInput,
+	armoryValues,
 	publicCharacter,
 	attendanceMetrics,
 } from './domain.mjs';
+import { armoryApi } from './armory.mjs';
 import {
 	SESSION_MAX_AGE_SECONDS,
 	currentSession,
@@ -80,6 +83,9 @@ const files = {
 	'/assets/guild-logo.png': ['assets/guild-logo.png', 'image/png'],
 	'/operations-ui.js': ['operations-ui.js', 'text/javascript'],
 	'/character-editor.js': ['character-editor.js', 'text/javascript'],
+	'/armory-catalog.js': ['armory-catalog.js', 'text/javascript'],
+	'/armory-view.js': ['armory-view.js', 'text/javascript'],
+	'/armory-admin-ui.js': ['armory-admin-ui.js', 'text/javascript'],
 	'/style.css': ['style.css', 'text/css'],
 	'/theme.css': ['theme.css', 'text/css'],
 	'/assets/night-sanctum.svg': ['assets/night-sanctum.svg', 'image/svg+xml'],
@@ -98,6 +104,7 @@ const pages = new Set([
 	'/login',
 	'/perfil',
 	'/panel',
+	'/armeria',
 ]);
 async function body(req) {
 	let raw = '';
@@ -292,6 +299,20 @@ export function createApp(db, env, { readAsset = readLocalAsset } = {}) {
 				return send(200, { ok: true }, { 'Set-Cookie': cookie('session', '', env, 0) });
 			}
 			if (
+				await armoryApi({
+					db,
+					user,
+					path,
+					method,
+					url,
+					body: () => body(req),
+					send,
+					requireUser,
+					requirePermission,
+				})
+			)
+				return;
+			if (
 				await manualRosterApi({
 					db,
 					user,
@@ -316,7 +337,9 @@ export function createApp(db, env, { readAsset = readLocalAsset } = {}) {
 					);
 				if (method === 'POST') {
 					requirePermission('character.write');
-					const v = characterInput(await body(req)),
+					const input = await body(req),
+						v = characterInput(input),
+						sheet = armoryInput(input, v.class),
 						id = randomUUID();
 					transaction(db, () => {
 						const count = db
@@ -343,6 +366,9 @@ export function createApp(db, env, { readAsset = readLocalAsset } = {}) {
 							v.isMain || !count ? 1 : 0,
 							date(),
 						);
+						db.prepare(
+							'UPDATE characters SET game_version=?,realm=?,region=?,faction=?,race=?,secondary_spec=?,level=?,updated_at=? WHERE id=?',
+						).run(...armoryValues(sheet), date(), id);
 						audit(db, user.id, 'character.created', id, { name: v.name });
 					});
 					return send(201, { id });
@@ -356,11 +382,12 @@ export function createApp(db, env, { readAsset = readLocalAsset } = {}) {
 					.get(id, user.id);
 				if (!previous) throw new HttpError(404, 'Personaje no encontrado.');
 				const input = await body(req);
-				const v = characterInput({ ...previous, ...input });
+				const v = characterInput({ ...previous, ...input }),
+					sheet = armoryInput({ ...previous, ...input }, v.class);
 				// Main changes use the dedicated atomic endpoint. Ignore client ownership/source fields.
 				transaction(db, () => {
 					db.prepare(
-						'UPDATE characters SET name=?,surname=?,class=?,role=?,spec=?,professions=?,availability=?,notes=? WHERE id=? AND user_id=?',
+						'UPDATE characters SET name=?,surname=?,class=?,role=?,spec=?,professions=?,availability=?,notes=?,game_version=?,realm=?,region=?,faction=?,race=?,secondary_spec=?,level=?,updated_at=? WHERE id=? AND user_id=?',
 					).run(
 						v.name,
 						v.surname,
@@ -370,11 +397,14 @@ export function createApp(db, env, { readAsset = readLocalAsset } = {}) {
 						v.professions,
 						v.availability,
 						v.notes,
+						...armoryValues(sheet),
+						date(),
 						id,
 						user.id,
 					);
 					const before = {},
 						after = {};
+					Object.assign(v, sheet);
 					for (const key of [
 						'name',
 						'surname',
@@ -384,6 +414,7 @@ export function createApp(db, env, { readAsset = readLocalAsset } = {}) {
 						'professions',
 						'availability',
 						'notes',
+						...Object.keys(sheet),
 					]) {
 						if (previous[key] !== v[key]) {
 							before[key] = previous[key];
@@ -619,7 +650,7 @@ export function createApp(db, env, { readAsset = readLocalAsset } = {}) {
 				if (!can(user, 'roster.read'))
 					throw new HttpError(403, 'Tu rango no permite entrar al panel.');
 			}
-			if (path === '/perfil') requireUser();
+			if (path === '/perfil' || path === '/armeria') requireUser();
 			if (files[path] || pages.has(path)) {
 				const [file, type] = files[path] || ['index.html', 'text/html'];
 				res.writeHead(200, {

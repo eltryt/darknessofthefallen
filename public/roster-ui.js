@@ -19,7 +19,12 @@ export function classKey(name) {
 export function rosterCards(
 	rows,
 	esc,
-	{ privateDetails = false, rankLabel = (value) => value, editable = false } = {},
+	{
+		privateDetails = false,
+		rankLabel = (value) => value,
+		editable = false,
+		sheetLinks = false,
+	} = {},
 ) {
 	const roleOrder = ['Tanque', 'Sanador', 'DPS melee', 'DPS distancia'];
 	const roles = [...new Set(rows.map((row) => row.role))].sort(
@@ -41,7 +46,7 @@ export function rosterCards(
 						${members
 							.map((row) => {
 								const identity = `<span class="class-emblem" aria-hidden="true">${row.spec ? ClassWithSpecIcon({ className: row.class, specId: row.spec }) : ClassIcon({ className: row.class })}</span><span class="roster-player-info"><strong class="class-name">${esc(row.name)}${privateDetails && row.surname ? ' ' + esc(row.surname) : ''}</strong><span>${esc(row.class)}${privateDetails ? ' · ' + esc(rankLabel(row.rank)) : ''}</span></span>`;
-								return `<li class="roster-player class-${classKey(row.class)}">${privateDetails ? `<details class="roster-profile"><summary>${identity}<span class="roster-main-badge">${row.is_main ? 'Main' : 'Alter'}</span><span class="roster-expand" aria-hidden="true">⌄</span></summary><div class="roster-profile-body"><dl><dt>Jugador</dt><dd>${esc(row.display_name || row.name)}</dd><dt>Disponibilidad</dt><dd>${esc(row.availability || 'Por confirmar')}</dd><dt>Registro</dt><dd>${row.source === 'staff' ? 'Manual · sin cuenta web' : 'Cuenta de Discord'}</dd></dl>${editable ? `<button type="button" class="secondary" data-roster-edit="${esc(row.id)}">Editar personaje</button>` : ''}</div></details>` : `<div class="roster-public-identity">${identity}</div>`}</li>`;
+								return `<li class="roster-player class-${classKey(row.class)}">${privateDetails ? `<details class="roster-profile"><summary>${identity}<span class="roster-main-badge">${row.is_main ? 'Main' : 'Alter'}</span><span class="roster-expand" aria-hidden="true">⌄</span></summary><div class="roster-profile-body"><dl><dt>Jugador</dt><dd>${esc(row.display_name || row.name)}</dd><dt>Disponibilidad</dt><dd>${esc(row.availability || 'Por confirmar')}</dd><dt>Registro</dt><dd>${row.source === 'staff' ? 'Manual · sin cuenta web' : 'Cuenta de Discord'}</dd></dl>${sheetLinks ? `<a class="button secondary" href="/armeria?personaje=${encodeURIComponent(row.id)}">Ficha de armería</a>` : ''}${editable ? `<button type="button" class="secondary" data-roster-edit="${esc(row.id)}">Editar personaje</button>` : ''}</div></details>` : `<div class="roster-public-identity">${identity}</div>`}</li>`;
 							})
 							.join('')}
 					</ul>

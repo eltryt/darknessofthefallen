@@ -711,6 +711,14 @@ Publicado: `0e8ee4d`; backend `38650997078`, Pages `38650986419` y validación `
 - Validación: 69 pruebas Node, prueba workerd y build Pages; las 12 pestañas del Panel y el Perfil con sesión QA de líder (datos sintéticos) a 1440/1024/768/390/320 px sin desbordamiento ni errores JS; páginas públicas sin regresiones.
 Publicado: `aa1b606`; backend `38652050382`, Pages `38652035269` y validación `38652035080` correctos. theme.css y app.js servidos idénticos al local tras la propagación; /panel y /perfil responden 401 sin sesión, como corresponde. No se ha visto el panel de producción con una sesión real: pendiente de revisión del propietario.
 
+## 2026-10-15 — Armería, listas BiS y guías (rama feature/armeria, sin publicar)
+
+- Ficha por personaje en `/armeria` (Resumen, Equipamiento, Mi BiS, Guías, Revisiones), enlazada desde el perfil y el roster del panel; Panel → Guías externas para el Líder.
+- Migración 007 aditiva: amplía `characters` y crea equipamiento, listas/entradas BiS, proveedores y enlaces de guías, revisiones y notas internas. Copias de seguridad en base 7, compatibles con 5 y 6.
+- Sin objetos, equipamiento, listas ni enlaces de guía precargados; solo los tres proveedores. WoW Forever marcado como provisional en el catálogo. Detalle en docs/ARMORY.md.
+- Validación: 77 pruebas Node (6 nuevas de Armería y 2 de copias) y prueba workerd; navegador con sesión QA: recorrido completo, permisos y anchos 1440/1024/768/390/320 sin desbordamiento ni errores JS.
+- Pendiente: aprobación del propietario para push y despliegue.
+
 ## 2026-10-15 — Estados vacíos honestos en Asistencia, Loot y Wishlists
 
 - El propietario señaló la tarjeta grande «Sin resultados · No hay registros que coincidan con esta búsqueda» en secciones que todavía no tienen datos (no hay APIs/catálogo de objetos ni de raids de Forever).

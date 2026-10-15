@@ -270,9 +270,24 @@ test(
 				assert.equal(report.verified, true);
 				assert.ok(report.counts.applications > 0);
 				assert.ok(report.counts.raid_events > 0);
+				assert.equal(report.counts.guide_providers, 3);
 			} finally {
 				restored.close();
 			}
+			// Migration 007 runs inside the Durable Object: armory routes answer on its SQLite.
+			assert.equal((await request('/api/armory/characters')).status, 401);
+			const armory = await request('/api/armory/characters', { headers: headers('member') });
+			assert.equal(armory.status, 200);
+			assert.deepEqual(await armory.json(), []);
+			assert.equal(
+				(await request('/api/armory/guides', { headers: headers('member') })).status,
+				403,
+			);
+			assert.equal(
+				(await (await request('/api/armory/guides', { headers: headers('leader') })).json())
+					.providers.length,
+				3,
+			);
 		} finally {
 			await runtime?.dispose();
 			await rm(directory, { recursive: true, force: true });

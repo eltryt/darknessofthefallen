@@ -1,3 +1,5 @@
+import { gameVersions, defaultGameVersion, factions } from '../public/armory-catalog.js';
+import { isValidSpecForClass, normalizeSpecValue } from '../public/specs.js';
 export const ranks = ['visitor', 'member', 'raider', 'raid_leader', 'officer', 'leader'];
 export const classes = [
 	'Guerrero',
@@ -25,6 +27,10 @@ export const permissions = {
 	'audit.read': 'officer',
 	'settings.manage': 'leader',
 	'backup.export': 'leader',
+	// Armory: read any member's sheet and BiS, review with internal notes, configure guides.
+	'armory.read': 'raid_leader',
+	'armory.review': 'officer',
+	'armory.configure': 'leader',
 };
 export function can(user, permission) {
 	return (
@@ -72,6 +78,63 @@ export function characterInput(v) {
 		isMain: v.isMain === true,
 	};
 }
+// Armory sheet fields. Unknown values may stay empty; combinations are checked
+// against the game version catalogue (race ↔ faction, spec ↔ class, level cap).
+export function armoryInput(v, className) {
+	const version = choice(
+		v.game_version || defaultGameVersion,
+		Object.keys(gameVersions),
+		'versión',
+	);
+	const catalogue = gameVersions[version];
+	const region = text(v.region ?? '', 'región', 40, false);
+	if (region && !catalogue.regions.includes(region)) throw new HttpError(400, 'Región no válida.');
+	let faction = text(v.faction ?? '', 'facción', 20, false);
+	if (faction) choice(faction, factions, 'facción');
+	const race = text(v.race ?? '', 'raza', 40, false);
+	if (race) {
+		if (!Object.hasOwn(catalogue.races, race)) throw new HttpError(400, 'Raza no válida.');
+		if (faction && catalogue.races[race] !== faction)
+			throw new HttpError(400, 'La raza no corresponde a la facción.');
+		faction = catalogue.races[race];
+		if (catalogue.raceClasses && !catalogue.raceClasses[race]?.includes(className))
+			throw new HttpError(400, 'Esa clase no está disponible para la raza elegida.');
+	}
+	const secondary = text(v.secondary_spec ?? '', 'especialización secundaria', 40, false);
+	if (secondary && !isValidSpecForClass(normalizeSpecValue(secondary), classKeys[className]))
+		throw new HttpError(400, 'La especialización secundaria no pertenece a la clase.');
+	let level = v.level ?? null;
+	if (level === '') level = null;
+	if (level !== null) {
+		level = Number(level);
+		if (!Number.isInteger(level) || level < 1 || level > (catalogue.maxLevel || 100))
+			throw new HttpError(400, 'Nivel no válido.');
+	}
+	return {
+		game_version: version,
+		realm: text(v.realm ?? '', 'reino', 60, false),
+		region,
+		faction,
+		race,
+		secondary_spec: secondary ? normalizeSpecValue(secondary) : '',
+		level,
+	};
+}
+// Column order used by the character INSERT/UPDATE statements.
+export function armoryValues(s) {
+	return [s.game_version, s.realm, s.region, s.faction, s.race, s.secondary_spec, s.level];
+}
+export const classKeys = {
+	Guerrero: 'warrior',
+	Paladín: 'paladin',
+	Cazador: 'hunter',
+	Pícaro: 'rogue',
+	Sacerdote: 'priest',
+	Chamán: 'shaman',
+	Mago: 'mage',
+	Brujo: 'warlock',
+	Druida: 'druid',
+};
 export function publicCharacter(c) {
 	return { name: [c.name, c.surname].filter(Boolean).join(' '), class: c.class, role: c.role };
 }

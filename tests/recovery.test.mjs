@@ -142,14 +142,80 @@ test('schema 5 snapshots remain restorable after notification migration', () => 
 		snapshot.databaseVersion = 5;
 		delete snapshot.gm_messages;
 		delete snapshot.gm_notifications;
-		const { integrity, ...content } = snapshot;
-		snapshot.integrity = {
-			algorithm: 'sha256',
-			digest: createHash('sha256').update(JSON.stringify(content)).digest('hex'),
-		};
+		for (const table of armoryTables) delete snapshot[table];
+		resign(snapshot);
 		assert.equal(restoreRecovery(target, snapshot).verified, true);
 		assert.equal(target.prepare('SELECT COUNT(*) n FROM gm_notifications').get().n, 0);
 		assert.equal(target.prepare('SELECT COUNT(*) n FROM applications').get().n, 1);
+	} finally {
+		source.close();
+		target.close();
+	}
+});
+
+const armoryTables = [
+	'character_equipment',
+	'bis_lists',
+	'bis_entries',
+	'guide_providers',
+	'guide_links',
+	'character_reviews',
+	'character_officer_notes',
+];
+function resign(snapshot) {
+	delete snapshot.integrity;
+	snapshot.integrity = {
+		algorithm: 'sha256',
+		digest: createHash('sha256').update(JSON.stringify(snapshot)).digest('hex'),
+	};
+}
+test('schema 6 snapshots restore characters without armory columns and keep seeded providers', () => {
+	const source = openDatabase(':memory:'),
+		target = openDatabase(':memory:');
+	try {
+		seed(source);
+		const snapshot = exportRecovery(source);
+		snapshot.databaseVersion = 6;
+		for (const table of armoryTables) delete snapshot[table];
+		for (const row of snapshot.characters)
+			for (const column of [
+				'game_version',
+				'realm',
+				'region',
+				'faction',
+				'race',
+				'secondary_spec',
+				'level',
+				'avatar_url',
+				'updated_at',
+				'synced_at',
+			])
+				delete row[column];
+		resign(snapshot);
+		assert.equal(restoreRecovery(target, snapshot).verified, true);
+		const restored = target.prepare('SELECT * FROM characters').get();
+		assert.equal(restored.name, 'Main');
+		assert.equal(restored.game_version, 'forever');
+		assert.equal(restored.level, null);
+		assert.equal(target.prepare('SELECT COUNT(*) n FROM guide_providers').get().n, 3);
+	} finally {
+		source.close();
+		target.close();
+	}
+});
+test('armory rows survive a full backup and restore', () => {
+	const source = openDatabase(':memory:'),
+		target = openDatabase(':memory:');
+	try {
+		seed(source);
+		source.exec(`INSERT INTO bis_lists VALUES('l1','c','arcane','Banda','Fase 1','','2026-10-15','2026-10-15');
+		 INSERT INTO bis_entries(id,list_id,slot,item_name,is_primary,updated_at) VALUES('e1','l1','head','Objeto escrito por el jugador',1,'2026-10-15');
+		 INSERT INTO character_reviews(id,character_id,reviewer_id,summary,created_at) VALUES('r1','c','leader','Revisión','2026-10-15');
+		 INSERT INTO character_officer_notes VALUES('n1','c','leader','Nota interna','2026-10-15');`);
+		const report = restoreRecovery(target, JSON.parse(JSON.stringify(exportRecovery(source))));
+		assert.equal(report.counts.bis_entries, 1);
+		assert.equal(report.counts.character_officer_notes, 1);
+		assert.equal(report.counts.guide_providers, 3);
 	} finally {
 		source.close();
 		target.close();

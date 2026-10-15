@@ -2,6 +2,7 @@ import { initAnalytics } from './analytics.js';
 import { createPublicViews } from './public-views.js';
 import { createProfileView } from './profile-view.js';
 import { createPanelView } from './panel-view.js';
+import { createArmoryView } from './armory-view.js';
 
 // Contexto compartido por las herramientas del panel.
 function operationsContext() {
@@ -146,7 +147,7 @@ async function boot() {
 		const s = data.settings,
 			path = location.pathname.replace(/\/$/, '') || '/';
 		if (!data.authConfigured && !me.user) $('.login').textContent = 'Acceso de miembros';
-		document.title = `${{ '/nosotros': 'Hermandad', '/raids': 'Raids', '/roster': 'Roster', '/progreso': 'Progreso PvE', '/reclutamiento': 'Reclutamiento', '/contacto': 'Contacto', '/login': 'Entrar con Discord', '/perfil': 'Mi perfil', '/panel': 'Panel' }[path] || 'Inicio'} · ${s.name}`;
+		document.title = `${{ '/nosotros': 'Hermandad', '/raids': 'Raids', '/roster': 'Roster', '/progreso': 'Progreso PvE', '/reclutamiento': 'Reclutamiento', '/contacto': 'Contacto', '/login': 'Entrar con Discord', '/perfil': 'Mi perfil', '/armeria': 'Armería', '/panel': 'Panel' }[path] || 'Inicio'} · ${s.name}`;
 		document.querySelectorAll('nav a').forEach((a) => {
 			if (a.pathname.replace(/\/$/, '') === path.replace(/\/$/, ''))
 				a.setAttribute('aria-current', 'page');
@@ -163,8 +164,9 @@ async function boot() {
 		if (path === '/panel') $('#navigation a[href="/panel"]')?.setAttribute('aria-current', 'page');
 		const context = { ...operationsContext(), $, title, roles, classes, opts, recruitmentChoices };
 		// Member areas share the public visual layer, which is keyed on data-page.
-		if (path === '/perfil' || path === '/panel') document.body.dataset.page = path;
+		if (['/perfil', '/panel', '/armeria'].includes(path)) document.body.dataset.page = path;
 		if (path === '/perfil') await createProfileView(context).profile();
+		else if (path === '/armeria') await createArmoryView(context).armory();
 		else if (path === '/panel') await createPanelView(context).panel();
 		else await createPublicViews(context).render(path);
 	} catch (e) {
