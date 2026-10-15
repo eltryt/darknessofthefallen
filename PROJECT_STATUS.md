@@ -717,7 +717,8 @@ Publicado: `aa1b606`; backend `38652050382`, Pages `38652035269` y validación `
 - Migración 007 aditiva: amplía `characters` y crea equipamiento, listas/entradas BiS, proveedores y enlaces de guías, revisiones y notas internas. Copias de seguridad en base 7, compatibles con 5 y 6.
 - Sin objetos, equipamiento, listas ni enlaces de guía precargados; solo los tres proveedores. WoW Forever marcado como provisional en el catálogo. Detalle en docs/ARMORY.md.
 - Validación: 77 pruebas Node (6 nuevas de Armería y 2 de copias) y prueba workerd; navegador con sesión QA: recorrido completo, permisos y anchos 1440/1024/768/390/320 sin desbordamiento ni errores JS.
-- Pendiente: aprobación del propietario para push y despliegue.
+- Publicado con autorización del propietario: merge `33f0672` en main; backend `38658863757`, Pages `38658853228` y validación `38658853322` correctos. Los módulos de Armería, app.js y theme.css servidos idénticos al local; /armeria, /api/armory/* y panel/perfil responden 401 sin sesión; /api/public conserva los 23 personajes y el progreso real tras la migración 007; páginas públicas a 1440/390 sin regresiones.
+- No se ha abierto una ficha real con sesión de Discord en producción: pendiente de prueba del propietario. Ningún enlace de guía cargado todavía.
 
 ## 2026-10-15 — Estados vacíos honestos en Asistencia, Loot y Wishlists
 
