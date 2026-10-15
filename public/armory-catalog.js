@@ -41,6 +41,23 @@ export const gameVersions = {
 			'off_hand',
 			'ranged',
 		],
+		// Classic armory layout: two item columns around the character, weapons below.
+		paperdoll: {
+			left: ['head', 'neck', 'shoulders', 'back', 'chest', 'wrist'],
+			right: ['hands', 'waist', 'legs', 'feet', 'finger1', 'finger2', 'trinket1', 'trinket2'],
+			bottom: ['main_hand', 'off_hand', 'ranged'],
+		},
+		// Character statistics shown under the model once a data provider supplies them.
+		stats: [
+			['health', 'Salud'],
+			['power', 'Maná / energía / ira'],
+			['strength', 'Fuerza'],
+			['agility', 'Agilidad'],
+			['stamina', 'Aguante'],
+			['intellect', 'Intelecto'],
+			['spirit', 'Espíritu'],
+			['armor', 'Armadura'],
+		],
 	},
 };
 export const defaultGameVersion = 'forever';

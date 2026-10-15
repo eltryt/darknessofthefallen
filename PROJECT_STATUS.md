@@ -711,6 +711,14 @@ Publicado: `0e8ee4d`; backend `38650997078`, Pages `38650986419` y validación `
 - Validación: 69 pruebas Node, prueba workerd y build Pages; las 12 pestañas del Panel y el Perfil con sesión QA de líder (datos sintéticos) a 1440/1024/768/390/320 px sin desbordamiento ni errores JS; páginas públicas sin regresiones.
 Publicado: `aa1b606`; backend `38652050382`, Pages `38652035269` y validación `38652035080` correctos. theme.css y app.js servidos idénticos al local tras la propagación; /panel y /perfil responden 401 sin sesión, como corresponde. No se ha visto el panel de producción con una sesión real: pendiente de revisión del propietario.
 
+## 2026-10-15 — Armería estilo «paperdoll», cabecera y ajustes de personaje
+
+- Componente común public/paperdoll.js en el perfil y en la pestaña Equipamiento de la ficha: columnas de objetos a izquierda y derecha, personaje en el centro, armas debajo y estadísticas al pie; nivel de objeto medio, ranuras registradas y origen. La calidad solo tiñe marco y nombre. Ranuras vacías con estado sereno; sin objetos ni estadísticas inventados.
+- Disposición y lista de estadísticas definidas por versión de juego en armory-catalog.js. Imagen del personaje solo desde rutas locales (la CSP bloquea imágenes externas); hoy se muestra silueta con el emblema de clase.
+- Migración 008 aditiva: `characters.stats` (JSON, solo para un futuro proveedor). Copias de seguridad en base 8, compatibles con 5–7.
+- Cabecera del perfil rediseñada (marco con esquinas, emblema circular con distintivo Main, indicadores en franja con anillo de asistencia, botón «Salir» compacto). Tarjetas de personaje con «Ver ficha» y menú «Ajustes» (editar, marcar Main, archivar) que se cierra al pulsar fuera o con Escape.
+- Validación: 77 pruebas Node, workerd y build; navegador con sesión QA y objetos ficticios solo en memoria a 1440/1024/768/390/320 sin desbordamiento ni errores.
+
 ## 2026-10-15 — Perfil convertido en panel personal
 
 - /perfil abre directamente la armería del personaje Main: mosaico de ranuras y tarjetas de lista BiS (progreso conseguido/prioritario), guías comprobadas y datos pendientes de la ficha, todas enlazadas a la ficha completa.

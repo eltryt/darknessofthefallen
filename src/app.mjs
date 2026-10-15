@@ -86,6 +86,7 @@ const files = {
 	'/armory-catalog.js': ['armory-catalog.js', 'text/javascript'],
 	'/armory-view.js': ['armory-view.js', 'text/javascript'],
 	'/armory-admin-ui.js': ['armory-admin-ui.js', 'text/javascript'],
+	'/paperdoll.js': ['paperdoll.js', 'text/javascript'],
 	'/style.css': ['style.css', 'text/css'],
 	'/theme.css': ['theme.css', 'text/css'],
 	'/assets/night-sanctum.svg': ['assets/night-sanctum.svg', 'image/svg+xml'],

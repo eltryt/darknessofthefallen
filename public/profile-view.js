@@ -5,7 +5,7 @@ import { mountRaidEvents } from './raid-events-ui.js';
 import { ClassIcon } from './components.js';
 import { classKey } from './roster-ui.js';
 import { getSpecsForClass, normalizeSpecValue } from './specs.js';
-import { gameVersions, slotLabels } from './armory-catalog.js';
+import { paperdoll } from './paperdoll.js';
 
 const icons = {
 	armeria: '<path d="M12 3 4 6v6c0 4.5 3.4 8.2 8 9 4.6-.8 8-4.5 8-9V6Z"/><path d="M9 12l2 2 4-4"/>',
@@ -64,39 +64,57 @@ export function createProfileView(context) {
 	function render() {
 		const main = rows.find((c) => c.id === selected);
 		const metrics = attendance.metrics;
+		const rank = rankLabels[me.user.rank] || me.user.rank;
+		const corners = ['tl', 'tr', 'bl', 'br']
+			.map((k) => `<span class="frame-corner corner-${k}"></span>`)
+			.join('');
 		$('#content').innerHTML = /* HTML */ `<section
 				class="hub-hero ${main ? 'class-' + classKey(main.class) : ''}"
 			>
+				<span class="hub-hero-frame" aria-hidden="true">${corners}</span>
 				<div class="hub-hero-main">
 					<div class="hub-crest">
+						<span class="hub-crest-ring" aria-hidden="true"></span>
 						${main ? ClassIcon({ className: main.class, size: 'large' }) : svg('personajes')}
+						${main?.is_main ? '<span class="hub-crest-tag">Main</span>' : ''}
 					</div>
-					<div>
+					<div class="hub-hero-text">
 						<span class="eyebrow">Tu espacio en la hermandad</span>
 						<h1>${esc(me.user.name)}</h1>
 						${
 							main
-								? `<p class="hub-hero-line">${esc(main.name)} · ${esc(main.class)}${main.spec ? ' · ' + esc(specName(main.class, main.spec)) : ''}</p>`
+								? `<p class="hub-hero-line"><strong>${esc(main.name)}</strong><span>${esc(main.class)}${main.spec ? ' · ' + esc(specName(main.class, main.spec)) : ''}</span><span>${esc(main.role)}</span></p>`
 								: '<p class="hub-hero-line">Registra tu primer personaje para abrir tu armería.</p>'
 						}
 					</div>
 				</div>
 				<dl class="hub-stats">
 					<div>
+						${svg('armeria')}
 						<dt>Rango</dt>
-						<dd>${esc(rankLabels[me.user.rank] || me.user.rank)}</dd>
+						<dd>${esc(rank)}</dd>
 					</div>
 					<div>
+						<span
+							class="hub-ring"
+							style="--value:${Number(metrics.percentage) || 0}"
+							aria-hidden="true"
+						></span>
 						<dt>Asistencia</dt>
 						<dd>${metrics.percentage}%</dd>
 						<small>${metrics.raids ? metrics.raids + ' registros' : 'Sin registros'}</small>
 					</div>
 					<div>
+						${svg('personajes')}
 						<dt>Personajes</dt>
 						<dd>${rows.length}</dd>
 					</div>
 				</dl>
-				<button type="button" id="logout" class="secondary hub-logout">Cerrar sesión</button>
+				<button type="button" id="logout" class="hub-logout" aria-label="Cerrar sesión">
+					<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+						<path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10" /></svg
+					><span>Salir</span>
+				</button>
 			</section>
 			${
 				rows.length > 1
@@ -190,9 +208,7 @@ export function createProfileView(context) {
 			sheetCache.set(c.id, await api('/api/armory/characters/' + encodeURIComponent(c.id)));
 		if (!host.isConnected) return;
 		const sheet = sheetCache.get(c.id),
-			ch = sheet.character,
-			version = gameVersions[ch.game_version],
-			items = new Map(sheet.equipment.map((e) => [e.slot, e]));
+			ch = sheet.character;
 		const entries = sheet.lists.flatMap((l) => l.entries),
 			got = entries.filter((e) => e.status === 'Conseguido').length,
 			priority = entries.filter((e) => e.status === 'Prioritario').length,
@@ -213,21 +229,7 @@ export function createProfileView(context) {
 					<h2>Equipamiento</h2>
 					<a href="${link('gear')}">Ver ficha completa →</a>
 				</header>
-				<div class="hub-slots">
-					${(version?.slots || [])
-						.map((slot) => {
-							const item = items.get(slot);
-							return `<a class="hub-slot ${item ? 'has-item quality-' + esc(item.quality || 'none') : ''}" href="${link('gear')}" title="${esc(slotLabels[slot])}${item ? ': ' + esc(item.item_name) : ' · Sin datos'}"><span>${esc(slotLabels[slot])}</span><strong>${item ? esc(item.item_name) : 'Sin datos'}</strong></a>`;
-						})
-						.join('')}
-				</div>
-				<p class="hub-hint">
-					${
-						sheet.equipment.length
-							? `${sheet.equipment.length} ranuras registradas.`
-							: 'Aún no hay equipamiento registrado: se completará con una fuente fiable de WoW Forever.'
-					}
-				</p>
+				${paperdoll(sheet, { href: link('gear') })}
 			</div>
 			<div class="hub-armory-side">
 				<a class="hub-card" href="${link('bis')}">
@@ -288,7 +290,7 @@ export function createProfileView(context) {
 					? `<div class="hub-char-grid">${rows
 							.map(
 								(c) =>
-									`<article class="hub-char-card class-${classKey(c.class)}"><div class="hub-char-top">${ClassIcon({ className: c.class, size: 'large' })}<div><h3>${esc(c.name)} ${esc(c.surname)}</h3><p>${esc(c.class)}${c.spec ? ' · ' + esc(specName(c.class, c.spec)) : ''} · ${esc(c.role)}</p></div>${c.is_main ? '<span class="pill gold">Main</span>' : ''}</div><div class="hub-char-actions"><a class="button secondary" href="/armeria?personaje=${encodeURIComponent(c.id)}">Ficha</a><button type="button" class="secondary" data-character-edit="${esc(c.id)}">Editar</button>${c.is_main ? '' : `<button type="button" class="secondary" data-main="${esc(c.id)}">Marcar Main</button>`}<button type="button" class="secondary danger" data-character-archive="${esc(c.id)}">Archivar</button></div></article>`,
+									`<article class="hub-char-card class-${classKey(c.class)}"><div class="hub-char-top">${ClassIcon({ className: c.class, size: 'large' })}<div><h3>${esc(c.name)} ${esc(c.surname)}</h3><p>${esc(c.class)}${c.spec ? ' · ' + esc(specName(c.class, c.spec)) : ''} · ${esc(c.role)}</p></div>${c.is_main ? '<span class="pill gold">Main</span>' : ''}</div><div class="hub-char-actions"><a class="button secondary" href="/armeria?personaje=${encodeURIComponent(c.id)}">Ver ficha</a><details class="hub-settings"><summary aria-label="Ajustes de ${esc(c.name)}"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg><span>Ajustes</span></summary><div class="hub-menu"><button type="button" data-character-edit="${esc(c.id)}">Editar datos</button>${c.is_main ? '' : `<button type="button" data-main="${esc(c.id)}">Marcar como Main</button>`}<button type="button" class="is-danger" data-character-archive="${esc(c.id)}">Archivar personaje</button></div></details></div></article>`,
 							)
 							.join('')}</div>`
 					: '<div class="empty-note" role="status"><strong>Todavía no tienes personajes</strong><p>Añade el primero para incorporarte al roster y abrir su armería.</p></div>'
@@ -309,6 +311,19 @@ export function createProfileView(context) {
 						</details>`
 					: '<p class="notice">Un rol de miembro en Discord es necesario para registrar personajes.</p>'
 			}`;
+		const menus = [...host.querySelectorAll('.hub-settings')];
+		menus.forEach((m) =>
+			m.addEventListener('toggle', () => {
+				if (m.open) menus.forEach((o) => o !== m && (o.open = false));
+			}),
+		);
+		host.addEventListener('click', (e) => {
+			if (!e.target.closest('.hub-settings')) menus.forEach((m) => (m.open = false));
+			else if (e.target.closest('.hub-menu button')) e.target.closest('.hub-settings').open = false;
+		});
+		host.addEventListener('keydown', (e) => {
+			if (e.key === 'Escape') menus.forEach((m) => (m.open = false));
+		});
 		attachCharacterEditor({ rows, api, refresh: profile, toast });
 		formHandler('#character', async (v) => {
 			await api('/api/characters', 'POST', { ...v, isMain: !!v.isMain });

@@ -56,6 +56,7 @@ for (const file of [
 	'schedule-ui.js',
 	'style.css',
 	'character-editor.js',
+	'paperdoll.js',
 	'armory-catalog.js',
 	'armory-view.js',
 	'armory-admin-ui.js',

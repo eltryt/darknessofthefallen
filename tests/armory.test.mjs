@@ -79,6 +79,7 @@ test('migration 007 keeps existing characters and applies empty armory defaults'
 		assert.equal(c.game_version, 'forever');
 		assert.equal(c.realm, '');
 		assert.equal(c.level, null);
+		assert.equal(c.stats, '{}');
 		assert.equal(db.prepare('SELECT COUNT(*) n FROM guide_links').get().n, 0);
 		assert.equal(db.prepare('SELECT COUNT(*) n FROM bis_entries').get().n, 0);
 		assert.deepEqual(
@@ -91,7 +92,7 @@ test('migration 007 keeps existing characters and applies empty armory defaults'
 		db.close();
 		// Reopening must not run the migration twice.
 		const again = openDatabase(file);
-		assert.equal(again.prepare('SELECT COUNT(*) n FROM schema_migrations').get().n, 7);
+		assert.equal(again.prepare('SELECT COUNT(*) n FROM schema_migrations').get().n, 8);
 		again.close();
 	} finally {
 		rmSync(dir, { recursive: true, force: true });

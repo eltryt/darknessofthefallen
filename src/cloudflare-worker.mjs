@@ -16,6 +16,7 @@ import invitationSchema from '../migrations/003_discord_invite.sql';
 import recruitmentSchema from '../migrations/004_open_recruitment.sql';
 import raidEventsSchema from '../migrations/005_raid_events.sql';
 import armorySchema from '../migrations/007_armory.sql';
+import statsSchema from '../migrations/008_character_stats.sql';
 import { syncRaidEvents } from './raid-sync.mjs';
 import { raidHelperReady } from './raid-helper.mjs';
 
@@ -31,6 +32,7 @@ export class Guild extends DurableObject {
 			raidEventsSchema,
 			gmSchema,
 			armorySchema,
+			statsSchema,
 		);
 		repairGMRedirectFailures(this.db);
 	}

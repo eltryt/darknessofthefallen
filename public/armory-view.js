@@ -1,4 +1,5 @@
 import { ClassIcon } from './components.js';
+import { paperdoll } from './paperdoll.js';
 import { getSpecsForClass, normalizeSpecValue } from './specs.js';
 import { classKey } from './roster-ui.js';
 import {
@@ -8,7 +9,6 @@ import {
 	bisStatuses,
 	bisContents,
 	guideContentTypes,
-	itemQualities,
 } from './armory-catalog.js';
 
 const boxIcon =
@@ -338,27 +338,15 @@ export function createArmoryView(context) {
 	}
 
 	function gear(el) {
-		const c = sheet.character,
-			version = gameVersions[c.game_version],
-			items = new Map(sheet.equipment.map((row) => [row.slot, row]));
-		el.innerHTML = /* HTML */ `<div class="gear-grid">
-				${(version?.slots || [])
-					.map((slot) => {
-						const item = items.get(slot);
-						return `<article class="gear-slot ${item ? 'quality-' + esc(item.quality || 'none') : 'is-empty'}"><span class="gear-icon">${boxIcon}</span><div><strong>${esc(slotLabels[slot] || slot)}</strong>${
-							item
-								? `<span class="gear-item">${esc(item.item_name || 'Objeto sin nombre')}</span><small>${[item.item_level ? 'Nivel de objeto ' + item.item_level : '', item.quality ? itemQualities[item.quality] || item.quality : '', item.enchant ? 'Encantamiento: ' + item.enchant : '', item.gems?.length ? item.gems.length + ' gemas' : '', item.origin === 'provider' ? 'Proveedor ' + item.provider : 'Manual'].filter(Boolean).map(esc).join(' · ')}</small>`
-								: '<small>Sin datos</small>'
-						}</div></article>`;
-					})
-					.join('')}
-			</div>
-			${note(
-				sheet.equipment.length
-					? 'Equipamiento registrado'
-					: 'Todavía no hay equipamiento registrado',
-				'Las ranuras se completarán cuando exista una fuente fiable: introducción manual o un proveedor compatible con WoW Forever. No se muestran objetos de ejemplo.',
-			)}`;
+		el.innerHTML = /* HTML */ `${paperdoll(sheet)}
+		${
+			sheet.equipment.length
+				? ''
+				: note(
+						'Todavía no hay equipamiento registrado',
+						'Las ranuras se completarán cuando exista una fuente fiable: introducción manual o un proveedor compatible con WoW Forever. No se muestran objetos de ejemplo.',
+					)
+		}`;
 	}
 
 	function bis(el) {

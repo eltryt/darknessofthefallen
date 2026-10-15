@@ -106,6 +106,7 @@ try {
 		'schedule-ui.js',
 		'app.js',
 		'character-editor.js',
+		'paperdoll.js',
 		'armory-catalog.js',
 		'armory-view.js',
 		'armory-admin-ui.js',

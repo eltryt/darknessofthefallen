@@ -132,6 +132,7 @@ function sheet(db, user, c) {
 	const specs = [...new Set([normalizeSpecValue(c.spec), c.secondary_spec].filter(Boolean))];
 	return {
 		character: c,
+		stats: JSON.parse(c.stats || '{}'),
 		owner: { id: c.user_id, name: c.owner_name, linked: !c.user_id.startsWith('manual:') },
 		canEdit: owner && can(user, 'character.write'),
 		canReview: review,

@@ -38,7 +38,7 @@ const armoryTables = [
 	'character_reviews',
 	'character_officer_notes',
 ];
-// Columns added by migration 007; older snapshots restore them with their defaults.
+// Columns added by migrations 007 and 008; older snapshots restore them with their defaults.
 const characterDefaults = {
 	game_version: 'forever',
 	realm: '',
@@ -50,6 +50,7 @@ const characterDefaults = {
 	avatar_url: '',
 	updated_at: null,
 	synced_at: null,
+	stats: '{}',
 };
 const tablesFor = (version) =>
 	recoveryTables.filter(
@@ -67,7 +68,7 @@ export function exportRecovery(db) {
 	return transaction(db, () => {
 		const snapshot = {
 			schemaVersion: 2,
-			databaseVersion: 7,
+			databaseVersion: 8,
 			exportedAt: new Date().toISOString(),
 			settings: JSON.parse(db.prepare('SELECT data FROM settings WHERE id=1').get().data),
 		};
@@ -78,7 +79,7 @@ export function exportRecovery(db) {
 	});
 }
 export function validateRecovery(snapshot) {
-	if (!snapshot || snapshot.schemaVersion !== 2 || ![5, 6, 7].includes(snapshot.databaseVersion))
+	if (!snapshot || snapshot.schemaVersion !== 2 || ![5, 6, 7, 8].includes(snapshot.databaseVersion))
 		throw new Error('Formato no compatible: descarga una nueva exportación JSON desde el panel.');
 	if (
 		!snapshot.settings ||
@@ -126,7 +127,7 @@ export function restoreRecovery(db, snapshot) {
 			for (const stored of snapshot[table] || []) {
 				const original =
 					table === 'characters' &&
-					snapshot.databaseVersion < 7 &&
+					snapshot.databaseVersion < 8 &&
 					stored &&
 					typeof stored === 'object'
 						? { ...characterDefaults, ...stored }
