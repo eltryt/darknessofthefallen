@@ -57,15 +57,15 @@ const files = {
 	'/assets/art/campfire.webp': ['assets/art/campfire.webp', 'image/webp'],
 	'/assets/art/heroes.webp': ['assets/art/heroes.webp', 'image/webp'],
 	'/assets/art/landscape.webp': ['assets/art/landscape.webp', 'image/webp'],
-	'/assets/partners/restedxp-leaderboard.png': [
-		'assets/partners/restedxp-leaderboard.png',
-		'image/png',
+	'/assets/partners/restedxp-leaderboard.webp': [
+		'assets/partners/restedxp-leaderboard.webp',
+		'image/webp',
 	],
 
 	'/manual-roster-ui.js': ['manual-roster-ui.js', 'text/javascript'],
 	'/analytics.js': ['analytics.js', 'text/javascript'],
 	'/home-events.js': ['home-events.js', 'text/javascript'],
-	...Object.fromEntries(iconAssets.map((file) => ['/' + file, [file, 'image/jpeg']])),
+	...Object.fromEntries(iconAssets.map((file) => ['/' + file, [file, 'image/webp']])),
 	'/components.js': ['components.js', 'text/javascript'],
 	'/specs.js': ['specs.js', 'text/javascript'],
 	'/gm-ui.js': ['gm-ui.js', 'text/javascript'],
@@ -81,6 +81,7 @@ const files = {
 	'/schedule.js': ['schedule.js', 'text/javascript'],
 	'/schedule-ui.js': ['schedule-ui.js', 'text/javascript'],
 	'/assets/guild-logo.png': ['assets/guild-logo.png', 'image/png'],
+	'/assets/guild-logo.webp': ['assets/guild-logo.webp', 'image/webp'],
 	'/operations-ui.js': ['operations-ui.js', 'text/javascript'],
 	'/character-editor.js': ['character-editor.js', 'text/javascript'],
 	'/armory-catalog.js': ['armory-catalog.js', 'text/javascript'],

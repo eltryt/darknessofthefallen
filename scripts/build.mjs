@@ -85,7 +85,7 @@ try {
 		'assets/art/campfire.webp',
 		'assets/art/heroes.webp',
 		'assets/art/landscape.webp',
-		'assets/partners/restedxp-leaderboard.png',
+		'assets/partners/restedxp-leaderboard.webp',
 
 		'guild-showcase.js',
 		'boot-state.js',
@@ -116,6 +116,7 @@ try {
 		'specs.js',
 		...iconAssets,
 		'assets/guild-logo.png',
+		'assets/guild-logo.webp',
 		'site-data.json',
 	];
 	const sourceOrigin = 'https://darkness-of-the-fallen.borclagonher.chatgpt.site';

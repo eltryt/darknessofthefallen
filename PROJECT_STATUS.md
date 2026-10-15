@@ -711,6 +711,13 @@ Publicado: `0e8ee4d`; backend `38650997078`, Pages `38650986419` y validación `
 - Validación: 69 pruebas Node, prueba workerd y build Pages; las 12 pestañas del Panel y el Perfil con sesión QA de líder (datos sintéticos) a 1440/1024/768/390/320 px sin desbordamiento ni errores JS; páginas públicas sin regresiones.
 Publicado: `aa1b606`; backend `38652050382`, Pages `38652035269` y validación `38652035080` correctos. theme.css y app.js servidos idénticos al local tras la propagación; /panel y /perfil responden 401 sin sesión, como corresponde. No se ha visto el panel de producción con una sesión real: pendiente de revisión del propietario.
 
+## 2026-10-15 — Imágenes en WebP
+
+- Los 35 iconos JPEG de clase/especialización/Onyxia, el logo PNG y el banner de RestedXP pasan a WebP (sharp, calidad 85–88; logo reducido de 1254 a 1024 px). Recursos de imagen de 2,53 MB a 0,33 MB; el logo de 2,4 MB a ~0,25 MB.
+- Se conserva guild-logo.png únicamente para og:image (vista previa en redes, compatibilidad). night-sanctum.svg sigue en SVG por ser vectorial. Las ilustraciones ya eran WebP.
+- Actualizadas rutas del servidor (image/webp), build, exportador, favicon y pruebas (la de iconos verifica ahora la firma RIFF/WEBP). Originales eliminados del árbol; quedan en el historial de Git.
+- Validación: 77 pruebas Node, workerd y build; 76 imágenes en 11 páginas (públicas, perfil, armería y panel) cargadas en WebP sin roturas.
+
 ## 2026-10-15 — Armería estilo «paperdoll», cabecera y ajustes de personaje
 
 - Componente común public/paperdoll.js en el perfil y en la pestaña Equipamiento de la ficha: columnas de objetos a izquierda y derecha, personaje en el centro, armas debajo y estadísticas al pie; nivel de objeto medio, ranuras registradas y origen. La calidad solo tiñe marco y nombre. Ranuras vacías con estado sereno; sin objetos ni estadísticas inventados.

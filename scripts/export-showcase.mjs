@@ -35,7 +35,7 @@ for (const file of [
 	'assets/art/campfire.webp',
 	'assets/art/heroes.webp',
 	'assets/art/landscape.webp',
-	'assets/partners/restedxp-leaderboard.png',
+	'assets/partners/restedxp-leaderboard.webp',
 
 	'guild-showcase.js',
 	'boot-state.js',
@@ -65,6 +65,7 @@ for (const file of [
 	'specs.js',
 	...iconAssets,
 	'assets/guild-logo.png',
+	'assets/guild-logo.webp',
 ]) {
 	if (file.endsWith('.js') && memberApp) {
 		const code = readFileSync(new URL(file, source), 'utf8').replaceAll(

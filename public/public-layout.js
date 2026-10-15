@@ -197,7 +197,7 @@ export function createPublicLayout(context) {
 						<span class="partner-banner-label">Aliado de la hermandad · Enlace de afiliado</span>
 						<a href="https://shop.restedxp.com/ref/Tryt/" target="_blank" rel="sponsored noopener"
 							><img
-								src="/assets/partners/restedxp-leaderboard.png"
+								src="/assets/partners/restedxp-leaderboard.webp"
 								width="728"
 								height="90"
 								decoding="async"
@@ -212,9 +212,9 @@ export function createPublicLayout(context) {
 				/* HTML */ `<section class="about-layout">
 					<div class="about-emblem">
 						<img
-							src="/assets/guild-logo.png"
-							width="1254"
-							height="1254"
+							src="/assets/guild-logo.webp"
+							width="1024"
+							height="1024"
 							alt="Emblema de Darkness of the Fallen"
 							loading="lazy"
 						/>
@@ -476,7 +476,7 @@ export function createPublicLayout(context) {
 				) +
 				/* HTML */ `<div class="contact-layout">
 					<article class="card contact-card">
-						<img src="/assets/guild-logo.png" alt="" width="1254" height="1254" />
+						<img src="/assets/guild-logo.webp" alt="" width="1024" height="1024" />
 						<h2>${esc(s.name)}</h2>
 						${guildFacts()}${discord}
 					</article>
@@ -505,9 +505,9 @@ export function createPublicLayout(context) {
 			return /* HTML */ `<div class="login-layout">
 				<div class="login-art">
 					<img
-						src="/assets/guild-logo.png"
-						width="1254"
-						height="1254"
+						src="/assets/guild-logo.webp"
+						width="1024"
+						height="1024"
 						alt="Emblema de Darkness of the Fallen"
 					/>
 				</div>

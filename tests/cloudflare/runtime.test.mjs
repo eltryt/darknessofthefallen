@@ -105,13 +105,13 @@ test(
 				'/components.js',
 				'/specs.js',
 				'/roster-ui.js',
-				'/assets/icons/mage.jpg',
-				'/assets/icons/spec/spec_frost.jpg',
+				'/assets/icons/mage.webp',
+				'/assets/icons/spec/spec_frost.webp',
 				'/public-views.js',
 				'/public-layout.js',
 				'/profile-view.js',
 				'/panel-view.js',
-				'/assets/guild-logo.png',
+				'/assets/guild-logo.webp',
 			])
 				assert.equal((await request(path)).status, 200);
 			const homepage = await request('/');
