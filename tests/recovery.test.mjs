@@ -142,7 +142,7 @@ test('schema 5 snapshots remain restorable after notification migration', () => 
 		snapshot.databaseVersion = 5;
 		delete snapshot.gm_messages;
 		delete snapshot.gm_notifications;
-		for (const table of armoryTables) delete snapshot[table];
+		for (const table of [...armoryTables, ...lineupTables]) delete snapshot[table];
 		resign(snapshot);
 		assert.equal(restoreRecovery(target, snapshot).verified, true);
 		assert.equal(target.prepare('SELECT COUNT(*) n FROM gm_notifications').get().n, 0);
@@ -162,6 +162,7 @@ const armoryTables = [
 	'character_reviews',
 	'character_officer_notes',
 ];
+const lineupTables = ['raid_lineups', 'raid_lineup_slots', 'raid_callups'];
 function resign(snapshot) {
 	delete snapshot.integrity;
 	snapshot.integrity = {
@@ -176,7 +177,7 @@ test('schema 6 snapshots restore characters without armory columns and keep seed
 		seed(source);
 		const snapshot = exportRecovery(source);
 		snapshot.databaseVersion = 6;
-		for (const table of armoryTables) delete snapshot[table];
+		for (const table of [...armoryTables, ...lineupTables]) delete snapshot[table];
 		for (const row of snapshot.characters)
 			for (const column of [
 				'game_version',

@@ -17,6 +17,8 @@ import recruitmentSchema from '../migrations/004_open_recruitment.sql';
 import raidEventsSchema from '../migrations/005_raid_events.sql';
 import armorySchema from '../migrations/007_armory.sql';
 import statsSchema from '../migrations/008_character_stats.sql';
+import lineupSchema from '../migrations/009_raid_lineups.sql';
+import { deliverCallups, dmReady, nextCallupAt } from './raid-lineup.mjs';
 import { syncRaidEvents } from './raid-sync.mjs';
 import { raidHelperReady } from './raid-helper.mjs';
 
@@ -33,6 +35,7 @@ export class Guild extends DurableObject {
 			gmSchema,
 			armorySchema,
 			statsSchema,
+			lineupSchema,
 		);
 		repairGMRedirectFailures(this.db);
 	}
@@ -106,6 +109,14 @@ export class Guild extends DurableObject {
 				if (alarm === null || alarm > due) await this.ctx.storage.setAlarm(due);
 			}
 		}
+		if (dmReady(this.env)) {
+			const due = nextCallupAt(this.db);
+			if (due !== null) {
+				const at = Math.max(Date.now() + 5000, due),
+					alarm = await this.ctx.storage.getAlarm();
+				if (alarm === null || alarm > at) await this.ctx.storage.setAlarm(at);
+			}
+		}
 		if (raidHelperReady(this.env)) {
 			const sync = this.db.prepare('SELECT next_at FROM raid_sync WHERE id=1').get(),
 				job = this.db
@@ -132,6 +143,7 @@ export class Guild extends DurableObject {
 			await syncRaidEvents(this.db, this.env);
 			captureRaidIncidents(this.db, this.env);
 			await deliverGM(this.db, this.env);
+			await deliverCallups(this.db, { ...this.env, APP_ORIGIN: origin || '' });
 		} finally {
 			await this.scheduleNotifications();
 		}

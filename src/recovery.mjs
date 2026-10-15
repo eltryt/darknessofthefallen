@@ -28,6 +28,9 @@ export const recoveryTables = [
 	'outbox',
 	'gm_messages',
 	'gm_notifications',
+	'raid_lineups',
+	'raid_lineup_slots',
+	'raid_callups',
 ];
 const armoryTables = [
 	'character_equipment',
@@ -52,9 +55,13 @@ const characterDefaults = {
 	synced_at: null,
 	stats: '{}',
 };
+const lineupTables = ['raid_lineups', 'raid_lineup_slots', 'raid_callups'];
 const tablesFor = (version) =>
 	recoveryTables.filter(
-		(t) => (version >= 6 || !t.startsWith('gm_')) && (version >= 7 || !armoryTables.includes(t)),
+		(t) =>
+			(version >= 6 || !t.startsWith('gm_')) &&
+			(version >= 7 || !armoryTables.includes(t)) &&
+			(version >= 9 || !lineupTables.includes(t)),
 	);
 const digest = (value) => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const content = (s) => ({
@@ -68,7 +75,7 @@ export function exportRecovery(db) {
 	return transaction(db, () => {
 		const snapshot = {
 			schemaVersion: 2,
-			databaseVersion: 8,
+			databaseVersion: 9,
 			exportedAt: new Date().toISOString(),
 			settings: JSON.parse(db.prepare('SELECT data FROM settings WHERE id=1').get().data),
 		};
@@ -79,7 +86,11 @@ export function exportRecovery(db) {
 	});
 }
 export function validateRecovery(snapshot) {
-	if (!snapshot || snapshot.schemaVersion !== 2 || ![5, 6, 7, 8].includes(snapshot.databaseVersion))
+	if (
+		!snapshot ||
+		snapshot.schemaVersion !== 2 ||
+		![5, 6, 7, 8, 9].includes(snapshot.databaseVersion)
+	)
 		throw new Error('Formato no compatible: descarga una nueva exportación JSON desde el panel.');
 	if (
 		!snapshot.settings ||
@@ -150,6 +161,10 @@ export function restoreRecovery(db, snapshot) {
 					row.error = 'Recuperado de copia: revisar en Discord antes de reintentar.';
 				}
 				if (table === 'outbox' && !row.delivered_at) row.attempts = Math.max(5, row.attempts);
+				if (table === 'raid_callups' && !['sent', 'failed'].includes(row.dm_status)) {
+					row.dm_status = 'uncertain';
+					row.dm_error = 'Copia restaurada: comprueba con el jugador antes de reenviar.';
+				}
 				if (table === 'raid_sync') {
 					row.next_at = 0;
 					row.busy_until = 0;

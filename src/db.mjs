@@ -45,5 +45,9 @@ export function openDatabase(path = 'data/guild.sqlite') {
 				readFileSync(new URL('../migrations/008_character_stats.sql', import.meta.url), 'utf8'),
 			),
 		);
+	if (!db.prepare('SELECT version FROM schema_migrations WHERE version=9').get())
+		transaction(db, () =>
+			db.exec(readFileSync(new URL('../migrations/009_raid_lineups.sql', import.meta.url), 'utf8')),
+		);
 	return db;
 }

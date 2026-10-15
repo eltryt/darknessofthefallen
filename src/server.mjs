@@ -5,6 +5,7 @@ import { openDatabase } from './db.mjs';
 import { createApp } from './app.mjs';
 import { syncRaidEvents } from './raid-sync.mjs';
 import { deliverRecruitment } from './integrations.mjs';
+import { deliverCallups } from './raid-lineup.mjs';
 if (existsSync('.env')) process.loadEnvFile('.env');
 const db = openDatabase(process.env.DATABASE_PATH),
 	env = { APP_ORIGIN: 'http://localhost:3000', ...process.env };
@@ -23,6 +24,7 @@ const timer = setInterval(async () => {
 		await syncRaidEvents(db, env);
 		captureRaidIncidents(db, env);
 		await deliverGM(db, env);
+		await deliverCallups(db, env);
 	} catch {
 		console.error('Notification delivery unavailable. Check configuration.');
 	} finally {

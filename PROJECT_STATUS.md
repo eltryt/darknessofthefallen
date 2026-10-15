@@ -711,6 +711,16 @@ Publicado: `0e8ee4d`; backend `38650997078`, Pages `38650986419` y validación `
 - Validación: 69 pruebas Node, prueba workerd y build Pages; las 12 pestañas del Panel y el Perfil con sesión QA de líder (datos sintéticos) a 1440/1024/768/390/320 px sin desbordamiento ni errores JS; páginas públicas sin regresiones.
 Publicado: `aa1b606`; backend `38652050382`, Pages `38652035269` y validación `38652035080` correctos. theme.css y app.js servidos idénticos al local tras la propagación; /panel y /perfil responden 401 sin sesión, como corresponde. No se ha visto el panel de producción con una sesión real: pendiente de revisión del propietario.
 
+## 2026-10-15 — Alineaciones de raid y convocatorias por privado
+
+- Decisión del propietario (sustituye a «sin bot ni avisos a Discord»): bot propio para mensajes privados de convocatoria; estado «Convocado» que se confirma tras la raid; grupos de 5 más banquillo.
+- Panel → Raids → Alineación: inscritos de Raid-Helper (excepto ausencias) en tarjetas por clase; arrastrar con ratón, asa táctil o selector «Mover a…» accesible; grupos según capacidad (20 → 4, 40 → 8), límite de 5 por grupo, banquillo, autocompletar equilibrado, borrador con control de revisión (409 si otro la cambió).
+- Enviar convocatoria crea una convocatoria por jugador (raid_callups) y encola el privado. Reenviar solo avisa a quien cambia de puesto o sale. Cola con reintentos (429/5xx), privados cerrados → fallo con motivo, envío interrumpido o sin respuesta → «sin confirmar» y nunca se repite solo. Sin bot: se guarda igual y queda «Sin aviso».
+- Perfil → Convocatorias muestra «Mis convocatorias» (grupo y asistencia). Tras la raid, «Confirmar asistencia» prerrellenado (grupos Asistió, banquillo Reserva) usa el endpoint de asistencia existente; solo cuenta para quien tiene cuenta y personaje.
+- Migración 009 aditiva (raid_lineups, raid_lineup_slots, raid_callups); copias en base 9, compatibles con 5–8; las convocatorias restauradas no reenvían privados.
+- Bot: scripts/configure-discord-bot.mjs y paso en backend.yml validan token y presencia en el servidor e instalan DISCORD_BOT_TOKEN y DISCORD_DM_ENABLED como secretos del Worker sin imprimirlos. Guía en docs/DISCORD_BOT.md. Pendiente del propietario: crear el bot, invitarlo y guardar el secreto en GitHub.
+- Validación: 82 pruebas Node (5 nuevas: permisos, validación, concurrencia, envío sin bot, entrega simulada con éxito/fallo/sin confirmar/límite y reenvío), workerd y build; navegador con convocatoria ficticia en memoria: autocompletar, arrastre con ratón y táctil, selector, guardar, enviar, perfil del miembro y anchos 1440/1024/768/390/320 sin desbordamiento ni errores.
+
 ## 2026-10-15 — Imágenes en WebP
 
 - Los 35 iconos JPEG de clase/especialización/Onyxia, el logo PNG y el banner de RestedXP pasan a WebP (sharp, calidad 85–88; logo reducido de 1254 a 1024 px). Recursos de imagen de 2,53 MB a 0,33 MB; el logo de 2,4 MB a ~0,25 MB.

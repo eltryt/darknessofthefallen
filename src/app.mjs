@@ -20,6 +20,7 @@ import {
 	attendanceMetrics,
 } from './domain.mjs';
 import { armoryApi } from './armory.mjs';
+import { raidLineupApi } from './raid-lineup.mjs';
 import {
 	SESSION_MAX_AGE_SECONDS,
 	currentSession,
@@ -88,6 +89,7 @@ const files = {
 	'/armory-view.js': ['armory-view.js', 'text/javascript'],
 	'/armory-admin-ui.js': ['armory-admin-ui.js', 'text/javascript'],
 	'/paperdoll.js': ['paperdoll.js', 'text/javascript'],
+	'/lineup-board.js': ['lineup-board.js', 'text/javascript'],
 	'/style.css': ['style.css', 'text/css'],
 	'/theme.css': ['theme.css', 'text/css'],
 	'/assets/night-sanctum.svg': ['assets/night-sanctum.svg', 'image/svg+xml'],
@@ -231,6 +233,19 @@ export function createApp(db, env, { readAsset = readLocalAsset } = {}) {
 					send,
 					env,
 					requirePermission,
+				})
+			)
+				return;
+			if (
+				await raidLineupApi({
+					db,
+					user,
+					path,
+					method,
+					body: () => body(req),
+					send,
+					env,
+					requireUser,
 				})
 			)
 				return;

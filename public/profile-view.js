@@ -181,13 +181,48 @@ export function createProfileView(context) {
 				if (!me.permissions.includes('community.read')) return locked(host);
 				await mountMemberLoot(host, context);
 			}
-			if (id === 'convocatorias') await mountRaidEvents(host, context, { mine: true });
+			if (id === 'convocatorias') {
+				const callups = await api('/api/callups/mine');
+				if (!host.isConnected) return;
+				host.innerHTML = `${callupList(callups)}<div data-hub-events></div>`;
+				await mountRaidEvents(host.querySelector('[data-hub-events]'), context, { mine: true });
+			}
 		} catch (error) {
 			if (token === renderToken)
 				host.innerHTML = `<div class="empty-note" role="alert"><strong>No se pudo cargar esta sección</strong><p>${esc(error.message)}</p></div>`;
 		} finally {
 			requestAnimationFrame(() => host.classList.remove('is-entering'));
 		}
+	}
+	// Call-ups sent from a lineup: group, delivery of the Discord notice and recorded attendance.
+	function callupList(callups) {
+		if (!callups.length) return '';
+		const when = (value) =>
+			new Date(value).toLocaleString('es-ES', {
+				timeZone: 'Europe/Madrid',
+				weekday: 'short',
+				day: 'numeric',
+				month: 'short',
+				hour: '2-digit',
+				minute: '2-digit',
+			});
+		const upcoming = (c) => Date.parse(c.starts_at) > Date.now();
+		return /* HTML */ `<section class="hub-callups">
+			<div class="hub-section-head">
+				<div>
+					<h2>Mis convocatorias</h2>
+					<p>Alineaciones en las que te han colocado los responsables de raid.</p>
+				</div>
+			</div>
+			<ul>
+				${callups
+					.map(
+						(c) =>
+							`<li class="hub-callup ${upcoming(c) ? 'is-upcoming' : ''} ${c.slot === 'removed' ? 'is-removed' : ''}"><span class="hub-callup-slot">${esc(c.slotLabel)}</span><span class="hub-callup-main"><strong>${esc(c.title)}</strong><small>${esc(when(c.starts_at))}</small></span><span class="hub-callup-state">${c.attendance ? `Asistencia: ${esc(c.attendance)}` : upcoming(c) ? (c.slot === 'removed' ? 'Ya no estás convocado' : 'Convocado') : 'Pendiente de confirmar'}</span></li>`,
+					)
+					.join('')}
+			</ul>
+		</section>`;
 	}
 	function locked(host) {
 		host.innerHTML =

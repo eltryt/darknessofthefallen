@@ -28,6 +28,7 @@ const madrid = (value) =>
 				.format(new Date(value))
 				.replace(' ', 'T')
 		: '';
+import { mountLineup } from './lineup-board.js';
 export async function mountRaidEvents(host, ctx, { manage = false, mine = false } = {}) {
 	const { api, esc, me, toast } = ctx;
 	if (document.body.dataset.showcase) {
@@ -39,7 +40,8 @@ export async function mountRaidEvents(host, ctx, { manage = false, mine = false 
 		return;
 	}
 	let result,
-		selected = null;
+		selected = null,
+		lineupOpen = false;
 	const filters = { from: '', category: '', roster: '', state: '', mine };
 	const manager = me.permissions.includes('attendance.manage');
 	const options = (values, value = '') =>
@@ -198,7 +200,7 @@ export async function mountRaidEvents(host, ctx, { manage = false, mine = false 
 								</p>
 								${e.mine?.length ? `<p>Tu inscripción: ${e.mine.map((s) => esc(s.status)).join(', ')}</p>` : ''}
 								<div class="actions">
-									${e.canDelete ? `<button type="button" class="secondary danger" data-delete-event="${esc(e.id)}">Borrar convocatoria</button>` : ''}${me.user && e.signups ? `<button type="button" data-event="${esc(e.id)}">Ver convocatoria</button>` : ''}${e.discordUrl ? /* HTML */ `<a class="button secondary" href="${esc(e.discordUrl)}" target="_blank" rel="noopener noreferrer">Discord ↗</a>` : ''}
+									${e.canDelete ? `<button type="button" class="secondary danger" data-delete-event="${esc(e.id)}">Borrar convocatoria</button>` : ''}${me.user && e.signups ? `<button type="button" data-event="${esc(e.id)}">Ver convocatoria</button>` : ''}${e.canManage && e.signups ? `<button type="button" class="secondary" data-lineup="${esc(e.id)}">Alineación</button>` : ''}${e.discordUrl ? /* HTML */ `<a class="button secondary" href="${esc(e.discordUrl)}" target="_blank" rel="noopener noreferrer">Discord ↗</a>` : ''}
 								</div>
 								${e.job ? /* HTML */ `<p class="notice">${esc(jobLabel(e.job.status))} · ${esc(e.job.error || 'Esperando sincronización')}</p>` : ''}
 							</article>`,
@@ -228,8 +230,27 @@ export async function mountRaidEvents(host, ctx, { manage = false, mine = false 
 		host
 			.querySelectorAll('[data-event]')
 			.forEach((b) => (b.onclick = () => detail(b.dataset.event).catch((e) => toast(e.message))));
+		host.querySelectorAll('[data-lineup]').forEach(
+			(b) =>
+				(b.onclick = async () => {
+					const target = host.querySelector('[data-event-detail]');
+					selected = null;
+					lineupOpen = true;
+					try {
+						await mountLineup(target, b.dataset.lineup, ctx, () => {
+							lineupOpen = false;
+							target.innerHTML = '';
+						});
+						target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+					} catch (e) {
+						lineupOpen = false;
+						toast(e.message);
+					}
+				}),
+		);
 	}
 	async function detail(id) {
+		lineupOpen = false;
 		selected = id;
 		const event = await api('/api/events/' + id),
 			target = host.querySelector('[data-event-detail]');
@@ -461,6 +482,7 @@ export async function mountRaidEvents(host, ctx, { manage = false, mine = false 
 			clearInterval(timer);
 			return;
 		}
-		if (!selected && !host.querySelector('[data-create][open]')) load().catch(() => {});
+		if (!selected && !lineupOpen && !host.querySelector('[data-create][open]'))
+			load().catch(() => {});
 	}, 30000);
 }
