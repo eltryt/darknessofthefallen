@@ -833,3 +833,4 @@ Publicado: `7628b5a`; backend `38652910420`, Pages `38652910475` y validación `
 - Logo de cabecera, pie y pestaña en versión de 128 px (9,5 KB en lugar de 261 KB) en todas las páginas.
 - Carga diferida (`loading="lazy"`) y decodificación asíncrona en iconos y en las imágenes que quedan más abajo; fundido en retratos, emblemas, Onyxia y el banner de RestedXP. El retrato de clase de la Armería se pide con prioridad.
 - Validación: 96 pruebas Node (nueva: caché de imágenes, 304 con ETag y páginas sin guardar) y build; navegador: ilustración precargada en Inicio, Raids, Hermandad y Perfil, nada oculto y, al recargar, todas las imágenes salen de la caché (0 bytes).
+- Publicado: `f85ebea`; backend 38834455382, Pages 38834454890 y validación 38834454775 correctos. En producción las imágenes llevan caché de un día con ETag, app.js responde 304 si no ha cambiado, las páginas siguen en no-store y el logo de 128 px pesa 9,5 KB.
