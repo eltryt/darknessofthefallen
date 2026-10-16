@@ -72,6 +72,7 @@ for (const file of [
 	...iconAssets,
 	'assets/guild-logo.png',
 	'assets/guild-logo.webp',
+	'assets/guild-logo-128.webp',
 	'assets/og-image.jpg',
 	'assets/favicon-32.png',
 	'assets/apple-touch-icon.png',

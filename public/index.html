@@ -13,7 +13,7 @@
 		<link rel="stylesheet" href="/style.css" />
 		<link rel="stylesheet" href="/theme.css" />
 		<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png" />
-		<link rel="icon" type="image/webp" href="/assets/guild-logo.webp" />
+		<link rel="icon" type="image/webp" href="/assets/guild-logo-128.webp" />
 		<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
 		<link rel="manifest" href="/site.webmanifest" />
 		<script src="/boot-state.js"></script>
@@ -23,9 +23,14 @@
 		<a class="skip" href="#content">Saltar al contenido</a>
 		<header>
 			<a class="brand" href="/"
-				><img class="brand-logo" src="/assets/guild-logo.webp" alt="" width="64" height="64" /><span
-					>DARKNESS<span class="brand-sub">OF THE FALLEN</span></span
-				></a
+				><img
+					class="brand-logo"
+					src="/assets/guild-logo-128.webp"
+					alt=""
+					width="64"
+					height="64"
+					fetchpriority="high"
+				/><span>DARKNESS<span class="brand-sub">OF THE FALLEN</span></span></a
 			><button id="menu" aria-expanded="false" aria-controls="navigation" class="menu">Menú</button>
 			<nav id="navigation" aria-label="Principal">
 				<a href="/"
@@ -90,9 +95,14 @@
 		</main>
 		<footer>
 			<a class="footer-brand" href="/"
-				><img src="/assets/guild-logo.webp" width="52" height="52" alt="" loading="lazy" /><span
-					>DARKNESS<br />OF THE FALLEN</span
-				></a
+				><img
+					src="/assets/guild-logo-128.webp"
+					width="52"
+					height="52"
+					alt=""
+					loading="lazy"
+					decoding="async"
+				/><span>DARKNESS<br />OF THE FALLEN</span></a
 			><span>Alianza · WoW Forever · Europe/Madrid</span>
 			<div class="footer-links">
 				<a href="/nosotros">Hermandad</a><a href="/raids">Horarios</a

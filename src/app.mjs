@@ -3,7 +3,7 @@ import { seoPages, seoHtml, sitemap } from './seo.mjs';
 import { iconAssets } from '../public/icon-assets.js';
 import { gmApi, enqueueGM, gmReady } from './gm-notifications.mjs';
 import { exportRecovery } from './recovery.mjs';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, createHash } from 'node:crypto';
 import { Buffer } from 'node:buffer';
 import { settings, transaction, audit } from './database-core.mjs';
 import {
@@ -91,6 +91,7 @@ const files = {
 	'/schedule-ui.js': ['schedule-ui.js', 'text/javascript'],
 	'/assets/guild-logo.png': ['assets/guild-logo.png', 'image/png'],
 	'/assets/guild-logo.webp': ['assets/guild-logo.webp', 'image/webp'],
+	'/assets/guild-logo-128.webp': ['assets/guild-logo-128.webp', 'image/webp'],
 	'/assets/og-image.jpg': ['assets/og-image.jpg', 'image/jpeg'],
 	'/assets/favicon-32.png': ['assets/favicon-32.png', 'image/png'],
 	'/assets/apple-touch-icon.png': ['assets/apple-touch-icon.png', 'image/png'],
@@ -143,7 +144,8 @@ async function body(req) {
 export function createApp(db, env, { readAsset = readLocalAsset, discordFetch = fetch } = {}) {
 	env = { APP_ORIGIN: 'http://localhost:3000', ...env };
 	const limits = new Map(),
-		memberChecks = new Map();
+		memberChecks = new Map(),
+		assetTags = new Map();
 	function throttle(
 		req,
 		route,
@@ -745,6 +747,34 @@ export function createApp(db, env, { readAsset = readLocalAsset, discordFetch = 
 					throw new HttpError(403, 'Tu rango no permite entrar al panel.');
 			}
 			if (path === '/perfil' || path === '/armeria') requireUser();
+			if (files[path] && !files[path][1].startsWith('text/html')) {
+				// Static files: images stay cached for a day and refresh in the background;
+				// code and styles revalidate with a fingerprint, so a deploy shows at once.
+				const [file, type] = files[path];
+				const content = await readAsset(file);
+				let tag = assetTags.get(file);
+				if (!tag) {
+					tag = `"${createHash('sha1').update(content).digest('base64url')}"`;
+					assetTags.set(file, tag);
+				}
+				const binary = type.startsWith('image/');
+				const common = {
+					...headers,
+					ETag: tag,
+					'Cache-Control': binary
+						? 'public, max-age=86400, stale-while-revalidate=604800'
+						: 'no-cache',
+				};
+				if (req.headers['if-none-match'] === tag) {
+					res.writeHead(304, common);
+					return res.end();
+				}
+				res.writeHead(200, {
+					...common,
+					'Content-Type': binary ? type : `${type}; charset=utf-8`,
+				});
+				return res.end(method === 'HEAD' ? '' : content);
+			}
 			if (files[path] || pages.has(path)) {
 				const [file, type] = files[path] || ['index.html', 'text/html'];
 				res.writeHead(200, {

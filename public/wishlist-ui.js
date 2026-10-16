@@ -21,7 +21,7 @@ const norm = (value) =>
 		.toLocaleLowerCase('es');
 const bossIcon = (name, raid) =>
 	/onyxia|onixya|onixia/i.test(name + ' ' + raid)
-		? '<img src="/assets/icons/onyxia.webp" alt="" width="48" height="48" loading="lazy">'
+		? '<img class="fade-in" src="/assets/icons/onyxia.webp" alt="" width="48" height="48" loading="lazy" decoding="async">'
 		: '<span class="boss-sigil" aria-hidden="true">◇</span>';
 
 export async function mountWishlist(host, character, refresh, ctx) {

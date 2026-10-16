@@ -78,9 +78,9 @@ export function paperdoll(sheet, { href = '', slotButtons = false, target = fals
 			<figure class="doll-figure class-tint">
 				${
 					portrait
-						? `<img class="doll-portrait" src="${escape(portrait)}" alt="Imagen de ${escape(c.name)}">`
+						? `<img class="doll-portrait fade-in" src="${escape(portrait)}" alt="Imagen de ${escape(c.name)}" decoding="async">`
 						: classArt
-							? `<img class="doll-portrait is-class-art" src="/assets/portraits/${classArt}.webp" alt="" width="600" height="800" loading="lazy">`
+							? `<img class="doll-portrait is-class-art fade-in" src="/assets/portraits/${classArt}.webp" alt="" width="600" height="800" decoding="async" fetchpriority="high">`
 							: `<div class="doll-placeholder">${ClassIcon({ className: c.class, size: 'large' })}<span class="doll-silhouette" aria-hidden="true"></span></div>`
 				}
 				<figcaption>${portrait ? escape(c.name) : classArt ? `Retrato provisional de ${escape(c.class)}. Se sustituirá por tu personaje real cuando la web se conecte con la API de Blizzard.` : 'La imagen del personaje aparecerá cuando exista un proveedor compatible con WoW Forever.'}</figcaption>

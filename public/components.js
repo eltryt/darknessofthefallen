@@ -17,7 +17,7 @@ const escape = (value) =>
 	);
 function icon(file, label, size) {
 	const safeSize = ['small', 'medium', 'large'].includes(size) ? size : 'medium';
-	return `<img src="/assets/icons/${file}.webp" alt="${escape(label)}" title="${escape(label)}" class="icon-${safeSize}" width="24" height="24" loading="lazy" />`;
+	return `<img src="/assets/icons/${file}.webp" alt="${escape(label)}" title="${escape(label)}" class="icon-${safeSize}" width="24" height="24" loading="lazy" decoding="async" />`;
 }
 export function ClassIcon({ className, size = 'medium' }) {
 	const key = Object.hasOwn(classes, className) ? classes[className] : null;

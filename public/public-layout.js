@@ -198,8 +198,10 @@ export function createPublicLayout(context) {
 						<a href="https://shop.restedxp.com/ref/Tryt/" target="_blank" rel="sponsored noopener"
 							><img
 								src="/assets/partners/restedxp-leaderboard.webp"
+								class="fade-in"
 								width="728"
 								height="90"
+								loading="lazy"
 								decoding="async"
 								alt="RestedXP: guías premium de leveo con un 10% de descuento"
 						/></a>
@@ -212,11 +214,13 @@ export function createPublicLayout(context) {
 				/* HTML */ `<section class="about-layout">
 					<div class="about-emblem">
 						<img
+							class="fade-in"
 							src="/assets/guild-logo.webp"
 							width="1024"
 							height="1024"
 							alt="Emblema de Darkness of the Fallen"
 							loading="lazy"
+							decoding="async"
 						/>
 					</div>
 					<div>
@@ -476,7 +480,14 @@ export function createPublicLayout(context) {
 				) +
 				/* HTML */ `<div class="contact-layout">
 					<article class="card contact-card">
-						<img src="/assets/guild-logo.webp" alt="" width="1024" height="1024" />
+						<img
+							class="fade-in"
+							src="/assets/guild-logo.webp"
+							alt=""
+							width="1024"
+							height="1024"
+							decoding="async"
+						/>
 						<h2>${esc(s.name)}</h2>
 						${guildFacts()}${discord}
 					</article>
@@ -505,10 +516,12 @@ export function createPublicLayout(context) {
 			return /* HTML */ `<div class="login-layout">
 				<div class="login-art">
 					<img
+						class="fade-in"
 						src="/assets/guild-logo.webp"
 						width="1024"
 						height="1024"
 						alt="Emblema de Darkness of the Fallen"
+						decoding="async"
 					/>
 				</div>
 				<section class="card login-card">

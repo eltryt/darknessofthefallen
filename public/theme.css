@@ -6130,3 +6130,24 @@ button.doll-slot:active {
 	color: inherit;
 	transform: none;
 }
+
+/* ===== Image loading: page illustration and large images fade in ===== */
+:is(.hero, .hub-hero, .page-title)::before {
+	transition: opacity 0.6s ease;
+}
+html:not(.hero-art-ready) :is(.hero, .hub-hero, .page-title)::before {
+	opacity: 0;
+}
+img.fade-in {
+	opacity: 0;
+	transition: opacity 0.45s ease;
+}
+img.fade-in.is-loaded {
+	opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+	:is(.hero, .hub-hero, .page-title)::before,
+	img.fade-in {
+		transition: none;
+	}
+}

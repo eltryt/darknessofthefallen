@@ -824,3 +824,12 @@ Publicado: `7628b5a`; backend `38652910420`, Pages `38652910475` y validación `
 - Corregido: el estilo genérico de hover de los botones se aplicaba a los huecos de equipo.
 - Validación: 95 pruebas Node y build (la exportación crea la carpeta de retratos); navegador QA a 1440 y 390 px con el retrato cargado y rutas nuevas con su tipo correcto.
 - Publicado: `0d22dc8`; backend 38833526845, Pages 38833527191 y validación 38833527172 correctos. Retratos, icono de Onyxia, imagen para compartir, iconos y manifiesto responden 200 con su tipo en producción; og:image apunta a og-image.jpg; paperdoll.js idéntico al local.
+
+## 2026-10-16 — Carga de imágenes
+
+- Causa de que el texto apareciera antes que las imágenes: todos los archivos se servían con `Cache-Control: no-store`, así que cada visita y cada cambio de página volvía a descargar las ilustraciones; además, las de cabecera están en el CSS y el navegador solo las pedía después de pintar el texto.
+- Imágenes con caché de un día y renovación en segundo plano; JS/CSS con huella (ETag) y `no-cache`, de modo que un despliegue se ve al momento y si no cambió responde 304 sin descargar. Las páginas HTML siguen sin guardarse.
+- `boot-state.js` pide con prioridad alta la ilustración principal de cada página antes de pintar y la muestra con un fundido suave (nunca queda oculta más de 2,5 s).
+- Logo de cabecera, pie y pestaña en versión de 128 px (9,5 KB en lugar de 261 KB) en todas las páginas.
+- Carga diferida (`loading="lazy"`) y decodificación asíncrona en iconos y en las imágenes que quedan más abajo; fundido en retratos, emblemas, Onyxia y el banner de RestedXP. El retrato de clase de la Armería se pide con prioridad.
+- Validación: 96 pruebas Node (nueva: caché de imágenes, 304 con ETag y páginas sin guardar) y build; navegador: ilustración precargada en Inicio, Raids, Hermandad y Perfil, nada oculto y, al recargar, todas las imágenes salen de la caché (0 bytes).
