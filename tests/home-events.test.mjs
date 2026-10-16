@@ -1,6 +1,25 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { upcomingEvents, eventDate } from '../public/home-events.js';
+import {
+	upcomingEvents,
+	eventDate,
+	launchCountdown,
+	FOREVER_LAUNCH,
+} from '../public/home-events.js';
+test('launch countdown targets midnight in Madrid and stops at launch', () => {
+	assert.equal(new Date(FOREVER_LAUNCH).toISOString(), '2026-11-04T23:00:00.000Z');
+	assert.deepEqual(launchCountdown(Date.parse('2026-10-16T21:59:08Z')), {
+		live: false,
+		expired: false,
+		days: 19,
+		hours: 1,
+		minutes: 0,
+		seconds: 52,
+	});
+	assert.equal(launchCountdown(FOREVER_LAUNCH).live, true);
+	assert.equal(launchCountdown(FOREVER_LAUNCH + 3600000).seconds, 0);
+	assert.equal(launchCountdown(FOREVER_LAUNCH + 7 * 86400000).expired, true);
+});
 test('home shows three next open events, excludes past, cancelled, invalid and unpublished events', () => {
 	const rows = [5, 1, 4, 2, 3].map((day) => ({
 		state: 'Abierta',

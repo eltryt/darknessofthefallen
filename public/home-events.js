@@ -12,6 +12,47 @@ export function eventDate(value) {
 		timeStyle: 'short',
 	}).format(new Date(value));
 }
+// Global launch shown on the official site: 4 Nov 2026 15:00 PST, 00:00 on 5 Nov in Madrid.
+export const FOREVER_LAUNCH = Date.parse('2026-11-04T23:00:00Z');
+const LAUNCH_BANNER_DAYS = 7;
+export function launchCountdown(now = Date.now(), launch = FOREVER_LAUNCH) {
+	const total = Math.max(0, Math.floor((launch - now) / 1000));
+	return {
+		live: total === 0,
+		expired: now >= launch + LAUNCH_BANNER_DAYS * 86400000,
+		days: Math.floor(total / 86400),
+		hours: Math.floor((total % 86400) / 3600),
+		minutes: Math.floor((total % 3600) / 60),
+		seconds: total % 60,
+	};
+}
+export function mountLaunchCountdown(host) {
+	if (!host) return;
+	const units = Object.fromEntries(
+		[...host.querySelectorAll('[data-unit]')].map((el) => [el.dataset.unit, el]),
+	);
+	const render = () => {
+		const left = launchCountdown();
+		if (!host.isConnected || left.expired) {
+			clearInterval(timer);
+			if (left.expired) host.remove();
+			return;
+		}
+		if (left.live) {
+			host.classList.add('is-live');
+			host.querySelector('[data-launch-title]').textContent =
+				'¡World of Warcraft: Forever ya está aquí!';
+			host.querySelector('[data-launch-note]').textContent =
+				'Nos vemos en Azeroth. Por la Alianza.';
+			clearInterval(timer);
+			return;
+		}
+		for (const unit of ['days', 'hours', 'minutes', 'seconds'])
+			units[unit].textContent = String(left[unit]).padStart(2, '0');
+	};
+	const timer = setInterval(render, 1000);
+	render();
+}
 export async function mountHomeEvents(host, { api, esc }) {
 	if (!host) return;
 	if (document.body.dataset.showcase) {

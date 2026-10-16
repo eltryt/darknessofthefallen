@@ -1,5 +1,5 @@
 import { progressShowcase, attachRecruitmentFilters } from './guild-showcase.js';
-import { mountHomeEvents } from './home-events.js';
+import { mountHomeEvents, mountLaunchCountdown } from './home-events.js';
 import { contactForm } from './gm-ui.js';
 import { rosterTable } from './roster-ui.js';
 import { createPublicLayout } from './public-layout.js';
@@ -41,6 +41,23 @@ export function createPublicViews(context) {
 							>Encuentra tu lugar <span aria-hidden="true">→</span></a
 						><a class="button secondary" href="/nosotros">Conoce la hermandad</a>
 					</div>
+				</div>
+			</section>
+			<section class="launch-countdown" data-launch-countdown aria-labelledby="launch-title">
+				<div class="launch-copy">
+					<span class="eyebrow">Cuenta atrás</span>
+					<h2 id="launch-title" data-launch-title>
+						¡World of Warcraft: Forever llega el 4 de noviembre!
+					</h2>
+					<p data-launch-note>Lanzamiento global · 00:00 del 5 de noviembre, hora peninsular</p>
+				</div>
+				<div class="launch-timer" role="timer" aria-label="Tiempo hasta el lanzamiento">
+					<span><b data-unit="days">--</b><small>Días</small></span
+					><i aria-hidden="true">:</i><span><b data-unit="hours">--</b><small>Horas</small></span
+					><i aria-hidden="true">:</i
+					><span><b data-unit="minutes">--</b><small>Minutos</small></span
+					><i aria-hidden="true">:</i
+					><span><b data-unit="seconds">--</b><small>Segundos</small></span>
 				</div>
 			</section>
 			<nav class="adventure-grid" aria-label="Descubre la hermandad">
@@ -386,7 +403,10 @@ export function createPublicViews(context) {
 		attachRecruitmentFilters($('#content'));
 		document.body.dataset.page = path;
 		attachSchedulePlanner(s);
-		if (path === '/') await mountHomeEvents(document.querySelector('[data-home-events]'), context);
+		if (path === '/') {
+			mountLaunchCountdown(document.querySelector('[data-launch-countdown]'));
+			await mountHomeEvents(document.querySelector('[data-home-events]'), context);
+		}
 		if (path === '/contacto' && context.me?.permissions.includes('community.read')) {
 			const host = document.createElement('section');
 			host.className = 'section';
