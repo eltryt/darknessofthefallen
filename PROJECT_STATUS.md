@@ -870,3 +870,4 @@ Publicado: `7628b5a`; backend `38652910420`, Pages `38652910475` y validación `
 - Una «noche de raid» va de 2 h antes a 6 h después del inicio, así que un registro hecho pasada la medianoche cuenta para la raid de esa tarde (también para Testigo de la historia).
 - Limitaciones: Progreso solo guarda cambios de estado, no cada victoria repetida, por eso Matajefes usa el botín registrado; Superviviente necesita que los oficiales marquen «En progreso» la misma noche de los intentos.
 - Validación: 102 pruebas Node (2 nuevas cubren los 12 logros) y build; navegador QA a 1440 y 390 px.
+- Publicado: `85a5127` (backend 38840271637 y Pages correctos; /api/public muestra los 7 logros de la hermandad y medals.js es idéntico al local). La validación de ese commit falló solo por el formato de tests/achievements.test.mjs (Prettier no era idempotente en un bloque); corregido en el commit siguiente, con validación 38840422813 correcta.
