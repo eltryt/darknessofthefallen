@@ -80,6 +80,7 @@ const files = {
 	'/sheet-parts.js': ['sheet-parts.js', 'text/javascript'],
 	'/my-callups.js': ['my-callups.js', 'text/javascript'],
 	'/profile-tour.js': ['profile-tour.js', 'text/javascript'],
+	'/motion.js': ['motion.js', 'text/javascript'],
 	'/encounter-catalog.js': ['encounter-catalog.js', 'text/javascript'],
 	'/public-views.js': ['public-views.js', 'text/javascript'],
 	'/public-layout.js': ['public-layout.js', 'text/javascript'],

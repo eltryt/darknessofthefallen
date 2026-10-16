@@ -3,6 +3,7 @@ import { createPublicViews } from './public-views.js';
 import { createProfileView } from './profile-view.js';
 import { createPanelView } from './panel-view.js';
 import { createArmoryView } from './armory-view.js';
+import { initMotion, pageReady } from './motion.js';
 
 // Contexto compartido por las herramientas del panel.
 function operationsContext() {
@@ -187,6 +188,7 @@ async function boot() {
 		</div>`;
 	} finally {
 		document.documentElement.classList.remove('site-booting');
+		pageReady();
 	}
 }
 const closeMenu = () => {
@@ -206,5 +208,6 @@ document.addEventListener('keydown', (e) => {
 $('#navigation').addEventListener('click', (e) => {
 	if (e.target.closest('a')) closeMenu();
 });
+initMotion();
 boot();
 initAnalytics();

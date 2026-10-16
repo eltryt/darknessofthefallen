@@ -6151,3 +6151,135 @@ img.fade-in.is-loaded {
 		transition: none;
 	}
 }
+
+/* ===== Motion: illustrations fade in, page entrances and transitions ===== */
+.art-fade::before {
+	transition: opacity 0.6s ease;
+}
+.art-pending::before {
+	opacity: 0 !important;
+}
+@keyframes enter-up {
+	from {
+		opacity: 0;
+		translate: 0 22px;
+	}
+	to {
+		opacity: 1;
+		translate: 0 0;
+	}
+}
+@keyframes page-enter {
+	from {
+		opacity: 0;
+		translate: 0 14px;
+	}
+	to {
+		opacity: 1;
+		translate: 0 0;
+	}
+}
+@keyframes hero-settle {
+	from {
+		scale: 1.08;
+		filter: brightness(0.55);
+	}
+	to {
+		scale: 1;
+		filter: brightness(1);
+	}
+}
+@keyframes page-out {
+	to {
+		opacity: 0;
+		translate: 0 -10px;
+	}
+}
+@keyframes page-in {
+	from {
+		opacity: 0;
+		translate: 0 12px;
+	}
+}
+@media (prefers-reduced-motion: no-preference) {
+	/* Every page: the content rises softly once it is ready. */
+	#content.page-enter {
+		animation: page-enter 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+	}
+	/* Home: the hero settles, its text arrives line by line, then the cards. */
+	body[data-page='/'] #content.page-enter {
+		animation: none;
+	}
+	body[data-page='/'] .page-enter .hero::before {
+		animation: hero-settle 2.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+	}
+	body[data-page='/'] .page-enter .hero > div > * {
+		animation: enter-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+	}
+	body[data-page='/'] .page-enter .hero > div > :nth-child(1) {
+		animation-delay: 0.1s;
+	}
+	body[data-page='/'] .page-enter .hero > div > :nth-child(2) {
+		animation-delay: 0.22s;
+	}
+	body[data-page='/'] .page-enter .hero > div > :nth-child(3) {
+		animation-delay: 0.36s;
+	}
+	body[data-page='/'] .page-enter .hero > div > :nth-child(4) {
+		animation-delay: 0.48s;
+	}
+	body[data-page='/'] .page-enter .hero > div > :nth-child(5) {
+		animation-delay: 0.58s;
+	}
+	body[data-page='/'] .page-enter .hero > div > :nth-child(6) {
+		animation-delay: 0.68s;
+	}
+	body[data-page='/'] .page-enter .adventure-card {
+		animation: enter-up 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+	}
+	body[data-page='/'] .page-enter .adventure-card:nth-child(1) {
+		animation-delay: 0.7s;
+	}
+	body[data-page='/'] .page-enter .adventure-card:nth-child(2) {
+		animation-delay: 0.82s;
+	}
+	body[data-page='/'] .page-enter .adventure-card:nth-child(3) {
+		animation-delay: 0.94s;
+	}
+	body[data-page='/'] .page-enter .adventure-card:nth-child(4) {
+		animation-delay: 1.06s;
+	}
+	/* Home sections further down appear while scrolling. */
+	.reveal {
+		opacity: 0;
+		translate: 0 28px;
+		transition:
+			opacity 0.8s ease,
+			translate 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+	}
+	.reveal.is-visible {
+		opacity: 1;
+		translate: 0 0;
+	}
+	/* Changing page: native view transitions keep the header still and
+	   cross-fade the rest; other browsers fade the content out. */
+	@view-transition {
+		navigation: auto;
+	}
+	body > header {
+		view-transition-name: site-header;
+	}
+	::view-transition-old(root) {
+		animation: page-out 0.22s ease both;
+	}
+	::view-transition-new(root) {
+		animation: page-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+	}
+	html.page-leaving #content {
+		opacity: 0;
+		translate: 0 -8px;
+		transition:
+			opacity 0.18s ease,
+			translate 0.18s ease;
+	}
+}

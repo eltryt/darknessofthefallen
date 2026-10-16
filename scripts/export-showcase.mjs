@@ -48,6 +48,7 @@ for (const file of [
 	'sheet-parts.js',
 	'my-callups.js',
 	'profile-tour.js',
+	'motion.js',
 	'encounter-catalog.js',
 	'gm-ui.js',
 	'public-views.js',

@@ -834,3 +834,11 @@ Publicado: `7628b5a`; backend `38652910420`, Pages `38652910475` y validación `
 - Carga diferida (`loading="lazy"`) y decodificación asíncrona en iconos y en las imágenes que quedan más abajo; fundido en retratos, emblemas, Onyxia y el banner de RestedXP. El retrato de clase de la Armería se pide con prioridad.
 - Validación: 96 pruebas Node (nueva: caché de imágenes, 304 con ETag y páginas sin guardar) y build; navegador: ilustración precargada en Inicio, Raids, Hermandad y Perfil, nada oculto y, al recargar, todas las imágenes salen de la caché (0 bytes).
 - Publicado: `f85ebea`; backend 38834455382, Pages 38834454890 y validación 38834454775 correctos. En producción las imágenes llevan caché de un día con ETag, app.js responde 304 si no ha cambiado, las páginas siguen en no-store y el logo de 128 px pesa 9,5 KB.
+
+## 2026-10-16 — Entradas animadas y transiciones entre páginas
+
+- Ninguna imagen aparece de golpe en ninguna página: `public/motion.js` vigila el contenido y aplica un fundido a toda imagen que aún no está cargada (las que vienen de la caché se muestran tal cual) y a las ilustraciones de fondo de cabeceras, tarjetas y bandas mientras se descargan (máximo 2,5 s ocultas).
+- Inicio: la ilustración del castillo se asienta con un zum suave, el texto de la portada entra línea a línea y después las cuatro tarjetas; las secciones de más abajo aparecen al hacer scroll.
+- Cambio de página: transición nativa del navegador (View Transitions entre documentos) con la cabecera fija y fundido del resto; en navegadores sin soporte (Firefox), fundido de salida de 0,18 s. En todas las páginas el contenido sube suavemente al estar listo.
+- Todo se desactiva con «reducir movimiento». Sin dependencias externas.
+- Validación: 96 pruebas Node y build; navegador a 1440 y 390 px: fotogramas de la entrada, nada oculto al terminar, 7/7 secciones reveladas al bajar y navegación Inicio → Raids sin errores.
