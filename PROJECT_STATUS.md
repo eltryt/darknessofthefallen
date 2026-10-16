@@ -862,3 +862,11 @@ Publicado: `7628b5a`; backend `38652910420`, Pages `38652910475` y validación `
 - Pendiente de comprobar con datos reales: la hora de inscripción de Raid-Helper (por eso no hay logro de «inscribirse a tiempo»).
 - Validación: 100 pruebas Node (4 nuevas: niveles y banquillo, rachas y secretos ocultos, primeras victorias y muro público, medallas permanentes y permisos), workerd y build; navegador QA con datos ficticios en memoria a 1440 y 390 px sin desbordamiento ni errores.
 - Publicado: `3698632`; backend 38838758414, Pages 38838758190 y validación correctos. Activado en producción el 2026-10-16 02:07 UTC (todos los contadores parten de cero); /api/public conserva 23 personajes y muestra los logros de la hermandad; /api/achievements pide sesión (401); medals.js y profile-view.js idénticos al local.
+
+## 2026-10-16 — 12 logros nuevos (30 en total)
+
+- Elegidos por el propietario. Personales: Fiel (meses con asistencia 3/6/12), Mes perfecto (todas las raids de un mes terminado, mínimo 4; oro), Matajefes (jefes caídos con el jugador presente, según el botín registrado de esa raid; 5/15/40), Superviviente del wipe (noches de intentos sin victoria; 3/10/25), Imprescindible (Dentro en todos los jefes de una noche con plan; 1/5/15) y Deseo cumplido (objeto de tu wishlist recibido según el historial de botín; 1/3/10).
+- Secretos nuevos: Primera piedra, Centenario, Todoterreno e Incansable. Hermandad: Aniversario (oro) e Imparables (plata).
+- Una «noche de raid» va de 2 h antes a 6 h después del inicio, así que un registro hecho pasada la medianoche cuenta para la raid de esa tarde (también para Testigo de la historia).
+- Limitaciones: Progreso solo guarda cambios de estado, no cada victoria repetida, por eso Matajefes usa el botín registrado; Superviviente necesita que los oficiales marquen «En progreso» la misma noche de los intentos.
+- Validación: 102 pruebas Node (2 nuevas cubren los 12 logros) y build; navegador QA a 1440 y 390 px.

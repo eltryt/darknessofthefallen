@@ -166,3 +166,113 @@ test('earned medals are kept when records change, and access needs a member', as
 		await f.close();
 	}
 });
+
+test('new achievements: kills from loot, attempts, wishes, months, runs and roles', async () => {
+	const f = await fixture();
+	try {
+		const roles = ['Tanque', 'Sanador', 'DPS distancia'];
+		roles.forEach((role, i) =>
+			f.db
+				.prepare(
+					"INSERT INTO characters(id,user_id,name,class,role,created_at) VALUES(?,'ana',?,'Guerrero',?,'2026-01-01')",
+				)
+				.run('c' + i, 'Pj' + i, role),
+		);
+		// Ten consecutive raids in February (a finished month), one character per night.
+		const ids = [];
+		for (let i = 0; i < 10; i++) {
+			const id = f.raid(`2026-02-${String(i * 2 + 2).padStart(2, '0')}`, {
+				ana: 'Asistió',
+				bea: i ? 'Asistió' : 'Ausente',
+			});
+			f.db
+				.prepare('UPDATE attendance SET character_id=? WHERE raid_id=? AND user_id=?')
+				.run('c' + (i % 3), id, 'ana');
+			ids.push(id);
+		}
+		// Loot from five bosses across two of those raids; one item was on ana's wishlist.
+		const loot = (raidId, boss, item, userId = 'bea') =>
+			f.db
+				.prepare('INSERT INTO loot VALUES(?,?,?)')
+				.run(
+					raidId + boss,
+					JSON.stringify({
+						item,
+						raidId,
+						boss,
+						recipientUserId: userId,
+						date: '2026-02-10T22:00:00.000Z',
+					}),
+					'2026-02-10',
+				);
+		['A', 'B', 'C'].forEach((b) => loot(ids[1], b, 'Objeto ' + b));
+		loot(ids[2], 'D', 'Espada deseada', 'ana');
+		loot(ids[2], 'E', 'Objeto E');
+		f.db
+			.prepare('INSERT INTO wishlists VALUES(?,?,?)')
+			.run('w', 'ana', JSON.stringify({ item: 'Espada deseada', status: 'BiS' }));
+		// Attempts recorded after midnight still belong to that raid night; a kill night does not count.
+		f.db.prepare('INSERT INTO progress(id,data) VALUES(?,?)').run(
+			'p',
+			JSON.stringify({
+				name: 'Guarida',
+				bosses: [
+					{ id: 'b', name: 'Jefe', status: 'Derrotado', firstKill: '2026-02-08T21:00:00.000Z' },
+				],
+				history: [
+					{ boss: 'Jefe', status: 'En progreso', date: '2026-02-03T00:30:00.000Z' },
+					{ boss: 'Jefe', status: 'En progreso', date: '2026-02-04T22:30:00.000Z' },
+					{ boss: 'Jefe', status: 'En progreso', date: '2026-02-08T20:30:00.000Z' },
+				],
+			}),
+		);
+		const ana = (await f.request('/api/achievements', 'ana')).body;
+		assert.equal(find(ana, 'slayer').value, 5);
+		assert.equal(find(ana, 'slayer').tier, 1);
+		assert.equal(find(ana, 'wish-granted').value, 1);
+		assert.equal(find(ana, 'survivor').value, 2);
+		assert.equal(find(ana, 'perfect-month').tier, 3);
+		assert.equal(find(ana, 'loyal').value, 1);
+		assert.equal(find(ana, 'first-stone').tier, 2);
+		assert.equal(find(ana, 'all-rounder').tier, 2);
+		assert.equal(find(ana, 'tireless').tier, 2);
+		const bea = (await f.request('/api/achievements', 'bea')).body;
+		assert.equal(find(bea, 'first-stone').name, '???');
+		assert.equal(find(bea, 'perfect-month').tier, 0);
+		assert.equal(find(bea, 'wish-granted').value, 0);
+	} finally {
+		await f.close();
+	}
+});
+
+test('per-boss plans reward being inside every boss; three kill nights in a row', async () => {
+	const f = await fixture();
+	try {
+		const kills = [];
+		for (const [i, day] of ['2026-03-03', '2026-03-04', '2026-03-05'].entries()) {
+			const id = f.raid(day, { ana: 'Asistió' });
+			kills.push({
+				id: 'b' + i,
+				name: 'Jefe ' + i,
+				status: 'Derrotado',
+				firstKill: `${day}T21:30:00.000Z`,
+			});
+			f.db
+				.prepare(
+					"INSERT INTO raid_events(id,channel_id,organizer_id,title,starts_at,state,updated_at) VALUES(?,'c','ana','Raid',?,'Abierta','2026-03-01')",
+				)
+				.run(id, `${day}T20:00:00.000Z`);
+		}
+		f.db
+			.prepare('INSERT INTO progress(id,data) VALUES(?,?)')
+			.run('p', JSON.stringify({ name: 'Raid', bosses: kills }));
+		f.db.exec(`INSERT INTO raid_boss_plans VALUES('r1',0,'Uno'),('r1',1,'Dos'),('r2',0,'Uno');
+			INSERT INTO raid_boss_assignments VALUES('r1','Uno','ana','in'),('r1','Dos','ana','in'),('r2','Uno','ana','bench');`);
+		const ana = (await f.request('/api/achievements', 'ana')).body;
+		assert.equal(find(ana, 'essential').value, 1);
+		assert.equal(ana.guild.find((a) => a.id === 'unstoppable').tier, 2);
+		assert.equal(ana.guild.find((a) => a.id === 'anniversary').tier, 0);
+	} finally {
+		await f.close();
+	}
+});

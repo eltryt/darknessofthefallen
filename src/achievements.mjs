@@ -103,6 +103,59 @@ export const playerCatalog = [
 		help: 'Un Alter registrado además del Main.',
 	},
 	{
+		id: 'loyal',
+		category: 'asistencia',
+		icon: 'calendar',
+		name: 'Fiel',
+		unit: 'meses con asistencia',
+		tiers: [3, 6, 12],
+		help: 'Meses distintos con al menos una asistencia.',
+	},
+	{
+		id: 'perfect-month',
+		category: 'asistencia',
+		icon: 'star',
+		name: 'Mes perfecto',
+		single: 3,
+		help: 'Asistir a todas las raids de un mes ya terminado (mínimo cuatro).',
+	},
+	{
+		id: 'slayer',
+		category: 'progreso',
+		icon: 'swords',
+		name: 'Matajefes',
+		unit: 'jefes derrotados',
+		tiers: [5, 15, 40],
+		help: 'Presente cuando cae un jefe, según el botín registrado de esa raid.',
+	},
+	{
+		id: 'survivor',
+		category: 'progreso',
+		icon: 'cracked',
+		name: 'Superviviente del wipe',
+		unit: 'noches de intentos',
+		tiers: [3, 10, 25],
+		help: 'Presente en noches de intentos sin victoria registradas en Progreso.',
+	},
+	{
+		id: 'essential',
+		category: 'compromiso',
+		icon: 'target',
+		name: 'Imprescindible',
+		unit: 'noches',
+		tiers: [1, 5, 15],
+		help: 'Dentro en todos los jefes de una noche con plan por jefe.',
+	},
+	{
+		id: 'wish-granted',
+		category: 'compromiso',
+		icon: 'chest',
+		name: 'Deseo cumplido',
+		unit: 'objetos de tu wishlist',
+		tiers: [1, 3, 10],
+		help: 'Recibir un objeto de tu wishlist, según el historial de botín.',
+	},
+	{
 		id: 'phoenix',
 		category: 'secreto',
 		icon: 'phoenix',
@@ -119,6 +172,42 @@ export const playerCatalog = [
 		single: 2,
 		secret: true,
 		help: 'Tres raids en una misma semana.',
+	},
+	{
+		id: 'first-stone',
+		category: 'secreto',
+		icon: 'stone',
+		name: 'Primera piedra',
+		single: 2,
+		secret: true,
+		help: 'Estar en la primera raid registrada tras activar los logros.',
+	},
+	{
+		id: 'centenary',
+		category: 'secreto',
+		icon: 'hundred',
+		name: 'Centenario',
+		single: 3,
+		secret: true,
+		help: 'Asistir a la noche número 100 de la hermandad.',
+	},
+	{
+		id: 'all-rounder',
+		category: 'secreto',
+		icon: 'compass',
+		name: 'Todoterreno',
+		single: 2,
+		secret: true,
+		help: 'Asistir con personajes de los tres roles: tanque, sanador y DPS.',
+	},
+	{
+		id: 'tireless',
+		category: 'secreto',
+		icon: 'infinity',
+		name: 'Incansable',
+		single: 2,
+		secret: true,
+		help: 'Diez raids seguidas de la hermandad sin faltar a ninguna.',
 	},
 ];
 export const guildCatalog = [
@@ -165,6 +254,22 @@ export const guildCatalog = [
 		tiers: [25, 50, 100],
 		help: 'Raids con asistencia registrada.',
 	},
+	{
+		id: 'anniversary',
+		category: 'hermandad',
+		icon: 'laurel',
+		name: 'Aniversario',
+		single: 3,
+		help: 'Un año de raids desde la activación, con raids en al menos diez meses.',
+	},
+	{
+		id: 'unstoppable',
+		category: 'hermandad',
+		icon: 'chevrons',
+		name: 'Imparables',
+		single: 2,
+		help: 'Primeras victorias en tres noches de raid seguidas.',
+	},
 ];
 
 const madridDay = (iso) =>
@@ -190,6 +295,61 @@ function guildRaids(db, since) {
 		)
 		.all(since);
 }
+const norm = (v) =>
+	String(v ?? '')
+		.trim()
+		.toLocaleLowerCase('es');
+// The raid whose night contains a moment: from 2 h before its start to 6 h after,
+// so a record made after midnight still belongs to the raid of that evening.
+function nightOf(raids, iso) {
+	const t = Date.parse(iso);
+	return (
+		raids.find((r) => {
+			const start = Date.parse(r.starts_at);
+			return t >= start - 2 * 3600000 && t <= start + 6 * 3600000;
+		}) || null
+	);
+}
+function lootSince(db, since) {
+	return db
+		.prepare('SELECT data FROM loot')
+		.all()
+		.map((row) => JSON.parse(row.data))
+		.filter((l) => (l.date || '') >= since);
+}
+// Raid nights with attempts recorded in Progreso and no victory that night.
+function attemptNights(db, since, raids) {
+	const records = db
+		.prepare('SELECT data FROM progress')
+		.all()
+		.map((row) => JSON.parse(row.data));
+	const history = records.flatMap((r) => r.history || []).filter((h) => (h.date || '') >= since);
+	const kills = new Set(
+		[
+			...history.filter((h) => h.status === 'Derrotado').map((h) => h.date),
+			...records
+				.flatMap((r) => (r.bosses || []).map((b) => b.firstKill))
+				.filter((d) => d && d >= since),
+		]
+			.map((d) => nightOf(raids, d)?.id)
+			.filter(Boolean),
+	);
+	return new Set(
+		history
+			.filter((h) => h.status === 'En progreso')
+			.map((h) => nightOf(raids, h.date)?.id)
+			.filter((id) => id && !kills.has(id)),
+	);
+}
+function sharedData(db, since) {
+	const raids = guildRaids(db, since);
+	return {
+		raids,
+		progress: firstKills(db, since),
+		loot: lootSince(db, since),
+		attempts: attemptNights(db, since, raids),
+	};
+}
 function firstKills(db, since) {
 	return db
 		.prepare('SELECT data FROM progress')
@@ -204,9 +364,8 @@ function firstKills(db, since) {
 		}));
 }
 
-export function playerMetrics(db, userId, since, shared = {}) {
-	const raids = shared.raids || guildRaids(db, since),
-		progress = shared.progress || firstKills(db, since);
+export function playerMetrics(db, userId, since, shared = sharedData(db, since)) {
+	const { raids, progress, loot, attempts } = shared;
 	const rows = db
 		.prepare(
 			`SELECT a.raid_id,a.status,r.starts_at FROM attendance a JOIN raids r ON r.id=a.raid_id
@@ -222,13 +381,50 @@ export function playerMetrics(db, userId, since, shared = {}) {
 		streak = attendedWeeks.has(week) ? streak + 1 : 0;
 		best = Math.max(best, streak);
 	}
-	const days = new Set(attended.map((r) => madridDay(r.starts_at)));
+	const days = new Set(attended.map((r) => madridDay(r.starts_at))),
+		attendedIds = new Set(attended.map((r) => r.raid_id));
+	// A kill is witnessed when the player attended that raid night.
+	const present = (iso) => {
+		const night = nightOf(raids, iso);
+		return night ? attendedIds.has(night.id) : days.has(madridDay(iso));
+	};
 	const witnessed = progress.flatMap((raid) =>
-		raid.bosses.filter((b) => b.kill && days.has(madridDay(b.kill))),
+		raid.bosses.filter((b) => b.kill && present(b.kill)),
 	);
 	const conqueror = progress.some(
-		(raid) => raid.bosses.length && raid.bosses.every((b) => b.kill && days.has(madridDay(b.kill))),
+		(raid) => raid.bosses.length && raid.bosses.every((b) => b.kill && present(b.kill)),
 	);
+	const currentMonth = madridDay(new Date().toISOString()).slice(0, 7),
+		byMonth = {};
+	for (const r of raids) (byMonth[madridDay(r.starts_at).slice(0, 7)] ||= []).push(r.id);
+	const perfectMonth = Object.entries(byMonth).some(
+		([month, ids]) =>
+			month < currentMonth && ids.length >= 4 && ids.every((id) => attendedIds.has(id)),
+	);
+	const slain = new Set(
+		loot.filter((l) => attendedIds.has(l.raidId)).map((l) => l.raidId + '|' + norm(l.boss)),
+	).size;
+	const plans = db
+		.prepare(
+			"SELECT p.event_id,COUNT(*) n,SUM(CASE WHEN a.status='in' THEN 1 ELSE 0 END) inside FROM raid_boss_plans p JOIN raid_events e ON e.id=p.event_id LEFT JOIN raid_boss_assignments a ON a.event_id=p.event_id AND a.boss=p.boss AND a.user_id=? WHERE e.starts_at>=? AND e.state!='Eliminada' GROUP BY p.event_id",
+		)
+		.all(userId, since);
+	const roles = new Set(
+		db
+			.prepare(
+				'SELECT DISTINCT c.role FROM attendance a JOIN characters c ON c.id=a.character_id JOIN raids r ON r.id=a.raid_id WHERE a.user_id=? AND r.starts_at>=? AND a.status IN (' +
+					COUNTED.map(() => '?').join(',') +
+					')',
+			)
+			.all(userId, since, ...COUNTED)
+			.map((r) => (r.role.startsWith('DPS') ? 'DPS' : r.role)),
+	);
+	let run = 0,
+		longestRun = 0;
+	for (const r of raids) {
+		run = attendedIds.has(r.id) ? run + 1 : 0;
+		longestRun = Math.max(longestRun, run);
+	}
 	const called = db
 		.prepare(
 			`SELECT c.event_id,c.slot FROM raid_callups c JOIN raid_events e ON e.id=c.event_id
@@ -249,10 +445,16 @@ export function playerMetrics(db, userId, since, shared = {}) {
 			 WHERE c.user_id=? AND c.archived_at IS NULL GROUP BY e.character_id)`,
 		)
 		.get(userId).n;
-	const wishes = db
+	const wanted = db
 		.prepare('SELECT data FROM wishlists WHERE user_id=?')
 		.all(userId)
-		.filter((w) => JSON.parse(w.data).status !== 'Pasar').length;
+		.map((w) => JSON.parse(w.data))
+		.filter((w) => w.status !== 'Pasar');
+	const wishes = wanted.length,
+		wantedItems = new Set(wanted.map((w) => norm(w.item)));
+	const granted = loot.filter(
+		(l) => l.recipientUserId === userId && wantedItems.has(norm(l.item)),
+	).length;
 	const times = attended.map((r) => Date.parse(r.starts_at));
 	const perWeek = {};
 	for (const r of attended)
@@ -271,11 +473,20 @@ export function playerMetrics(db, userId, since, shared = {}) {
 		family: characters.length >= 2 ? 1 : 0,
 		phoenix: times.some((t, i) => i && t - times[i - 1] >= 28 * 86400000) ? 1 : 0,
 		marathon: Object.values(perWeek).some((n) => n >= 3) ? 1 : 0,
+		loyal: new Set(attended.map((r) => madridDay(r.starts_at).slice(0, 7))).size,
+		'perfect-month': perfectMonth ? 1 : 0,
+		slayer: slain,
+		survivor: [...attempts].filter((id) => attendedIds.has(id)).length,
+		essential: plans.filter((p) => p.n > 0 && p.inside === p.n).length,
+		'wish-granted': granted,
+		'first-stone': raids[0] && attendedIds.has(raids[0].id) ? 1 : 0,
+		centenary: raids[99] && attendedIds.has(raids[99].id) ? 1 : 0,
+		'all-rounder': ['Tanque', 'Sanador', 'DPS'].every((r) => roles.has(r)) ? 1 : 0,
+		tireless: longestRun >= 10 ? 1 : 0,
 	};
 }
-export function guildMetrics(db, since, shared = {}) {
-	const raids = shared.raids || guildRaids(db, since),
-		progress = shared.progress || firstKills(db, since);
+export function guildMetrics(db, since, shared = sharedData(db, since)) {
+	const { raids, progress } = shared;
 	const kills = progress.flatMap((r) => r.bosses.filter((b) => b.kill));
 	const month = new Date(Date.now() - 30 * 86400000).toISOString();
 	const alive = db
@@ -284,7 +495,17 @@ export function guildMetrics(db, since, shared = {}) {
 			 WHERE r.starts_at>=? AND r.starts_at>=? AND a.status IN (${COUNTED.map(() => '?').join(',')})`,
 		)
 		.get(since, month, ...COUNTED).n;
+	const killNights = new Set(kills.map((b) => nightOf(raids, b.kill)?.id).filter(Boolean));
+	let streak = 0,
+		unstoppable = false;
+	for (const r of raids) {
+		streak = killNights.has(r.id) ? streak + 1 : 0;
+		if (streak >= 3) unstoppable = true;
+	}
+	const months = new Set(raids.map((r) => madridDay(r.starts_at).slice(0, 7))).size;
 	return {
+		anniversary: Date.now() - Date.parse(since) >= 365 * 86400000 && months >= 10 ? 1 : 0,
+		unstoppable: unstoppable ? 1 : 0,
 		'first-blood': kills.length ? 1 : 0,
 		slayers: kills.length,
 		'raid-cleared': progress.some((r) => r.bosses.length && r.bosses.every((b) => b.kill)) ? 1 : 0,
@@ -317,7 +538,7 @@ function award(db, table, key, catalog, metrics, now) {
 }
 export function refreshAchievements(db, now = new Date().toISOString()) {
 	const since = achievementsSince(db),
-		shared = { raids: guildRaids(db, since), progress: firstKills(db, since) };
+		shared = sharedData(db, since);
 	const players = db.prepare("SELECT id FROM users WHERE rank!='visitor'").all();
 	const metrics = {};
 	for (const { id } of players) {
