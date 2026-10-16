@@ -5868,3 +5868,246 @@ button.doll-slot:focus-visible {
 	color: var(--muted);
 	font-size: 11px;
 }
+
+/* ===== Guided tour of Mi perfil ===== */
+.hub-tour-start {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	margin-top: 12px;
+	min-height: 36px;
+	padding: 6px 14px 6px 10px;
+	border: 1px solid #a68a5b70;
+	border-radius: 999px;
+	background: #121113cc;
+	box-shadow: none;
+	color: #f3e6cf;
+	font-size: 13px;
+	font-weight: 600;
+}
+.hub-tour-start::before {
+	display: none;
+}
+.hub-tour-start svg {
+	width: 18px;
+	height: 18px;
+	fill: none;
+	stroke: var(--gold);
+	stroke-width: 1.6;
+	stroke-linejoin: round;
+}
+.hub-tour-start:hover,
+.hub-tour-start:focus-visible {
+	border-color: var(--gold);
+	background: #2a2116;
+}
+.hub-tour-start.is-new {
+	position: relative;
+}
+.hub-tour-start.is-new::after {
+	content: '';
+	position: absolute;
+	top: -3px;
+	right: -3px;
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	background: var(--gold);
+	box-shadow: 0 0 0 0 #d8b98299;
+	animation: tour-ping 2.2s ease-out infinite;
+}
+@keyframes tour-ping {
+	70% {
+		box-shadow: 0 0 0 10px #d8b98200;
+	}
+	100% {
+		box-shadow: 0 0 0 0 #d8b98200;
+	}
+}
+.tour {
+	position: fixed;
+	inset: 0;
+	z-index: 1000;
+	opacity: 0;
+	transition: opacity 0.25s ease;
+}
+.tour.is-on {
+	opacity: 1;
+}
+.tour.is-leaving {
+	opacity: 0;
+}
+.tour-blocker {
+	position: absolute;
+	inset: 0;
+}
+.tour-spot {
+	position: fixed;
+	border: 2px solid var(--gold);
+	border-radius: 10px;
+	box-shadow:
+		0 0 0 9999px #050407c4,
+		0 0 26px #d8b98266;
+	pointer-events: none;
+	transition:
+		top 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+		left 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+		width 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+		height 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.tour-pop {
+	position: fixed;
+	width: min(380px, calc(100vw - 32px));
+	padding: 18px 18px 16px;
+	border: 1px solid #a68a5b90;
+	border-radius: 10px;
+	background: #16141bf2;
+	backdrop-filter: blur(6px);
+	box-shadow: 0 20px 50px #000c;
+	color: var(--ink);
+	transition:
+		top 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+		left 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+		opacity 0.2s ease,
+		transform 0.2s ease;
+}
+.tour-pop.is-moving {
+	opacity: 0.35;
+	transform: scale(0.97);
+}
+.tour-pop header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+}
+.tour-count {
+	color: var(--gold);
+	font-size: 12px;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+.tour-close {
+	min-width: 36px;
+	min-height: 36px;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	box-shadow: none;
+	color: var(--muted);
+	font-size: 22px;
+	line-height: 1;
+}
+.tour-close::before {
+	display: none;
+}
+.tour-pop h2 {
+	margin: 4px 0 6px;
+	font-size: 22px;
+}
+.tour-pop p {
+	margin: 0 0 12px;
+	color: #d9d2c6;
+	font-size: 15px;
+	line-height: 1.5;
+}
+.tour-dots {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 5px;
+	margin-bottom: 14px;
+}
+.tour-dots button {
+	width: 10px;
+	min-width: 0;
+	height: 10px;
+	min-height: 0;
+	padding: 0;
+	border: 1px solid #a68a5b90;
+	border-radius: 50%;
+	background: transparent;
+	box-shadow: none;
+}
+.tour-dots button::before {
+	display: none;
+}
+.tour-dots button[aria-current='step'] {
+	width: 22px;
+	border-radius: 999px;
+	background: var(--gold);
+}
+.tour-dots button:focus-visible {
+	outline: 2px solid var(--gold);
+	outline-offset: 2px;
+}
+.tour-pop footer {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+.tour-pop footer [data-tour='next'] {
+	margin-left: auto;
+}
+.tour-pop footer button {
+	min-height: 38px;
+	padding: 6px 14px;
+	font-size: 14px;
+}
+.tour-skip {
+	border: 0;
+	background: transparent;
+	box-shadow: none;
+	color: var(--muted);
+	text-decoration: underline;
+}
+.tour-skip::before {
+	display: none;
+}
+.tour-pop[data-dock] {
+	right: 12px;
+	left: 12px;
+	width: auto;
+}
+.tour-pop[data-dock='bottom'] {
+	top: auto !important;
+	bottom: 12px;
+}
+.tour-pop[data-dock='top'] {
+	top: 12px;
+	bottom: auto;
+}
+body.tour-open {
+	overflow-anchor: none;
+}
+@media (prefers-reduced-motion: reduce) {
+	.tour,
+	.tour-spot,
+	.tour-pop {
+		transition: none;
+	}
+	.hub-tour-start.is-new::after {
+		animation: none;
+	}
+}
+.tour-pop footer {
+	flex-wrap: nowrap;
+	justify-content: flex-start;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+	text-align: left;
+}
+.tour-pop footer::before,
+.tour-pop footer::after {
+	display: none;
+}
+.tour-pop footer {
+	row-gap: 8px;
+	max-width: none;
+}

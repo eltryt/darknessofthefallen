@@ -3,6 +3,7 @@ import { operationTab } from './operations-ui.js';
 import { mountWishlist } from './wishlist-ui.js';
 import { mountMyCallups } from './my-callups.js';
 import { contactForm } from './gm-ui.js';
+import { startProfileTour } from './profile-tour.js';
 import { ClassIcon } from './components.js';
 import { classKey } from './roster-ui.js';
 import { paperdoll } from './paperdoll.js';
@@ -42,6 +43,13 @@ export const rankLabels = {
 const svg = (name) =>
 	`<svg class="hub-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${icons[name]}</svg>`;
 const STORAGE_KEY = 'profile-character';
+const tourSeen = () => {
+	try {
+		return localStorage.getItem('profile-tour-seen') === '1';
+	} catch {
+		return true;
+	}
+};
 const remember = (id) => {
 	try {
 		localStorage.setItem(STORAGE_KEY, id);
@@ -130,6 +138,16 @@ export function createProfileView(context) {
 								? `<p class="hub-hero-line"><strong>${esc(main.name)}</strong><span>${esc(main.class)}${main.spec ? ' · ' + esc(specName(main.class, main.spec)) : ''}</span><span>${esc(main.role)}</span></p>`
 								: '<p class="hub-hero-line">Registra tu primer personaje para abrir tu armería.</p>'
 						}
+						<button
+							type="button"
+							class="hub-tour-start ${tourSeen() ? '' : 'is-new'}"
+							data-tour-start
+						>
+							<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+								<circle cx="12" cy="12" r="9" />
+								<path d="M10 8.5v7l5.5-3.5Z" /></svg
+							><span>Guía del perfil</span>
+						</button>
 					</div>
 				</div>
 				<dl class="hub-stats">
@@ -182,6 +200,10 @@ export function createProfileView(context) {
 		// The CSP forbids style attributes; the ring value is set through the DOM.
 		const ring = $('.hub-ring');
 		if (ring) ring.style.setProperty('--value', ring.dataset.value);
+		$('[data-tour-start]').onclick = (e) => {
+			e.currentTarget.classList.remove('is-new');
+			startProfileTour();
+		};
 		$('#logout').onclick = async () => {
 			await api('/api/logout', 'POST', {});
 			location.href = '/';

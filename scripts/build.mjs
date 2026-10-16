@@ -96,6 +96,7 @@ try {
 		'wishlist-ui.js',
 		'sheet-parts.js',
 		'my-callups.js',
+		'profile-tour.js',
 		'encounter-catalog.js',
 		'gm-ui.js',
 		'public-views.js',

@@ -797,3 +797,10 @@ Publicado: `7628b5a`; backend `38652910420`, Pages `38652910475` y validación `
 - Corregido: expresiones regulares sin barra invertida en lineup-board.js (la especialización «Shadow» se leía como «hadow» y no se quitaban los dígitos finales), y el anillo de asistencia del perfil, bloqueado por la CSP.
 - Validación: 88 pruebas Node (9 nuevas: estados de wishlist, equipo manual, migración sin pérdida, alineación visible solo enviada, plan por jefe y permisos), workerd y build; navegador con servidor QA en memoria: Líder, miembro y visitante, rutas directas, persistencia tras recargar, cambio rápido de pestañas, 1440 y 390 px sin desbordamiento ni errores JS.
 - Publicado: merge `76125a3` en main (rama `claude/navegacion-perfil` también subida); backend 38823185291, Pages 38823172519 y validación 38823172473 correctos. Los nueve módulos cambiados servidos idénticos al local; /api/public conserva 23 personajes y el progreso tras la migración 010; /perfil, /panel, /api/wishlists y /api/armory/* responden 401 sin sesión. Pendiente: revisión del propietario con su sesión de Discord.
+
+## 2026-10-16 — Guía interactiva de Mi perfil
+
+- Botón «Guía del perfil» en la cabecera (con un punto discreto hasta la primera vez; nunca se abre sola). 17 pasos por las cinco secciones: cambia de sección por sí misma, ilumina cada elemento con el resto atenuado y mueve la ventana con transiciones.
+- Controles: Atrás, Siguiente, «Saltar sección», puntos para ir a cualquier paso, cerrar con × o Escape, flechas del teclado. El foco queda dentro de la ventana y vuelve al botón al cerrar. En móvil la ventana se acopla abajo o arriba según dónde esté el elemento. Respeta «reducir movimiento».
+- Los pasos cuyo elemento no existe para ese jugador (sin personajes, sin convocatorias) se omiten solos. Módulo nuevo `public/profile-tour.js`; sin dependencias externas (CSP intacta) ni cambios de backend.
+- Validación: 88 pruebas Node y build; navegador con servidor QA en memoria a 1440 y 390 px: recorrido completo, atrás, salto por puntos, saltar sección, teclado, Escape y foco, sin errores JS.
