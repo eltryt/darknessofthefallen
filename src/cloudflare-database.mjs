@@ -14,6 +14,7 @@ export function durableDatabase(
 	statsSchema,
 	lineupSchema,
 	wishlistSchema,
+	achievementsSchema,
 ) {
 	const execute = (sql, parameters = []) => storage.sql.exec(sql, ...parameters);
 	const db = {
@@ -60,6 +61,8 @@ export function durableDatabase(
 			db.exec(lineupSchema);
 		if (!db.prepare('SELECT version FROM schema_migrations WHERE version=10').get())
 			db.exec(wishlistSchema);
+		if (!db.prepare('SELECT version FROM schema_migrations WHERE version=11').get())
+			db.exec(achievementsSchema);
 	});
 	return db;
 }

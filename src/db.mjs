@@ -55,5 +55,9 @@ export function openDatabase(path = 'data/guild.sqlite') {
 				readFileSync(new URL('../migrations/010_unified_wishlist.sql', import.meta.url), 'utf8'),
 			),
 		);
+	if (!db.prepare('SELECT version FROM schema_migrations WHERE version=11').get())
+		transaction(db, () =>
+			db.exec(readFileSync(new URL('../migrations/011_achievements.sql', import.meta.url), 'utf8')),
+		);
 	return db;
 }

@@ -168,6 +168,8 @@ const lineupTables = [
 	'raid_callups',
 	'raid_boss_plans',
 	'raid_boss_assignments',
+	'user_achievements',
+	'guild_achievements',
 ];
 function resign(snapshot) {
 	delete snapshot.integrity;

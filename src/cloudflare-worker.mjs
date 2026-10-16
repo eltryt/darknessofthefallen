@@ -19,6 +19,7 @@ import armorySchema from '../migrations/007_armory.sql';
 import statsSchema from '../migrations/008_character_stats.sql';
 import lineupSchema from '../migrations/009_raid_lineups.sql';
 import wishlistSchema from '../migrations/010_unified_wishlist.sql';
+import achievementsSchema from '../migrations/011_achievements.sql';
 import { deliverCallups, dmReady, nextCallupAt } from './raid-lineup.mjs';
 import { syncRaidEvents } from './raid-sync.mjs';
 import { raidHelperReady } from './raid-helper.mjs';
@@ -38,6 +39,7 @@ export class Guild extends DurableObject {
 			statsSchema,
 			lineupSchema,
 			wishlistSchema,
+			achievementsSchema,
 		);
 		repairGMRedirectFailures(this.db);
 	}

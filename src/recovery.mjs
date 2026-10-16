@@ -33,6 +33,8 @@ export const recoveryTables = [
 	'raid_callups',
 	'raid_boss_plans',
 	'raid_boss_assignments',
+	'user_achievements',
+	'guild_achievements',
 ];
 const armoryTables = [
 	'character_equipment',
@@ -64,7 +66,8 @@ const tablesFor = (version) =>
 			(version >= 6 || !t.startsWith('gm_')) &&
 			(version >= 7 || !armoryTables.includes(t)) &&
 			(version >= 9 || !lineupTables.includes(t)) &&
-			(version >= 10 || !t.startsWith('raid_boss_')),
+			(version >= 10 || !t.startsWith('raid_boss_')) &&
+			(version >= 11 || !t.endsWith('_achievements')),
 	);
 const digest = (value) => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const content = (s) => ({
@@ -78,7 +81,7 @@ export function exportRecovery(db) {
 	return transaction(db, () => {
 		const snapshot = {
 			schemaVersion: 2,
-			databaseVersion: 10,
+			databaseVersion: 11,
 			exportedAt: new Date().toISOString(),
 			settings: JSON.parse(db.prepare('SELECT data FROM settings WHERE id=1').get().data),
 		};
@@ -92,7 +95,7 @@ export function validateRecovery(snapshot) {
 	if (
 		!snapshot ||
 		snapshot.schemaVersion !== 2 ||
-		![5, 6, 7, 8, 9, 10].includes(snapshot.databaseVersion)
+		![5, 6, 7, 8, 9, 10, 11].includes(snapshot.databaseVersion)
 	)
 		throw new Error('Formato no compatible: descarga una nueva exportación JSON desde el panel.');
 	if (

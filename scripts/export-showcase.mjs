@@ -49,6 +49,7 @@ for (const file of [
 	'my-callups.js',
 	'profile-tour.js',
 	'motion.js',
+	'medals.js',
 	'encounter-catalog.js',
 	'gm-ui.js',
 	'public-views.js',

@@ -4,6 +4,7 @@ import { mountWishlist } from './wishlist-ui.js';
 import { mountMyCallups } from './my-callups.js';
 import { contactForm } from './gm-ui.js';
 import { startProfileTour } from './profile-tour.js';
+import { medal, tierNames, progressOf } from './medals.js';
 import { ClassIcon } from './components.js';
 import { classKey } from './roster-ui.js';
 import { paperdoll } from './paperdoll.js';
@@ -24,6 +25,8 @@ const icons = {
 	botin: '<path d="M4 9h16v11H4Z"/><path d="M3 5h18v4H3ZM12 5v15"/>',
 	convocatorias:
 		'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+	logros:
+		'<circle cx="12" cy="14" r="6"/><path d="m8 3 4 5 4-5M12 11.5l1 2 2.2.3-1.6 1.5.4 2.2-2-1-2 1 .4-2.2-1.6-1.5 2.2-.3Z"/>',
 };
 const sections = [
 	['armeria', 'Armería'],
@@ -31,7 +34,15 @@ const sections = [
 	['wishlist', 'Wishlist / BiS'],
 	['botin', 'Botín'],
 	['convocatorias', 'Convocatorias'],
+	['logros', 'Logros'],
 ];
+const categoryNames = {
+	asistencia: 'Asistencia',
+	progreso: 'Progreso',
+	compromiso: 'Compromiso',
+	perfil: 'Perfil',
+	secreto: 'Secretos',
+};
 export const rankLabels = {
 	visitor: 'Visitante',
 	member: 'Miembro',
@@ -72,6 +83,7 @@ export function createProfileView(context) {
 	const { specName } = sheetHelpers(esc);
 	let rows = [],
 		attendance,
+		achievements = null,
 		selected = null,
 		sheetCache = new Map(),
 		wishCache = null,
@@ -83,9 +95,12 @@ export function createProfileView(context) {
 	const selectedCharacter = () => rows.find((c) => c.id === selected) || null;
 
 	async function profile() {
-		[rows, attendance] = await Promise.all([
+		[rows, attendance, achievements] = await Promise.all([
 			api('/api/characters'),
 			api('/api/attendance?userId=me'),
+			me.permissions.includes('community.read')
+				? api('/api/achievements').catch(() => null)
+				: Promise.resolve(null),
 		]);
 		sheetCache = new Map();
 		wishCache = null;
@@ -138,6 +153,7 @@ export function createProfileView(context) {
 								? `<p class="hub-hero-line"><strong>${esc(main.name)}</strong><span>${esc(main.class)}${main.spec ? ' · ' + esc(specName(main.class, main.spec)) : ''}</span><span>${esc(main.role)}</span></p>`
 								: '<p class="hub-hero-line">Registra tu primer personaje para abrir tu armería.</p>'
 						}
+						${heroMedals()}
 						<button
 							type="button"
 							class="hub-tour-start ${tourSeen() ? '' : 'is-new'}"
@@ -247,12 +263,129 @@ export function createProfileView(context) {
 				await loot(host);
 			}
 			if (id === 'convocatorias') await mountMyCallups(host, context);
+			if (id === 'logros') {
+				if (!achievements) return locked(host);
+				logros(host);
+			}
 		} catch (error) {
 			if (token === renderToken && host.isConnected)
 				host.innerHTML = `<div class="empty-note" role="alert"><strong>No se pudo cargar esta sección</strong><p>${esc(error.message)}</p></div>`;
 		} finally {
 			requestAnimationFrame(() => host.classList.remove('is-entering'));
 		}
+	}
+	// The player's best medals, shown under the name in the header.
+	function heroMedals() {
+		if (!achievements) return '';
+		const earned = achievements.achievements
+			.filter((a) => a.tier)
+			.sort(
+				(a, b) =>
+					b.tier - a.tier ||
+					(b.earned.at(-1)?.earnedAt || '').localeCompare(a.earned.at(-1)?.earnedAt || ''),
+			);
+		const shown = earned.slice(0, 6);
+		return `<a class="hub-medals" href="#logros" aria-label="Ver mis logros: ${earned.length} medallas">${
+			shown.length
+				? shown.map((a) => medal(a, { size: 'small' })).join('') +
+					(earned.length > shown.length
+						? `<span class="hub-medals-more">+${earned.length - shown.length}</span>`
+						: '')
+				: '<span class="hub-medals-empty">Aún sin medallas · Ver logros</span>'
+		}</a>`;
+	}
+	function logros(host) {
+		const a = achievements,
+			list = a.achievements,
+			earned = list.filter((x) => x.tier).length,
+			since = new Date(a.since).toLocaleDateString('es-ES', {
+				timeZone: 'Europe/Madrid',
+				day: 'numeric',
+				month: 'long',
+				year: 'numeric',
+			});
+		const progressText = (x) => {
+			if (x.value == null) return 'Se revela al conseguirlo.';
+			if (x.single) return x.tier ? 'Conseguido' : 'Pendiente';
+			if (x.next == null) return `${x.value} ${x.unit} · nivel máximo`;
+			return `${x.value} / ${x.next} ${x.unit} · siguiente: ${tierNames[x.tier + 1]}`;
+		};
+		const card = (x) =>
+			/* HTML */ `<li class="ach-card ${x.tier ? 'is-earned' : ''}">
+				${medal(x)}
+				<div>
+					<h4>${esc(x.name)}</h4>
+					<p>${esc(x.help)}</p>
+					${
+						x.tiers
+							? `<div class="ach-tiers">${x.tiers.map((t, i) => `<span class="t${i + 1} ${x.tier > i ? 'on' : ''}">${tierNames[i + 1]} ${t}</span>`).join('')}</div><div class="ach-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(progressOf(x))}"><i data-bar="${x.next == null ? 100 : Math.round(progressOf(x))}"></i></div>`
+							: x.single
+								? `<div class="ach-tiers"><span class="t${x.single} ${x.tier ? 'on' : ''}">${tierNames[x.single]}</span></div>`
+								: ''
+					}
+					<small>${esc(progressText(x))}</small>
+				</div>
+			</li>`;
+		const groups = Object.keys(categoryNames)
+			.map((cat) => [cat, list.filter((x) => x.category === cat)])
+			.filter(([, items]) => items.length);
+		const lb = a.leaderboard;
+		const inTop = lb.top.some((m) => m.rank === lb.me?.rank && m.points === lb.me?.points);
+		host.innerHTML = /* HTML */ `<div class="hub-section-head">
+				<div>
+					<h2>Mis logros</h2>
+					<p>Medallas que se consiguen solas con lo que registra la hermandad.</p>
+				</div>
+			</div>
+			<dl class="ach-summary">
+				<div>
+					<dt>Puntos</dt>
+					<dd>${a.points}</dd>
+				</div>
+				<div>
+					<dt>Medallas</dt>
+					<dd>${earned} <small>/ ${list.length}</small></dd>
+				</div>
+				<div>
+					<dt>Clasificación</dt>
+					<dd>
+						${lb.me ? '#' + lb.me.rank : '—'} <small>${lb.me ? 'de ' + lb.me.total : ''}</small>
+					</dd>
+				</div>
+			</dl>
+			<div class="ach-layout">
+				<div>
+					${groups
+						.map(
+							([cat, items]) =>
+								`<section class="ach-group"><h3>${categoryNames[cat]}</h3><ul class="ach-grid">${items.map(card).join('')}</ul></section>`,
+						)
+						.join('')}
+					<p class="ach-note">
+						Cuentan desde el ${esc(since)}. Bronce 10 puntos, plata 25, oro 50. Las medallas no se
+						pierden aunque cambien los registros. El banquillo cuenta como asistencia.
+					</p>
+				</div>
+				<aside class="card ach-ranking" aria-labelledby="ach-ranking-title">
+					<h3 id="ach-ranking-title">Clasificación de la hermandad</h3>
+					<ol>
+						${lb.top
+							.map(
+								(m) =>
+									`<li class="${lb.me && m.rank === lb.me.rank && m.points === lb.me.points && m.name === me.user.name ? 'is-me' : ''}"><b>${m.rank}</b><span>${esc(m.name)}</span><em>${m.points}</em></li>`,
+							)
+							.join('')}
+					</ol>
+					${
+						lb.me && !inTop
+							? `<p class="ach-note">Tu puesto: <strong>#${lb.me.rank}</strong> con ${lb.me.points} puntos.</p>`
+							: ''
+					}
+					<p class="ach-note">
+						<a href="/progreso#guild-wall-title">Ver los logros de la hermandad →</a>
+					</p>
+				</aside>
+			</div>`;
 	}
 	async function refreshWishlist() {
 		wishCache = null;

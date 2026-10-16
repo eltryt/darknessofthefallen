@@ -42,6 +42,11 @@ function fadeArt(el) {
 }
 function scan(node) {
 	if (!(node instanceof Element)) return;
+	// Medal progress rings: CSS variables cannot come from style attributes (CSP).
+	for (const m of [node, ...node.querySelectorAll('.medal[data-progress]')])
+		if (m.matches?.('.medal[data-progress]')) m.style.setProperty('--p', m.dataset.progress);
+	for (const bar of [node, ...node.querySelectorAll('[data-bar]')])
+		if (bar.matches?.('[data-bar]')) bar.style.setProperty('--p', bar.dataset.bar);
 	if (node.matches('img')) fadeImage(node);
 	node.querySelectorAll('img').forEach(fadeImage);
 	if (node.matches(ART)) fadeArt(node);

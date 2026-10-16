@@ -6704,3 +6704,489 @@ body[data-page='/'] .hero {
 		letter-spacing: 0.25em;
 	}
 }
+
+/* ===== Achievement medals (pure CSS) ===== */
+.medal {
+	--size: 64px;
+	--rib-a: #6e0f1d;
+	--rib-b: #d8b982;
+	--hi: #4a4650;
+	--mid: #2c2a30;
+	--lo: #141317;
+	--rim: #5d5866;
+	--ink: #8d8796;
+	position: relative;
+	display: inline-grid;
+	justify-items: center;
+	flex: 0 0 auto;
+	width: var(--size);
+	height: calc(var(--size) * 1.32);
+	vertical-align: middle;
+}
+.medal-small {
+	--size: 40px;
+}
+.medal-large {
+	--size: 84px;
+}
+.medal-ribbon {
+	position: absolute;
+	top: 0;
+	width: calc(var(--size) * 0.56);
+	height: calc(var(--size) * 0.6);
+	background:
+		linear-gradient(90deg, #0004, transparent 18%, transparent 82%, #0004),
+		linear-gradient(
+			90deg,
+			var(--rib-a) 0 30%,
+			var(--rib-b) 30% 38%,
+			var(--rib-a) 38% 62%,
+			var(--rib-b) 62% 70%,
+			var(--rib-a) 70%
+		);
+	clip-path: polygon(0 0, 100% 0, 100% 72%, 50% 100%, 0 72%);
+	filter: drop-shadow(0 2px 2px #0008);
+}
+.medal-disc {
+	position: absolute;
+	bottom: 0;
+	display: grid;
+	place-items: center;
+	width: var(--size);
+	aspect-ratio: 1;
+	border-radius: 50%;
+	overflow: hidden;
+	background:
+		radial-gradient(circle at 32% 26%, var(--hi) 0%, var(--mid) 42%, var(--lo) 100%), var(--mid);
+	box-shadow:
+		inset 0 0 0 calc(var(--size) * 0.05) var(--rim),
+		inset 0 0 0 calc(var(--size) * 0.085) var(--lo),
+		inset 0 calc(var(--size) * 0.05) calc(var(--size) * 0.08) #fff3,
+		inset 0 calc(var(--size) * -0.06) calc(var(--size) * 0.1) #0006,
+		0 calc(var(--size) * 0.06) calc(var(--size) * 0.14) #000a;
+}
+/* Engraved inner ring. */
+.medal-disc::before {
+	content: '';
+	position: absolute;
+	inset: 15%;
+	border: 1px dashed color-mix(in srgb, var(--rim) 70%, transparent);
+	border-radius: 50%;
+}
+/* Light sweep across the metal. */
+.medal-disc::after {
+	content: '';
+	position: absolute;
+	inset: -20%;
+	background: linear-gradient(115deg, transparent 40%, #fff9 50%, transparent 60%);
+	translate: -120% 0;
+	transition: translate 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.medal:hover .medal-disc::after,
+.medal:focus-visible .medal-disc::after {
+	translate: 120% 0;
+}
+.medal-disc svg {
+	position: relative;
+	z-index: 1;
+	width: 46%;
+	height: 46%;
+	fill: none;
+	stroke: var(--ink);
+	stroke-width: 1.8;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+	filter: drop-shadow(0 1px 0 #fff6) drop-shadow(0 -1px 0 #0005);
+}
+.medal.is-bronze {
+	--hi: #ffd4a1;
+	--mid: #b9763b;
+	--lo: #5a3216;
+	--rim: #e7a86c;
+	--ink: #4a240c;
+}
+.medal.is-silver {
+	--hi: #ffffff;
+	--mid: #b8c1cb;
+	--lo: #525b67;
+	--rim: #eef2f6;
+	--ink: #333b45;
+}
+.medal.is-gold {
+	--hi: #fff6c2;
+	--mid: #d9ab3a;
+	--lo: #74500b;
+	--rim: #ffe490;
+	--ink: #573a03;
+}
+.medal.is-gold .medal-disc {
+	animation: medal-glow 3.2s ease-in-out infinite;
+}
+@keyframes medal-glow {
+	50% {
+		box-shadow:
+			inset 0 0 0 calc(var(--size) * 0.05) var(--rim),
+			inset 0 0 0 calc(var(--size) * 0.085) var(--lo),
+			inset 0 calc(var(--size) * 0.05) calc(var(--size) * 0.08) #fff3,
+			inset 0 calc(var(--size) * -0.06) calc(var(--size) * 0.1) #0006,
+			0 calc(var(--size) * 0.06) calc(var(--size) * 0.14) #000a,
+			0 0 calc(var(--size) * 0.35) #ffd76a66;
+	}
+}
+/* Locked: dark metal with a ring that fills towards the next tier. */
+.medal.is-locked .medal-ribbon {
+	filter: grayscale(1) brightness(0.55) drop-shadow(0 2px 2px #0008);
+}
+.medal.is-locked .medal-disc {
+	background:
+		radial-gradient(circle, var(--mid) 0 62%, transparent 63%),
+		conic-gradient(#d8b982 calc(var(--p, 0) * 1%), #3a363f 0);
+	box-shadow:
+		inset 0 0 0 calc(var(--size) * 0.085) transparent,
+		0 calc(var(--size) * 0.05) calc(var(--size) * 0.1) #0009;
+}
+.medal.is-locked .medal-disc::before {
+	inset: 11%;
+	border: 1px solid #0006;
+	background: radial-gradient(circle at 35% 30%, #3a3740, #19181c);
+}
+.medal.is-locked .medal-disc svg {
+	opacity: 0.5;
+	filter: none;
+}
+.medal.is-secret .medal-disc svg {
+	opacity: 0.8;
+	stroke: #c9a2ff;
+}
+/* Ribbon colours by category. */
+.medal.cat-asistencia {
+	--rib-a: #7a1424;
+	--rib-b: #e2c48d;
+}
+.medal.cat-progreso {
+	--rib-a: #3f2363;
+	--rib-b: #d2b0ff;
+}
+.medal.cat-compromiso {
+	--rib-a: #173a66;
+	--rib-b: #a9cdff;
+}
+.medal.cat-perfil {
+	--rib-a: #1d4b33;
+	--rib-b: #a9e2c0;
+}
+.medal.cat-secreto {
+	--rib-a: #141317;
+	--rib-b: #8f6bd6;
+}
+.medal.cat-hermandad {
+	--rib-a: #5b0f19;
+	--rib-b: #ffd76a;
+}
+@media (prefers-reduced-motion: reduce) {
+	.medal.is-gold .medal-disc {
+		animation: none;
+	}
+	.medal-disc::after {
+		transition: none;
+	}
+}
+
+/* Hero showcase: best medals next to the player's name. */
+.hub-medals {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	gap: 6px;
+	margin-top: 10px;
+	color: inherit;
+	text-decoration: none;
+}
+.hub-medals .medal {
+	transition: translate 0.2s ease;
+}
+.hub-medals:hover .medal {
+	translate: 0 -2px;
+}
+.hub-medals-empty {
+	align-self: center;
+	color: #b9ad9a;
+	font-size: 13px;
+}
+.hub-medals-more {
+	align-self: center;
+	padding: 2px 8px;
+	border: 1px solid #a68a5b60;
+	border-radius: 999px;
+	color: #e3c08f;
+	font-size: 12px;
+}
+.hub-hero-text .hub-tour-start {
+	margin-top: 10px;
+}
+
+/* Logros section */
+.ach-summary {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+	gap: 10px;
+	margin-bottom: 18px;
+}
+.ach-summary div {
+	padding: 12px 14px;
+	border: 1px solid #a68a5b40;
+	border-radius: 8px;
+	background: linear-gradient(180deg, #17151a, #111013);
+}
+.ach-summary dt {
+	color: var(--muted);
+	font-size: 12px;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+.ach-summary dd {
+	margin: 4px 0 0;
+	color: var(--gold);
+	font-family: Georgia, serif;
+	font-size: 28px;
+}
+.ach-summary dd small {
+	color: var(--muted);
+	font-family: inherit;
+	font-size: 14px;
+}
+.ach-layout {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+	gap: 18px;
+	align-items: start;
+}
+.ach-group h3 {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin: 18px 0 10px;
+	font-size: 16px;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: #e3c08f;
+}
+.ach-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
+	gap: 10px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.ach-card {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
+	align-items: center;
+	gap: 14px;
+	padding: 12px 14px;
+	border: 1px solid #2c272c;
+	border-radius: 8px;
+	background: #0f0e11;
+}
+.ach-card.is-earned {
+	border-color: #a68a5b55;
+	background: linear-gradient(135deg, #1b171c, #0f0e11);
+}
+.ach-card h4 {
+	margin: 0;
+	font-size: 15px;
+}
+.ach-card p {
+	margin: 2px 0 6px;
+	color: var(--muted);
+	font-size: 13px;
+}
+.ach-tiers {
+	display: flex;
+	gap: 4px;
+	margin-bottom: 6px;
+}
+.ach-tiers span {
+	padding: 1px 7px;
+	border: 1px solid #3a343b;
+	border-radius: 999px;
+	color: #7d7682;
+	font-size: 11px;
+}
+.ach-tiers .on.t1 {
+	border-color: #b9763b;
+	color: #f0c294;
+}
+.ach-tiers .on.t2 {
+	border-color: #b8c1cb;
+	color: #eef2f6;
+}
+.ach-tiers .on.t3 {
+	border-color: #d9ab3a;
+	color: #ffe490;
+}
+.ach-bar {
+	height: 6px;
+	border-radius: 999px;
+	background: #2a262c;
+	overflow: hidden;
+}
+.ach-bar i {
+	display: block;
+	width: calc(var(--p, 0) * 1%);
+	height: 100%;
+	border-radius: inherit;
+	background: linear-gradient(90deg, #8f6a32, #ffd79a);
+}
+.ach-card small {
+	display: block;
+	margin-top: 4px;
+	color: #a79f93;
+	font-size: 12px;
+}
+.ach-ranking ol {
+	display: grid;
+	gap: 4px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.ach-ranking li {
+	display: grid;
+	grid-template-columns: 32px minmax(0, 1fr) auto;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 10px;
+	border-radius: 6px;
+	background: #0f0e11;
+}
+.ach-ranking li.is-me {
+	outline: 1px solid var(--gold);
+	background: #2a2116;
+}
+.ach-ranking b {
+	display: grid;
+	place-items: center;
+	width: 26px;
+	height: 26px;
+	border-radius: 50%;
+	background: #2a262c;
+	font-size: 13px;
+}
+.ach-ranking li:nth-child(1) b {
+	background: linear-gradient(135deg, #fff6c2, #d9ab3a);
+	color: #3d2900;
+}
+.ach-ranking li:nth-child(2) b {
+	background: linear-gradient(135deg, #ffffff, #9aa4af);
+	color: #222;
+}
+.ach-ranking li:nth-child(3) b {
+	background: linear-gradient(135deg, #ffd4a1, #a8652d);
+	color: #2b1406;
+}
+.ach-ranking span {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.ach-ranking em {
+	color: var(--gold);
+	font-style: normal;
+	font-weight: 700;
+}
+.ach-note {
+	margin-top: 14px;
+	color: var(--muted);
+	font-size: 13px;
+}
+@media (max-width: 900px) {
+	.ach-layout {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+/* Guild wall on the Progreso page */
+.guild-wall {
+	margin-top: 28px;
+}
+.guild-wall ul {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr));
+	gap: 14px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.guild-wall li {
+	display: grid;
+	justify-items: center;
+	gap: 8px;
+	padding: 16px 10px;
+	border: 1px solid #a68a5b30;
+	border-radius: 8px;
+	background: linear-gradient(180deg, #17151a, #0f0e11);
+	text-align: center;
+}
+.guild-wall li.is-earned {
+	border-color: #a68a5b70;
+}
+.guild-wall strong {
+	font-size: 14px;
+}
+.guild-wall small {
+	color: var(--muted);
+	font-size: 12px;
+}
+/* Reeded edge, like a minted coin. */
+.medal-edge {
+	position: absolute;
+	inset: 0;
+	border-radius: 50%;
+	background: repeating-conic-gradient(var(--rim) 0 3deg, var(--lo) 3deg 6deg);
+	-webkit-mask: radial-gradient(
+		circle closest-side,
+		transparent 87%,
+		#000 88% 96%,
+		transparent 97%
+	);
+	mask: radial-gradient(circle closest-side, transparent 87%, #000 88% 96%, transparent 97%);
+	opacity: 0.6;
+}
+.medal.is-locked .medal-edge {
+	display: none;
+}
+/* Gold medals carry a twinkling star. */
+.medal.is-gold::after {
+	content: '';
+	position: absolute;
+	z-index: 2;
+	top: 38%;
+	right: -4%;
+	width: calc(var(--size) * 0.26);
+	aspect-ratio: 1;
+	background: radial-gradient(circle, #fff 0 18%, #fff6c2 30%, transparent 62%);
+	clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%);
+	animation: medal-twinkle 2.6s ease-in-out infinite;
+	pointer-events: none;
+}
+@keyframes medal-twinkle {
+	0%,
+	100% {
+		opacity: 0;
+		scale: 0.4;
+		rotate: 0deg;
+	}
+	45% {
+		opacity: 1;
+		scale: 1;
+		rotate: 45deg;
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.medal.is-gold::after {
+		animation: none;
+		opacity: 0.8;
+	}
+}

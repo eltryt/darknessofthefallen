@@ -22,6 +22,7 @@ import {
 } from './domain.mjs';
 import { isValidSpecForClass } from '../public/specs.js';
 import { armoryApi } from './armory.mjs';
+import { achievementsApi, publicGuildAchievements } from './achievements.mjs';
 import { raidLineupApi } from './raid-lineup.mjs';
 import {
 	SESSION_MAX_AGE_SECONDS,
@@ -81,6 +82,7 @@ const files = {
 	'/my-callups.js': ['my-callups.js', 'text/javascript'],
 	'/profile-tour.js': ['profile-tour.js', 'text/javascript'],
 	'/motion.js': ['motion.js', 'text/javascript'],
+	'/medals.js': ['medals.js', 'text/javascript'],
 	'/encounter-catalog.js': ['encounter-catalog.js', 'text/javascript'],
 	'/public-views.js': ['public-views.js', 'text/javascript'],
 	'/public-layout.js': ['public-layout.js', 'text/javascript'],
@@ -268,6 +270,7 @@ export function createApp(db, env, { readAsset = readLocalAsset, discordFetch = 
 						.all()
 						.map(publicCharacter),
 					progress: publicProgress(db),
+					guildAchievements: publicGuildAchievements(db),
 					raids: db
 						.prepare(
 							"SELECT r.id,r.title,r.starts_at,r.source FROM raids r LEFT JOIN raid_events e ON e.id=r.id WHERE r.starts_at>=? AND (e.id IS NULL OR (e.public=1 AND e.state='Abierta')) ORDER BY r.starts_at LIMIT 100",
@@ -373,6 +376,7 @@ export function createApp(db, env, { readAsset = readLocalAsset, discordFetch = 
 				db.prepare('DELETE FROM sessions WHERE hash=?').run(hash(cookies(req).session));
 				return send(200, { ok: true }, { 'Set-Cookie': cookie('session', '', env, 0) });
 			}
+			if (await achievementsApi({ db, user, path, method, send, requirePermission })) return;
 			if (
 				await armoryApi({
 					db,

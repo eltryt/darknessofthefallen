@@ -1,5 +1,6 @@
 import { recruitmentShowcase } from './guild-showcase.js';
 import { schedulePlanner } from './schedule-ui.js';
+import { medal, tierNames } from './medals.js';
 export function createPublicLayout(context) {
 	const { esc, title, data } = context;
 	function weekSchedule() {
@@ -139,6 +140,30 @@ export function createPublicLayout(context) {
 				La idea es progresar como equipo, explicar las decisiones y cuidar la confianza entre
 				compañeros.
 			</p>
+		</section>`;
+	}
+
+	// Collective achievements, earned automatically from the guild's own records.
+	function guildWall() {
+		const list = data.guildAchievements || [];
+		if (!list.length) return '';
+		const earned = list.filter((a) => a.tier).length;
+		return /* HTML */ `<section class="section guild-wall" aria-labelledby="guild-wall-title">
+			<div class="section-head">
+				<div>
+					<span class="eyebrow">Logros de la hermandad</span>
+					<h2 id="guild-wall-title">Hitos que hemos alcanzado juntos.</h2>
+				</div>
+				<span class="pill">${earned} / ${list.length}</span>
+			</div>
+			<ul>
+				${list
+					.map(
+						(a) =>
+							`<li class="${a.tier ? 'is-earned' : ''}">${medal(a, { size: 'large' })}<strong>${esc(a.name)}</strong><small>${a.tier ? esc(tierNames[a.tier]) + (a.value != null && a.tiers ? ' · ' + esc(a.value) + ' ' + esc(a.unit) : '') : a.tiers ? `${esc(a.value ?? 0)} / ${esc(a.next)} ${esc(a.unit)}` : 'Por conseguir'}</small><small>${esc(a.help)}</small></li>`,
+					)
+					.join('')}
+			</ul>
 		</section>`;
 	}
 
@@ -447,29 +472,30 @@ export function createPublicLayout(context) {
 			return (
 				html +
 				/* HTML */ `<section class="section">
-					<h2>Cada encuentro tiene su historia.</h2>
-					<div class="grid">
-						<article class="card">
-							<span class="pill">No intentado</span>
-							<h3>El reto por delante</h3>
-							<p>Encuentros que la hermandad todavía no ha empezado.</p>
-						</article>
-						<article class="card">
-							<span class="pill">En progreso</span>
-							<h3>Aprender y avanzar</h3>
-							<p>Bosses en los que la banda está trabajando.</p>
-						</article>
-						<article class="card">
-							<span class="pill gold">Derrotado</span>
-							<h3>Una victoria compartida</h3>
-							<p>Encuentros superados, con su primera victoria e historial.</p>
-						</article>
-					</div>
-					<p class="privacy-note">
-						Aquí compartimos el progreso de la hermandad. Las métricas individuales detalladas
-						permanecen privadas.
-					</p>
-				</section>`
+						<h2>Cada encuentro tiene su historia.</h2>
+						<div class="grid">
+							<article class="card">
+								<span class="pill">No intentado</span>
+								<h3>El reto por delante</h3>
+								<p>Encuentros que la hermandad todavía no ha empezado.</p>
+							</article>
+							<article class="card">
+								<span class="pill">En progreso</span>
+								<h3>Aprender y avanzar</h3>
+								<p>Bosses en los que la banda está trabajando.</p>
+							</article>
+							<article class="card">
+								<span class="pill gold">Derrotado</span>
+								<h3>Una victoria compartida</h3>
+								<p>Encuentros superados, con su primera victoria e historial.</p>
+							</article>
+						</div>
+						<p class="privacy-note">
+							Aquí compartimos el progreso de la hermandad. Las métricas individuales detalladas
+							permanecen privadas.
+						</p>
+					</section>
+					${guildWall()}`
 			);
 		if (path === '/contacto')
 			return (

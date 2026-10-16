@@ -98,6 +98,13 @@ const steps = [
 		text: 'Despliega esta ayuda cuando quieras. Y si los responsables planifican jefe a jefe, aquí verás si entras en cada uno.',
 	},
 	{
+		section: 'logros',
+		target: '.ach-grid',
+		closest: '.ach-group',
+		title: 'Tus medallas',
+		text: 'Se consiguen solas con lo que registra la hermandad: asistencia, primeras victorias, convocatorias y tu ficha. Bronce, plata y oro suman puntos para la clasificación.',
+	},
+	{
 		target: '[data-tour-start]',
 		title: '¡Listo!',
 		text: 'Puedes repetir esta guía cuando quieras desde este botón.',

@@ -92,7 +92,7 @@ test('migration 007 keeps existing characters and applies empty armory defaults'
 		db.close();
 		// Reopening must not run the migration twice.
 		const again = openDatabase(file);
-		assert.equal(again.prepare('SELECT COUNT(*) n FROM schema_migrations').get().n, 10);
+		assert.equal(again.prepare('SELECT COUNT(*) n FROM schema_migrations').get().n, 11);
 		again.close();
 	} finally {
 		rmSync(dir, { recursive: true, force: true });
