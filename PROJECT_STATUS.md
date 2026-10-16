@@ -843,3 +843,11 @@ Publicado: `7628b5a`; backend `38652910420`, Pages `38652910475` y validación `
 - Todo se desactiva con «reducir movimiento». Sin dependencias externas.
 - Validación: 96 pruebas Node y build; navegador a 1440 y 390 px: fotogramas de la entrada, nada oculto al terminar, 7/7 secciones reveladas al bajar y navegación Inicio → Raids sin errores.
 - Publicado: `e1e678f`; backend 38835547515, Pages 38835548161 y validación 38835547966 correctos; motion.js, app.js y theme.css servidos idénticos al local.
+
+## 2026-10-16 — Entrada cinematográfica en Inicio
+
+- Intro (una vez por sesión del navegador, se salta con un clic o una tecla): pantalla oscura, el emblema se enciende con brillo dorado, una línea de luz y el nombre que se despliega; el telón se abre en dos mitades sobre el castillo. Se marca antes del primer pintado para que la página no asome debajo; si el módulo fallara, se descubre a los 3 s.
+- Portada viva: el castillo sale del desenfoque con un zum profundo (recortado a su zona), brasas que suben sobre la escena, el título entra letra a letra con un destello dorado que lo recorre, el menú baja desde arriba y el resto del texto llega en cascada.
+- Tarjetas de aventura «repartidas» en 3D con sus esquinas doradas encendiéndose; las secciones inferiores aparecen al hacer scroll con desenfoque y sus elementos en cascada.
+- Emblema de 320 px (40 KB) para la intro. Título con etiqueta accesible «Darkness of the Fallen». Todo se desactiva con «reducir movimiento».
+- Validación: 96 pruebas Node y build; navegador a 1440 y 390 px con fotogramas de 0,15 a 6 s, salto por clic, sin intro en la segunda visita, nada oculto al terminar y sin desbordamiento.

@@ -93,6 +93,7 @@ const files = {
 	'/assets/guild-logo.png': ['assets/guild-logo.png', 'image/png'],
 	'/assets/guild-logo.webp': ['assets/guild-logo.webp', 'image/webp'],
 	'/assets/guild-logo-128.webp': ['assets/guild-logo-128.webp', 'image/webp'],
+	'/assets/guild-logo-320.webp': ['assets/guild-logo-320.webp', 'image/webp'],
 	'/assets/og-image.jpg': ['assets/og-image.jpg', 'image/jpeg'],
 	'/assets/favicon-32.png': ['assets/favicon-32.png', 'image/png'],
 	'/assets/apple-touch-icon.png': ['assets/apple-touch-icon.png', 'image/png'],

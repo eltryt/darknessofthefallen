@@ -3,6 +3,29 @@ document.documentElement.classList.add('site-booting');
 // A broken module or a stalled request must not hide useful public content forever.
 window.setTimeout(() => document.documentElement.classList.remove('site-booting'), 8000);
 
+// Home: the cinematic intro plays once per browser session. Mark it before the
+// first paint so the page never flashes underneath; motion.js builds it.
+(() => {
+	const home = location.pathname.replace(/\/+$/, '').split('/').pop() === '';
+	if (!home || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+	try {
+		if (sessionStorage.getItem('dotf-intro')) return;
+	} catch {
+		return;
+	}
+	document.documentElement.classList.add('intro-pending');
+	const link = document.createElement('link');
+	link.rel = 'preload';
+	link.as = 'image';
+	link.href = new URL(
+		'assets/guild-logo-320.webp',
+		document.currentScript?.src || location.href,
+	).href;
+	document.head.append(link);
+	// If the intro module never loads, uncover the page anyway.
+	window.setTimeout(() => document.documentElement.classList.remove('intro-pending'), 3000);
+})();
+
 // The main illustration of each page lives in the CSS, so the browser would only
 // ask for it after drawing the text. Request it now, and fade it in once it is here.
 (() => {
