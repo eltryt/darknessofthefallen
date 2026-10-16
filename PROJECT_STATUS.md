@@ -804,3 +804,4 @@ Publicado: `7628b5a`; backend `38652910420`, Pages `38652910475` y validación `
 - Controles: Atrás, Siguiente, «Saltar sección», puntos para ir a cualquier paso, cerrar con × o Escape, flechas del teclado. El foco queda dentro de la ventana y vuelve al botón al cerrar. En móvil la ventana se acopla abajo o arriba según dónde esté el elemento. Respeta «reducir movimiento».
 - Los pasos cuyo elemento no existe para ese jugador (sin personajes, sin convocatorias) se omiten solos. Módulo nuevo `public/profile-tour.js`; sin dependencias externas (CSP intacta) ni cambios de backend.
 - Validación: 88 pruebas Node y build; navegador con servidor QA en memoria a 1440 y 390 px: recorrido completo, atrás, salto por puntos, saltar sección, teclado, Escape y foco, sin errores JS.
+- Publicado: `6d0793a`; backend 38828855194, Pages 38828856097 y validación 38828856246/38828855946 correctos; profile-tour.js, profile-view.js y theme.css servidos idénticos al local.
