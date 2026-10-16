@@ -96,3 +96,50 @@ export async function finishOAuth(db, req, url, env, fetcher = fetch) {
 	db.prepare('DELETE FROM sessions WHERE user_id=? OR expires<?').run(profile.id, Date.now());
 	return issueSession(db, profile.id);
 }
+
+// Ranks come from Discord roles. A session lasts days, so the bot re-reads the
+// member every few minutes: leaving the server or losing a role takes effect
+// without waiting for the session to expire. Network failures keep the session.
+export const MEMBER_RECHECK_MS = 10 * 60 * 1000;
+export const memberCheckReady = (env) =>
+	typeof env.DISCORD_BOT_TOKEN === 'string' &&
+	/^[\w.-]{50,120}$/.test(env.DISCORD_BOT_TOKEN) &&
+	/^\d{17,20}$/.test(env.DISCORD_GUILD_ID || '');
+export async function revalidateMember(db, user, env, fetcher = fetch) {
+	if (!/^\d{17,20}$/.test(user.id)) return user;
+	let r;
+	try {
+		r = await fetcher(
+			`https://discord.com/api/v10/guilds/${env.DISCORD_GUILD_ID}/members/${user.id}`,
+			{
+				headers: { Authorization: `Bot ${env.DISCORD_BOT_TOKEN}` },
+				signal: AbortSignal.timeout(5000),
+			},
+		);
+	} catch {
+		return user;
+	}
+	// 404 also means "unknown guild" if the bot was removed; only Discord's
+	// Unknown Member code (10007) proves the player left.
+	const body = r.status === 404 ? await r.json().catch(() => null) : null;
+	if (r.status === 404 && body?.code === 10007) {
+		// No longer in the guild: end every session of this account.
+		db.prepare('DELETE FROM sessions WHERE user_id=?').run(user.id);
+		db.prepare("UPDATE users SET rank='visitor',updated_at=? WHERE id=?").run(
+			new Date().toISOString(),
+			user.id,
+		);
+		return null;
+	}
+	if (!r.ok) return user;
+	const member = await r.json().catch(() => null);
+	if (!member || !Array.isArray(member.roles)) return user;
+	const rank = roleFromDiscord(user.id, member.roles, env);
+	if (rank !== user.rank)
+		db.prepare('UPDATE users SET rank=?,updated_at=? WHERE id=?').run(
+			rank,
+			new Date().toISOString(),
+			user.id,
+		);
+	return { ...user, rank };
+}

@@ -32,6 +32,9 @@ import {
 	cookies,
 	hash,
 	oauthReady,
+	memberCheckReady,
+	revalidateMember,
+	MEMBER_RECHECK_MS,
 } from './auth.mjs';
 import { deliverRecruitment } from './integrations.mjs';
 import { raidEventsApi } from './raid-events.mjs';
@@ -131,17 +134,52 @@ async function body(req) {
 		throw new HttpError(400, 'JSON no válido.');
 	}
 }
-export function createApp(db, env, { readAsset = readLocalAsset } = {}) {
+export function createApp(db, env, { readAsset = readLocalAsset, discordFetch = fetch } = {}) {
 	env = { APP_ORIGIN: 'http://localhost:3000', ...env };
-	const limits = new Map();
-	function throttle(req, route) {
+	const limits = new Map(),
+		memberChecks = new Map();
+	function throttle(
+		req,
+		route,
+		max = 15,
+		windowMs = 60000,
+		message = 'Demasiados intentos. Espera un minuto.',
+	) {
 		const key = `${req.socket.remoteAddress}:${route}`,
 			now = Date.now();
 		let item = limits.get(key);
-		if (!item || item.until < now) item = { count: 0, until: now + 60000 };
-		if (++item.count > 15) throw new HttpError(429, 'Demasiados intentos. Espera un minuto.');
+		if (!item || item.until < now) item = { count: 0, until: now + windowMs };
+		if (++item.count > max) throw new HttpError(429, message);
 		limits.set(key, item);
 		if (limits.size > 10000) for (const [k, v] of limits) if (v.until < now) limits.delete(k);
+	}
+	// Anonymous applications: a tighter limit per address and a ceiling for everyone,
+	// so a flood cannot fill the database or the officers' Discord channel.
+	const applicationLog = [];
+	function throttleApplications(req) {
+		throttle(
+			req,
+			'application',
+			3,
+			10 * 60000,
+			'Ya has enviado varias candidaturas. Espera unos minutos.',
+		);
+		const now = Date.now();
+		while (applicationLog.length && applicationLog[0] < now - 3600000) applicationLog.shift();
+		if (applicationLog.length >= 30)
+			throw new HttpError(429, 'Hemos recibido muchas candidaturas. Inténtalo dentro de un rato.');
+		applicationLog.push(now);
+	}
+	async function sessionUser(req) {
+		const found = currentSession(db, req);
+		if (!found || !memberCheckReady(env)) return found;
+		const last = memberChecks.get(found.id) || 0;
+		if (Date.now() - last < MEMBER_RECHECK_MS) return found;
+		memberChecks.set(found.id, Date.now());
+		if (memberChecks.size > 5000)
+			for (const [k, v] of memberChecks)
+				if (Date.now() - v > MEMBER_RECHECK_MS) memberChecks.delete(k);
+		return revalidateMember(db, found, env, discordFetch);
 	}
 	return async (req, res) => {
 		const headers = {
@@ -149,9 +187,12 @@ export function createApp(db, env, { readAsset = readLocalAsset } = {}) {
 			'X-Robots-Tag': 'noindex, nofollow',
 			'Referrer-Policy': 'no-referrer',
 			'Content-Security-Policy':
-				"default-src 'self'; script-src 'self' https://www.googletagmanager.com; style-src 'self'; img-src 'self' data:; connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com https://www.googletagmanager.com; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
+				"default-src 'self'; script-src 'self' https://www.googletagmanager.com; style-src 'self'; img-src 'self' data:; connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com https://www.googletagmanager.com; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; object-src 'none'",
 			'Cache-Control': 'no-store',
-			'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+			'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
+			'Cross-Origin-Opener-Policy': 'same-origin',
+			'Cross-Origin-Resource-Policy': 'same-origin',
+			'X-Frame-Options': 'DENY',
 		};
 		if (env.APP_ORIGIN.startsWith('https:'))
 			headers['Strict-Transport-Security'] = 'max-age=31536000';
@@ -188,7 +229,7 @@ export function createApp(db, env, { readAsset = readLocalAsset } = {}) {
 				});
 				return res.end(method === 'HEAD' ? '' : content);
 			}
-			const user = currentSession(db, req),
+			const user = await sessionUser(req),
 				s = settings(db);
 			const requireUser = () => {
 				if (!user) throw new HttpError(401, 'Entra con Discord para continuar.');
@@ -305,6 +346,7 @@ export function createApp(db, env, { readAsset = readLocalAsset } = {}) {
 				return res.end();
 			}
 			if (path === '/auth/discord/callback' && method === 'GET') {
+				throttle(req, path);
 				const session = await finishOAuth(db, req, url, env);
 				res.writeHead(302, {
 					...headers,
@@ -476,6 +518,7 @@ export function createApp(db, env, { readAsset = readLocalAsset } = {}) {
 			if (path === '/api/applications' && method === 'POST') {
 				if (!s.recruitmentOpen)
 					throw new HttpError(409, 'El reclutamiento está cerrado en este momento.');
+				throttleApplications(req);
 				const v = await body(req);
 				if (v.website) throw new HttpError(400, 'Formulario no válido.');
 				const a = {

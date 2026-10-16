@@ -805,3 +805,11 @@ Publicado: `7628b5a`; backend `38652910420`, Pages `38652910475` y validación `
 - Los pasos cuyo elemento no existe para ese jugador (sin personajes, sin convocatorias) se omiten solos. Módulo nuevo `public/profile-tour.js`; sin dependencias externas (CSP intacta) ni cambios de backend.
 - Validación: 88 pruebas Node y build; navegador con servidor QA en memoria a 1440 y 390 px: recorrido completo, atrás, salto por puntos, saltar sección, teclado, Escape y foco, sin errores JS.
 - Publicado: `6d0793a`; backend 38828855194, Pages 38828856097 y validación 38828856246/38828855946 correctos; profile-tour.js, profile-view.js y theme.css servidos idénticos al local.
+
+## 2026-10-16 — Revisión de seguridad
+
+- Revisado: cabeceras, cookies de sesión (HttpOnly, SameSite=Lax, Secure, guardadas como hash), OAuth de Discord (state de un solo uso), CSRF (Origin + token + JSON obligatorio), permisos por rango en el servidor, propiedad de personajes/wishlist/equipo, validación de entradas, escape de HTML en navegador y servidor, menciones bloqueadas en avisos de Discord y errores internos ocultos. Sin fallos en esas áreas.
+- Corregido (importante): el rango solo se comprobaba al iniciar sesión y la sesión dura 7 días, así que quien salía del Discord o perdía su rol conservaba el acceso hasta una semana. Ahora el bot revisa al miembro cada 10 minutos: si ya no está en el servidor (código Unknown Member 10007) se cierran todas sus sesiones; si cambió su rol, el rango se actualiza al momento. Si Discord falla o el bot no ve el servidor, la sesión se mantiene.
+- Añadido: cabeceras Cross-Origin-Opener-Policy, Cross-Origin-Resource-Policy, X-Frame-Options y `object-src 'none'` en la CSP; Permissions-Policy ampliada (pago y USB). Candidaturas anónimas limitadas a 3 cada 10 minutos por dirección y 30 por hora en total. Límite de intentos en la vuelta del inicio de sesión.
+- Pendiente: 3 avisos de npm en herramientas de desarrollo (sharp dentro del simulador local de Wrangler), no en la web publicada. La versión que lo corrige (4.151.0) tiene dos días y depende de una beta; se actualizará cuando madure.
+- Validación: 95 pruebas Node (7 nuevas de sesiones, cabeceras y límites), workerd y build del backend.
