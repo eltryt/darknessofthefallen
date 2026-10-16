@@ -1,5 +1,5 @@
-// Achievement medals drawn with HTML and CSS only: a ribbon in the category
-// colours, a metal disc for the tier, an engraved ring and an embossed icon.
+// Achievement emblems drawn with HTML and CSS only: a forged metal frame for the
+// tier, four diamond studs set with the category gem and a silver icon on slate.
 const icons = {
 	shield: '<path d="M12 3 5 6v5c0 4.4 3 8.3 7 9.5 4-1.2 7-5.1 7-9.5V6Z"/><path d="m9 12 2 2 4-4"/>',
 	flame:
@@ -61,5 +61,5 @@ export function progressOf(a) {
 export function medal(a, { size = 'medium' } = {}) {
 	const tier = a.tier || 0;
 	const label = `${a.name}${tier ? ' · ' + tierNames[tier] : ' · Bloqueado'}`;
-	return `<span class="medal medal-${esc(size)} ${tierClass[tier]} cat-${esc(a.category)}${a.secret && !tier ? ' is-secret' : ''}" role="img" aria-label="${esc(label)}" title="${esc(label)}" data-progress="${Math.round(progressOf(a))}"><span class="medal-ribbon" aria-hidden="true"></span><span class="medal-disc" aria-hidden="true"><span class="medal-edge"></span><svg viewBox="0 0 24 24" focusable="false">${icons[a.icon] || icons.secret}</svg></span></span>`;
+	return `<span class="medal medal-${esc(size)} ${tierClass[tier]} cat-${esc(a.category)}${a.secret && !tier ? ' is-secret' : ''}" role="img" aria-label="${esc(label)}" title="${esc(label)}" data-progress="${Math.round(progressOf(a))}"><span class="medal-disc" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false">${icons[a.icon] || icons.secret}</svg></span><span class="medal-studs" aria-hidden="true"><i></i><i></i><i></i><i></i></span></span>`;
 }

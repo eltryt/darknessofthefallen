@@ -871,3 +871,9 @@ Publicado: `7628b5a`; backend `38652910420`, Pages `38652910475` y validación `
 - Limitaciones: Progreso solo guarda cambios de estado, no cada victoria repetida, por eso Matajefes usa el botín registrado; Superviviente necesita que los oficiales marquen «En progreso» la misma noche de los intentos.
 - Validación: 102 pruebas Node (2 nuevas cubren los 12 logros) y build; navegador QA a 1440 y 390 px.
 - Publicado: `85a5127` (backend 38840271637 y Pages correctos; /api/public muestra los 7 logros de la hermandad y medals.js es idéntico al local). La validación de ese commit falló solo por el formato de tests/achievements.test.mjs (Prettier no era idempotente en un bloque); corregido en el commit siguiente, con validación 38840422813 correcta.
+
+## 2026-10-16 — Medallas con estilo de emblema de logro
+
+- A petición del propietario (con capturas de referencia): las medallas pasan a ser emblemas circulares sin cinta. Marco de metal forjado según el nivel (cobre, plata, oro; hierro oscuro con arco de progreso si está bloqueado), bisel interior, centro de pizarra con el icono plateado en relieve, cuatro tachuelas en rombo (la superior más grande) con la gema de la categoría (rubí, amatista, zafiro, esmeralda, violeta, topacio), destello al pasar el ratón y brillo suave en las de oro.
+- Tarjetas como la lista de logros de referencia: emblema a la izquierda, título y descripción, pastillas Bronce/Plata/Oro a la derecha y barra de progreso con contador (también «0 / 1» en los logros únicos); cabeceras de sección en dorado con filete.
+- Solo CSS y HTML; sin cambios de datos ni de API. Validación: 102 pruebas Node y build; navegador QA a 1440 y 390 px sin desbordamiento.

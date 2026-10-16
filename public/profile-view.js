@@ -306,22 +306,38 @@ export function createProfileView(context) {
 			});
 		const progressText = (x) => {
 			if (x.value == null) return 'Se revela al conseguirlo.';
-			if (x.single) return x.tier ? 'Conseguido' : 'Pendiente';
+			if (x.single) return x.tier ? '1 / 1 · Conseguido' : '0 / 1';
 			if (x.next == null) return `${x.value} ${x.unit} · nivel máximo`;
 			return `${x.value} / ${x.next} ${x.unit} · siguiente: ${tierNames[x.tier + 1]}`;
 		};
+		const pills = (x) =>
+			x.tiers
+				? x.tiers
+						.map(
+							(t, i) =>
+								`<span class="t${i + 1} ${x.tier > i ? 'on' : ''}" title="${tierNames[i + 1]}: ${t} ${esc(x.unit)}">${tierNames[i + 1]}</span>`,
+						)
+						.join('')
+				: x.single
+					? `<span class="t${x.single} ${x.tier ? 'on' : ''}">${tierNames[x.single]}</span>`
+					: '';
+		const bar = (x) =>
+			x.single ? (x.tier ? 100 : 0) : x.next == null && x.tiers ? 100 : Math.round(progressOf(x));
 		const card = (x) =>
 			/* HTML */ `<li class="ach-card ${x.tier ? 'is-earned' : ''}">
 				${medal(x)}
 				<div>
-					<h4>${esc(x.name)}</h4>
-					<p>${esc(x.help)}</p>
+					<div class="ach-head">
+						<div>
+							<h4>${esc(x.name)}</h4>
+							<p>${esc(x.help)}</p>
+						</div>
+						<div class="ach-tiers">${pills(x)}</div>
+					</div>
 					${
-						x.tiers
-							? `<div class="ach-tiers">${x.tiers.map((t, i) => `<span class="t${i + 1} ${x.tier > i ? 'on' : ''}">${tierNames[i + 1]} ${t}</span>`).join('')}</div><div class="ach-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(progressOf(x))}"><i data-bar="${x.next == null ? 100 : Math.round(progressOf(x))}"></i></div>`
-							: x.single
-								? `<div class="ach-tiers"><span class="t${x.single} ${x.tier ? 'on' : ''}">${tierNames[x.single]}</span></div>`
-								: ''
+						x.value == null
+							? ''
+							: `<div class="ach-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${bar(x)}"><i data-bar="${bar(x)}"></i></div>`
 					}
 					<small>${esc(progressText(x))}</small>
 				</div>
