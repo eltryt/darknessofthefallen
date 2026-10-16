@@ -1,5 +1,5 @@
 import { progressShowcase, attachRecruitmentFilters } from './guild-showcase.js';
-import { mountHomeEvents, mountLaunchCountdown } from './home-events.js';
+import { mountHomeEvents, mountLaunchCountdown, mountPactEgg } from './home-events.js';
 import { contactForm } from './gm-ui.js';
 import { rosterTable } from './roster-ui.js';
 import { createPublicLayout } from './public-layout.js';
@@ -405,6 +405,7 @@ export function createPublicViews(context) {
 		attachSchedulePlanner(s);
 		if (path === '/') {
 			mountLaunchCountdown(document.querySelector('[data-launch-countdown]'));
+			mountPactEgg(document.querySelector('.hero h1'), context);
 			await mountHomeEvents(document.querySelector('[data-home-events]'), context);
 		}
 		if (path === '/contacto' && context.me?.permissions.includes('community.read')) {

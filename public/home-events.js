@@ -53,6 +53,67 @@ export function mountLaunchCountdown(host) {
 	const timer = setInterval(render, 1000);
 	render();
 }
+// Easter egg: enough quick clicks on the title bring back the owner's old guild.
+export const PACT_CLICKS = 7;
+const PACT_GAP_MS = 1200;
+export function countPactClick(state, now) {
+	const clicks = now - state.last < PACT_GAP_MS ? state.clicks + 1 : 1;
+	return { clicks, last: now, ready: clicks >= PACT_CLICKS };
+}
+function titleWord(h1) {
+	// The animated title is split into words; the plain one starts with a text node.
+	const split = h1.querySelector('.title-word');
+	if (split) return split;
+	const word = document.createElement('span');
+	word.className = 'title-word';
+	word.textContent = h1.firstChild.textContent.trim();
+	h1.firstChild.replaceWith(word);
+	return word;
+}
+function revealPact(h1) {
+	const old = titleWord(h1),
+		pact = document.createElement('span');
+	pact.className = 'title-word pact-word';
+	pact.setAttribute('aria-hidden', 'true');
+	pact.textContent = 'Pact';
+	h1.setAttribute('aria-label', 'Pact of the Fallen');
+	h1.classList.add('pact-revealed');
+	let swapped = false;
+	const swap = () => {
+		if (swapped) return;
+		swapped = true;
+		old.replaceWith(pact);
+	};
+	if (matchMedia('(prefers-reduced-motion: reduce)').matches) return swap();
+	old.classList.add('pact-fall');
+	// Letters bubble their own entrance animations; only the word's fall counts.
+	old.addEventListener('animationend', (e) => e.target === old && swap());
+	setTimeout(swap, 1400);
+}
+export function mountPactEgg(h1, { api, toast, me }) {
+	if (!h1) return;
+	let state = { clicks: 0, last: 0 },
+		found = false;
+	h1.addEventListener('click', () => {
+		if (found) return;
+		state = countPactClick(state, Date.now());
+		if (!state.ready) return;
+		found = true;
+		revealPact(h1);
+		if (!me?.user)
+			return toast('Has despertado un viejo pacto. Entra con Discord para guardar este secreto.');
+		if (!me.permissions?.includes('community.read')) return toast('Has despertado un viejo pacto.');
+		api('/api/achievements/pact', 'POST', {})
+			.then((r) =>
+				toast(
+					r.first
+						? 'Logro secreto desbloqueado: Pacto de los Caídos.'
+						: 'El pacto ya te reconoce: tienes este logro.',
+				),
+			)
+			.catch(() => toast('Has despertado un viejo pacto, pero no se pudo guardar el logro.'));
+	});
+}
 export async function mountHomeEvents(host, { api, esc }) {
 	if (!host) return;
 	if (document.body.dataset.showcase) {

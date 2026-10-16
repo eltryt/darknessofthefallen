@@ -265,6 +265,49 @@ main {
 	margin-top: 6px;
 	font-size: 11px;
 }
+.hero h1 {
+	user-select: none;
+}
+.title-word.pact-fall {
+	display: inline-block;
+	transform-origin: 10% 100%;
+	animation: pact-fall 1.1s cubic-bezier(0.55, 0, 0.9, 0.45) forwards;
+}
+.title-word.pact-word {
+	display: inline-block;
+	color: var(--gold);
+	animation: pact-rise 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes pact-fall {
+	20% {
+		transform: rotate(-4deg);
+	}
+	100% {
+		transform: translateY(70vh) rotate(28deg);
+		opacity: 0;
+		filter: blur(2px);
+	}
+}
+@keyframes pact-rise {
+	from {
+		transform: translateY(-0.6em) scale(1.25);
+		opacity: 0;
+		text-shadow: 0 0 0 transparent;
+	}
+	60% {
+		text-shadow: 0 0 28px var(--gold);
+	}
+	to {
+		transform: none;
+		opacity: 1;
+		text-shadow: 0 0 10px #0000;
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.title-word.pact-word {
+		animation: none;
+	}
+}
 .launch-countdown {
 	display: flex;
 	flex-wrap: wrap;

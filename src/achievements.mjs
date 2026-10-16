@@ -209,6 +209,16 @@ export const playerCatalog = [
 		secret: true,
 		help: 'Diez raids seguidas de la hermandad sin faltar a ninguna.',
 	},
+	{
+		// Not computed from records: claimed by the home page easter egg.
+		id: 'pact',
+		category: 'secreto',
+		icon: 'pact',
+		name: 'Pacto de los Caídos',
+		single: 2,
+		secret: true,
+		help: 'Descubrir el antiguo nombre escondido en la portada.',
+	},
 ];
 export const guildCatalog = [
 	{
@@ -586,6 +596,16 @@ export function publicGuildAchievements(db, now = new Date().toISOString()) {
 }
 
 export async function achievementsApi({ db, user, path, method, send, requirePermission }) {
+	if (path === '/api/achievements/pact' && method === 'POST') {
+		requirePermission('community.read');
+		const first = db
+			.prepare(
+				"INSERT OR IGNORE INTO user_achievements(user_id,achievement_id,tier,earned_at) VALUES(?,'pact',2,?)",
+			)
+			.run(user.id, new Date().toISOString()).changes;
+		send(200, { first: first > 0 });
+		return true;
+	}
 	if (path !== '/api/achievements' || method !== 'GET') return false;
 	requirePermission('community.read');
 	const { since, metrics, guild } = refreshAchievements(db);

@@ -34,6 +34,7 @@ const icons = {
 	hundred:
 		'<path d="M4 8v8M8 8a2 2 0 0 1 4 0v4a2 2 0 0 1-4 0Z M14 8a2 2 0 0 1 4 0v4a2 2 0 0 1-4 0Z"/><path d="M6 19h12"/>',
 	compass: '<circle cx="12" cy="12" r="8"/><path d="m15 9-2 4-4 2 2-4Z"/>',
+	pact: '<circle cx="9" cy="12" r="5"/><circle cx="15" cy="12" r="5"/><path d="M12 4v2M12 18v2"/>',
 	infinity:
 		'<path d="M8 15c-2 0-4-1.3-4-3s2-3 4-3c3 0 5 6 8 6 2 0 4-1.3 4-3s-2-3-4-3c-3 0-5 6-8 6Z"/>',
 	laurel:
