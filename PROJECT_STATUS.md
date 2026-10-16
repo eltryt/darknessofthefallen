@@ -842,3 +842,4 @@ Publicado: `7628b5a`; backend `38652910420`, Pages `38652910475` y validación `
 - Cambio de página: transición nativa del navegador (View Transitions entre documentos) con la cabecera fija y fundido del resto; en navegadores sin soporte (Firefox), fundido de salida de 0,18 s. En todas las páginas el contenido sube suavemente al estar listo.
 - Todo se desactiva con «reducir movimiento». Sin dependencias externas.
 - Validación: 96 pruebas Node y build; navegador a 1440 y 390 px: fotogramas de la entrada, nada oculto al terminar, 7/7 secciones reveladas al bajar y navegación Inicio → Raids sin errores.
+- Publicado: `e1e678f`; backend 38835547515, Pages 38835548161 y validación 38835547966 correctos; motion.js, app.js y theme.css servidos idénticos al local.
