@@ -823,3 +823,4 @@ Publicado: `7628b5a`; backend `38652910420`, Pages `38652910475` y validación `
 - Iconos de aplicación desde el nuevo logo: favicon PNG 32 px, icono de iPhone 180 px, 192/512 px y `site.webmanifest` con rutas relativas. El emblema plateado de la web no cambia.
 - Corregido: el estilo genérico de hover de los botones se aplicaba a los huecos de equipo.
 - Validación: 95 pruebas Node y build (la exportación crea la carpeta de retratos); navegador QA a 1440 y 390 px con el retrato cargado y rutas nuevas con su tipo correcto.
+- Publicado: `0d22dc8`; backend 38833526845, Pages 38833527191 y validación 38833527172 correctos. Retratos, icono de Onyxia, imagen para compartir, iconos y manifiesto responden 200 con su tipo en producción; og:image apunta a og-image.jpg; paperdoll.js idéntico al local.
