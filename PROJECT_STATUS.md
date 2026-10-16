@@ -851,3 +851,4 @@ Publicado: `7628b5a`; backend `38652910420`, Pages `38652910475` y validación `
 - Tarjetas de aventura «repartidas» en 3D con sus esquinas doradas encendiéndose; las secciones inferiores aparecen al hacer scroll con desenfoque y sus elementos en cascada.
 - Emblema de 320 px (40 KB) para la intro. Título con etiqueta accesible «Darkness of the Fallen». Todo se desactiva con «reducir movimiento».
 - Validación: 96 pruebas Node y build; navegador a 1440 y 390 px con fotogramas de 0,15 a 6 s, salto por clic, sin intro en la segunda visita, nada oculto al terminar y sin desbordamiento.
+- Publicado: `ed16e19`; backend 38836454470, Pages 38836454070 y validación correctos; motion.js, boot-state.js y theme.css servidos idénticos al local; emblema de 320 px disponible.
