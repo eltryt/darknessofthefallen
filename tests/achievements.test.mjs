@@ -192,19 +192,17 @@ test('new achievements: kills from loot, attempts, wishes, months, runs and role
 		}
 		// Loot from five bosses across two of those raids; one item was on ana's wishlist.
 		const loot = (raidId, boss, item, userId = 'bea') =>
-			f.db
-				.prepare('INSERT INTO loot VALUES(?,?,?)')
-				.run(
-					raidId + boss,
-					JSON.stringify({
-						item,
-						raidId,
-						boss,
-						recipientUserId: userId,
-						date: '2026-02-10T22:00:00.000Z',
-					}),
-					'2026-02-10',
-				);
+			f.db.prepare('INSERT INTO loot VALUES(?,?,?)').run(
+				raidId + boss,
+				JSON.stringify({
+					item,
+					raidId,
+					boss,
+					recipientUserId: userId,
+					date: '2026-02-10T22:00:00.000Z',
+				}),
+				'2026-02-10',
+			);
 		['A', 'B', 'C'].forEach((b) => loot(ids[1], b, 'Objeto ' + b));
 		loot(ids[2], 'D', 'Espada deseada', 'ana');
 		loot(ids[2], 'E', 'Objeto E');
