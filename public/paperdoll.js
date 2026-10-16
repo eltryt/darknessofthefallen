@@ -10,6 +10,19 @@ const escape = (value) =>
 // must be proxied or stored locally before they can be shown.
 const localImage = (value) =>
 	typeof value === 'string' && /^\/(?!\/)[\w/.-]+$/.test(value) ? value : '';
+// Provisional class portraits, shown until the Blizzard API (or another provider)
+// supplies the real character image.
+const classPortraits = {
+	Guerrero: 'warrior',
+	Paladín: 'paladin',
+	Cazador: 'hunter',
+	Pícaro: 'rogue',
+	Sacerdote: 'priest',
+	Chamán: 'shaman',
+	Mago: 'mage',
+	Brujo: 'warlock',
+	Druida: 'druid',
+};
 const emptyIcon =
 	'<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9Z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg>';
 
@@ -44,7 +57,8 @@ export function paperdoll(sheet, { href = '', slotButtons = false, target = fals
 	const average = levels.length
 		? Math.round(levels.reduce((a, b) => a + b, 0) / levels.length)
 		: null;
-	const portrait = localImage(c.avatar_url);
+	const portrait = localImage(c.avatar_url),
+		classArt = Object.hasOwn(classPortraits, c.class) ? classPortraits[c.class] : '';
 	const stats = sheet.stats || {};
 	const column = (side) =>
 		`<div class="doll-column doll-${side}">${layout[side].map((name) => slot(name, items.get(name), side, href, slotButtons)).join('')}</div>`;
@@ -65,9 +79,11 @@ export function paperdoll(sheet, { href = '', slotButtons = false, target = fals
 				${
 					portrait
 						? `<img class="doll-portrait" src="${escape(portrait)}" alt="Imagen de ${escape(c.name)}">`
-						: `<div class="doll-placeholder">${ClassIcon({ className: c.class, size: 'large' })}<span class="doll-silhouette" aria-hidden="true"></span></div>`
+						: classArt
+							? `<img class="doll-portrait is-class-art" src="/assets/portraits/${classArt}.webp" alt="" width="600" height="800" loading="lazy">`
+							: `<div class="doll-placeholder">${ClassIcon({ className: c.class, size: 'large' })}<span class="doll-silhouette" aria-hidden="true"></span></div>`
 				}
-				<figcaption>${portrait ? escape(c.name) : 'La imagen del personaje aparecerá cuando exista un proveedor compatible con WoW Forever.'}</figcaption>
+				<figcaption>${portrait ? escape(c.name) : classArt ? `Retrato provisional de ${escape(c.class)}. Se sustituirá por tu personaje real cuando la web se conecte con la API de Blizzard.` : 'La imagen del personaje aparecerá cuando exista un proveedor compatible con WoW Forever.'}</figcaption>
 			</figure>
 			${column('right')}
 		</div>

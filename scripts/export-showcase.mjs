@@ -14,6 +14,7 @@ if (memberApp) {
 mkdirSync(join(destination, 'assets/icons/spec'), { recursive: true });
 mkdirSync(join(destination, 'assets/art'), { recursive: true });
 mkdirSync(join(destination, 'assets/partners'), { recursive: true });
+mkdirSync(join(destination, 'assets/portraits'), { recursive: true });
 const source = new URL('../public/', import.meta.url);
 for (const file of [
 	'theme.css',
@@ -71,6 +72,12 @@ for (const file of [
 	...iconAssets,
 	'assets/guild-logo.png',
 	'assets/guild-logo.webp',
+	'assets/og-image.jpg',
+	'assets/favicon-32.png',
+	'assets/apple-touch-icon.png',
+	'assets/app-icon-192.png',
+	'assets/app-icon-512.png',
+	'site.webmanifest',
 ]) {
 	if (file.endsWith('.js') && memberApp) {
 		const code = readFileSync(new URL(file, source), 'utf8').replaceAll(
@@ -139,7 +146,7 @@ const titles = {
 for (const [route, label] of Object.entries(titles)) {
 	const title = label + ' · Darkness of the Fallen',
 		url = origin + (route ? '/' + route : '/');
-	const meta = `<link rel="canonical" href="${url}"><meta property="og:type" content="website"><meta property="og:site_name" content="Darkness of the Fallen"><meta property="og:title" content="${title}"><meta property="og:description" content="${description}"><meta property="og:url" content="${url}"><meta property="og:image" content="${origin}/assets/guild-logo.png"><meta property="og:image:alt" content="Emblema de Darkness of the Fallen"><meta name="twitter:card" content="summary">`;
+	const meta = `<link rel="canonical" href="${url}"><meta property="og:type" content="website"><meta property="og:site_name" content="Darkness of the Fallen"><meta property="og:title" content="${title}"><meta property="og:description" content="${description}"><meta property="og:url" content="${url}"><meta property="og:image" content="${origin}/assets/og-image.jpg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Emblema de Darkness of the Fallen y aventureros ante una fortaleza"><meta name="twitter:card" content="summary_large_image">`;
 	const page = html
 		.replace('<title>Darkness of the Fallen</title>', `<title>${title}</title>`)
 		.replace('</head>', meta + '</head>');

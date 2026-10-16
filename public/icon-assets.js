@@ -34,4 +34,8 @@ export const iconAssets = [
 	'assets/icons/spec/spec_archery.webp',
 	'assets/icons/spec/spec_feral.webp',
 	'assets/icons/spec/spec_guardian.webp',
+	// Class portraits shown in the armory figure.
+	...['warrior', 'paladin', 'hunter', 'rogue', 'priest', 'shaman', 'mage', 'warlock', 'druid'].map(
+		(c) => `assets/portraits/${c}.webp`,
+	),
 ];

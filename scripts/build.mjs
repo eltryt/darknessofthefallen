@@ -122,6 +122,12 @@ try {
 		...iconAssets,
 		'assets/guild-logo.png',
 		'assets/guild-logo.webp',
+		'assets/og-image.jpg',
+		'assets/favicon-32.png',
+		'assets/apple-touch-icon.png',
+		'assets/app-icon-192.png',
+		'assets/app-icon-512.png',
+		'site.webmanifest',
 		'site-data.json',
 	];
 	const sourceOrigin = 'https://darkness-of-the-fallen.borclagonher.chatgpt.site';

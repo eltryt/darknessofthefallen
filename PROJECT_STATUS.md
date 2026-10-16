@@ -814,3 +814,12 @@ Publicado: `7628b5a`; backend `38652910420`, Pages `38652910475` y validación `
 - Pendiente: 3 avisos de npm en herramientas de desarrollo (sharp dentro del simulador local de Wrangler), no en la web publicada. La versión que lo corrige (4.151.0) tiene dos días y depende de una beta; se actualizará cuando madure.
 - Validación: 95 pruebas Node (7 nuevas de sesiones, cabeceras y límites), workerd y build del backend.
 - Publicado: `dc6da32`; backend 38830378512, Pages 38830378814 y validación correctos. Cabeceras nuevas comprobadas en producción; /api/public 200 y /api/me sin sesión responde sin usuario. La escaparate de GitHub Pages solo enlaza al backend, así que la nueva Cross-Origin-Resource-Policy no le afecta.
+
+## 2026-10-16 — Pack de assets del propietario
+
+- Retratos de las 9 clases (fondo transparente, 600×800 WebP, 100–170 KB) en el centro de la Armería cuando el personaje no tiene imagen propia. **Provisionales**: el pie lo indica («Se sustituirá por tu personaje real cuando la web se conecte con la API de Blizzard»).
+- Nuevo retrato de Onyxia como icono de jefe (wishlist, progreso y escaparate), 256 px.
+- Imagen para compartir 1200×630 (`og-image.jpg`) en Open Graph y Twitter (`summary_large_image`), también en la copia de GitHub Pages.
+- Iconos de aplicación desde el nuevo logo: favicon PNG 32 px, icono de iPhone 180 px, 192/512 px y `site.webmanifest` con rutas relativas. El emblema plateado de la web no cambia.
+- Corregido: el estilo genérico de hover de los botones se aplicaba a los huecos de equipo.
+- Validación: 95 pruebas Node y build (la exportación crea la carpeta de retratos); navegador QA a 1440 y 390 px con el retrato cargado y rutas nuevas con su tipo correcto.
