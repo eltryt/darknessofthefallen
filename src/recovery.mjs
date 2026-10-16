@@ -121,7 +121,8 @@ export function restoreRecovery(db, snapshot) {
 		if (
 			db
 				.prepare(
-					`SELECT COUNT(*) AS n FROM ${table}${table === 'audit' ? " WHERE actor_id NOT IN ('migration:003','migration:004')" : ''}`,
+					// Migrations and the Durable Object's startup repair audit themselves.
+					`SELECT COUNT(*) AS n FROM ${table}${table === 'audit' ? " WHERE actor_id NOT IN ('migration:003','migration:004') AND action<>'notification.redirect_runtime_repair'" : ''}`,
 				)
 				.get().n
 		)
@@ -183,7 +184,8 @@ export function restoreRecovery(db, snapshot) {
 		}
 		if (db.prepare('PRAGMA foreign_key_check').all().length)
 			throw new Error('Referencias inválidas en la copia.');
-		if (db.prepare('PRAGMA integrity_check').get().integrity_check !== 'ok')
+		// quick_check: Durable Object SQLite does not authorize integrity_check.
+		if (db.prepare('PRAGMA quick_check').get().quick_check !== 'ok')
 			throw new Error('Integridad SQLite incorrecta.');
 		return {
 			verified: true,

@@ -73,6 +73,18 @@ jobs:
           DISCORD_GUILD_ID: ${{ secrets.DISCORD_GUILD_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || vars.CLOUDFLARE_ACCOUNT_ID }}
+      - name: Configure off-site backup token when its secret is present
+        shell: bash
+        run: |
+          if [ -n "$BACKUP_TOKEN" ]; then
+            node scripts/configure-backup.mjs
+          else
+            echo 'Backup token not configured; the backup endpoints stay disabled.'
+          fi
+        env:
+          BACKUP_TOKEN: ${{ secrets.BACKUP_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || vars.CLOUDFLARE_ACCOUNT_ID }}
       - name: Deploy persistent backend and application assets
         run: npm run deploy:backend
         env:

@@ -3,6 +3,7 @@ import { seoPages, seoHtml, sitemap } from './seo.mjs';
 import { iconAssets } from '../public/icon-assets.js';
 import { gmApi, enqueueGM, gmReady } from './gm-notifications.mjs';
 import { exportRecovery } from './recovery.mjs';
+import { backupApi } from './backup-api.mjs';
 import { randomUUID, createHash } from 'node:crypto';
 import { Buffer } from 'node:buffer';
 import { settings, transaction, audit } from './database-core.mjs';
@@ -241,6 +242,8 @@ export function createApp(db, env, { readAsset = readLocalAsset, discordFetch = 
 				});
 				return res.end(method === 'HEAD' ? '' : content);
 			}
+			// Token-authenticated, so it runs before cookie sessions and the browser-origin check.
+			if (await backupApi({ db, req, path, method, env, send, throttle })) return;
 			const user = await sessionUser(req),
 				s = settings(db);
 			const requireUser = () => {

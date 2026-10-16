@@ -19,6 +19,10 @@
 		"deploy:backend": "wrangler deploy",
 		"test:backend": "node --test tests/cloudflare/*.test.mjs",
 		"restore": "node scripts/restore.mjs",
+		"backup:keygen": "node scripts/backup-keygen.mjs",
+		"backup:remote": "node scripts/backup-remote.mjs",
+		"backup:decrypt": "node scripts/decrypt-backup.mjs",
+		"backup:restore-remote": "node scripts/restore-remote.mjs",
 		"format": "prettier --write \"{public,src,scripts,tests}/**/*.{js,mjs,css,html}\" \"*.json\" \"*.jsonc\" \".github/workflows/*.yml\"",
 		"format:check": "prettier --check \"{public,src,scripts,tests}/**/*.{js,mjs,css,html}\" \"*.json\" \"*.jsonc\" \".github/workflows/*.yml\""
 	},
