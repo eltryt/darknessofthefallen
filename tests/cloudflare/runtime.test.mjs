@@ -80,7 +80,7 @@ test(
 			const oldAddress = await runtime.dispatchFetch('https://old.example/raids?view=next', {
 				redirect: 'manual',
 			});
-			assert.equal(oldAddress.status, 302);
+			assert.equal(oldAddress.status, 301);
 			assert.equal(oldAddress.headers.get('location'), 'https://guild.example/raids?view=next');
 			assert.equal(
 				(

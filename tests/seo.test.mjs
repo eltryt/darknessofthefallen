@@ -30,3 +30,32 @@ test('server SEO provides unique public metadata and indexable text without priv
 	assert.ok(malicious.includes('&lt;script&gt;'));
 	assert.ok(malicious.includes('$&'));
 });
+
+test('structured data describes the guild on the home page and breadcrumbs elsewhere', () => {
+	const ld = (html) =>
+		JSON.parse(html.match(/<script type="application\/ld\+json">(.*?)<\/script>/s)[1]);
+	const home = ld(
+		seoHtml(source, '/', 'https://guild.example', {
+			discordUrl: 'https://discord.gg/abc',
+			raidDays: [],
+		}),
+	);
+	const guild = home['@graph'].find((n) => n['@type'] === 'Organization');
+	assert.equal(guild.url, 'https://guild.example/');
+	assert.deepEqual(guild.sameAs, ['https://discord.gg/abc']);
+	assert.ok(home['@graph'].some((n) => n['@type'] === 'WebSite'));
+	const page = ld(seoHtml(source, '/raids', 'https://guild.example', { raidDays: [] }));
+	assert.equal(page['@graph'][0]['@type'], 'BreadcrumbList');
+	assert.equal(page['@graph'][0].itemListElement[1].item, 'https://guild.example/raids');
+	// A hostile setting can neither close the data block nor add a fake profile link.
+	const hostile = seoHtml(source, '/', 'https://guild.example', {
+		discordUrl: 'javascript:alert(1)</script><script>alert(1)</script>',
+		raidDays: [],
+	});
+	assert.doesNotMatch(hostile, /<\/script><script>alert/);
+	assert.equal(ld(hostile)['@graph'][1].sameAs, undefined);
+	for (const [path, [title, description]] of Object.entries(seoPages)) {
+		assert.ok(title.length <= 62, `${path} title too long`);
+		assert.ok(description.length <= 160, `${path} description too long`);
+	}
+});

@@ -169,9 +169,10 @@ export default {
 				target = new URL(env.APP_ORIGIN);
 			target.pathname = original.pathname;
 			target.search = original.search;
+			// Permanent: search engines transfer the old address's standing to the domain.
 			return new Response(null, {
-				status: 302,
-				headers: { Location: target.href, 'Cache-Control': 'no-store' },
+				status: 301,
+				headers: { Location: target.href, 'Cache-Control': 'public, max-age=3600' },
 			});
 		}
 		// One persistent database per guild. Keep this name stable across deploys.
