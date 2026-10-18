@@ -888,3 +888,11 @@ Publicado: `7628b5a`; backend `38652910420`, Pages `38652910475` y validación `
 - Código: APP_ORIGIN, comprobaciones de despliegue, enlace de miembros de GitHub Pages, scripts y documentación con el dominio nuevo. La dirección workers.dev antigua (pasarela) reenvía al backend, que redirige al dominio nuevo; las sesiones anteriores caducan y hay que volver a entrar con Discord una vez.
 - Verificado desde 55 ubicaciones (check-host.net): /api/public responde 200 por el dominio nuevo y la dirección antigua devuelve 302; solo un nodo de Madrid conservaba la IP antigua en caché. Despliegue backend 39149539063 con sus comprobaciones (HTTPS, controles de acceso y redirección de Discord) correctas; validación verde tras un ajuste de formato.
 - Limitación conocida: en España, durante los partidos de LaLiga las operadoras bloquean IPs compartidas de Cloudflare por orden judicial; afecta al dominio y a workers.dev por igual. El propietario decide de momento no hacer nada (VPN en esos ratos). Alternativas valoradas: proxy propio fuera de Cloudflare, migración a servidor propio o IP dedicada de Cloudflare.
+
+## 2026-10-18 — SEO en el dominio nuevo
+
+- Redirecciones permanentes (301) de la dirección workers.dev antigua y de www hacia https://darknessofthefallen.com, para que Google traslade la reputación al dominio.
+- Datos estructurados JSON-LD: en Inicio, la hermandad (Organization: nombre, logo, imagen, Discord, fundación 2026) y la web (WebSite, es-ES); en el resto de páginas públicas, migas de pan (BreadcrumbList). Es un bloque de datos que la CSP no ejecuta; los valores se escapan.
+- Títulos (≤ 60 caracteres) y descripciones (≤ 160) con los términos de búsqueda: hermandad/guild española, WoW Forever, Alianza, raids. Se mantienen canónicas, Open Graph, sitemap, robots.txt, páginas privadas en noindex y la copia de GitHub Pages en noindex con canónica al dominio.
+- Validación: 109 pruebas Node (nueva: datos estructurados, valores hostiles y longitudes) y prueba de runtime con el 301; despliegue backend 39150904721 y validación correctos. En producción: check-host devuelve 301 desde la dirección antigua y la prueba de resultados enriquecidos de Google detecta 1 elemento válido (Organización).
+- Pendiente del propietario: dar de alta darknessofthefallen.com en Google Search Console y enviar el sitemap.
