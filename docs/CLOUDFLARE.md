@@ -1,6 +1,6 @@
 # Backend en Cloudflare
 
-Publicado: https://darknessofthefallen.eltryt-darknessofthefallen.workers.dev/
+Publicado: https://darknessofthefallen.com/
 
 Comprobación remota correcta: Actions 37827710593 (HTTPS, páginas, API pública,
 rechazo de accesos privados y origen no autorizado). Discord aún sin configurar.

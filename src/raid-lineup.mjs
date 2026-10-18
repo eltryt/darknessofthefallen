@@ -391,7 +391,7 @@ async function discord(transport, env, path, payload) {
 			Authorization: `Bot ${env.DISCORD_BOT_TOKEN}`,
 			'Content-Type': 'application/json',
 			'User-Agent':
-				'DarknessOfTheFallen (https://darknessofthefallen.eltryt-darknessofthefallen.workers.dev, 1)',
+				'DarknessOfTheFallen (https://darknessofthefallen.com, 1)',
 		},
 		body: JSON.stringify(payload),
 	});

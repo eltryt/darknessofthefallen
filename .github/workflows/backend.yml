@@ -93,6 +93,6 @@ jobs:
       - name: Verify public HTTPS application and access controls
         run: node scripts/check-backend.mjs
         env:
-          BACKEND_URL: https://darknessofthefallen.eltryt-darknessofthefallen.workers.dev
+          BACKEND_URL: https://darknessofthefallen.com
       - name: Verify Discord uses the public callback
         run: node scripts/check-discord.mjs

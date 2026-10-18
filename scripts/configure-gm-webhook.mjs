@@ -5,7 +5,7 @@ import { gmWebhook, enqueueGM, deliverGM } from '../src/gm-notifications.mjs';
 const env = {
 	...process.env,
 	GM_NOTIFICATIONS_ENABLED: 'true',
-	APP_ORIGIN: 'https://darknessofthefallen.eltryt-darknessofthefallen.workers.dev',
+	APP_ORIGIN: 'https://darknessofthefallen.com',
 };
 async function main() {
 	for (const name of [

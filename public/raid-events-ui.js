@@ -34,7 +34,7 @@ export async function mountRaidEvents(host, ctx, { manage = false, mine = false 
 	if (document.body.dataset.showcase) {
 		host.innerHTML = /* HTML */ `<a
 			class="button"
-			href="${esc(new URL('/raids', document.body.dataset.applicationUrl || 'https://darknessofthefallen.eltryt-darknessofthefallen.workers.dev').href)}"
+			href="${esc(new URL('/raids', document.body.dataset.applicationUrl || 'https://darknessofthefallen.com').href)}"
 			>Ver convocatorias actualizadas ↗</a
 		>`;
 		return;

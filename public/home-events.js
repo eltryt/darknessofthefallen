@@ -117,7 +117,7 @@ export function mountPactEgg(h1, { api, toast, me }) {
 export async function mountHomeEvents(host, { api, esc }) {
 	if (!host) return;
 	if (document.body.dataset.showcase) {
-		host.innerHTML = `<p>Consulta las convocatorias actualizadas en la web de la hermandad.</p><a class="button secondary" href="${esc(new URL('/raids', document.body.dataset.applicationUrl || 'https://darknessofthefallen.eltryt-darknessofthefallen.workers.dev').href)}">Ver convocatorias ↗</a>`;
+		host.innerHTML = `<p>Consulta las convocatorias actualizadas en la web de la hermandad.</p><a class="button secondary" href="${esc(new URL('/raids', document.body.dataset.applicationUrl || 'https://darknessofthefallen.com').href)}">Ver convocatorias ↗</a>`;
 		return;
 	}
 	async function load() {

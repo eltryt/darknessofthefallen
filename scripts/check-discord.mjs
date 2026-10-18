@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-const origin = 'https://darknessofthefallen.eltryt-darknessofthefallen.workers.dev';
+const origin = 'https://darknessofthefallen.com';
 const response = await fetch(origin + '/auth/discord', {
 	redirect: 'manual',
 	signal: AbortSignal.timeout(20000),

@@ -7,7 +7,7 @@ import { validateRecovery } from '../src/recovery.mjs';
 // Prints counts, never guild data.
 const outDir = process.argv[2] || 'backups';
 const origin =
-	process.env.BACKUP_URL || 'https://darknessofthefallen.eltryt-darknessofthefallen.workers.dev';
+	process.env.BACKUP_URL || 'https://darknessofthefallen.com';
 const token = process.env.BACKUP_TOKEN;
 if (!token) throw new Error('Falta BACKUP_TOKEN.');
 const response = await fetch(new URL('/api/backup', origin), {

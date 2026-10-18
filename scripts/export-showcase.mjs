@@ -128,7 +128,7 @@ if (memberApp)
 		);
 html = html.replace('<body', '<body data-showcase="true"');
 html = html.replace('</head>', '<meta name="robots" content="noindex,follow"></head>');
-const origin = memberApp || 'https://darknessofthefallen.eltryt-darknessofthefallen.workers.dev';
+const origin = memberApp || 'https://darknessofthefallen.com';
 const escapeMeta = (value) =>
 	String(value).replace(
 		/[&<>"]/g,

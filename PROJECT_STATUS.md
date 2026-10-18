@@ -6,7 +6,7 @@ trabajo: `eltryt/darknessofthefallen`. Los documentos de `docs/imported/` son hi
 
 ## Publicación y arquitectura
 
-- Aplicación completa: https://darknessofthefallen.eltryt-darknessofthefallen.workers.dev/
+- Aplicación completa: https://darknessofthefallen.com/
 - Presentación pública: https://eltryt.github.io/darknessofthefallen/
 - Cloudflare Workers con Durable Object SQLite persistente; mismo origen para frontend/API/sesiones.
 - Pages publica solo recursos y datos editoriales; acceso de miembros y candidaturas enlazan al backend.
@@ -77,7 +77,7 @@ y `docs/RECRUITMENT.md`.
 
 ## Dirección pública sin «backend» — activación
 
-- URL principal: https://darknessofthefallen.eltryt-darknessofthefallen.workers.dev/
+- URL principal: https://darknessofthefallen.com/
 - El propietario confirmó el registro del nuevo callback OAuth en Discord.
 - Worker público `darknessofthefallen` conectado mediante Service Binding al Worker original `darknessofthefallen-backend`. La entrada no almacena secretos ni crea otra base de datos.
 - Se conservan la clase Guild, la migración v1 y el identificador darknessofthefallen del Durable Object original. APP_ORIGIN cambia al dominio público.
