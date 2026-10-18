@@ -878,3 +878,13 @@ Publicado: `7628b5a`; backend `38652910420`, Pages `38652910475` y validación `
 - Tarjetas como la lista de logros de referencia: emblema a la izquierda, título y descripción, pastillas Bronce/Plata/Oro a la derecha y barra de progreso con contador (también «0 / 1» en los logros únicos); cabeceras de sección en dorado con filete.
 - Solo CSS y HTML; sin cambios de datos ni de API. Validación: 102 pruebas Node y build; navegador QA a 1440 y 390 px sin desbordamiento.
 - Publicado: `ab97ea2`; backend 38915961857, Pages 38915962382 y validación correctos; medals.js, profile-view.js y theme.css servidos idénticos al local.
+
+## 2026-10-18 — Dominio propio darknessofthefallen.com
+
+- Decisión del propietario: la web completa (no solo el escaparate de GitHub Pages) en darknessofthefallen.com, servida por el Worker de Cloudflare; el código sigue en GitHub.
+- Cloudflare (plan Free): zona creada con los registros de correo de IONOS revisados (MX mx00/mx01.ionos.es, SPF, _dmarc, autodiscover y las firmas DKIM s1/s2-ionos._domainkey, todos «DNS only»); borrados el sitio por defecto de IONOS (A/AAAA) y _domainconnect. Dominios personalizados darknessofthefallen.com y www conectados al Worker darknessofthefallen-backend; certificados emitidos.
+- IONOS: servidores de nombres cambiados a ivy.ns.cloudflare.com y karl.ns.cloudflare.com. Como los servidores de IONOS seguían respondiendo con la IP antigua (217.160.0.123) a los resolutores con caché, se cambió también el A de la zona antigua de IONOS a 188.114.96.5 (Cloudflare) y se desactivó su «Default Site».
+- Discord: añadida la redirección https://darknessofthefallen.com/auth/discord/callback (se conserva la antigua).
+- Código: APP_ORIGIN, comprobaciones de despliegue, enlace de miembros de GitHub Pages, scripts y documentación con el dominio nuevo. La dirección workers.dev antigua (pasarela) reenvía al backend, que redirige al dominio nuevo; las sesiones anteriores caducan y hay que volver a entrar con Discord una vez.
+- Verificado desde 55 ubicaciones (check-host.net): /api/public responde 200 por el dominio nuevo y la dirección antigua devuelve 302; solo un nodo de Madrid conservaba la IP antigua en caché. Despliegue backend 39149539063 con sus comprobaciones (HTTPS, controles de acceso y redirección de Discord) correctas; validación verde tras un ajuste de formato.
+- Limitación conocida: en España, durante los partidos de LaLiga las operadoras bloquean IPs compartidas de Cloudflare por orden judicial; afecta al dominio y a workers.dev por igual. El propietario decide de momento no hacer nada (VPN en esos ratos). Alternativas valoradas: proxy propio fuera de Cloudflare, migración a servidor propio o IP dedicada de Cloudflare.
