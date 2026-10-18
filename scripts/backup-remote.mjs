@@ -6,8 +6,7 @@ import { validateRecovery } from '../src/recovery.mjs';
 // Downloads the production export, verifies it and stores it only in encrypted form.
 // Prints counts, never guild data.
 const outDir = process.argv[2] || 'backups';
-const origin =
-	process.env.BACKUP_URL || 'https://darknessofthefallen.com';
+const origin = process.env.BACKUP_URL || 'https://darknessofthefallen.com';
 const token = process.env.BACKUP_TOKEN;
 if (!token) throw new Error('Falta BACKUP_TOKEN.');
 const response = await fetch(new URL('/api/backup', origin), {

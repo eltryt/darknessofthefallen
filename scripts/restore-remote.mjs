@@ -10,8 +10,7 @@ if (!input || flags.join(' ') !== '--confirmo-restaurar-produccion') {
 	);
 	process.exit(1);
 }
-const origin =
-	process.env.BACKUP_URL || 'https://darknessofthefallen.com';
+const origin = process.env.BACKUP_URL || 'https://darknessofthefallen.com';
 const token = process.env.BACKUP_TOKEN;
 if (!token) throw new Error('Falta BACKUP_TOKEN (está en tu carpeta privada, backup-token.txt).');
 const raw = readFileSync(input, 'utf8');
