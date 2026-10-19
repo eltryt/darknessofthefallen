@@ -7063,6 +7063,9 @@ body[data-page='/'] .hero {
 	padding: 0;
 	list-style: none;
 }
+.ach-card .medal {
+	--size: 50px;
+}
 .ach-card {
 	display: grid;
 	grid-template-columns: auto minmax(0, 1fr);
@@ -7242,9 +7245,10 @@ body[data-page='/'] .hero {
 	}
 }
 /* Achievements with their own illustrated emblem. */
+/* The art has transparent margins, so it is drawn larger than its box to match the forged frames. */
 .medal.has-image .medal-image {
-	width: calc(var(--size) * 1.1);
-	height: calc(var(--size) * 1.1);
+	width: calc(var(--size) * 1.36);
+	height: calc(var(--size) * 1.36);
 	filter: drop-shadow(0 calc(var(--size) * 0.05) calc(var(--size) * 0.12) #000c);
 	transition: filter 0.3s ease;
 }
