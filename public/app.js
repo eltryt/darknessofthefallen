@@ -208,6 +208,34 @@ document.addEventListener('keydown', (e) => {
 $('#navigation').addEventListener('click', (e) => {
 	if (e.target.closest('a')) closeMenu();
 });
+// Installable app: service worker on the real site (not the Pages showcase) and an
+// install button. iPhone has no install prompt, so it shows the manual steps.
+function initInstallApp() {
+	if (document.body.dataset.showcase || !('serviceWorker' in navigator)) return;
+	navigator.serviceWorker.register('/sw.js').catch(() => {});
+	const button = $('[data-install-app]');
+	const standalone =
+		matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+	if (!button || standalone) return;
+	let prompt = null;
+	window.addEventListener('beforeinstallprompt', (e) => {
+		e.preventDefault();
+		prompt = e;
+		button.hidden = false;
+	});
+	window.addEventListener('appinstalled', () => (button.hidden = true));
+	const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+	if (ios) button.hidden = false;
+	button.onclick = async () => {
+		if (prompt) {
+			prompt.prompt();
+			await prompt.userChoice;
+			prompt = null;
+			button.hidden = true;
+		} else if (ios) toast('En iPhone: pulsa Compartir y después «Añadir a pantalla de inicio».');
+	};
+}
 initMotion();
 boot();
 initAnalytics();
+initInstallApp();

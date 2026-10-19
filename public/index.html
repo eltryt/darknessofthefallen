@@ -18,6 +18,10 @@
 		<link rel="icon" type="image/png" sizes="144x144" href="/assets/favicon-144.png" />
 		<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
 		<link rel="manifest" href="/site.webmanifest" />
+		<meta name="mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-title" content="DotF" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black" />
 		<script src="/boot-state.js"></script>
 		<script type="module" src="/app.js"></script>
 	</head>
@@ -108,7 +112,8 @@
 			><span>Alianza · WoW Forever · Europe/Madrid</span>
 			<div class="footer-links">
 				<a href="/nosotros">Hermandad</a><a href="/raids">Horarios</a
-				><a href="/contacto">Contacto y Discord ↗</a>
+				><a href="/contacto">Contacto y Discord ↗</a
+				><button type="button" class="install-app" data-install-app hidden>Instalar app</button>
 			</div>
 			<small>Proyecto de comunidad independiente. No afiliado a Blizzard Entertainment.</small>
 		</footer>

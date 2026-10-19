@@ -107,6 +107,7 @@ const files = {
 	'/assets/app-icon-192.png': ['assets/app-icon-192.png', 'image/png'],
 	'/assets/app-icon-512.png': ['assets/app-icon-512.png', 'image/png'],
 	'/site.webmanifest': ['site.webmanifest', 'application/manifest+json'],
+	'/sw.js': ['sw.js', 'text/javascript'],
 	'/operations-ui.js': ['operations-ui.js', 'text/javascript'],
 	'/character-editor.js': ['character-editor.js', 'text/javascript'],
 	'/armory-catalog.js': ['armory-catalog.js', 'text/javascript'],

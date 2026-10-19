@@ -1656,6 +1656,18 @@ footer {
 .footer-links a:hover {
 	text-decoration: underline;
 }
+.install-app {
+	padding: 6px 14px;
+	border: 1px solid var(--gold);
+	border-radius: 999px;
+	background: transparent;
+	color: var(--gold);
+	font: inherit;
+	cursor: pointer;
+}
+.install-app[hidden] {
+	display: none;
+}
 .loading {
 	min-height: 45vh;
 	display: grid;
