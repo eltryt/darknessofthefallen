@@ -902,3 +902,9 @@ Publicado: `7628b5a`; backend `38652910420`, Pages `38652910475` y validación `
 
 - La dirección workers.dev antigua salía segunda al buscar la hermandad. Se pidió en Search Console (propiedad antigua, ya verificada desde el 12-10) la retirada temporal de todas sus URL (≈ 6 meses; cancelable). Las redirecciones 301 hacen que Google la sustituya por el dominio de forma definitiva. La herramienta «Cambio de dirección» no pudo validarse porque Google no consigue obtener la portada de un subdominio de workers.dev; no es necesaria con los 301.
 - Logo en los resultados: Google solo muestra iconos cuadrados en múltiplos de 48 px. Añadidos favicon-48/96/144.png y /favicon.ico (16/32/48) a partir del logo de la hermandad, enlazados en la cabecera. Desplegado (backend 39177738895, validación correcta); /favicon.ico responde 200 desde fuera. La portada ya figura como indexada y se ha vuelto a solicitar su rastreo. Google puede tardar días o semanas en cambiar el icono.
+
+## 2026-10-19 — Logro «Matadragones» con el emblema de Onyxia
+
+- Logro nuevo de Progreso (oro, 50 puntos): estar presente en la primera victoria de la hermandad contra Onyxia (acepta Onyxia/Onixya/Onixia). Cuenta desde la activación, como el resto.
+- Las medallas admiten un emblema ilustrado local (`/assets/achievements/*.webp`) en lugar del icono dibujado; bloqueado se ve en gris y en oro brilla. Emblema de Onyxia aportado por el propietario (84 px, WebP sin pérdida).
+- Validación: 110 pruebas Node (nueva: Matadragones) y build; navegador QA con la medalla conseguida y bloqueada. Desplegado: backend 39236218135, Pages y validación correctos.
