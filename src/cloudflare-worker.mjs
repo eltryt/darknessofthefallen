@@ -21,6 +21,7 @@ import lineupSchema from '../migrations/009_raid_lineups.sql';
 import wishlistSchema from '../migrations/010_unified_wishlist.sql';
 import achievementsSchema from '../migrations/011_achievements.sql';
 import pushSchema from '../migrations/012_push.sql';
+import lootOfficerSchema from '../migrations/013_loot_officer.sql';
 import { deliverPush, nextPushAt, pushReady } from './push-notifications.mjs';
 import { deliverCallups, dmReady, nextCallupAt } from './raid-lineup.mjs';
 import { syncRaidEvents } from './raid-sync.mjs';
@@ -43,6 +44,7 @@ export class Guild extends DurableObject {
 			wishlistSchema,
 			achievementsSchema,
 			pushSchema,
+			lootOfficerSchema,
 		);
 		repairGMRedirectFailures(this.db);
 	}

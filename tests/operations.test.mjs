@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { openDatabase } from '../src/db.mjs';
 import { createApp } from '../src/app.mjs';
 import { issueSession, startOAuth, finishOAuth } from '../src/auth.mjs';
-import { ranks } from '../src/domain.mjs';
+import { ranks, can } from '../src/domain.mjs';
 import { csv } from '../src/operations.mjs';
 
 async function fixture() {
@@ -77,19 +77,19 @@ test('operations enforce all six ranks and deny anonymous access', async () => {
 	const f = await fixture();
 	try {
 		for (const rank of ranks) {
-			for (const [path, minimum] of [
-				['/api/raids', 1],
-				['/api/loot', 1],
-				['/api/council', 1],
-				['/api/wishlists', 1],
-				['/api/wishlists?all=true', 3],
-				['/api/progress', 3],
-				['/api/members', 3],
-				['/api/export/csv?dataset=characters', 5],
+			for (const [path, permission] of [
+				['/api/raids', 'community.read'],
+				['/api/loot', 'community.read'],
+				['/api/council', 'community.read'],
+				['/api/wishlists', 'community.read'],
+				['/api/wishlists?all=true', 'loot.manage'],
+				['/api/progress', 'progress.manage'],
+				['/api/members', 'roster.read'],
+				['/api/export/csv?dataset=characters', 'backup.export'],
 			]) {
 				assert.equal(
 					(await f.request(path, rank)).status,
-					ranks.indexOf(rank) >= minimum ? 200 : 403,
+					can({ rank }, permission) ? 200 : 403,
 					rank + ' ' + path,
 				);
 			}
@@ -100,7 +100,7 @@ test('operations enforce all six ranks and deny anonymous access', async () => {
 						starts_at: '2026-10-01T21:00:00Z',
 					})
 				).status,
-				ranks.indexOf(rank) >= 3 ? 201 : 403,
+				can({ rank }, 'attendance.manage') ? 201 : 403,
 			);
 			assert.equal(
 				(await f.request('/api/council', rank, 'PUT', { userIds: ['member'] })).status,
@@ -394,7 +394,7 @@ test('migration runs once and preserves existing records on reopening', () => {
 		db.prepare('INSERT INTO users VALUES(?,?,?,?)').run('id', 'Miembro', 'member', '2026-10-07');
 		db.close();
 		db = openDatabase(file);
-		assert.equal(db.prepare('SELECT count(*) n FROM schema_migrations').get().n, 12);
+		assert.equal(db.prepare('SELECT count(*) n FROM schema_migrations').get().n, 13);
 		assert.equal(
 			db.prepare('SELECT display_name FROM users WHERE id=?').get('id').display_name,
 			'Miembro',

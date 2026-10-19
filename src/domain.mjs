@@ -1,6 +1,14 @@
 import { gameVersions, defaultGameVersion, factions } from '../public/armory-catalog.js';
 import { isValidSpecForClass, normalizeSpecValue } from '../public/specs.js';
-export const ranks = ['visitor', 'member', 'raider', 'raid_leader', 'officer', 'leader'];
+export const ranks = [
+	'visitor',
+	'member',
+	'raider',
+	'raid_leader',
+	'loot_officer',
+	'officer',
+	'leader',
+];
 export const classes = [
 	'Guerrero',
 	'Paladín',
@@ -32,12 +40,22 @@ export const permissions = {
 	'armory.review': 'officer',
 	'armory.configure': 'leader',
 };
+// Ranks outside the hierarchy: they hold exactly these permissions, nothing inherited.
+// The loot officer handles loot and reads members' sheets and notes, without guild management.
+export const scopedRanks = {
+	loot_officer: [
+		'community.read',
+		'character.write',
+		'roster.read',
+		'loot.manage',
+		'armory.read',
+		'armory.review',
+	],
+};
 export function can(user, permission) {
-	return (
-		!!user &&
-		permission in permissions &&
-		ranks.indexOf(user.rank) >= ranks.indexOf(permissions[permission])
-	);
+	if (!user || !(permission in permissions)) return false;
+	if (Object.hasOwn(scopedRanks, user.rank)) return scopedRanks[user.rank].includes(permission);
+	return ranks.indexOf(user.rank) >= ranks.indexOf(permissions[permission]);
 }
 export function roleFromDiscord(id, roles, env) {
 	if (env.DISCORD_LEADER_ID && id === env.DISCORD_LEADER_ID) return 'leader';

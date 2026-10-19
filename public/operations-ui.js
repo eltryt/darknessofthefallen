@@ -6,6 +6,7 @@ const rankLabel = (rank) =>
 		member: 'Miembro',
 		raider: 'Raider',
 		raid_leader: 'Raid Leader',
+		loot_officer: 'Oficial de botín',
 		officer: 'Oficial',
 		leader: 'Líder',
 	})[rank] || rank;

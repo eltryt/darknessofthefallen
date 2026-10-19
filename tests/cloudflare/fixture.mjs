@@ -4,6 +4,7 @@ import worker, { Guild as ProductionGuild } from '../../src/cloudflare-worker.mj
 import { issueSession } from '../../src/auth.mjs';
 import { syncRaidEvents } from '../../src/raid-sync.mjs';
 import { transaction } from '../../src/database-core.mjs';
+import lootOfficerSchema from '../../migrations/013_loot_officer.sql';
 export class Guild extends ProductionGuild {
 	async fetch(request) {
 		const path = new URL(request.url).pathname;
@@ -36,6 +37,34 @@ export class Guild extends ProductionGuild {
 			return Response.json(
 				this.db.prepare('SELECT last_success,error FROM raid_sync WHERE id=1').get(),
 			);
+		}
+		if (path === '/__test/rerun-loot-officer-migration') {
+			// Production already has users referenced by sessions and raids when 013 runs.
+			const before = this.db.prepare('SELECT count(*) n FROM sessions').get().n;
+			transaction(this.db, () => {
+				this.db.prepare('DELETE FROM schema_migrations WHERE version=13').run();
+				this.db.exec(lootOfficerSchema);
+			});
+			this.db.prepare("UPDATE users SET rank='loot_officer' WHERE id='member'").run();
+			let orphanRejected = false;
+			try {
+				this.db
+					.prepare('INSERT INTO sessions VALUES(?,?,?,?)')
+					.run('orphan', 'ghost', 'csrf', Date.now());
+			} catch {
+				orphanRejected = true;
+			}
+			const rank = this.db.prepare("SELECT rank FROM users WHERE id='member'").get().rank;
+			this.db.prepare("UPDATE users SET rank='member' WHERE id='member'").run();
+			return Response.json({
+				before,
+				after: this.db.prepare('SELECT count(*) n FROM sessions').get().n,
+				organizer: this.db
+					.prepare("SELECT organizer_id FROM raid_events WHERE id='runtime-event'")
+					.get().organizer_id,
+				rank,
+				orphanRejected,
+			});
 		}
 		if (path === '/__test/rollback') {
 			try {

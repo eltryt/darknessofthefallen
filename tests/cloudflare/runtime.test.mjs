@@ -227,6 +227,12 @@ test(
 			);
 			assert.equal((await request('/api/settings', update)).status, 200);
 			assert.equal((await (await request('/__test/rollback')).json()).display_name, 'leader');
+			const migrated = await (await request('/__test/rerun-loot-officer-migration')).json();
+			assert.ok(migrated.before > 0);
+			assert.equal(migrated.after, migrated.before);
+			assert.equal(migrated.organizer, 'leader');
+			assert.equal(migrated.rank, 'loot_officer');
+			assert.equal(migrated.orphanRejected, true);
 			const oauth = await request('/auth/discord', { redirect: 'manual' });
 			assert.equal(oauth.status, 302);
 			assert.match(oauth.headers.get('set-cookie'), /HttpOnly; SameSite=Lax; Max-Age=600; Secure/);

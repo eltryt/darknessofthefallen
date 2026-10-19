@@ -82,10 +82,11 @@ test('character editing preserves ownership and main status and rejects cross-ac
 		await f.close();
 	}
 });
-import { openDatabase } from '../src/db.mjs';
+import { openDatabase, transaction } from '../src/db.mjs';
+import { readFileSync } from 'node:fs';
 import { createApp } from '../src/app.mjs';
 import { issueSession, finishOAuth, hash } from '../src/auth.mjs';
-import { ranks, can, roleFromDiscord } from '../src/domain.mjs';
+import { ranks, can, roleFromDiscord, permissions } from '../src/domain.mjs';
 async function fixture() {
 	const db = openDatabase(':memory:');
 	const server = createServer(createApp(db, { APP_ORIGIN: 'http://localhost:3000' }));
@@ -617,5 +618,73 @@ test('roster import is atomic, repeatable and never changes Discord account rank
 		);
 	} finally {
 		await f.close();
+	}
+});
+test('loot officer handles loot and member sheets, never guild management', async () => {
+	const allowed = [
+		'community.read',
+		'character.write',
+		'roster.read',
+		'loot.manage',
+		'armory.read',
+		'armory.review',
+	];
+	for (const permission of Object.keys(permissions))
+		assert.equal(
+			can({ rank: 'loot_officer' }, permission),
+			allowed.includes(permission),
+			permission,
+		);
+	assert.equal(
+		roleFromDiscord('new', ['loot', 'raider'], {
+			DISCORD_ROLE_MAP: '{"loot":"loot_officer","raider":"raider"}',
+		}),
+		'loot_officer',
+	);
+	assert.equal(
+		roleFromDiscord('new', ['loot', 'ofi'], {
+			DISCORD_ROLE_MAP: '{"loot":"loot_officer","ofi":"officer"}',
+		}),
+		'officer',
+	);
+	const f = await fixture();
+	try {
+		for (const [path, status] of [
+			['/api/roster', 200],
+			['/api/applications', 403],
+			['/api/audit', 403],
+			['/api/export', 403],
+		])
+			assert.equal((await f.request(path, 'loot_officer')).status, status, path);
+		assert.equal((await f.request('/api/settings', 'loot_officer', 'PUT', {})).status, 403);
+	} finally {
+		await f.close();
+	}
+});
+test('loot officer migration rebuilds users and keeps every referencing row', () => {
+	const db = openDatabase(':memory:');
+	try {
+		const now = new Date().toISOString();
+		db.prepare('INSERT INTO users VALUES(?,?,?,?)').run('u1', 'Infusiones', 'officer', now);
+		db.prepare(
+			'INSERT INTO characters(id,user_id,name,class,role,created_at) VALUES(?,?,?,?,?,?)',
+		).run('c1', 'u1', 'Infusiones', 'Druida', 'Sanador', now);
+		db.prepare('DELETE FROM schema_migrations WHERE version=13').run();
+		transaction(db, () =>
+			db.exec(readFileSync(new URL('../migrations/013_loot_officer.sql', import.meta.url), 'utf8')),
+		);
+		assert.deepEqual(db.prepare('PRAGMA foreign_key_check').all(), []);
+		assert.equal(db.prepare('SELECT user_id FROM characters WHERE id=?').get('c1').user_id, 'u1');
+		db.prepare("UPDATE users SET rank='loot_officer' WHERE id='u1'").run();
+		assert.throws(() => db.prepare("UPDATE users SET rank='admin' WHERE id='u1'").run());
+		assert.throws(() =>
+			db
+				.prepare(
+					'INSERT INTO characters(id,user_id,name,class,role,created_at) VALUES(?,?,?,?,?,?)',
+				)
+				.run('c2', 'ghost', 'X', 'Mago', 'DPS distancia', now),
+		);
+	} finally {
+		db.close();
 	}
 });

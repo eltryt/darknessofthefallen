@@ -16,6 +16,7 @@ export function durableDatabase(
 	wishlistSchema,
 	achievementsSchema,
 	pushSchema,
+	lootOfficerSchema,
 ) {
 	const execute = (sql, parameters = []) => storage.sql.exec(sql, ...parameters);
 	const db = {
@@ -66,6 +67,11 @@ export function durableDatabase(
 			db.exec(achievementsSchema);
 		if (pushSchema && !db.prepare('SELECT version FROM schema_migrations WHERE version=12').get())
 			db.exec(pushSchema);
+		if (
+			lootOfficerSchema &&
+			!db.prepare('SELECT version FROM schema_migrations WHERE version=13').get()
+		)
+			db.exec(lootOfficerSchema);
 	});
 	return db;
 }
