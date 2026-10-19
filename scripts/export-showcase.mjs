@@ -15,6 +15,7 @@ mkdirSync(join(destination, 'assets/icons/spec'), { recursive: true });
 mkdirSync(join(destination, 'assets/art'), { recursive: true });
 mkdirSync(join(destination, 'assets/partners'), { recursive: true });
 mkdirSync(join(destination, 'assets/portraits'), { recursive: true });
+mkdirSync(join(destination, 'assets/achievements'), { recursive: true });
 const source = new URL('../public/', import.meta.url);
 for (const file of [
 	'theme.css',

@@ -38,4 +38,6 @@ export const iconAssets = [
 	...['warrior', 'paladin', 'hunter', 'rogue', 'priest', 'shaman', 'mage', 'warlock', 'druid'].map(
 		(c) => `assets/portraits/${c}.webp`,
 	),
+	// Illustrated achievement emblems.
+	'assets/achievements/onyxia.webp',
 ];

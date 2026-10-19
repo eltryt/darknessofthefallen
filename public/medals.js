@@ -62,5 +62,8 @@ export function progressOf(a) {
 export function medal(a, { size = 'medium' } = {}) {
 	const tier = a.tier || 0;
 	const label = `${a.name}${tier ? ' · ' + tierNames[tier] : ' · Bloqueado'}`;
+	// Illustrated emblems already carry their frame; only local achievement art is accepted.
+	if (typeof a.image === 'string' && /^\/assets\/achievements\/[\w-]+\.webp$/.test(a.image))
+		return `<span class="medal medal-${esc(size)} has-image ${tierClass[tier]} cat-${esc(a.category)}" role="img" aria-label="${esc(label)}" title="${esc(label)}"><img class="medal-image" src="${esc(a.image)}" alt="" width="84" height="84" loading="lazy" decoding="async" /></span>`;
 	return `<span class="medal medal-${esc(size)} ${tierClass[tier]} cat-${esc(a.category)}${a.secret && !tier ? ' is-secret' : ''}" role="img" aria-label="${esc(label)}" title="${esc(label)}" data-progress="${Math.round(progressOf(a))}"><span class="medal-disc" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false">${icons[a.icon] || icons.secret}</svg></span><span class="medal-studs" aria-hidden="true"><i></i><i></i><i></i><i></i></span></span>`;
 }

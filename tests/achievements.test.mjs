@@ -274,3 +274,26 @@ test('per-boss plans reward being inside every boss; three kill nights in a row'
 		await f.close();
 	}
 });
+
+test('Matadragones goes to whoever was present at the first kill of Onyxia', async () => {
+	const f = await fixture();
+	try {
+		f.raid('2026-07-07', { ana: 'Asistió', bea: 'Ausente' });
+		f.db.prepare('INSERT INTO progress(id,data) VALUES(?,?)').run(
+			'p',
+			JSON.stringify({
+				name: 'Guarida de Onixya',
+				bosses: [
+					{ id: 'o', name: 'Onixya', status: 'Derrotado', firstKill: '2026-07-07T21:40:00.000Z' },
+				],
+			}),
+		);
+		const ana = find((await f.request('/api/achievements', 'ana')).body, 'dragonslayer');
+		assert.equal(ana.tier, 3);
+		assert.equal(ana.image, '/assets/achievements/onyxia.webp');
+		const bea = find((await f.request('/api/achievements', 'bea')).body, 'dragonslayer');
+		assert.equal(bea.tier, 0);
+	} finally {
+		await f.close();
+	}
+});

@@ -7241,3 +7241,27 @@ body[data-page='/'] .hero {
 		justify-content: flex-start;
 	}
 }
+/* Achievements with their own illustrated emblem. */
+.medal.has-image .medal-image {
+	width: calc(var(--size) * 1.1);
+	height: calc(var(--size) * 1.1);
+	filter: drop-shadow(0 calc(var(--size) * 0.05) calc(var(--size) * 0.12) #000c);
+	transition: filter 0.3s ease;
+}
+.medal.has-image.is-gold .medal-image {
+	animation: medal-image-glow 3.2s ease-in-out infinite;
+}
+@keyframes medal-image-glow {
+	50% {
+		filter: drop-shadow(0 calc(var(--size) * 0.05) calc(var(--size) * 0.12) #000c)
+			drop-shadow(0 0 calc(var(--size) * 0.22) #c58bff99);
+	}
+}
+.medal.has-image.is-locked .medal-image {
+	filter: grayscale(1) brightness(0.45) contrast(1.1);
+}
+@media (prefers-reduced-motion: reduce) {
+	.medal.has-image.is-gold .medal-image {
+		animation: none;
+	}
+}

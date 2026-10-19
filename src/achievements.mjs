@@ -53,6 +53,16 @@ export const playerCatalog = [
 		help: 'Presente en todas las primeras victorias de una raid.',
 	},
 	{
+		id: 'dragonslayer',
+		category: 'progreso',
+		icon: 'skull',
+		// Illustrated emblem supplied by the guild; replaces the drawn icon.
+		image: '/assets/achievements/onyxia.webp',
+		name: 'Matadragones',
+		single: 3,
+		help: 'Presente en la primera victoria de la hermandad contra Onyxia.',
+	},
+	{
 		id: 'called',
 		category: 'compromiso',
 		icon: 'banner',
@@ -404,6 +414,10 @@ export function playerMetrics(db, userId, since, shared = sharedData(db, since))
 	const conqueror = progress.some(
 		(raid) => raid.bosses.length && raid.bosses.every((b) => b.kill && present(b.kill)),
 	);
+	// Onyxia's first kill, whatever spelling the progress record uses.
+	const dragonslayer = progress.some((raid) =>
+		raid.bosses.some((b) => b.kill && /onyxia|onixya|onixia/i.test(b.name) && present(b.kill)),
+	);
 	const currentMonth = madridDay(new Date().toISOString()).slice(0, 7),
 		byMonth = {};
 	for (const r of raids) (byMonth[madridDay(r.starts_at).slice(0, 7)] ||= []).push(r.id);
@@ -475,6 +489,7 @@ export function playerMetrics(db, userId, since, shared = sharedData(db, since))
 		punctual: rows.filter((r) => r.status === 'Asistió').length,
 		witness: witnessed.length,
 		conqueror: conqueror ? 1 : 0,
+		dragonslayer: dragonslayer ? 1 : 0,
 		called: called.length,
 		bench: bench.size,
 		sheet: main && main.realm && main.race && main.level && main.spec ? 1 : 0,
@@ -575,6 +590,7 @@ function present(item, earned = [], value) {
 		id: item.id,
 		category: item.category,
 		icon: hidden ? 'secret' : item.icon,
+		image: hidden ? null : item.image || null,
 		name: hidden ? '???' : item.name,
 		help: hidden ? 'Logro secreto. Se revela cuando alguien lo consigue.' : item.help,
 		secret: !!item.secret,
