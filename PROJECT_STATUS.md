@@ -908,3 +908,5 @@ Publicado: `7628b5a`; backend `38652910420`, Pages `38652910475` y validación `
 - Logro nuevo de Progreso (oro, 50 puntos): estar presente en la primera victoria de la hermandad contra Onyxia (acepta Onyxia/Onixya/Onixia). Cuenta desde la activación, como el resto.
 - Las medallas admiten un emblema ilustrado local (`/assets/achievements/*.webp`) en lugar del icono dibujado; bloqueado se ve en gris y en oro brilla. Emblema de Onyxia aportado por el propietario (84 px, WebP sin pérdida).
 - Validación: 110 pruebas Node (nueva: Matadragones) y build; navegador QA con la medalla conseguida y bloqueada. Desplegado: backend 39236218135, Pages y validación correctos.
+
+- 2026-10-19: Medallas de las tarjetas de logros reducidas (50 px) y emblema de Onyxia ampliado para igualar su tamaño, manteniendo la alineación del texto. Deploy 39241276224.
