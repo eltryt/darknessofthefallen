@@ -20,6 +20,8 @@ import statsSchema from '../migrations/008_character_stats.sql';
 import lineupSchema from '../migrations/009_raid_lineups.sql';
 import wishlistSchema from '../migrations/010_unified_wishlist.sql';
 import achievementsSchema from '../migrations/011_achievements.sql';
+import pushSchema from '../migrations/012_push.sql';
+import { deliverPush, nextPushAt, pushReady } from './push-notifications.mjs';
 import { deliverCallups, dmReady, nextCallupAt } from './raid-lineup.mjs';
 import { syncRaidEvents } from './raid-sync.mjs';
 import { raidHelperReady } from './raid-helper.mjs';
@@ -40,6 +42,7 @@ export class Guild extends DurableObject {
 			lineupSchema,
 			wishlistSchema,
 			achievementsSchema,
+			pushSchema,
 		);
 		repairGMRedirectFailures(this.db);
 	}
@@ -113,6 +116,14 @@ export class Guild extends DurableObject {
 				if (alarm === null || alarm > due) await this.ctx.storage.setAlarm(due);
 			}
 		}
+		if (pushReady(this.env)) {
+			const due = nextPushAt(this.db);
+			if (due !== null) {
+				const at = Math.max(Date.now() + 2000, due),
+					alarm = await this.ctx.storage.getAlarm();
+				if (alarm === null || alarm > at) await this.ctx.storage.setAlarm(at);
+			}
+		}
 		if (dmReady(this.env)) {
 			const due = nextCallupAt(this.db);
 			if (due !== null) {
@@ -147,6 +158,7 @@ export class Guild extends DurableObject {
 			await syncRaidEvents(this.db, this.env);
 			captureRaidIncidents(this.db, this.env);
 			await deliverGM(this.db, this.env);
+			await deliverPush(this.db, { ...this.env, APP_ORIGIN: origin || this.env.APP_ORIGIN });
 			await deliverCallups(this.db, { ...this.env, APP_ORIGIN: origin || '' });
 		} finally {
 			await this.scheduleNotifications();

@@ -43,3 +43,34 @@ self.addEventListener('fetch', (event) => {
 		event.respondWith(caches.match(ICON).then((hit) => hit || fetch(request)));
 	}
 });
+
+// App notifications for GM and officers (new applications, messages, incidents).
+self.addEventListener('push', (event) => {
+	let data = {};
+	try {
+		data = event.data ? event.data.json() : {};
+	} catch {
+		/* Malformed payload: show a generic notice. */
+	}
+	event.waitUntil(
+		self.registration.showNotification(data.title || 'Darkness of the Fallen', {
+			body: data.body || 'Tienes un aviso nuevo en el panel.',
+			icon: ICON,
+			badge: ICON,
+			tag: data.tag,
+			data: { url: data.url || '/panel' },
+		}),
+	);
+});
+
+self.addEventListener('notificationclick', (event) => {
+	event.notification.close();
+	const url = new URL(event.notification.data?.url || '/panel', self.location.origin).href;
+	event.waitUntil(
+		self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windows) => {
+			const open = windows.find((w) => new URL(w.url).origin === self.location.origin);
+			if (open) return open.navigate(url).then((w) => (w || open).focus());
+			return self.clients.openWindow(url);
+		}),
+	);
+});

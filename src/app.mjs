@@ -4,6 +4,7 @@ import { iconAssets } from '../public/icon-assets.js';
 import { gmApi, enqueueGM, gmReady } from './gm-notifications.mjs';
 import { exportRecovery } from './recovery.mjs';
 import { backupApi } from './backup-api.mjs';
+import { pushApi, pushReady, enqueuePush } from './push-notifications.mjs';
 import { randomUUID, createHash } from 'node:crypto';
 import { Buffer } from 'node:buffer';
 import { settings, transaction, audit } from './database-core.mjs';
@@ -305,6 +306,19 @@ export function createApp(db, env, { readAsset = readLocalAsset, discordFetch = 
 			)
 				return;
 			if (
+				await pushApi({
+					db,
+					user,
+					path,
+					method,
+					env,
+					body: () => body(req),
+					send,
+					requirePermission,
+				})
+			)
+				return;
+			if (
 				await raidLineupApi({
 					db,
 					user,
@@ -564,6 +578,7 @@ export function createApp(db, env, { readAsset = readLocalAsset, discordFetch = 
 						date(),
 						date(),
 					);
+					if (pushReady(env)) enqueuePush(db, 'recruitment', id);
 					if (gmReady(env)) enqueueGM(db, 'recruitment', id);
 					else if (
 						env.RECRUITMENT_NOTIFICATIONS_ENABLED === 'true' &&

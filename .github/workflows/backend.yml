@@ -85,6 +85,18 @@ jobs:
           BACKUP_TOKEN: ${{ secrets.BACKUP_TOKEN }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || vars.CLOUDFLARE_ACCOUNT_ID }}
+      - name: Configure app notification key when its secret is present
+        shell: bash
+        run: |
+          if [ -n "$VAPID_PRIVATE_JWK" ]; then
+            node scripts/configure-push.mjs
+          else
+            echo 'App notification key not configured; app notifications stay disabled.'
+          fi
+        env:
+          VAPID_PRIVATE_JWK: ${{ secrets.VAPID_PRIVATE_JWK }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || vars.CLOUDFLARE_ACCOUNT_ID }}
       - name: Deploy persistent backend and application assets
         run: npm run deploy:backend
         env:

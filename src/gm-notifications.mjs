@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { audit, transaction } from './database-core.mjs';
 import { HttpError, text } from './domain.mjs';
+import { enqueuePush, pushReady } from './push-notifications.mjs';
 
 // One-time recovery for the first Workers deployment: redirect:'error' was
 // rejected before dispatch. Do not replay genuinely ambiguous network failures.
@@ -47,6 +48,10 @@ export function gmWebhook(env) {
 	}
 }
 export const gmReady = (env) => env.GM_NOTIFICATIONS_ENABLED === 'true' && Boolean(gmWebhook(env));
+// Contact messages and incidents also reach GM and officers' app (see push-notifications.mjs).
+function notifyApp(db, env, kind, targetId) {
+	if (pushReady(env)) enqueuePush(db, kind, targetId);
+}
 export function enqueueGM(db, kind, targetId, key = kind + ':' + targetId) {
 	db.prepare(
 		'INSERT OR IGNORE INTO gm_notifications(id,kind,target_id,dedupe_key,created_at) VALUES(?,?,?,?,?)',
@@ -166,6 +171,7 @@ export function captureRaidIncidents(db, env) {
 				new Date().toISOString(),
 			);
 			enqueueGM(db, 'incident', id, key);
+			notifyApp(db, env, 'incident', id);
 		});
 	}
 }
@@ -207,6 +213,7 @@ export async function gmApi(ctx) {
 					new Date().toISOString(),
 				);
 				enqueueGM(db, kind, requestId);
+				notifyApp(db, env, kind, requestId);
 				audit(db, user.id, 'message.created', requestId, { kind });
 			});
 			send(201, { id: requestId });

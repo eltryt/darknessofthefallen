@@ -9,6 +9,7 @@
 	"vars": {
 		"RAID_HELPER_CHANNEL_ID": "1550997172982382723",
 		"RAID_HELPER_TEMPLATE_ID": "wowforever",
+		"VAPID_PUBLIC_KEY": "BJ6BIFuCEgeq9EDebLvLmOjCF08fqEqwpaTGFWBYeIlJHqPTE1XgEpnSfCE4bexyjTomorll5Itv69MXy3868fg",
 		"APP_ORIGIN": "https://darknessofthefallen.com",
 	},
 	"assets": {
