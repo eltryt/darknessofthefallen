@@ -6,6 +6,8 @@ import { createPublicLayout } from './public-layout.js';
 import { mountRaidEvents } from './raid-events-ui.js';
 import { prepareApplication, applicationReceipt } from './recruitment-ui.js';
 import { attachSchedulePlanner } from './schedule-ui.js';
+// Embedded on /mapa; the server's Content-Security-Policy allows exactly this origin.
+export const MAP_URL = 'https://wowforevermap.com/';
 
 export function createPublicViews(context) {
 	const {
@@ -370,6 +372,35 @@ export function createPublicViews(context) {
 						'Nuestro progreso PvE',
 						'Aquí quedarán los encuentros superados y los hitos de la hermandad.',
 					) + progressShowcase(data.progress, esc);
+				break;
+			case '/mapa':
+				// The interactive map is WoW Forever Map's own site, shown inside our page with
+				// credit. Its markers, routes and 3D view stay theirs.
+				html =
+					title(
+						'Explora Azeroth',
+						'Mapa interactivo de WoW Forever.',
+						'Zonas, ciudades, mazmorras, rutas de vuelo, barcos y zepelines. Busca un lugar o activa las capas que necesites.',
+					) +
+					/* HTML */ `<section class="map-embed">
+						<div class="map-frame">
+							<iframe
+								src="${MAP_URL}"
+								title="Mapa interactivo de WoW Forever (WoW Forever Map)"
+								allow="fullscreen"
+								sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-forms"
+							></iframe>
+						</div>
+						<p class="map-credit">
+							Mapa creado por
+							<a href="${MAP_URL}" target="_blank" rel="noopener">WoW Forever Map</a>, un proyecto
+							independiente de la comunidad. Sus datos proceden de servidores Classic y pueden no
+							coincidir del todo con WoW Forever.
+							<a class="button secondary" href="${MAP_URL}" target="_blank" rel="noopener"
+								>Abrir a pantalla completa ↗</a
+							>
+						</p>
+					</section>`;
 				break;
 			case '/contacto':
 				html =

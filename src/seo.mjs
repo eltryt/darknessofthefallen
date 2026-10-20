@@ -31,6 +31,11 @@ export const seoPages = {
 		'Buscamos jugadores para raidear en WoW Forever. Mira qué especializaciones necesitamos y presenta tu candidatura a esta guild española de la Alianza.',
 		'Reclutamiento',
 	],
+	'/mapa': [
+		'Mapa interactivo de WoW Forever · Darkness of the Fallen',
+		'Mapa de Azeroth para WoW Forever: zonas, ciudades, mazmorras, rutas de vuelo, barcos y zepelines. Explóralo desde la web de Darkness of the Fallen.',
+		'Mapa',
+	],
 	'/contacto': [
 		'Contacto y Discord · Darkness of the Fallen',
 		'Contacta con Darkness of the Fallen, hermandad española de WoW Forever, y entra en nuestro Discord.',

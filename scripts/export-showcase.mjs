@@ -149,6 +149,7 @@ const titles = {
 	roster: 'Roster',
 	raids: 'Raids',
 	reclutamiento: 'Reclutamiento',
+	mapa: 'Mapa',
 	contacto: 'Contacto',
 	login: 'Entrar con Discord',
 };

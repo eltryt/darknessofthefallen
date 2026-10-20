@@ -138,6 +138,7 @@ const pages = new Set([
 	'/roster',
 	'/reclutamiento',
 	'/raids',
+	'/mapa',
 	'/contacto',
 	'/login',
 	'/perfil',
@@ -151,7 +152,7 @@ export function securityHeaders(origin) {
 		'X-Robots-Tag': 'noindex, nofollow',
 		'Referrer-Policy': 'no-referrer',
 		'Content-Security-Policy':
-			"default-src 'self'; script-src 'self' https://www.googletagmanager.com; style-src 'self'; img-src 'self' data:; connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com https://www.googletagmanager.com; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; object-src 'none'",
+			"default-src 'self'; script-src 'self' https://www.googletagmanager.com; style-src 'self'; img-src 'self' data:; connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com https://www.googletagmanager.com; frame-src https://wowforevermap.com; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; object-src 'none'",
 		'Cache-Control': 'no-store',
 		'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
 		'Cross-Origin-Opener-Policy': 'same-origin',

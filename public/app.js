@@ -153,7 +153,7 @@ async function boot() {
 		const s = data.settings,
 			path = location.pathname.replace(/\/$/, '') || '/';
 		if (!data.authConfigured && !me.user) $('.login').textContent = 'Acceso de miembros';
-		document.title = `${{ '/nosotros': 'Hermandad', '/raids': 'Raids', '/roster': 'Roster', '/progreso': 'Progreso PvE', '/reclutamiento': 'Reclutamiento', '/contacto': 'Contacto', '/login': 'Entrar con Discord', '/perfil': 'Mi perfil', '/armeria': 'Armería', '/panel': 'Panel' }[path] || 'Inicio'} · ${s.name}`;
+		document.title = `${{ '/nosotros': 'Hermandad', '/raids': 'Raids', '/mapa': 'Mapa de Azeroth', '/roster': 'Roster', '/progreso': 'Progreso PvE', '/reclutamiento': 'Reclutamiento', '/contacto': 'Contacto', '/login': 'Entrar con Discord', '/perfil': 'Mi perfil', '/armeria': 'Armería', '/panel': 'Panel' }[path] || 'Inicio'} · ${s.name}`;
 		document.querySelectorAll('nav a').forEach((a) => {
 			if (a.pathname.replace(/\/$/, '') === path.replace(/\/$/, ''))
 				a.setAttribute('aria-current', 'page');

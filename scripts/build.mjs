@@ -61,6 +61,7 @@ try {
 		'progreso',
 		'roster',
 		'raids',
+		'mapa',
 		'reclutamiento',
 		'contacto',
 		'login',
