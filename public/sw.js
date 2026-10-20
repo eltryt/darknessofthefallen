@@ -1,8 +1,58 @@
-// Minimal service worker: makes the site installable as an app and shows a
-// themed page when there is no connection. Pages, API responses and sessions are
-// never cached, so members always see live data and a deploy shows at once.
+// Service worker: makes the site installable as an app, shows a themed page when
+// there is no connection and keeps the code on the device. Pages, API responses
+// and sessions are never cached, so members always see live data.
+//
+// Code and styles: every page response names the deploy it belongs to
+// (X-App-Version). While it does not change, scripts and styles come from the
+// device without asking the server; a new deploy drops them before the page that
+// announced it requests any, so a deploy still shows at once and never mixes versions.
 const CACHE = 'dotf-offline-v1';
+const META = 'dotf-meta';
+const CODE = 'dotf-code-';
 const ICON = '/assets/app-icon-192.png';
+let version = null;
+
+async function currentVersion() {
+	if (version) return version;
+	const stored = await (await caches.open(META)).match('/__version');
+	version = stored ? await stored.text() : null;
+	return version;
+}
+async function useVersion(next) {
+	if (next === (await currentVersion())) return;
+	version = next;
+	await (await caches.open(META)).put('/__version', new Response(next));
+	const keys = await caches.keys();
+	await Promise.all(
+		keys.filter((k) => k.startsWith(CODE) && k !== CODE + next).map((k) => caches.delete(k)),
+	);
+}
+const isCode = (url) =>
+	url.origin === self.location.origin &&
+	url.pathname !== '/sw.js' &&
+	!url.search &&
+	/\.(js|css)$/.test(url.pathname);
+async function page(request) {
+	try {
+		const response = await fetch(request);
+		const next = response.headers.get('X-App-Version');
+		if (next) await useVersion(next);
+		return response;
+	} catch {
+		return new Response(offlinePage, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+	}
+}
+async function code(request) {
+	const current = await currentVersion();
+	if (!current) return fetch(request);
+	const cache = await caches.open(CODE + current);
+	const hit = await cache.match(request);
+	if (hit) return hit;
+	const response = await fetch(request);
+	// Only a complete answer for the deploy still in use is kept.
+	if (response.status === 200 && current === version) await cache.put(request, response.clone());
+	return response;
+}
 
 const offlinePage = `<!doctype html><html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>Sin conexión · Darkness of the Fallen</title>
@@ -22,7 +72,10 @@ self.addEventListener('activate', (event) => {
 	event.waitUntil(
 		caches
 			.keys()
-			.then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+			// A new worker starts with empty code caches; the deploy version is kept.
+			.then((keys) =>
+				Promise.all(keys.filter((k) => k !== CACHE && k !== META).map((k) => caches.delete(k))),
+			)
 			.then(() => self.clients.claim()),
 	);
 });
@@ -30,16 +83,10 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
 	const { request } = event;
 	if (request.method !== 'GET') return;
-	if (request.mode === 'navigate') {
-		event.respondWith(
-			fetch(request).catch(
-				() =>
-					new Response(offlinePage, {
-						headers: { 'Content-Type': 'text/html; charset=utf-8' },
-					}),
-			),
-		);
-	} else if (new URL(request.url).pathname === ICON) {
+	const url = new URL(request.url);
+	if (request.mode === 'navigate') event.respondWith(page(request));
+	else if (isCode(url)) event.respondWith(code(request));
+	else if (url.pathname === ICON) {
 		event.respondWith(caches.match(ICON).then((hit) => hit || fetch(request)));
 	}
 });

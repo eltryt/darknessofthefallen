@@ -24,6 +24,37 @@
 		<meta name="apple-mobile-web-app-status-bar-style" content="black" />
 		<script src="/boot-state.js"></script>
 		<script type="module" src="/app.js"></script>
+		<!-- Every module app.js imports, fetched in parallel instead of level by level. tests/performance.test.mjs keeps this list complete. -->
+		<link rel="modulepreload" href="/analytics.js" />
+		<link rel="modulepreload" href="/armory-admin-ui.js" />
+		<link rel="modulepreload" href="/armory-catalog.js" />
+		<link rel="modulepreload" href="/armory-view.js" />
+		<link rel="modulepreload" href="/character-editor.js" />
+		<link rel="modulepreload" href="/components.js" />
+		<link rel="modulepreload" href="/gm-ui.js" />
+		<link rel="modulepreload" href="/guild-showcase.js" />
+		<link rel="modulepreload" href="/home-events.js" />
+		<link rel="modulepreload" href="/lineup-board.js" />
+		<link rel="modulepreload" href="/manual-roster-ui.js" />
+		<link rel="modulepreload" href="/medals.js" />
+		<link rel="modulepreload" href="/motion.js" />
+		<link rel="modulepreload" href="/my-callups.js" />
+		<link rel="modulepreload" href="/operations-ui.js" />
+		<link rel="modulepreload" href="/panel-view.js" />
+		<link rel="modulepreload" href="/paperdoll.js" />
+		<link rel="modulepreload" href="/profile-tour.js" />
+		<link rel="modulepreload" href="/profile-view.js" />
+		<link rel="modulepreload" href="/public-layout.js" />
+		<link rel="modulepreload" href="/public-views.js" />
+		<link rel="modulepreload" href="/raid-buffs.js" />
+		<link rel="modulepreload" href="/raid-events-ui.js" />
+		<link rel="modulepreload" href="/recruitment-ui.js" />
+		<link rel="modulepreload" href="/roster-ui.js" />
+		<link rel="modulepreload" href="/schedule-ui.js" />
+		<link rel="modulepreload" href="/schedule.js" />
+		<link rel="modulepreload" href="/sheet-parts.js" />
+		<link rel="modulepreload" href="/specs.js" />
+		<link rel="modulepreload" href="/wishlist-ui.js" />
 	</head>
 	<body>
 		<a class="skip" href="#content">Saltar al contenido</a>

@@ -46,14 +46,19 @@ function toast(message) {
 }
 // Comunicación con el backend autenticado.
 async function api(path, method = 'GET', value) {
-	const r = await fetch(path, {
-		method,
-		headers: {
-			'Content-Type': 'application/json',
-			...(me?.csrf ? { 'X-CSRF-Token': me.csrf } : {}),
-		},
-		...(value !== undefined ? { body: JSON.stringify(value) } : {}),
-	});
+	const request = () =>
+		fetch(path, {
+			method,
+			headers: {
+				'Content-Type': 'application/json',
+				...(me?.csrf ? { 'X-CSRF-Token': me.csrf } : {}),
+			},
+			...(value !== undefined ? { body: JSON.stringify(value) } : {}),
+		});
+	// boot-state.js already asked for the data every page needs; use it once.
+	const early = method === 'GET' && window.dotfPrefetch?.[path];
+	if (early) delete window.dotfPrefetch[path];
+	const r = await (early ? early.catch(request) : request());
 	const result = await r
 		.json()
 		.catch(() => ({ error: 'No se pudo conectar. Vuelve a intentarlo en unos instantes.' }));

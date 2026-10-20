@@ -17,6 +17,8 @@
 		"binding": "ASSETS",
 		"run_worker_first": true,
 	},
+	// Each deploy's id marks the pages, so the app's service worker renews its code cache.
+	"version_metadata": { "binding": "CF_VERSION_METADATA" },
 	"durable_objects": {
 		"bindings": [{ "name": "GUILD", "class_name": "Guild" }],
 	},

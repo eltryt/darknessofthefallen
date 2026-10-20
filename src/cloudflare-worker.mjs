@@ -217,6 +217,13 @@ export default {
 		}
 		// One persistent database per guild. Keep this name stable across deploys.
 		const id = env.GUILD.idFromName('darknessofthefallen');
-		return env.GUILD.get(id).fetch(request);
+		const response = await env.GUILD.get(id).fetch(request);
+		// Pages name their deploy so the app's service worker knows when its cached
+		// code is current (public/sw.js).
+		const deploy = env.CF_VERSION_METADATA?.id;
+		if (!deploy || !response.headers.get('Content-Type')?.startsWith('text/html')) return response;
+		const page = new Response(response.body, response);
+		page.headers.set('X-App-Version', deploy);
+		return page;
 	},
 };

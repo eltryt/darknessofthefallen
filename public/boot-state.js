@@ -3,6 +3,15 @@ document.documentElement.classList.add('site-booting');
 // A broken module or a stalled request must not hide useful public content forever.
 window.setTimeout(() => document.documentElement.classList.remove('site-booting'), 8000);
 
+// Every page starts from the guild data and the session. Ask for both now, while
+// the modules load, instead of after them; api() in app.js takes each one once.
+window.dotfPrefetch = {};
+for (const path of ['/api/public', '/api/me']) {
+	const response = fetch(path, { headers: { 'Content-Type': 'application/json' } });
+	response.catch(() => {});
+	window.dotfPrefetch[path] = response;
+}
+
 // Home: the cinematic intro plays once per browser session and doubles as the
 // loading screen. It is built here, before the modules load, so it shows from the
 // first frame even on a slow phone: the emblem lights up, the curtain stays closed
@@ -119,7 +128,9 @@ window.setTimeout(() => document.documentElement.classList.remove('site-booting'
 	link.as = 'image';
 	link.type = 'image/webp';
 	link.setAttribute('fetchpriority', 'high');
-	link.href = new URL(`assets/art/${art}.webp`, base).href;
+	// Phones get the lighter version, as theme.css does (same query as public/art-variants.js).
+	const phone = matchMedia('(max-width: 600px)').matches;
+	link.href = new URL(`assets/art/${art}${phone ? '-m' : ''}.webp`, base).href;
 	link.onload = link.onerror = ready;
 	document.head.append(link);
 	// Never keep the illustration hidden if the network is slow.

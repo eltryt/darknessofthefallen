@@ -619,7 +619,7 @@ button,
 	width: 53%;
 }
 .hero::before {
-	background: url('assets/art/castle.webp') center/cover;
+	background: var(--art-castle) center/cover;
 	inset: 0 calc(-1 * clamp(18px, 4vw, 64px));
 }
 .hero::after {
@@ -702,16 +702,16 @@ button,
 	color: var(--ink);
 }
 .art-campfire {
-	--card-art: url('assets/art/campfire.webp');
+	--card-art: var(--art-campfire);
 }
 .art-landscape {
-	--card-art: url('assets/art/landscape.webp');
+	--card-art: var(--art-landscape);
 }
 .art-journey {
-	--card-art: url('assets/art/raid-journey.webp');
+	--card-art: var(--art-raid-journey);
 }
 .art-heroes {
-	--card-art: url('assets/art/heroes.webp');
+	--card-art: var(--art-heroes);
 }
 .art-heroes::before {
 	background-position: center 34%;
@@ -736,10 +736,10 @@ body[data-page='/roster'] .page-title::before {
 	background: var(--page-art) center 45% / cover;
 }
 body[data-page='/raids'] {
-	--page-art: url('assets/art/raid-journey.webp');
+	--page-art: var(--art-raid-journey);
 }
 body[data-page='/roster'] {
-	--page-art: url('assets/art/war-room.webp');
+	--page-art: var(--art-war-room);
 }
 body[data-page='/raids'] .page-title::after,
 body[data-page='/roster'] .page-title::after {
@@ -1282,16 +1282,16 @@ body[data-page] .section-head {
 	border-bottom: 1px solid #a68a5b38;
 }
 body[data-page='/nosotros'] {
-	--section-art: url('assets/art/tavern.webp');
+	--section-art: var(--art-tavern);
 }
 body[data-page='/contacto'] {
-	--section-art: url('assets/art/tavern.webp');
+	--section-art: var(--art-tavern);
 }
 body[data-page='/reclutamiento'] {
-	--section-art: url('assets/art/recruiting.webp');
+	--section-art: var(--art-recruiting);
 }
 body[data-page='/progreso'] {
-	--section-art: url('assets/art/raid-expedition.webp');
+	--section-art: var(--art-raid-expedition);
 }
 body:is(
 		[data-page='/nosotros'],
@@ -1352,7 +1352,7 @@ body[data-page] .banner {
 	border-radius: 4px;
 	background:
 		linear-gradient(90deg, #0b0b0dee, #0b0b0d88),
-		url('assets/art/raid-expedition.webp') center 48% / cover;
+		var(--art-raid-expedition) center 48% / cover;
 	min-height: 210px;
 }
 body[data-page] .banner p {
@@ -1406,7 +1406,7 @@ body[data-page] .link-card:hover {
 	border-color: #a68a5b60;
 	background:
 		linear-gradient(90deg, #101012ed, #101012c9),
-		url('assets/art/strategy.webp') center/cover;
+		var(--art-strategy) center/cover;
 }
 .recruit-expectations {
 	border-radius: 3px;
@@ -1443,7 +1443,7 @@ body[data-page] .link-card:hover {
 .raid-art {
 	background:
 		linear-gradient(0deg, #131113, #13111366),
-		url('assets/art/raid-expedition.webp') center/cover;
+		var(--art-raid-expedition) center/cover;
 }
 .raid-onyxia .raid-art {
 	min-height: 380px;
@@ -1471,7 +1471,7 @@ body[data-page] .link-card:hover {
 body[data-page='/contacto'] .contact-card {
 	background:
 		linear-gradient(#111113c9, #111113f5),
-		url('assets/art/tavern.webp') center/cover;
+		var(--art-tavern) center/cover;
 	border-color: #a68a5b70;
 }
 .contact-notes {
@@ -1530,32 +1530,31 @@ body[data-page] textarea {
 	}
 }
 body[data-page='/nosotros'] {
-	--section-art: url('assets/art/castle-journey.webp');
+	--section-art: var(--art-castle-journey);
 }
 body[data-page='/'] .banner {
-	background-image:
-		linear-gradient(90deg, #0b0b0dee, #0b0b0d70), url('assets/art/castle-overlook.webp');
+	background-image: linear-gradient(90deg, #0b0b0dee, #0b0b0d70), var(--art-castle-overlook);
 }
 body[data-page='/'] .link-card:nth-child(1) {
 	background:
 		linear-gradient(0deg, #111113 15%, #111113b0),
-		url('assets/art/raid-expedition.webp') center/cover;
+		var(--art-raid-expedition) center/cover;
 }
 body[data-page='/'] .link-card:nth-child(2) {
 	background:
 		linear-gradient(0deg, #111113 15%, #111113b0),
-		url('assets/art/guild-army.webp') center/cover;
+		var(--art-guild-army) center/cover;
 }
 body[data-page='/'] .link-card:nth-child(3) {
 	background:
 		linear-gradient(0deg, #111113 15%, #111113b0),
-		url('assets/art/recruiting.webp') center/cover;
+		var(--art-recruiting) center/cover;
 }
 body[data-page='/'] .art-campfire {
-	--card-art: url('assets/art/resting-camp.webp');
+	--card-art: var(--art-resting-camp);
 }
 body[data-page='/'] .art-landscape {
-	--card-art: url('assets/art/ironforge-gates.webp');
+	--card-art: var(--art-ironforge-gates);
 }
 body[data-page='/nosotros'] .about-emblem {
 	min-height: 360px;
@@ -1563,7 +1562,7 @@ body[data-page='/nosotros'] .about-emblem {
 	place-items: center;
 	background:
 		linear-gradient(0deg, #111113aa, #11111311),
-		url('assets/art/resting-camp.webp') center/cover;
+		var(--art-resting-camp) center/cover;
 }
 body[data-page='/nosotros'] .about-emblem img {
 	width: 150px;
@@ -1575,7 +1574,7 @@ body[data-page='/contacto'] .contact-card {
 	padding-top: 220px;
 	background:
 		linear-gradient(0deg, #111113 35%, #11111322 85%),
-		url('assets/art/tavern.webp') center top/100% auto no-repeat,
+		var(--art-tavern) center top/100% auto no-repeat,
 		#111113;
 }
 body[data-page='/contacto'] .contact-card > img {
@@ -2201,7 +2200,7 @@ body[data-page='/nosotros'] .about-emblem::after {
 body[data-page='/nosotros'] .about-emblem::before {
 	z-index: -2;
 	bottom: -12px;
-	background: url('assets/art/resting-camp.webp') center 40% / cover;
+	background: var(--art-resting-camp) center 40% / cover;
 }
 body[data-page='/nosotros'] .about-emblem::after {
 	z-index: -1;
@@ -2210,10 +2209,10 @@ body[data-page='/nosotros'] .about-emblem::after {
 
 /* Member areas (panel and profile) share the illustrated guild finish. */
 body[data-page='/panel'] {
-	--section-art: url('assets/art/war-room.webp');
+	--section-art: var(--art-war-room);
 }
 body[data-page='/perfil'] {
-	--section-art: url('assets/art/campfire.webp');
+	--section-art: var(--art-campfire);
 }
 body:is([data-page='/panel'], [data-page='/perfil']) .page-title {
 	position: relative;
@@ -2513,7 +2512,7 @@ body[data-page='/panel'] #application-list > .empty {
 
 /* Armory: character sheet, equipment slots, BiS lists, guides and officer reviews. */
 body[data-page='/armeria'] {
-	--section-art: url('assets/art/war-room.webp');
+	--section-art: var(--art-war-room);
 }
 body[data-page='/armeria'] main h2,
 body[data-page='/armeria'] main h3 {
@@ -3109,7 +3108,7 @@ body[data-page='/perfil'] .hub-body h3 {
 }
 .hub-hero::before {
 	z-index: -2;
-	background: url('assets/art/campfire.webp') center 40% / cover;
+	background: var(--art-campfire) center 40% / cover;
 	opacity: 0.6;
 	transform: scale(1.04);
 	animation: hub-drift 18s ease-in-out infinite alternate;
@@ -7272,5 +7271,45 @@ body[data-page='/'] .hero {
 @media (prefers-reduced-motion: reduce) {
 	.medal.has-image.is-gold .medal-image {
 		animation: none;
+	}
+}
+
+/* ===== Illustrations: lighter versions on phones ===== */
+/* About a third of the weight (scripts/art-variants.mjs); public/art-variants.js
+   lists them and shares this media query with the preloads. */
+:root {
+	--art-campfire: url('assets/art/campfire.webp');
+	--art-castle-journey: url('assets/art/castle-journey.webp');
+	--art-castle-overlook: url('assets/art/castle-overlook.webp');
+	--art-castle: url('assets/art/castle.webp');
+	--art-guild-army: url('assets/art/guild-army.webp');
+	--art-heroes: url('assets/art/heroes.webp');
+	--art-ironforge-gates: url('assets/art/ironforge-gates.webp');
+	--art-landscape: url('assets/art/landscape.webp');
+	--art-raid-expedition: url('assets/art/raid-expedition.webp');
+	--art-raid-journey: url('assets/art/raid-journey.webp');
+	--art-recruiting: url('assets/art/recruiting.webp');
+	--art-resting-camp: url('assets/art/resting-camp.webp');
+	--art-strategy: url('assets/art/strategy.webp');
+	--art-tavern: url('assets/art/tavern.webp');
+	--art-war-room: url('assets/art/war-room.webp');
+}
+@media (max-width: 600px) {
+	:root {
+		--art-campfire: url('assets/art/campfire-m.webp');
+		--art-castle-journey: url('assets/art/castle-journey-m.webp');
+		--art-castle-overlook: url('assets/art/castle-overlook-m.webp');
+		--art-castle: url('assets/art/castle-m.webp');
+		--art-guild-army: url('assets/art/guild-army-m.webp');
+		--art-heroes: url('assets/art/heroes-m.webp');
+		--art-ironforge-gates: url('assets/art/ironforge-gates-m.webp');
+		--art-landscape: url('assets/art/landscape-m.webp');
+		--art-raid-expedition: url('assets/art/raid-expedition-m.webp');
+		--art-raid-journey: url('assets/art/raid-journey-m.webp');
+		--art-recruiting: url('assets/art/recruiting-m.webp');
+		--art-resting-camp: url('assets/art/resting-camp-m.webp');
+		--art-strategy: url('assets/art/strategy-m.webp');
+		--art-tavern: url('assets/art/tavern-m.webp');
+		--art-war-room: url('assets/art/war-room-m.webp');
 	}
 }

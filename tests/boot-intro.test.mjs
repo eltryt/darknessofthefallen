@@ -57,6 +57,7 @@ function boot(t, { stored = false } = {}) {
 		setTimeout,
 		Date,
 		URL,
+		fetch: async () => new Response('{}'),
 		location: { pathname: '/', href: 'https://guild.example/' },
 		matchMedia: () => ({ matches: false }),
 		sessionStorage: {
