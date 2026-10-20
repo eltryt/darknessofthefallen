@@ -114,6 +114,17 @@ test(
 				'/assets/guild-logo.webp',
 			])
 				assert.equal((await request(path)).status, 200);
+			// Static files skip the Durable Object but keep the app's headers and cache policy.
+			const script = await request('/app.js');
+			assert.equal(script.headers.get('content-type'), 'text/javascript; charset=utf-8');
+			assert.equal(script.headers.get('cache-control'), 'no-cache');
+			assert.match(script.headers.get('content-security-policy'), /default-src 'self'/);
+			assert.equal(script.headers.get('x-frame-options'), 'DENY');
+			assert.match(await script.text(), /serviceWorker/);
+			const image = await request('/assets/guild-logo.webp', { method: 'HEAD' });
+			assert.equal(image.headers.get('content-type'), 'image/webp');
+			assert.match(image.headers.get('cache-control'), /max-age=86400/);
+			assert.equal((await request('/missing-file.js')).status, 404);
 			const homepage = await request('/');
 			assert.equal(homepage.headers.get('x-robots-tag'), 'index, follow');
 			assert.match(await homepage.text(), /rel="canonical"/);

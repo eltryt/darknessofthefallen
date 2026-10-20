@@ -7,7 +7,7 @@ import {
 } from './gm-notifications.mjs';
 import { DurableObject } from 'cloudflare:workers';
 import { Buffer } from 'node:buffer';
-import { createApp } from './app.mjs';
+import { createApp, securityHeaders, staticFile } from './app.mjs';
 import { durableDatabase } from './cloudflare-database.mjs';
 import { deliverRecruitment } from './integrations.mjs';
 import initialSchema from '../migrations/001_initial.sql';
@@ -168,6 +168,28 @@ export class Guild extends DurableObject {
 	}
 }
 
+// Code, styles and images come straight from the asset store at the edge. Only pages and
+// the API reach the guild's Durable Object, which handles one request at a time: a page
+// load requests dozens of files, and queuing them there left phones waiting for minutes.
+async function serveStatic(request, env, url) {
+	const asset = staticFile(url.pathname);
+	if (!asset) return null;
+	const stored = await env.ASSETS.fetch(
+		new Request(new URL('/' + asset.file, url.origin), {
+			method: request.method,
+			headers: request.headers,
+		}),
+	);
+	if (!stored.ok && stored.status !== 304) return null;
+	const headers = new Headers(securityHeaders(env.APP_ORIGIN || url.origin));
+	headers.set('Cache-Control', asset.cacheControl);
+	const tag = stored.headers.get('ETag');
+	if (tag) headers.set('ETag', tag);
+	if (stored.status === 304) return new Response(null, { status: 304, headers });
+	headers.set('Content-Type', asset.contentType);
+	return new Response(request.method === 'HEAD' ? null : stored.body, { status: 200, headers });
+}
+
 export default {
 	async fetch(request, env) {
 		if (env.APP_ORIGIN && new URL(request.url).origin !== env.APP_ORIGIN) {
@@ -188,6 +210,10 @@ export default {
 				status: 301,
 				headers: { Location: target.href, 'Cache-Control': 'public, max-age=3600' },
 			});
+		}
+		if (['GET', 'HEAD'].includes(request.method)) {
+			const response = await serveStatic(request, env, new URL(request.url));
+			if (response) return response;
 		}
 		// One persistent database per guild. Keep this name stable across deploys.
 		const id = env.GUILD.idFromName('darknessofthefallen');

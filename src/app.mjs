@@ -137,6 +137,36 @@ const pages = new Set([
 	'/panel',
 	'/armeria',
 ]);
+// Headers every response carries, whether served by the app or straight from assets.
+export function securityHeaders(origin) {
+	const headers = {
+		'X-Content-Type-Options': 'nosniff',
+		'X-Robots-Tag': 'noindex, nofollow',
+		'Referrer-Policy': 'no-referrer',
+		'Content-Security-Policy':
+			"default-src 'self'; script-src 'self' https://www.googletagmanager.com; style-src 'self'; img-src 'self' data:; connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com https://www.googletagmanager.com; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; object-src 'none'",
+		'Cache-Control': 'no-store',
+		'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
+		'Cross-Origin-Opener-Policy': 'same-origin',
+		'Cross-Origin-Resource-Policy': 'same-origin',
+		'X-Frame-Options': 'DENY',
+	};
+	if (origin.startsWith('https:')) headers['Strict-Transport-Security'] = 'max-age=31536000';
+	return headers;
+}
+// Static code, styles and images, with the content type and cache policy they are served with.
+// Images stay cached for a day and refresh in the background; code and styles revalidate
+// with a fingerprint, so a deploy shows at once. HTML pages are not static files.
+export function staticFile(path) {
+	if (!Object.hasOwn(files, path) || files[path][1].startsWith('text/html')) return null;
+	const [file, type] = files[path];
+	const binary = type.startsWith('image/');
+	return {
+		file,
+		contentType: binary ? type : `${type}; charset=utf-8`,
+		cacheControl: binary ? 'public, max-age=86400, stale-while-revalidate=604800' : 'no-cache',
+	};
+}
 async function body(req) {
 	let raw = '';
 	for await (const chunk of req) {
@@ -201,20 +231,7 @@ export function createApp(db, env, { readAsset = readLocalAsset, discordFetch = 
 		return revalidateMember(db, found, env, discordFetch);
 	}
 	return async (req, res) => {
-		const headers = {
-			'X-Content-Type-Options': 'nosniff',
-			'X-Robots-Tag': 'noindex, nofollow',
-			'Referrer-Policy': 'no-referrer',
-			'Content-Security-Policy':
-				"default-src 'self'; script-src 'self' https://www.googletagmanager.com; style-src 'self'; img-src 'self' data:; connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com https://www.googletagmanager.com; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; object-src 'none'",
-			'Cache-Control': 'no-store',
-			'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
-			'Cross-Origin-Opener-Policy': 'same-origin',
-			'Cross-Origin-Resource-Policy': 'same-origin',
-			'X-Frame-Options': 'DENY',
-		};
-		if (env.APP_ORIGIN.startsWith('https:'))
-			headers['Strict-Transport-Security'] = 'max-age=31536000';
+		const headers = securityHeaders(env.APP_ORIGIN);
 		const send = (status, data, extra = {}) => {
 			res.writeHead(status, {
 				...headers,
@@ -776,32 +793,21 @@ export function createApp(db, env, { readAsset = readLocalAsset, discordFetch = 
 					throw new HttpError(403, 'Tu rango no permite entrar al panel.');
 			}
 			if (path === '/perfil' || path === '/armeria') requireUser();
-			if (files[path] && !files[path][1].startsWith('text/html')) {
-				// Static files: images stay cached for a day and refresh in the background;
-				// code and styles revalidate with a fingerprint, so a deploy shows at once.
-				const [file, type] = files[path];
+			const asset = staticFile(path);
+			if (asset) {
+				const { file } = asset;
 				const content = await readAsset(file);
 				let tag = assetTags.get(file);
 				if (!tag) {
 					tag = `"${createHash('sha1').update(content).digest('base64url')}"`;
 					assetTags.set(file, tag);
 				}
-				const binary = type.startsWith('image/');
-				const common = {
-					...headers,
-					ETag: tag,
-					'Cache-Control': binary
-						? 'public, max-age=86400, stale-while-revalidate=604800'
-						: 'no-cache',
-				};
+				const common = { ...headers, ETag: tag, 'Cache-Control': asset.cacheControl };
 				if (req.headers['if-none-match'] === tag) {
 					res.writeHead(304, common);
 					return res.end();
 				}
-				res.writeHead(200, {
-					...common,
-					'Content-Type': binary ? type : `${type}; charset=utf-8`,
-				});
+				res.writeHead(200, { ...common, 'Content-Type': asset.contentType });
 				return res.end(method === 'HEAD' ? '' : content);
 			}
 			if (files[path] || pages.has(path)) {
