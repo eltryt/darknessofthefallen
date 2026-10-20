@@ -97,6 +97,7 @@ try {
 		'wishlist-ui.js',
 		'sheet-parts.js',
 		'my-callups.js',
+		'journey-board.js',
 		'profile-tour.js',
 		'motion.js',
 		'medals.js',

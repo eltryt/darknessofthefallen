@@ -2,6 +2,7 @@ import { attachCharacterEditor } from './character-editor.js';
 import { operationTab } from './operations-ui.js';
 import { mountWishlist } from './wishlist-ui.js';
 import { mountMyCallups } from './my-callups.js';
+import { mountJourney } from './journey-board.js';
 import { contactForm } from './gm-ui.js';
 import { startProfileTour } from './profile-tour.js';
 import { medal, tierNames, progressOf } from './medals.js';
@@ -25,6 +26,8 @@ const icons = {
 	botin: '<path d="M4 9h16v11H4Z"/><path d="M3 5h18v4H3ZM12 5v15"/>',
 	convocatorias:
 		'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+	camino:
+		'<path d="M4 20c0-4 3-5 6-5s4-2 4-4-2-3-4-3-3 1-3 2"/><circle cx="18" cy="5" r="2"/><path d="M18 7v4"/>',
 	logros:
 		'<circle cx="12" cy="14" r="6"/><path d="m8 3 4 5 4-5M12 11.5l1 2 2.2.3-1.6 1.5.4 2.2-2-1-2 1 .4-2.2-1.6-1.5 2.2-.3Z"/>',
 };
@@ -35,6 +38,7 @@ const sections = [
 	['botin', 'Botín'],
 	['convocatorias', 'Convocatorias'],
 	['logros', 'Logros'],
+	['camino', 'Camino al 60'],
 ];
 const categoryNames = {
 	asistencia: 'Asistencia',
@@ -264,6 +268,10 @@ export function createProfileView(context) {
 				await loot(host);
 			}
 			if (id === 'convocatorias') await mountMyCallups(host, context);
+			if (id === 'camino') {
+				if (!me.permissions.includes('community.read')) return locked(host);
+				await mountJourney(host, context);
+			}
 			if (id === 'logros') {
 				if (!achievements) return locked(host);
 				logros(host);

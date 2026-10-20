@@ -26,6 +26,7 @@ import {
 import { isValidSpecForClass } from '../public/specs.js';
 import { armoryApi } from './armory.mjs';
 import { achievementsApi, publicGuildAchievements } from './achievements.mjs';
+import { journeyApi } from './journey.mjs';
 import { raidLineupApi } from './raid-lineup.mjs';
 import {
 	SESSION_MAX_AGE_SECONDS,
@@ -89,6 +90,7 @@ const files = {
 	'/wishlist-ui.js': ['wishlist-ui.js', 'text/javascript'],
 	'/sheet-parts.js': ['sheet-parts.js', 'text/javascript'],
 	'/my-callups.js': ['my-callups.js', 'text/javascript'],
+	'/journey-board.js': ['journey-board.js', 'text/javascript'],
 	'/profile-tour.js': ['profile-tour.js', 'text/javascript'],
 	'/motion.js': ['motion.js', 'text/javascript'],
 	'/medals.js': ['medals.js', 'text/javascript'],
@@ -424,6 +426,7 @@ export function createApp(db, env, { readAsset = readLocalAsset, discordFetch = 
 				return send(200, { ok: true }, { 'Set-Cookie': cookie('session', '', env, 0) });
 			}
 			if (await achievementsApi({ db, user, path, method, send, requirePermission })) return;
+			if (journeyApi({ db, user, path, method, send, requirePermission })) return;
 			if (
 				await armoryApi({
 					db,

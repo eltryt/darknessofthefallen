@@ -7362,3 +7362,202 @@ body[data-page='/'] .hero {
 		margin-left: 0;
 	}
 }
+
+/* ===== Mi perfil: Camino al 60 (goose-game board) ===== */
+.journey {
+	display: grid;
+	gap: 18px;
+}
+.journey-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: end;
+	justify-content: space-between;
+	gap: 16px;
+}
+.journey-head h2 {
+	margin: 0 0 6px;
+}
+.journey-head p {
+	margin: 0;
+	max-width: 560px;
+	color: var(--muted);
+}
+.journey-stats {
+	display: flex;
+	gap: 10px;
+	margin: 0;
+}
+.journey-stats div {
+	min-width: 84px;
+	padding: 10px 14px;
+	border: 1px solid var(--line);
+	border-radius: 10px;
+	background: var(--panel);
+	text-align: center;
+}
+.journey-stats dt {
+	color: var(--muted);
+	font-size: 0.78rem;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+}
+.journey-stats dd {
+	margin: 2px 0 0;
+	font-family: Georgia, serif;
+	font-size: 1.7rem;
+	color: var(--ink);
+}
+/* Phones scroll the board sideways instead of shrinking the numbers out of sight. */
+.journey-scroll {
+	overflow-x: auto;
+	border: 1px solid var(--line);
+	border-radius: 14px;
+	background: radial-gradient(circle at 50% 50%, #2a151b 0%, #121014 55%, #0b0a0d 100%);
+}
+.journey-board {
+	display: block;
+	width: 100%;
+	min-width: 640px;
+	height: auto;
+}
+.journey-path {
+	fill: none;
+	stroke: #c7495f55;
+	stroke-width: 34;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+.journey-square circle {
+	fill: #1c1a20;
+	stroke: #4a4250;
+	stroke-width: 2;
+}
+.journey-square text {
+	fill: var(--ink);
+	font:
+		600 20px Georgia,
+		serif;
+	text-anchor: middle;
+}
+.journey-square .journey-label {
+	fill: var(--muted);
+	font:
+		600 13px system-ui,
+		sans-serif;
+	letter-spacing: 0.04em;
+	paint-order: stroke;
+	stroke: #0b0a0d;
+	stroke-width: 4px;
+}
+.journey-square.is-start circle,
+.journey-square.is-milestone circle {
+	fill: #3a2e1d;
+	stroke: #d8b982;
+}
+.journey-square.is-milestone text:not(.journey-label) {
+	fill: #f3dcae;
+}
+.journey-square.is-hazard circle {
+	fill: #3a1219;
+	stroke: #c7495f;
+}
+.journey-square.is-mine circle {
+	stroke: #fff;
+	stroke-width: 3;
+}
+.journey-goal > circle {
+	fill: #1a1015;
+	stroke: #d8b982;
+	stroke-width: 3;
+	filter: drop-shadow(0 0 22px #c7495f66);
+}
+.journey-goal-level {
+	fill: #f3dcae;
+	font:
+		700 34px Georgia,
+		serif;
+	text-anchor: middle;
+	paint-order: stroke;
+	stroke: #0b0a0d;
+	stroke-width: 6px;
+}
+.journey-token circle,
+.journey-more circle {
+	fill: var(--class-color, #888);
+	stroke: #0b0a0d;
+	stroke-width: 2.5;
+}
+.journey-token text,
+.journey-more text {
+	fill: #0b0a0d;
+	font:
+		700 13px system-ui,
+		sans-serif;
+	text-anchor: middle;
+	pointer-events: none;
+}
+.journey-token.is-me circle {
+	stroke: #fff;
+	stroke-width: 3.5;
+}
+.journey-more circle {
+	fill: var(--panel);
+	stroke: var(--line);
+}
+.journey-more text {
+	fill: var(--ink);
+}
+.journey-ready,
+.journey-unknown {
+	margin: 0;
+	color: var(--muted);
+}
+.journey-ranking {
+	display: grid;
+	gap: 6px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.journey-ranking li {
+	display: grid;
+	grid-template-columns: 14px minmax(90px, 1fr) minmax(0, 1.2fr) minmax(80px, 2fr) 34px;
+	align-items: center;
+	gap: 10px;
+	padding: 8px 12px;
+	border: 1px solid var(--line);
+	border-radius: 8px;
+	background: var(--panel);
+}
+.journey-ranking li.is-me {
+	border-color: var(--primary);
+}
+.journey-ranking small {
+	color: var(--muted);
+}
+.journey-ranking b {
+	text-align: right;
+	font-family: Georgia, serif;
+	font-size: 1.15rem;
+}
+.journey-dot {
+	width: 12px;
+	height: 12px;
+	border-radius: 50%;
+	background: var(--class-color, #888);
+}
+.journey-bar {
+	height: 6px;
+	border-radius: 3px;
+	background: linear-gradient(90deg, var(--class-color, #888) calc(var(--p, 0) * 1%), #ffffff14 0);
+}
+@media (max-width: 600px) {
+	.journey-ranking li {
+		grid-template-columns: 14px 1fr 34px;
+	}
+	.journey-ranking small,
+	.journey-bar {
+		display: none;
+	}
+}
