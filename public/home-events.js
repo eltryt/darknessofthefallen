@@ -90,15 +90,56 @@ function revealPact(h1) {
 	old.addEventListener('animationend', (e) => e.target === old && swap());
 	setTimeout(swap, 1400);
 }
+// After a while on the home page the old name starts bleeding through the title,
+// and a whisper hints at how to wake it.
+export const PACT_GLITCH_SECONDS = 300;
+const PACT_HINT_KEY = 'dotf-pact-hint';
+function showPactHint() {
+	try {
+		if (sessionStorage.getItem(PACT_HINT_KEY)) return null;
+		sessionStorage.setItem(PACT_HINT_KEY, '1');
+	} catch {}
+	const hint = document.createElement('aside');
+	hint.className = 'pact-hint';
+	hint.setAttribute('role', 'status');
+	hint.innerHTML =
+		'<span class="eyebrow">Un susurro</span><p>«Darkness» no siempre se llamó así. Llama a su nombre una y otra vez, sin pausa… y quizá despierte lo que duerme debajo.</p><button type="button" class="secondary" data-pact-hint-close>Cerrar</button>';
+	hint.querySelector('[data-pact-hint-close]').onclick = () => hint.remove();
+	document.body.append(hint);
+	setTimeout(() => hint.remove(), 45000);
+	return hint;
+}
+function startPactGlitch(h1, isFound) {
+	let seen = 0,
+		hint = null;
+	const timer = setInterval(() => {
+		if (!h1.isConnected || isFound()) return clearInterval(timer);
+		// Only time actually spent looking at the page counts.
+		if (document.visibilityState !== 'visible') return;
+		if (++seen < PACT_GLITCH_SECONDS) return;
+		clearInterval(timer);
+		const word = titleWord(h1);
+		word.dataset.glitch = 'Pact';
+		word.classList.add('pact-glitching');
+		hint = showPactHint();
+	}, 1000);
+	return () => {
+		clearInterval(timer);
+		h1.querySelector('.pact-glitching')?.classList.remove('pact-glitching');
+		hint?.remove();
+	};
+}
 export function mountPactEgg(h1, { api, toast, me }) {
 	if (!h1) return;
 	let state = { clicks: 0, last: 0 },
 		found = false;
+	const stopGlitch = startPactGlitch(h1, () => found);
 	h1.addEventListener('click', () => {
 		if (found) return;
 		state = countPactClick(state, Date.now());
 		if (!state.ready) return;
 		found = true;
+		stopGlitch();
 		revealPact(h1);
 		if (!me?.user)
 			return toast('Has despertado un viejo pacto. Entra con Discord para guardar este secreto.');
