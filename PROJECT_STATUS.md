@@ -910,3 +910,5 @@ Publicado: `7628b5a`; backend `38652910420`, Pages `38652910475` y validación `
 - Validación: 110 pruebas Node (nueva: Matadragones) y build; navegador QA con la medalla conseguida y bloqueada. Desplegado: backend 39236218135, Pages y validación correctos.
 
 - 2026-10-19: Medallas de las tarjetas de logros reducidas (50 px) y emblema de Onyxia ampliado para igualar su tamaño, manteniendo la alineación del texto. Deploy 39241276224.
+
+- 2026-10-20: Pista del logro secreto «Pacto de los Caídos»: tras 5 min de tiempo visible en Inicio, «Darkness» parpadea con «Pact» y aparece una vez por sesión un susurro que invita a llamar al nombre (clics rápidos). Respeta movimiento reducido. Deploy 39417749497.
