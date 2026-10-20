@@ -1,7 +1,7 @@
 // Visual entrances. Images and CSS illustrations fade in once they have
-// loaded instead of popping in; the home page opens with a cinematic intro,
-// a living hero and cards dealt in 3D; other pages rise softly. Everything
-// respects reduced motion.
+// loaded instead of popping in; the home page opens with a cinematic intro
+// (built early by boot-state.js), a living hero and cards dealt in 3D; other
+// pages rise softly. Everything respects reduced motion.
 const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 const root = document.documentElement;
 const checked = new WeakSet();
@@ -9,8 +9,6 @@ const checked = new WeakSet();
 const ART =
 	'.hero, .hub-hero, .page-title, .adventure-card, .raid-art, .link-card, .card, section, article, aside';
 const urlsOf = (value) => [...value.matchAll(/url\(["']?([^"')]+)["']?\)/g)].map((m) => m[1]);
-const INTRO_MS = 2600,
-	INTRO_REVEAL = '1.75s';
 
 function fadeImage(img) {
 	if (checked.has(img)) return;
@@ -51,49 +49,6 @@ function scan(node) {
 	node.querySelectorAll('img').forEach(fadeImage);
 	if (node.matches(ART)) fadeArt(node);
 	node.querySelectorAll(ART).forEach(fadeArt);
-}
-
-// Opening curtain: the emblem lights up, the name unfolds and the screen
-// splits open over the castle. Once per session; a click or key skips it.
-function playIntro() {
-	try {
-		sessionStorage.setItem('dotf-intro', '1');
-	} catch {
-		/* storage unavailable: it simply plays again next time */
-	}
-	root.style.setProperty('--intro', INTRO_REVEAL);
-	const intro = document.createElement('div');
-	intro.className = 'intro';
-	intro.setAttribute('aria-hidden', 'true');
-	intro.innerHTML = /* HTML */ `<div class="intro-panel intro-top"></div>
-		<div class="intro-panel intro-bottom"></div>
-		<div class="intro-core">
-			<span class="intro-glow"></span>
-			<img src="/assets/guild-logo-320.webp" alt="" width="320" height="320" />
-			<span class="intro-line"></span>
-			<p class="intro-name">Darkness of the Fallen</p>
-			<p class="intro-tag">WoW Forever · Alianza</p>
-		</div>`;
-	document.body.append(intro);
-	root.classList.remove('intro-pending');
-	root.classList.add('intro-playing');
-	let done = false;
-	const finish = () => {
-		if (done) return;
-		done = true;
-		root.classList.remove('intro-playing');
-		intro.remove();
-		removeEventListener('keydown', skip, true);
-	};
-	const skip = () => {
-		if (intro.classList.contains('is-skipping')) return;
-		intro.classList.add('is-skipping');
-		root.style.setProperty('--intro', '0.2s');
-		setTimeout(finish, 450);
-	};
-	intro.addEventListener('click', skip);
-	addEventListener('keydown', skip, true);
-	setTimeout(finish, INTRO_MS);
 }
 
 // Title letters arrive one by one; words never break across lines.
@@ -201,7 +156,6 @@ function leaveSoftly() {
 }
 
 export function initMotion() {
-	if (root.classList.contains('intro-pending')) playIntro();
 	scan(document.body);
 	new MutationObserver((records) => {
 		for (const r of records) r.addedNodes.forEach(scan);

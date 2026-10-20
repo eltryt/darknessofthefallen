@@ -6265,7 +6265,10 @@ html.intro-pending body::after {
 	right: 0;
 	height: 50.5%;
 	background: radial-gradient(ellipse at 50% 100%, #1d1015 0%, #070608 70%);
-	animation: intro-open 0.95s cubic-bezier(0.76, 0, 0.24, 1) 1.6s forwards;
+}
+/* The curtain stays closed while the site loads and opens once it is ready. */
+.intro.is-opening .intro-panel {
+	animation: intro-open 0.95s cubic-bezier(0.76, 0, 0.24, 1) 0.1s forwards;
 }
 .intro-top {
 	top: 0;
@@ -6310,7 +6313,9 @@ html.intro-pending body::after {
 	justify-items: center;
 	gap: 14px;
 	text-align: center;
-	animation: intro-core-out 0.7s cubic-bezier(0.55, 0, 0.75, 0.2) 1.5s forwards;
+}
+.intro.is-opening .intro-core {
+	animation: intro-core-out 0.7s cubic-bezier(0.55, 0, 0.75, 0.2) forwards;
 }
 .intro-core img {
 	width: min(220px, 46vw);
