@@ -4,7 +4,7 @@ import { createServer } from 'node:http';
 import { openDatabase } from '../src/db.mjs';
 import { createApp } from '../src/app.mjs';
 import { issueSession } from '../src/auth.mjs';
-import { spiralSquares, byLevel, specialSquares } from '../public/journey-board.js';
+import { spiralSquares, byLevel, specialSquares, walkRoute } from '../public/journey-board.js';
 
 const ORIGIN = 'http://localhost:3000';
 
@@ -90,4 +90,26 @@ test('tokens group by level and leave characters without level aside', () => {
 	]);
 	assert.deepEqual([...groups.keys()], [10]);
 	assert.equal(groups.get(10).length, 2);
+});
+
+test('iconic squares carry a short label and a Classic phrase', () => {
+	const kinds = new Set(['start', 'milestone', 'iconic', 'hazard', 'goal']);
+	for (const [level, square] of Object.entries(specialSquares)) {
+		assert.ok(Number(level) >= 1 && Number(level) <= 60, level);
+		assert.ok(kinds.has(square.kind), level);
+		assert.ok(square.label.length <= 11, square.label + ' fits under its square');
+		assert.ok(square.phrase.length > 20 && square.phrase.length < 120, level);
+	}
+	assert.equal(specialSquares[1].kind, 'start');
+	assert.equal(specialSquares[60].kind, 'goal');
+});
+
+test('tokens walk from square 1 to their own square, and to the centre at the cap', () => {
+	const squares = spiralSquares(60);
+	const to22 = walkRoute(squares, 22);
+	assert.equal(to22.length, 22);
+	assert.deepEqual(to22[0], [squares[0].x, squares[0].y]);
+	assert.deepEqual(to22.at(-1), [squares[21].x, squares[21].y]);
+	assert.deepEqual(walkRoute(squares, 60).at(-1), [500, 500]);
+	assert.equal(walkRoute(squares, 1).length, 1, 'level 1 does not move');
 });
