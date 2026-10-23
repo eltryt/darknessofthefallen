@@ -18,12 +18,19 @@ export async function blizzardClient({ region = REGION } = {}) {
 		throw new Error(`Blizzard token request failed with HTTP ${tokenResponse.status}.`);
 	const { access_token: token } = await tokenResponse.json();
 	const base = `https://${region}.api.blizzard.com`;
-	// GET with retries for rate limits (429) and transient server errors.
+	// GET with retries for rate limits (429), transient server errors and dropped connections.
 	async function get(path, params = {}) {
 		const url = new URL(path, base);
 		for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
 		for (let attempt = 0; ; attempt++) {
-			const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+			let response;
+			try {
+				response = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+			} catch (error) {
+				if (attempt >= 5) throw error;
+				await new Promise((r) => setTimeout(r, 1000 * 2 ** attempt));
+				continue;
+			}
 			if (response.ok) return response.json();
 			if (response.status === 404) return null;
 			if ((response.status === 429 || response.status >= 500) && attempt < 5) {

@@ -119,12 +119,18 @@ async function main() {
 	}
 	// Item + icon per id. Blizzard allows 36,000 requests an hour: stay well under it.
 	let done = 0;
+	const failed = [];
 	const started = Date.now();
 	const entries = await pool(ids, 8, async (id) => {
+		// One item that keeps failing is skipped and reported, never the whole catalogue.
 		const [item, media] = await Promise.all([
 			api.get(`/data/wow/item/${id}`, { namespace, locale: 'es_ES' }),
 			api.get(`/data/wow/media/item/${id}`, { namespace }),
-		]);
+		]).catch((error) => {
+			failed.push(id);
+			console.log(`Item ${id} skipped: ${error.message}`);
+			return [null, null];
+		});
 		if (++done % 500 === 0) console.log(`${done}/${ids.length} items`);
 		// Two requests per item, at most ~9 per second.
 		const wait = (done * 2 * 1000) / 9 - (Date.now() - started);
@@ -152,6 +158,7 @@ async function main() {
 		iconBase: `https://render.worldofwarcraft.com/classic1x-${api.region}/icons/56/`,
 		generatedAt: new Date().toISOString(),
 		count: entries.filter(Boolean).length,
+		skipped: failed.length,
 		counts,
 	};
 	await writeFile(new URL('meta.json', OUT), JSON.stringify(meta, null, '\t') + '\n');
