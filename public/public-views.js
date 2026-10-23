@@ -392,10 +392,12 @@ export function createPublicViews(context) {
 							></iframe>
 						</div>
 						<p class="map-credit">
-							Mapa creado por
-							<a href="${MAP_URL}" target="_blank" rel="noopener">WoW Forever Map</a>, un proyecto
-							independiente de la comunidad. Sus datos proceden de servidores Classic y pueden no
-							coincidir del todo con WoW Forever.
+							<span
+								>Mapa creado por
+								<a href="${MAP_URL}" target="_blank" rel="noopener">WoW Forever Map</a>, un proyecto
+								independiente de la comunidad. Sus datos proceden de servidores Classic y pueden no
+								coincidir del todo con WoW Forever.</span
+							>
 							<a class="button secondary" href="${MAP_URL}" target="_blank" rel="noopener"
 								>Abrir a pantalla completa ↗</a
 							>

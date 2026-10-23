@@ -7346,6 +7346,9 @@ body[data-page='/'] .hero {
 	font-size: 0.92rem;
 	line-height: 1.5;
 }
+.map-credit > span {
+	flex: 1 1 320px;
+}
 .map-credit .button {
 	margin-left: auto;
 }
