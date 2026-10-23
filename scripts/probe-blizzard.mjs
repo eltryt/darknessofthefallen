@@ -17,12 +17,9 @@ for (const namespace of [
 	`static-classic-forever-${region}`,
 	`static-${region}`,
 ]) {
-	const search = await api.get('/data/wow/search/item', {
-		namespace,
-		locale: 'es_ES',
-		orderby: 'id',
-		_pageSize: '3',
-	});
+	const search = await api
+		.get('/data/wow/search/item', { namespace, locale: 'es_ES', orderby: 'id', _pageSize: '3' })
+		.catch((error) => (console.log(namespace, error.message), null));
 	console.log(
 		`\n== ${namespace}: ${search ? `${search.pageCount} pages, ${search.maxPageSize} max page size` : 'no answer'}`,
 	);
