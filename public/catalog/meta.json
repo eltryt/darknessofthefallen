@@ -1,0 +1,29 @@
+{
+	"source": "Blizzard Game Data API",
+	"namespace": "static-classic1x-eu",
+	"build": "1.15.9_68185",
+	"game": "WoW Classic (orientativo para WoW Forever)",
+	"iconBase": "https://render.worldofwarcraft.com/classic1x-eu/icons/56/",
+	"generatedAt": "2026-10-23T01:53:37.558Z",
+	"count": 9018,
+	"skipped": 0,
+	"counts": {
+		"head": 531,
+		"neck": 215,
+		"shoulders": 533,
+		"back": 462,
+		"chest": 870,
+		"shirt": 48,
+		"tabard": 18,
+		"wrist": 593,
+		"hands": 689,
+		"waist": 652,
+		"legs": 678,
+		"feet": 721,
+		"finger": 342,
+		"trinket": 212,
+		"main_hand": 1320,
+		"off_hand": 955,
+		"ranged": 332
+	}
+}
