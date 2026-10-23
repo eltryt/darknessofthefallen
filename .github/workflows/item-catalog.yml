@@ -1,0 +1,26 @@
+name: Item catalog from the Blizzard API
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'probe = only inspect the API; sync = rebuild the catalog'
+        required: true
+        default: probe
+        type: choice
+        options: [probe, sync]
+permissions:
+  contents: read
+jobs:
+  catalog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Inspect the Blizzard API without logging credentials
+        if: inputs.mode == 'probe'
+        run: node scripts/probe-blizzard.mjs
+        env:
+          BLIZZARD_CLIENT_ID: ${{ secrets.BLIZZARD_CLIENT_ID }}
+          BLIZZARD_CLIENT_SECRET: ${{ secrets.BLIZZARD_CLIENT_SECRET }}
