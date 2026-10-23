@@ -139,7 +139,8 @@ async function main() {
 	});
 	const groups = Object.fromEntries(catalogGroups.map((g) => [g, []]));
 	for (const e of entries) {
-		if (!e) continue;
+		// Items without a Spanish name are internal or unused: they stay out of the catalogue.
+		if (!e || typeof e.item.name !== 'string' || !e.item.name.trim()) continue;
 		for (const group of inventoryGroups[e.item.inventory_type?.type] || [])
 			groups[group]?.push(compactItem(e.item, e.icon));
 	}
