@@ -8,6 +8,7 @@ import {
 	guideContentTypes,
 	hostAllowed,
 	itemQualities,
+	equipmentStats,
 } from '../public/armory-catalog.js';
 import { normalizeSpecValue, isValidSpecForClass } from '../public/specs.js';
 
@@ -218,8 +219,8 @@ export async function armoryApi({
 		send(200, sheet(db, user, viewable(db, user, m[1])));
 		return true;
 	}
-	// Manual equipment: there is no verified Forever item catalogue, so the owner
-	// types what is equipped. Rows stay marked as manual.
+	// Manual equipment: the owner types the item or picks it from the Classic catalogue
+	// (public/catalog). A picked item brings its id, icon name and stats. Rows stay manual.
 	if ((m = path.match(/^\/api\/armory\/characters\/([^/]+)\/equipment\/([\w]+)$/))) {
 		const c = owned(db, user, m[1]),
 			slot = choice(m[2], gameVersions[c.game_version]?.slots || [], 'ranura'),
@@ -249,26 +250,55 @@ export async function armoryApi({
 				throw new HttpError(400, 'Nivel de objeto no válido.');
 			const quality = text(v.quality ?? '', 'calidad', 20, false);
 			if (quality && !(quality in itemQualities)) throw new HttpError(400, 'Calidad no válida.');
+			const itemId = v.item_id == null || v.item_id === '' ? null : String(v.item_id);
+			if (itemId !== null && !/^\d{1,7}$/.test(itemId))
+				throw new HttpError(400, 'Identificador de objeto no válido.');
+			const icon = text(v.icon ?? '', 'icono', 80, false);
+			if (icon && !/^[a-z0-9_-]+$/.test(icon)) throw new HttpError(400, 'Icono no válido.');
+			let stats = v.stats ?? {};
+			if (typeof stats === 'string') {
+				try {
+					stats = stats ? JSON.parse(stats) : {};
+				} catch {
+					throw new HttpError(400, 'Atributos no válidos.');
+				}
+			}
+			if (!stats || typeof stats !== 'object' || Array.isArray(stats))
+				throw new HttpError(400, 'Atributos no válidos.');
+			const kept = {};
+			for (const key of equipmentStats) {
+				if (!(key in stats)) continue;
+				const value = Number(stats[key]);
+				if (!Number.isInteger(value) || Math.abs(value) > 10000)
+					throw new HttpError(400, 'Atributos no válidos.');
+				kept[key] = value;
+			}
 			const row = {
+				item_id: itemId,
 				item_name: text(v.item_name, 'nombre del objeto', 160),
 				quality,
 				item_level: level,
+				icon,
+				stats: kept,
 				enchant: text(v.enchant ?? '', 'encantamiento', 120, false),
 				source_label: text(v.source_label ?? '', 'origen', 120, false),
 			};
 			transaction(db, () => {
 				db.prepare(
-					`INSERT INTO character_equipment(id,character_id,slot,item_name,quality,item_level,enchant,source_label,origin,updated_at)
-					 VALUES(?,?,?,?,?,?,?,?,'manual',?)
-					 ON CONFLICT(character_id,slot) DO UPDATE SET item_name=excluded.item_name,quality=excluded.quality,
-					 item_level=excluded.item_level,enchant=excluded.enchant,source_label=excluded.source_label,updated_at=excluded.updated_at`,
+					`INSERT INTO character_equipment(id,character_id,slot,item_id,item_name,quality,item_level,icon,stats,enchant,source_label,origin,updated_at)
+					 VALUES(?,?,?,?,?,?,?,?,?,?,?,'manual',?)
+					 ON CONFLICT(character_id,slot) DO UPDATE SET item_id=excluded.item_id,item_name=excluded.item_name,quality=excluded.quality,
+					 item_level=excluded.item_level,icon=excluded.icon,stats=excluded.stats,enchant=excluded.enchant,source_label=excluded.source_label,updated_at=excluded.updated_at`,
 				).run(
 					randomUUID(),
 					c.id,
 					slot,
+					row.item_id,
 					row.item_name,
 					row.quality,
 					row.item_level,
+					row.icon,
+					JSON.stringify(row.stats),
 					row.enchant,
 					row.source_label,
 					now(),

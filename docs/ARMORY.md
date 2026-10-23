@@ -93,3 +93,21 @@ irían en variables del Worker, nunca en el frontend.
 Catálogo verificado de objetos/jefes de Forever, edición manual del equipamiento,
 comparación equipamiento ↔ BiS, listas por banda y jefe, prioridades de botín y enlace
 con raids, sincronización con un proveedor real, confirmación de razas/ranuras de Forever.
+
+## Catálogo de objetos (API de Blizzard) — 23 de octubre de 2026
+
+- `scripts/sync-items.mjs` descarga de la API oficial de datos de juego de Blizzard
+  (`static-classic1x-eu`) todos los objetos equipables de Classic que no son basura
+  (ids hasta 25.000; los superiores son de otras temporadas) con nombre en español,
+  calidad, niveles, atributos, daño de arma, efectos «Equipar» e icono.
+- Lo escribe en `public/catalog/<hueco>.json` (un archivo por hueco; anillos y abalorios
+  comparten archivo) y `public/catalog/meta.json` con la compilación del juego.
+- `.github/workflows/item-catalog.yml` lo ejecuta los lunes: si la compilación no cambia
+  no hace nada; si cambia, hace commit del catálogo y lanza el despliegue. Credenciales en
+  los secretos `BLIZZARD_CLIENT_ID` y `BLIZZARD_CLIENT_SECRET`.
+- En la Armería, el panel de cada hueco busca en el catálogo; al elegir un objeto se guardan
+  `item_id`, el nombre del icono y sus atributos, y el maniquí suma los atributos del equipo.
+  Los iconos se cargan del CDN de Blizzard (`render.worldofwarcraft.com`), el único origen
+  externo de imágenes que permite la CSP.
+- Forever aún no tiene espacio de nombres en la API (403): los datos de Classic se muestran
+  como orientativos. Cuando exista, se cambia `NAMESPACE` en el script y se vuelve a ejecutar.

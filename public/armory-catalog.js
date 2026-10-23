@@ -131,6 +131,27 @@ export const catalogGroups = [
 	'ranged',
 ];
 export const catalogGroup = (slot) => slot.replace(/^(finger|trinket)[12]$/, '$1');
+// Catalogue icons are served by Blizzard's image CDN (the media API points there);
+// the CSP allows exactly this origin. Rows store the icon name only.
+export const CATALOG_ICON_ORIGIN = 'https://render.worldofwarcraft.com';
+export const catalogIconUrl = (name) =>
+	typeof name === 'string' && /^[a-z0-9_-]{1,80}$/.test(name)
+		? `${CATALOG_ICON_ORIGIN}/classic1x-eu/icons/56/${name}.jpg`
+		: '';
+// Item stats the armory keeps and adds up: primary attributes, armour and resistances.
+export const equipmentStats = [
+	'strength',
+	'agility',
+	'stamina',
+	'intellect',
+	'spirit',
+	'armor',
+	'fire_resistance',
+	'nature_resistance',
+	'frost_resistance',
+	'shadow_resistance',
+	'arcane_resistance',
+];
 export function slotIcon(slot) {
 	return Object.hasOwn(slotIconSources, slot) ? `/assets/slots/${slot}.webp` : '';
 }

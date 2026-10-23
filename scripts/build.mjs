@@ -98,6 +98,7 @@ try {
 		'sheet-parts.js',
 		'my-callups.js',
 		'journey-board.js',
+		'item-catalog.js',
 		'profile-tour.js',
 		'motion.js',
 		'medals.js',

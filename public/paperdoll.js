@@ -1,5 +1,11 @@
 import { ClassIcon } from './components.js';
-import { gameVersions, slotLabels, itemQualities, slotIcon } from './armory-catalog.js';
+import {
+	gameVersions,
+	slotLabels,
+	itemQualities,
+	slotIcon,
+	catalogIconUrl,
+} from './armory-catalog.js';
 
 const escape = (value) =>
 	String(value ?? '').replace(
@@ -41,12 +47,22 @@ function slot(name, item, side, href, buttons) {
 			: '';
 	if (!item)
 		return `<${tag} class="doll-slot is-empty side-${side}"${link} title="${escape(label)} · Sin datos"><span class="doll-icon">${placeholder}</span><span class="doll-text"><span class="doll-slot-name">${escape(label)}</span><small>Sin datos</small></span></${tag}>`;
-	const icon = localImage(item.icon);
+	// Our own images, or the Blizzard icon of an item picked from the catalogue.
+	const icon = localImage(item.icon) || catalogIconUrl(item.icon);
 	const details = [
 		item.enchant ? 'Encantamiento: ' + item.enchant : '',
 		item.gems?.length ? `${item.gems.length} ${item.gems.length === 1 ? 'gema' : 'gemas'}` : '',
 	].filter(Boolean);
 	return `<${tag} class="doll-slot side-${side} quality-${escape(item.quality || 'none')}"${link} title="${escape(label)}: ${escape(item.item_name)}${item.quality ? ' · ' + escape(itemQualities[item.quality] || item.quality) : ''}"><span class="doll-icon">${icon ? `<img src="${escape(icon)}" alt="" width="44" height="44" loading="lazy">` : placeholder}</span><span class="doll-text"><strong>${escape(item.item_name || 'Objeto sin nombre')}</strong><span class="doll-meta">${item.item_level ? `<b>${escape(item.item_level)}</b>` : ''}${details.map((d) => `<small>${escape(d)}</small>`).join('')}</span></span></${tag}>`;
+}
+
+// Adds up the stats of the equipped pieces (items picked from the catalogue carry them).
+export function equipmentTotals(equipment) {
+	const totals = {};
+	for (const e of equipment)
+		for (const [key, value] of Object.entries(e.stats || {}))
+			if (Number.isFinite(value)) totals[key] = (totals[key] || 0) + value;
+	return totals;
 }
 
 // Character "paper doll": item columns around the character portrait, weapons
@@ -64,7 +80,10 @@ export function paperdoll(sheet, { href = '', slotButtons = false, target = fals
 		: null;
 	const portrait = localImage(c.avatar_url),
 		classArt = Object.hasOwn(classPortraits, c.class) ? classPortraits[c.class] : '';
-	const stats = sheet.stats || {};
+	// A data provider's character stats win; otherwise the sum of the equipped pieces.
+	const ownStats = Object.keys(sheet.stats || {}).length > 0,
+		stats = ownStats ? sheet.stats : target ? {} : equipmentTotals(sheet.equipment),
+		summed = !ownStats && Object.keys(stats).length > 0;
 	const column = (side) =>
 		`<div class="doll-column doll-${side}">${layout[side].map((name) => slot(name, items.get(name), side, href, slotButtons)).join('')}</div>`;
 	return `<section class="paperdoll${target ? ' is-target' : ''}" aria-label="${target ? 'Objetivo BiS' : 'Equipamiento'} de ${escape(c.name)}">
@@ -99,5 +118,6 @@ export function paperdoll(sheet, { href = '', slotButtons = false, target = fals
 					`<div><dt>${escape(label)}</dt><dd>${Number.isFinite(stats[key]) ? escape(stats[key].toLocaleString('es-ES')) : '—'}</dd></div>`,
 			)
 			.join('')}</dl>
+		${summed ? '<p class="doll-stats-note">Suma de los atributos de las piezas elegidas del catálogo. Sin atributos base del personaje, talentos ni encantamientos.</p>' : ''}
 	</section>`;
 }

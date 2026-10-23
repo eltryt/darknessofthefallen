@@ -466,3 +466,45 @@ test('migration 010 copies BiS entries into the wishlist without touching the or
 		db.close();
 	}
 });
+test('an item picked from the catalogue keeps its id, icon and stats; bad data is refused', async () => {
+	const f = await fixture();
+	try {
+		const id = await f.character('member');
+		const url = `/api/armory/characters/${id}/equipment/main_hand`;
+		const picked = {
+			item_id: '19019',
+			item_name: 'Trueno furioso, espada bendita del Hijo del Viento',
+			quality: 'legendary',
+			item_level: 80,
+			icon: 'inv_sword_39',
+			stats: JSON.stringify({ agility: 5, stamina: 8, fire_resistance: 8, haste: 99 }),
+		};
+		{
+			const r = await f.request(url, 'member', 'PUT', picked);
+			assert.equal(r.status, 200, JSON.stringify(r.body));
+		}
+		const row = (await f.request(`/api/armory/characters/${id}`, 'member')).body.equipment[0];
+		assert.equal(row.item_id, '19019');
+		assert.equal(row.icon, 'inv_sword_39');
+		assert.deepEqual(
+			row.stats,
+			{ agility: 5, stamina: 8, fire_resistance: 8 },
+			'unknown stats dropped',
+		);
+		for (const bad of [
+			{ icon: '../evil' },
+			{ item_id: 'abc' },
+			{ stats: '{"agility":"lots"}' },
+			{ stats: 'not json' },
+		])
+			assert.equal((await f.request(url, 'member', 'PUT', { ...picked, ...bad })).status, 400);
+		// Typed by hand: no catalogue data is kept from the previous item.
+		await f.request(url, 'member', 'PUT', { item_name: 'Espada a mano' });
+		const manual = (await f.request(`/api/armory/characters/${id}`, 'member')).body.equipment[0];
+		assert.equal(manual.item_id, null);
+		assert.equal(manual.icon, '');
+		assert.deepEqual(manual.stats, {});
+	} finally {
+		await f.close();
+	}
+});

@@ -2,7 +2,7 @@ import { manualRosterApi } from './manual-roster.mjs';
 import { seoPages, seoHtml, sitemap } from './seo.mjs';
 import { iconAssets } from '../public/icon-assets.js';
 import { mobileArt } from '../public/art-variants.js';
-import { slotIconSources } from '../public/armory-catalog.js';
+import { slotIconSources, catalogGroups } from '../public/armory-catalog.js';
 import { gmApi, enqueueGM, gmReady } from './gm-notifications.mjs';
 import { exportRecovery } from './recovery.mjs';
 import { backupApi } from './backup-api.mjs';
@@ -78,6 +78,13 @@ const files = {
 	'/analytics.js': ['analytics.js', 'text/javascript'],
 	'/home-events.js': ['home-events.js', 'text/javascript'],
 	...Object.fromEntries(iconAssets.map((file) => ['/' + file, [file, 'image/webp']])),
+	// Item catalogue built by scripts/sync-items.mjs (one file per slot group).
+	...Object.fromEntries(
+		[...catalogGroups, 'meta'].map((group) => [
+			`/catalog/${group}.json`,
+			[`catalog/${group}.json`, 'application/json'],
+		]),
+	),
 	...Object.fromEntries(
 		Object.keys(slotIconSources).map((slot) => [
 			`/assets/slots/${slot}.webp`,
@@ -98,6 +105,7 @@ const files = {
 	'/sheet-parts.js': ['sheet-parts.js', 'text/javascript'],
 	'/my-callups.js': ['my-callups.js', 'text/javascript'],
 	'/journey-board.js': ['journey-board.js', 'text/javascript'],
+	'/item-catalog.js': ['item-catalog.js', 'text/javascript'],
 	'/profile-tour.js': ['profile-tour.js', 'text/javascript'],
 	'/motion.js': ['motion.js', 'text/javascript'],
 	'/medals.js': ['medals.js', 'text/javascript'],
@@ -161,7 +169,7 @@ export function securityHeaders(origin) {
 		'X-Robots-Tag': 'noindex, nofollow',
 		'Referrer-Policy': 'no-referrer',
 		'Content-Security-Policy':
-			"default-src 'self'; script-src 'self' https://www.googletagmanager.com; style-src 'self'; img-src 'self' data:; connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com https://www.googletagmanager.com; frame-src https://wowforevermap.com; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; object-src 'none'",
+			"default-src 'self'; script-src 'self' https://www.googletagmanager.com; style-src 'self'; img-src 'self' data: https://render.worldofwarcraft.com; connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com https://www.googletagmanager.com; frame-src https://wowforevermap.com; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; object-src 'none'",
 		'Cache-Control': 'no-store',
 		'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
 		'Cross-Origin-Opener-Policy': 'same-origin',

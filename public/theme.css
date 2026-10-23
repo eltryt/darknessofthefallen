@@ -7702,3 +7702,103 @@ body[data-page='/'] .hero {
 .doll-slot.is-empty:focus-visible .doll-placeholder {
 	filter: saturate(0.6) brightness(0.8);
 }
+
+/* Armería: item finder from the Blizzard API catalogue. */
+.catalog-picker {
+	display: grid;
+	gap: 10px;
+	margin-bottom: 14px;
+}
+.catalog-picker label {
+	display: grid;
+	gap: 6px;
+}
+.catalog-results {
+	display: grid;
+	gap: 4px;
+	max-height: 260px;
+	margin: 0;
+	padding: 0;
+	overflow-y: auto;
+	list-style: none;
+}
+.catalog-result {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	width: 100%;
+	padding: 6px 8px;
+	border: 1px solid var(--line);
+	border-radius: 8px;
+	background: var(--panel);
+	color: var(--ink);
+	text-align: left;
+	cursor: pointer;
+}
+.catalog-result:hover,
+.catalog-result:focus-visible {
+	border-color: var(--gold);
+}
+.catalog-result img,
+.catalog-card img {
+	flex: none;
+	border-radius: 6px;
+	border: 1px solid #000;
+}
+.catalog-result span {
+	display: grid;
+}
+.catalog-result small,
+.catalog-card small {
+	color: var(--muted);
+}
+.catalog-card {
+	display: flex;
+	gap: 12px;
+	padding: 12px;
+	border: 1px solid var(--line);
+	border-radius: 10px;
+	background: #0b0b0e;
+}
+.catalog-card > div {
+	display: grid;
+	gap: 4px;
+}
+.catalog-card ul {
+	margin: 4px 0 0;
+	padding: 0;
+	list-style: none;
+	color: var(--ink);
+}
+.catalog-effect {
+	margin: 0;
+	color: #1eff00;
+	font-size: 0.9rem;
+}
+.catalog-note,
+.doll-stats-note {
+	margin: 0;
+	color: var(--muted);
+	font-size: 0.85rem;
+}
+/* WoW item quality colours on names. */
+.catalog-result.quality-poor strong,
+.catalog-card.quality-poor strong {
+	color: #9d9d9d;
+}
+.catalog-result.quality-uncommon strong,
+.catalog-card.quality-uncommon strong {
+	color: #1eff00;
+}
+.catalog-result.quality-rare strong,
+.catalog-card.quality-rare strong {
+	color: #0070dd;
+}
+.catalog-result.quality-epic strong,
+.catalog-card.quality-epic strong {
+	color: #a335ee;
+}
+.catalog-result.quality-legendary strong,
+.catalog-card.quality-legendary strong {
+	color: #ff8000;
+}

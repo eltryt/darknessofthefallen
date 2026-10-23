@@ -6,7 +6,9 @@ import {
 	factions,
 	itemQualities,
 	guideContentTypes,
+	catalogGroup,
 } from './armory-catalog.js';
+import { attachCatalogPicker } from './item-catalog.js';
 
 // Pieces of the character sheet shared by the profile (owner) and the
 // read-only sheet that management ranks open from the roster.
@@ -251,8 +253,8 @@ export function renderGuides(el, sheet, { esc, me }, state = {}) {
 }
 
 // Contextual panel for one equipment slot. Viewing is the default; only the
-// owner gets the manual entry form. There is no verified WoW Forever item
-// catalogue yet, so nothing is suggested from outside the guild's own data.
+// owner gets the entry form: pick the item from the Classic catalogue (Blizzard API,
+// orientative for Forever) or type it by hand as it appears in the game.
 export function openSlotDialog({ slot, sheet, wishes = [], canEdit, ctx, onSaved }) {
 	const { esc, api, toast } = ctx;
 	const label = slotLabels[slot] || slot,
@@ -290,11 +292,28 @@ export function openSlotDialog({ slot, sheet, wishes = [], canEdit, ctx, onSaved
 			canEdit && !provider
 				? /* HTML */ `<form class="form slot-edit">
 						<h3>${item ? 'Cambiar objeto' : 'Registrar objeto'}</h3>
-						<p class="notice">
-							Todavía no hay un catálogo verificado de objetos de WoW Forever, así que el objeto se
-							escribe a mano tal como aparece en el juego. No se rellenan iconos ni estadísticas
-							inventadas.
-						</p>
+						<div class="catalog-picker" data-catalog hidden>
+							<label
+								>Buscar en el catálogo<input
+									type="search"
+									data-catalog-search
+									placeholder="Escribe parte del nombre…"
+									autocomplete="off"
+							/></label>
+							<ul class="catalog-results" data-catalog-results></ul>
+							<div class="catalog-choice" data-catalog-choice></div>
+							<p class="catalog-note">
+								Objetos de WoW Classic desde la API de Blizzard: orientativos hasta que haya datos
+								oficiales de Forever. Si tu objeto no aparece, escríbelo a mano.
+							</p>
+						</div>
+						<input type="hidden" name="item_id" value="${esc(item?.item_id || '')}" />
+						<input type="hidden" name="icon" value="${esc(item?.item_id ? item.icon || '' : '')}" />
+						<input
+							type="hidden"
+							name="stats"
+							value="${esc(JSON.stringify(item?.item_id ? item.stats || {} : {}))}"
+						/>
 						<div class="form-grid">
 							<label class="wide"
 								>Nombre del objeto<input
@@ -353,6 +372,8 @@ export function openSlotDialog({ slot, sheet, wishes = [], canEdit, ctx, onSaved
 	});
 	const url = `/api/armory/characters/${encodeURIComponent(sheet.character.id)}/equipment/${slot}`;
 	const form = dialog.querySelector('.slot-edit');
+	if (form)
+		attachCatalogPicker(dialog.querySelector('[data-catalog]'), form, catalogGroup(slot), esc);
 	if (form)
 		form.onsubmit = async (e) => {
 			e.preventDefault();
