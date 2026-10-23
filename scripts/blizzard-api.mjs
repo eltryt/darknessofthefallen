@@ -23,15 +23,17 @@ export async function blizzardClient({ region = REGION } = {}) {
 		const url = new URL(path, base);
 		for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
 		for (let attempt = 0; ; attempt++) {
-			let response;
+			let response, body;
 			try {
 				response = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+				// The connection can also drop while the body is being read.
+				if (response.ok) body = await response.json();
 			} catch (error) {
 				if (attempt >= 5) throw error;
 				await new Promise((r) => setTimeout(r, 1000 * 2 ** attempt));
 				continue;
 			}
-			if (response.ok) return response.json();
+			if (response.ok) return body;
 			if (response.status === 404) return null;
 			if ((response.status === 429 || response.status >= 500) && attempt < 5) {
 				await new Promise((r) => setTimeout(r, 1000 * 2 ** attempt));
