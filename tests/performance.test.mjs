@@ -46,3 +46,19 @@ test('pages ask for the guild data and the session before the modules load', () 
 	for (const path of ['/api/public', '/api/me']) assert.ok(boot.includes(`'${path}'`));
 	assert.match(read('app.js'), /window\.dotfPrefetch\?\.\[path\]/);
 });
+
+test('every armory slot has its own icon, stored and served locally', async () => {
+	const { gameVersions, slotIcon } = await import('../public/armory-catalog.js');
+	const icons = new Set();
+	for (const slot of gameVersions.forever.slots) {
+		const icon = slotIcon(slot);
+		assert.match(icon, /^\/assets\/slots\/[a-z_0-9]+\.webp$/, slot);
+		assert.ok(existsSync(new URL(`../public${icon}`, import.meta.url)), `${icon} exists`);
+		assert.ok(staticFile(icon), `${icon} is served`);
+		icons.add(icon);
+	}
+	assert.equal(icons.size, gameVersions.forever.slots.length, 'no two slots share an icon');
+	assert.ok(
+		gameVersions.forever.slots.includes('shirt') && gameVersions.forever.slots.includes('tabard'),
+	);
+});

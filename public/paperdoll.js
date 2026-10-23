@@ -1,5 +1,5 @@
 import { ClassIcon } from './components.js';
-import { gameVersions, slotLabels, itemQualities } from './armory-catalog.js';
+import { gameVersions, slotLabels, itemQualities, slotIcon } from './armory-catalog.js';
 
 const escape = (value) =>
 	String(value ?? '').replace(
@@ -23,11 +23,16 @@ const classPortraits = {
 	Brujo: 'warlock',
 	Druida: 'druid',
 };
+// Generic outline, only for a slot without its own artwork.
 const emptyIcon =
 	'<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9Z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg>';
 
 function slot(name, item, side, href, buttons) {
 	const label = slotLabels[name] || name;
+	// Each slot shows its own silhouette (a faded official icon) until an item fills it.
+	const placeholder = slotIcon(name)
+		? `<img class="doll-placeholder" src="${slotIcon(name)}" alt="" width="44" height="44" loading="lazy">`
+		: emptyIcon;
 	const tag = buttons ? 'button' : href ? 'a' : 'div';
 	const link = buttons
 		? ` type="button" data-slot="${escape(name)}" aria-haspopup="dialog" aria-label="${escape(label)}: ${escape(item?.item_name || 'sin datos')}. Abrir detalles"`
@@ -35,13 +40,13 @@ function slot(name, item, side, href, buttons) {
 			? ` href="${escape(href)}"`
 			: '';
 	if (!item)
-		return `<${tag} class="doll-slot is-empty side-${side}"${link} title="${escape(label)} · Sin datos"><span class="doll-icon">${emptyIcon}</span><span class="doll-text"><span class="doll-slot-name">${escape(label)}</span><small>Sin datos</small></span></${tag}>`;
+		return `<${tag} class="doll-slot is-empty side-${side}"${link} title="${escape(label)} · Sin datos"><span class="doll-icon">${placeholder}</span><span class="doll-text"><span class="doll-slot-name">${escape(label)}</span><small>Sin datos</small></span></${tag}>`;
 	const icon = localImage(item.icon);
 	const details = [
 		item.enchant ? 'Encantamiento: ' + item.enchant : '',
 		item.gems?.length ? `${item.gems.length} ${item.gems.length === 1 ? 'gema' : 'gemas'}` : '',
 	].filter(Boolean);
-	return `<${tag} class="doll-slot side-${side} quality-${escape(item.quality || 'none')}"${link} title="${escape(label)}: ${escape(item.item_name)}${item.quality ? ' · ' + escape(itemQualities[item.quality] || item.quality) : ''}"><span class="doll-icon">${icon ? `<img src="${escape(icon)}" alt="" width="44" height="44" loading="lazy">` : emptyIcon}</span><span class="doll-text"><strong>${escape(item.item_name || 'Objeto sin nombre')}</strong><span class="doll-meta">${item.item_level ? `<b>${escape(item.item_level)}</b>` : ''}${details.map((d) => `<small>${escape(d)}</small>`).join('')}</span></span></${tag}>`;
+	return `<${tag} class="doll-slot side-${side} quality-${escape(item.quality || 'none')}"${link} title="${escape(label)}: ${escape(item.item_name)}${item.quality ? ' · ' + escape(itemQualities[item.quality] || item.quality) : ''}"><span class="doll-icon">${icon ? `<img src="${escape(icon)}" alt="" width="44" height="44" loading="lazy">` : placeholder}</span><span class="doll-text"><strong>${escape(item.item_name || 'Objeto sin nombre')}</strong><span class="doll-meta">${item.item_level ? `<b>${escape(item.item_level)}</b>` : ''}${details.map((d) => `<small>${escape(d)}</small>`).join('')}</span></span></${tag}>`;
 }
 
 // Character "paper doll": item columns around the character portrait, weapons

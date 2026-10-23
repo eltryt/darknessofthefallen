@@ -7685,3 +7685,20 @@ body[data-page='/'] .hero {
 		animation: none;
 	}
 }
+
+/* Armería: empty slots show their own faded silhouette (official item icon). */
+.doll-slot .doll-placeholder {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	border-radius: inherit;
+}
+.doll-slot.is-empty .doll-placeholder {
+	filter: saturate(0.35) brightness(0.62);
+	opacity: 0.85;
+}
+.doll-slot.is-empty:hover .doll-placeholder,
+.doll-slot.is-empty:focus-visible .doll-placeholder {
+	filter: saturate(0.6) brightness(0.8);
+}

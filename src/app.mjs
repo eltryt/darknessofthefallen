@@ -2,6 +2,7 @@ import { manualRosterApi } from './manual-roster.mjs';
 import { seoPages, seoHtml, sitemap } from './seo.mjs';
 import { iconAssets } from '../public/icon-assets.js';
 import { mobileArt } from '../public/art-variants.js';
+import { slotIconSources } from '../public/armory-catalog.js';
 import { gmApi, enqueueGM, gmReady } from './gm-notifications.mjs';
 import { exportRecovery } from './recovery.mjs';
 import { backupApi } from './backup-api.mjs';
@@ -77,6 +78,12 @@ const files = {
 	'/analytics.js': ['analytics.js', 'text/javascript'],
 	'/home-events.js': ['home-events.js', 'text/javascript'],
 	...Object.fromEntries(iconAssets.map((file) => ['/' + file, [file, 'image/webp']])),
+	...Object.fromEntries(
+		Object.keys(slotIconSources).map((slot) => [
+			`/assets/slots/${slot}.webp`,
+			[`assets/slots/${slot}.webp`, 'image/webp'],
+		]),
+	),
 	...Object.fromEntries(
 		mobileArt.map((name) => [
 			`/assets/art/${name}-m.webp`,

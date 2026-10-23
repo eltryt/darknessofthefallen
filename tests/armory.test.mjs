@@ -382,10 +382,18 @@ test('only the owner records equipment by hand, per valid slot', async () => {
 				404,
 			);
 		assert.equal(
-			(await f.request(`/api/armory/characters/${id}/equipment/tabard`, 'member', 'PUT', item))
+			(await f.request(`/api/armory/characters/${id}/equipment/ammo`, 'member', 'PUT', item))
 				.status,
 			400,
 		);
+		// Shirt and tabard are cosmetic, but armory APIs report them: they are valid slots.
+		for (const slot of ['shirt', 'tabard'])
+			assert.equal(
+				(await f.request(`/api/armory/characters/${id}/equipment/${slot}`, 'member', 'PUT', item))
+					.status,
+				200,
+				slot,
+			);
 		assert.equal(
 			(
 				await f.request(`/api/armory/characters/${id}/equipment/head`, 'member', 'PUT', {
@@ -405,9 +413,10 @@ test('only the owner records equipment by hand, per valid slot', async () => {
 			item_level: 62,
 		});
 		const sheet = (await f.request(`/api/armory/characters/${id}`, 'member')).body;
-		assert.equal(sheet.equipment.length, 1);
-		assert.equal(sheet.equipment[0].item_level, 62);
-		assert.equal(sheet.equipment[0].origin, 'manual');
+		const head = sheet.equipment.find((e) => e.slot === 'head');
+		assert.deepEqual(sheet.equipment.map((e) => e.slot).sort(), ['head', 'shirt', 'tabard']);
+		assert.equal(head.item_level, 62);
+		assert.equal(head.origin, 'manual');
 		assert.equal(
 			(await f.request(`/api/armory/characters/${id}/equipment/head`, 'member', 'DELETE', {}))
 				.status,
@@ -415,7 +424,7 @@ test('only the owner records equipment by hand, per valid slot', async () => {
 		);
 		assert.equal(
 			(await f.request(`/api/armory/characters/${id}`, 'member')).body.equipment.length,
-			0,
+			2,
 		);
 	} finally {
 		await f.close();

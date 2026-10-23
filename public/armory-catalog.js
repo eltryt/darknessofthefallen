@@ -28,6 +28,9 @@ export const gameVersions = {
 			'shoulders',
 			'back',
 			'chest',
+			// Cosmetic, but every armory API reports them: ready for the import.
+			'shirt',
+			'tabard',
 			'wrist',
 			'hands',
 			'waist',
@@ -43,7 +46,7 @@ export const gameVersions = {
 		],
 		// Classic armory layout: two item columns around the character, weapons below.
 		paperdoll: {
-			left: ['head', 'neck', 'shoulders', 'back', 'chest', 'wrist'],
+			left: ['head', 'neck', 'shoulders', 'back', 'chest', 'shirt', 'tabard', 'wrist'],
 			right: ['hands', 'waist', 'legs', 'feet', 'finger1', 'finger2', 'trinket1', 'trinket2'],
 			bottom: ['main_hand', 'off_hand', 'ranged'],
 		},
@@ -83,6 +86,32 @@ export const slotLabels = {
 	off_hand: 'Mano secundaria',
 	ranged: 'A distancia / reliquia',
 };
+// Empty-slot artwork: official WoW item icons from wow.zamimg.com, stored locally as
+// WebP in /assets/slots (the CSP serves images from our own origin only), one per slot.
+export const slotIconSources = {
+	head: 'inv_helmet_03',
+	neck: 'inv_jewelry_necklace_01',
+	shoulders: 'inv_shoulder_05',
+	back: 'inv_misc_cape_11',
+	chest: 'inv_chest_plate03',
+	shirt: 'inv_shirt_01',
+	tabard: 'inv_misc_tabardpvp_01',
+	wrist: 'inv_bracer_07',
+	hands: 'inv_gauntlets_04',
+	waist: 'inv_belt_03',
+	legs: 'inv_pants_04',
+	feet: 'inv_boots_05',
+	finger1: 'inv_jewelry_ring_01',
+	finger2: 'inv_jewelry_ring_03',
+	trinket1: 'inv_jewelry_talisman_01',
+	trinket2: 'inv_jewelry_talisman_02',
+	main_hand: 'inv_sword_04',
+	off_hand: 'inv_shield_04',
+	ranged: 'inv_weapon_bow_07',
+};
+export function slotIcon(slot) {
+	return Object.hasOwn(slotIconSources, slot) ? `/assets/slots/${slot}.webp` : '';
+}
 export const itemQualities = {
 	poor: 'Pobre',
 	common: 'Común',
