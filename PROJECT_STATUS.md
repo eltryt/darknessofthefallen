@@ -912,3 +912,5 @@ Publicado: `7628b5a`; backend `38652910420`, Pages `38652910475` y validación `
 - 2026-10-19: Medallas de las tarjetas de logros reducidas (50 px) y emblema de Onyxia ampliado para igualar su tamaño, manteniendo la alineación del texto. Deploy 39241276224.
 
 - 2026-10-20: Pista del logro secreto «Pacto de los Caídos»: tras 5 min de tiempo visible en Inicio, «Darkness» parpadea con «Pact» y aparece una vez por sesión un susurro que invita a llamar al nombre (clics rápidos). Respeta movimiento reducido. Deploy 39417749497.
+
+- 2026-10-23: Enlaces solo para miembros (/perfil, /armeria) sin sesión muestran una página con «Entrar con Discord» en vez del JSON de error; tras entrar vuelves al enlace original (solo rutas del propio sitio). Deploy 39945665305.
