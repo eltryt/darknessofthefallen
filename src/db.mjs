@@ -67,5 +67,9 @@ export function openDatabase(path = 'data/guild.sqlite') {
 		transaction(db, () =>
 			db.exec(readFileSync(new URL('../migrations/013_loot_officer.sql', import.meta.url), 'utf8')),
 		);
+	if (!db.prepare('SELECT version FROM schema_migrations WHERE version=14').get())
+		transaction(db, () =>
+			db.exec(readFileSync(new URL('../migrations/014_level_cap.sql', import.meta.url), 'utf8')),
+		);
 	return db;
 }

@@ -221,7 +221,8 @@ function walkTokens(svg, squares, maxLevel) {
 	requestAnimationFrame(frame);
 }
 
-export async function mountJourney(host, { api, esc }) {
+export async function mountJourney(host, ctx) {
+	const { api, esc, toast } = ctx;
 	const data = await api('/api/journey');
 	const squares = spiralSquares(data.maxLevel);
 	const groups = byLevel(data.players);
@@ -281,10 +282,22 @@ export async function mountJourney(host, { api, esc }) {
 	const ready = Object.entries(data.ready)
 		.map(([role, n]) => roleCount(role, n))
 		.join(' · ');
+	// At the cap: verified or pending; officers get the button to confirm or withdraw it.
+	const capStatus = (p) =>
+		p.level !== data.maxLevel
+			? ''
+			: `<span class="journey-cap${p.verified ? ' is-verified' : ''}">${p.verified ? 'Verificado' : 'Pendiente de verificar'}${data.canVerify ? `<button type="button" class="link-button" data-verify="${esc(p.id)}" data-verified="${p.verified}">${p.verified ? 'Quitar' : 'Verificar'}</button>` : ''}</span>`;
+	const medals = { 3: 'Oro', 2: 'Plata', 1: 'Bronce' };
+	const podiumHtml = Array.from({ length: data.places }, (_, i) => {
+		const place = data.podium[i];
+		return place
+			? `<li class="journey-place tier-${place.tier}${place.me ? ' is-me' : ''}"><b>${place.place}.º</b><span class="journey-dot class-${classKey(place.class)}" aria-hidden="true"></span><strong>${esc(place.name)}</strong><small>${medals[place.tier]}</small></li>`
+			: `<li class="journey-place is-open tier-${[3, 2, 2, 1, 1][i] || 1}"><b>${i + 1}.º</b><strong>¿Quién será?</strong><small>${medals[[3, 2, 2, 1, 1][i] || 1]}</small></li>`;
+	}).join('');
 	const ranking = leveled
 		.map(
 			(p) =>
-				`<li class="${p.me ? 'is-me' : ''}"><span class="journey-dot class-${classKey(p.class)}" aria-hidden="true"></span><strong>${esc(p.name)}</strong><small>${esc(p.class)} · ${esc(p.role)}</small><span class="journey-bar class-${classKey(p.class)}" data-bar="${Math.round((p.level / data.maxLevel) * 100)}" aria-hidden="true"></span><b>${p.level}</b></li>`,
+				`<li class="${p.me ? 'is-me' : ''}"><span class="journey-dot class-${classKey(p.class)}" aria-hidden="true"></span><strong>${esc(p.name)}</strong><small>${esc(p.class)} · ${esc(p.role)}</small><span class="journey-bar class-${classKey(p.class)}" data-bar="${Math.round((p.level / data.maxLevel) * 100)}" aria-hidden="true"></span><b>${p.level}</b>${capStatus(p)}</li>`,
 		)
 		.join('');
 	const notice =
@@ -339,6 +352,17 @@ export async function mountJourney(host, { api, esc }) {
 				<g class="journey-tokens">${tokens}</g>
 			</svg>
 		</div>
+		<section class="journey-podium" aria-labelledby="journey-podium-title">
+			<h3 id="journey-podium-title">Pioneros de Azeroth</h3>
+			<p>
+				Medalla para los ${data.places} primeros de la hermandad en llegar a nivel ${data.maxLevel}:
+				oro para el 1.º, plata para el 2.º y 3.º y bronce para el 4.º y 5.º. Cuenta el momento en
+				que lo registras en la web, y un oficial lo verifica con una captura del juego.
+			</p>
+			<ol class="journey-places">
+				${podiumHtml}
+			</ol>
+		</section>
 		<p class="journey-ready">
 			${ready ? `<strong>Listos para raid:</strong> ${esc(ready)}.` : 'Nadie ha llegado todavía al nivel máximo.'}
 		</p>
@@ -403,5 +427,23 @@ export async function mountJourney(host, { api, esc }) {
 			show(pick);
 		}, 70);
 	});
+	host.querySelectorAll('[data-verify]').forEach((button) =>
+		button.addEventListener('click', async () => {
+			button.disabled = true;
+			const verified = button.dataset.verified === 'true';
+			try {
+				await api(
+					`/api/journey/${encodeURIComponent(button.dataset.verify)}/verification`,
+					verified ? 'DELETE' : 'PUT',
+					{},
+				);
+				toast?.(verified ? 'Verificación retirada' : 'Nivel 60 verificado');
+				await mountJourney(host, ctx);
+			} catch (error) {
+				toast?.(error.message);
+				button.disabled = false;
+			}
+		}),
+	);
 	if (!reduced()) walkTokens(svg, squares, data.maxLevel);
 }

@@ -3,6 +3,8 @@
 // system was activated. Each tier is stored once earned and never taken away.
 // The catalogue lives on the server so secret conditions stay secret.
 
+import { podium } from './journey.mjs';
+
 export const TIER_POINTS = { 1: 10, 2: 25, 3: 50 };
 const COUNTED = ['Asistió', 'Llegó tarde', 'Reserva'];
 
@@ -61,6 +63,15 @@ export const playerCatalog = [
 		name: 'Matadragones',
 		single: 3,
 		help: 'Presente en la primera victoria de la hermandad contra Onyxia.',
+	},
+	{
+		// One medal whose tier is the podium place: see PODIUM_TIERS in journey.mjs.
+		id: 'pioneer',
+		category: 'progreso',
+		icon: 'crown',
+		name: 'Pionero de Azeroth',
+		podium: true,
+		help: 'Entre los cinco primeros de la hermandad en llegar a nivel 60, verificado por un oficial. Oro para el 1.º, plata para el 2.º y 3.º, bronce para el 4.º y 5.º.',
 	},
 	{
 		id: 'called',
@@ -368,6 +379,7 @@ function sharedData(db, since) {
 		progress: firstKills(db, since),
 		loot: lootSince(db, since),
 		attempts: attemptNights(db, since, raids),
+		pioneers: new Map(podium(db).map((p) => [p.user_id, p.tier])),
 	};
 }
 function firstKills(db, since) {
@@ -385,7 +397,7 @@ function firstKills(db, since) {
 }
 
 export function playerMetrics(db, userId, since, shared = sharedData(db, since)) {
-	const { raids, progress, loot, attempts } = shared;
+	const { raids, progress, loot, attempts, pioneers } = shared;
 	const rows = db
 		.prepare(
 			`SELECT a.raid_id,a.status,r.starts_at FROM attendance a JOIN raids r ON r.id=a.raid_id
@@ -508,6 +520,7 @@ export function playerMetrics(db, userId, since, shared = sharedData(db, since))
 		centenary: raids[99] && attendedIds.has(raids[99].id) ? 1 : 0,
 		'all-rounder': ['Tanque', 'Sanador', 'DPS'].every((r) => roles.has(r)) ? 1 : 0,
 		tireless: longestRun >= 10 ? 1 : 0,
+		pioneer: pioneers?.get(userId) || 0,
 	};
 }
 export function guildMetrics(db, since, shared = sharedData(db, since)) {
@@ -540,11 +553,15 @@ export function guildMetrics(db, since, shared = sharedData(db, since)) {
 }
 // Tiers met by a value: thresholds reached, or the single tier when the flag is set.
 const tiersFor = (item, value) =>
-	item.single
+	item.podium
 		? value
-			? [item.single]
+			? [value]
 			: []
-		: item.tiers.map((t, i) => (value >= t ? i + 1 : 0)).filter(Boolean);
+		: item.single
+			? value
+				? [item.single]
+				: []
+			: item.tiers.map((t, i) => (value >= t ? i + 1 : 0)).filter(Boolean);
 
 function award(db, table, key, catalog, metrics, now) {
 	const insert =
@@ -595,7 +612,8 @@ function present(item, earned = [], value) {
 		help: hidden ? 'Logro secreto. Se revela cuando alguien lo consigue.' : item.help,
 		secret: !!item.secret,
 		tiers: hidden ? null : item.tiers || null,
-		single: hidden ? null : item.single || null,
+		// A podium medal shows as a single medal of the tier earned (gold while still open).
+		single: hidden ? null : item.podium ? top || 3 : item.single || null,
 		unit: hidden ? null : item.unit || null,
 		tier: top,
 		earned: earned.sort((a, b) => a.tier - b.tier),

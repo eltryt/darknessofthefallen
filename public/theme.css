@@ -7415,11 +7415,20 @@ body[data-page='/'] .hero {
 	border-radius: 14px;
 	background: radial-gradient(circle at 50% 50%, #2a151b 0%, #121014 55%, #0b0a0d 100%);
 }
+/* The whole board fits on screen: as wide as the column, never taller than ~70% of the window. */
 .journey-board {
 	display: block;
-	width: 100%;
-	min-width: 640px;
+	width: min(100%, 70vh);
+	min-width: 420px;
 	height: auto;
+	margin: 0 auto;
+}
+@media (max-width: 600px) {
+	/* Phones scroll sideways instead of shrinking the numbers out of sight. */
+	.journey-board {
+		width: 100%;
+		min-width: 640px;
+	}
 }
 .journey-path {
 	fill: none;
@@ -7801,4 +7810,101 @@ body[data-page='/'] .hero {
 .catalog-result.quality-legendary strong,
 .catalog-card.quality-legendary strong {
 	color: #ff8000;
+}
+
+/* Camino al 60: Pioneros de Azeroth podium and verification. */
+.journey-podium {
+	padding: 16px 18px;
+	border: 1px solid #d8b98255;
+	border-radius: 12px;
+	background: linear-gradient(180deg, #2a2116, #141114);
+}
+.journey-podium h3 {
+	margin: 0 0 4px;
+	color: #f3dcae;
+	font-family: Georgia, serif;
+}
+.journey-podium > p {
+	margin: 0 0 12px;
+	color: var(--muted);
+	font-size: 0.92rem;
+}
+.journey-places {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+	gap: 8px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.journey-place {
+	display: grid;
+	grid-template-columns: auto auto 1fr;
+	grid-template-rows: auto auto;
+	align-items: center;
+	column-gap: 8px;
+	padding: 10px 12px;
+	border: 1px solid var(--medal, #888);
+	border-radius: 10px;
+	background: #0d0b0e;
+}
+.journey-place b {
+	grid-row: span 2;
+	color: var(--medal, #888);
+	font-family: Georgia, serif;
+	font-size: 1.4rem;
+}
+.journey-place .journey-dot {
+	grid-row: span 2;
+}
+.journey-place small {
+	grid-column: 3;
+	color: var(--medal, #888);
+	font-size: 0.78rem;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+}
+.journey-place.tier-3 {
+	--medal: #e8c25a;
+}
+.journey-place.tier-2 {
+	--medal: #c9d1dc;
+}
+.journey-place.tier-1 {
+	--medal: #cd8a52;
+}
+.journey-place.is-open {
+	border-style: dashed;
+	opacity: 0.75;
+}
+.journey-place.is-open strong {
+	color: var(--muted);
+	font-weight: 500;
+}
+.journey-place.is-me {
+	box-shadow: 0 0 0 2px #fff inset;
+}
+.journey-ranking li {
+	position: relative;
+}
+.journey-cap {
+	grid-column: 1 / -1;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-top: 2px;
+	color: #e8a5ae;
+	font-size: 0.8rem;
+}
+.journey-cap.is-verified {
+	color: #99d6b4;
+}
+.journey-cap .link-button {
+	padding: 0;
+	border: 0;
+	background: none;
+	color: var(--gold);
+	font: inherit;
+	text-decoration: underline;
+	cursor: pointer;
 }

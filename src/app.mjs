@@ -441,7 +441,7 @@ export function createApp(db, env, { readAsset = readLocalAsset, discordFetch = 
 				return send(200, { ok: true }, { 'Set-Cookie': cookie('session', '', env, 0) });
 			}
 			if (await achievementsApi({ db, user, path, method, send, requirePermission })) return;
-			if (journeyApi({ db, user, path, method, send, requirePermission })) return;
+			if (await journeyApi({ db, user, path, method, send, requirePermission })) return;
 			if (
 				await armoryApi({
 					db,
