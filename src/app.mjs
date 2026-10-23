@@ -45,6 +45,32 @@ import {
 import { deliverRecruitment } from './integrations.mjs';
 import { raidEventsApi } from './raid-events.mjs';
 import { operations, publicProgress } from './operations.mjs';
+// Where to return after signing in: only a path on this site, never another origin.
+export const safeNext = (value) =>
+	typeof value === 'string' &&
+	value.length <= 300 &&
+	/^\/(?!\/)[^\s\\]*$/.test(value) &&
+	!value.startsWith('/auth/')
+		? value
+		: null;
+const escHtml = (v) =>
+	String(v).replace(
+		/[&<>"']/g,
+		(c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
+	);
+// A page a person lands on by opening a link, instead of the API's JSON error.
+export function gatePage(status, message, next) {
+	const login = status === 401;
+	const title = login
+		? 'Entra con Discord'
+		: status === 404
+			? 'Página no encontrada'
+			: 'Acceso restringido';
+	const action = login
+		? `<a class="button" href="/auth/discord${next ? '?next=' + encodeURIComponent(next) : ''}">Entrar con Discord</a><a class="button secondary" href="/">Volver al inicio</a>`
+		: '<a class="button" href="/">Volver al inicio</a>';
+	return `<!doctype html><html lang="es"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><meta name="robots" content="noindex" /><title>${escHtml(title)} · Darkness of the Fallen</title><link rel="stylesheet" href="/style.css" /><link rel="stylesheet" href="/theme.css" /><link rel="icon" href="/favicon.ico" sizes="any" /></head><body class="gate-body"><main class="gate-page"><img src="/assets/app-icon-512.png" alt="" width="96" height="96" /><span class="eyebrow">Darkness of the Fallen</span><h1>${escHtml(title)}</h1><p>${escHtml(login ? 'Esta parte de la web es solo para miembros de la hermandad. Entra con tu cuenta de Discord y te llevamos de vuelta aquí.' : message)}</p><div class="gate-actions">${action}</div></main></body></html>`;
+}
 async function readLocalAsset(file) {
 	const { readFile } = await import('node:fs/promises');
 	return readFile(new URL(`../public/${file}`, import.meta.url));
@@ -414,23 +440,32 @@ export function createApp(db, env, { readAsset = readLocalAsset, discordFetch = 
 				});
 			if (path === '/auth/discord' && method === 'GET') {
 				throttle(req, path);
-				const auth = startOAuth(db, env);
+				const auth = startOAuth(db, env),
+					next = safeNext(url.searchParams.get('next'));
 				res.writeHead(302, {
 					...headers,
 					Location: auth.url,
-					'Set-Cookie': cookie('oauth_state', auth.state, env, 600),
+					'Set-Cookie': [
+						cookie('oauth_state', auth.state, env, 600),
+						cookie('login_next', next ? encodeURIComponent(next) : '', env, next ? 600 : 0),
+					],
 				});
 				return res.end();
 			}
 			if (path === '/auth/discord/callback' && method === 'GET') {
 				throttle(req, path);
 				const session = await finishOAuth(db, req, url, env);
+				let next = null;
+				try {
+					next = safeNext(decodeURIComponent(cookies(req).login_next || ''));
+				} catch {}
 				res.writeHead(302, {
 					...headers,
-					Location: '/perfil',
+					Location: next || '/perfil',
 					'Set-Cookie': [
 						cookie('session', session.raw, env, SESSION_MAX_AGE_SECONDS),
 						cookie('oauth_state', '', env, 0),
+						cookie('login_next', '', env, 0),
 					],
 				});
 				return res.end();
@@ -854,6 +889,25 @@ export function createApp(db, env, { readAsset = readLocalAsset, discordFetch = 
 			}
 			throw new HttpError(404, 'Página no encontrada.');
 		} catch (e) {
+			// Someone opening a page link gets a page with a way forward, not raw JSON.
+			const page = new URL(req.url, env.APP_ORIGIN);
+			if (
+				[401, 403, 404].includes(e.status) &&
+				['GET', 'HEAD'].includes(req.method) &&
+				!page.pathname.startsWith('/api/') &&
+				!page.pathname.startsWith('/auth/') &&
+				String(req.headers.accept || '').includes('text/html')
+			) {
+				res.writeHead(e.status, {
+					...headers,
+					'Content-Type': 'text/html; charset=utf-8',
+					'Cache-Control': 'no-store',
+					'X-Robots-Tag': 'noindex, nofollow',
+				});
+				return res.end(
+					req.method === 'HEAD' ? '' : gatePage(e.status, e.message, page.pathname + page.search),
+				);
+			}
 			send(e.status || 500, {
 				error: e.status ? e.message : 'No se pudo completar la operación. Inténtalo de nuevo.',
 			});

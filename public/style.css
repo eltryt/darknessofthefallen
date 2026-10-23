@@ -3668,3 +3668,47 @@ body > header .brand-logo {
 .site-booting [data-public-loading] {
 	display: grid;
 }
+/* Sign-in / access page shown when a members-only link is opened without a session. */
+.gate-body {
+	display: grid;
+	place-items: center;
+	min-height: 100vh;
+	margin: 0;
+	padding: 24px 16px;
+	box-sizing: border-box;
+	background: radial-gradient(circle at 50% 20%, #3a141a66, transparent 60%), var(--bg, #0b0a0d);
+}
+.gate-page {
+	display: grid;
+	justify-items: center;
+	gap: 12px;
+	width: min(440px, 100%);
+	padding: 32px 24px;
+	box-sizing: border-box;
+	border: 1px solid color-mix(in srgb, var(--gold, #c9a45c) 35%, transparent);
+	border-radius: 12px;
+	background: #121015e6;
+	box-shadow: 0 24px 60px #000c;
+	text-align: center;
+}
+.gate-page img {
+	width: 96px;
+	height: 96px;
+	border-radius: 50%;
+}
+.gate-page h1 {
+	margin: 0;
+	font-size: clamp(26px, 6vw, 34px);
+}
+.gate-page p {
+	margin: 0;
+	color: var(--muted);
+	line-height: 1.55;
+}
+.gate-actions {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 10px;
+	margin-top: 8px;
+}
