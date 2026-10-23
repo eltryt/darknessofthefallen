@@ -1,18 +1,31 @@
 name: Item catalog from the Blizzard API
 on:
+  schedule:
+    # Mondays 06:00 UTC: picks up new game data builds; does nothing if unchanged.
+    - cron: '0 6 * * 1'
   workflow_dispatch:
     inputs:
       mode:
         description: 'probe = only inspect the API; sync = rebuild the catalog'
         required: true
-        default: probe
+        default: sync
         type: choice
         options: [probe, sync]
+      force:
+        description: 'Rebuild even if the game data build has not changed'
+        required: false
+        default: false
+        type: boolean
 permissions:
-  contents: read
+  contents: write
+  actions: write
+concurrency:
+  group: item-catalog
+  cancel-in-progress: false
 jobs:
   catalog:
     runs-on: ubuntu-latest
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -24,3 +37,26 @@ jobs:
         env:
           BLIZZARD_CLIENT_ID: ${{ secrets.BLIZZARD_CLIENT_ID }}
           BLIZZARD_CLIENT_SECRET: ${{ secrets.BLIZZARD_CLIENT_SECRET }}
+      - name: Rebuild the item catalog
+        if: inputs.mode != 'probe'
+        run: node scripts/sync-items.mjs
+        env:
+          BLIZZARD_CLIENT_ID: ${{ secrets.BLIZZARD_CLIENT_ID }}
+          BLIZZARD_CLIENT_SECRET: ${{ secrets.BLIZZARD_CLIENT_SECRET }}
+          FORCE_CATALOG: ${{ inputs.force && '1' || '' }}
+      - name: Commit the catalog and deploy it
+        if: inputs.mode != 'probe'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet -- public/catalog && [ -z "$(git status --porcelain public/catalog)" ]; then
+            echo "Catalog unchanged."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/catalog
+          git commit -m "Update the item catalog from the Blizzard API [skip ci]"
+          git pull --rebase origin main
+          git push origin HEAD:main
+          gh workflow run backend.yml --ref main

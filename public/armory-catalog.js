@@ -109,6 +109,28 @@ export const slotIconSources = {
 	off_hand: 'inv_shield_04',
 	ranged: 'inv_weapon_bow_07',
 };
+// Item catalogue files (public/catalog/<group>.json, built by scripts/sync-items.mjs):
+// one per slot, with both rings and both trinkets sharing a file.
+export const catalogGroups = [
+	'head',
+	'neck',
+	'shoulders',
+	'back',
+	'chest',
+	'shirt',
+	'tabard',
+	'wrist',
+	'hands',
+	'waist',
+	'legs',
+	'feet',
+	'finger',
+	'trinket',
+	'main_hand',
+	'off_hand',
+	'ranged',
+];
+export const catalogGroup = (slot) => slot.replace(/^(finger|trinket)[12]$/, '$1');
 export function slotIcon(slot) {
 	return Object.hasOwn(slotIconSources, slot) ? `/assets/slots/${slot}.webp` : '';
 }
