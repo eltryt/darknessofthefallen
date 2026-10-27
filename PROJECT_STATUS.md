@@ -921,3 +921,4 @@ Publicado: `7628b5a`; backend `38652910420`, Pages `38652910475` y validación `
 
 - 2026-10-27: Retirados (archivados) del roster a petición: Chocolove, DaBigBoss, PotrasX, stopin1991, Kazza, Nyght y Nøxik Grimforge (32 → 25). El panel ahora permite archivar también personajes de miembros con cuenta de Discord. Pendiente identificar a «juanjo». Deploy 40486623181.
 - 2026-10-27: «juanjo» era darthom: archivado también (roster 25 → 24).
+- 2026-10-27: Nøxik Grimforge restaurado al roster (24 → 26 públicos) con el nuevo botón «Restaurar» del panel. Deploy 40569963226.
