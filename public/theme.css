@@ -7346,6 +7346,12 @@ body[data-page='/'] .hero {
 	font-size: 0.92rem;
 	line-height: 1.5;
 }
+.map-guide {
+	margin-top: 32px;
+}
+.map-guide h3 {
+	margin-top: 0;
+}
 .map-credit > span {
 	flex: 1 1 320px;
 }

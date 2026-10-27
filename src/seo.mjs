@@ -41,6 +41,11 @@ export const seoPages = {
 		'Contacta con Darkness of the Fallen, hermandad española de WoW Forever, y entra en nuestro Discord.',
 		'Contacto',
 	],
+	'/mapa': [
+		'Mapa interactivo de WoW Forever · Darkness of the Fallen',
+		'Mapa de WoW Forever con zonas, ciudades, mazmorras, raids, rutas de vuelo, barcos y zepelines de Azeroth, Kalimdor y los Reinos del Este.',
+		'Mapa',
+	],
 };
 // Structured data: who the guild is on the home page, and where each page sits.
 function structuredData(path, origin, settings) {

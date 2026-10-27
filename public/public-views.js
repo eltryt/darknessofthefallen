@@ -383,26 +383,53 @@ export function createPublicViews(context) {
 						'Zonas, ciudades, mazmorras, rutas de vuelo, barcos y zepelines. Busca un lugar o activa las capas que necesites.',
 					) +
 					/* HTML */ `<section class="map-embed">
-						<div class="map-frame">
-							<iframe
-								src="${MAP_URL}"
-								title="Mapa interactivo de WoW Forever (WoW Forever Map)"
-								allow="fullscreen"
-								sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-forms"
-							></iframe>
-						</div>
-						<p class="map-credit">
-							<span
-								>Mapa creado por
-								<a href="${MAP_URL}" target="_blank" rel="noopener">WoW Forever Map</a>, un proyecto
-								independiente de la comunidad. Sus datos proceden de servidores Classic y pueden no
-								coincidir del todo con WoW Forever.</span
-							>
-							<a class="button secondary" href="${MAP_URL}" target="_blank" rel="noopener"
-								>Abrir a pantalla completa ↗</a
-							>
-						</p>
-					</section>`;
+							<div class="map-frame">
+								<iframe
+									src="${MAP_URL}"
+									title="Mapa interactivo de WoW Forever (WoW Forever Map)"
+									allow="fullscreen"
+									sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-forms"
+								></iframe>
+							</div>
+							<p class="map-credit">
+								<span
+									>Mapa creado por
+									<a href="${MAP_URL}" target="_blank" rel="noopener">WoW Forever Map</a>, un
+									proyecto independiente de la comunidad. Sus datos proceden de servidores Classic y
+									pueden no coincidir del todo con WoW Forever.</span
+								>
+								<a class="button secondary" href="${MAP_URL}" target="_blank" rel="noopener"
+									>Abrir a pantalla completa ↗</a
+								>
+							</p>
+						</section>
+						<section class="grid map-guide">
+							<article class="card">
+								<h3>Cómo usarlo</h3>
+								<p>
+									Cambia entre Azeroth, Kalimdor y los Reinos del Este con las pestañas superiores.
+									Usa el buscador para encontrar una zona, ciudad o mazmorra, y activa en el panel
+									las capas de rutas de vuelo, barcos, zepelines, mazmorras y raids.
+								</p>
+							</article>
+							<article class="card">
+								<h3>Para la hermandad</h3>
+								<p>
+									Antes de cada raid, localiza la entrada de la mazmorra y la ruta de vuelo más
+									cercana para llegar a tiempo. Las convocatorias indican el encuentro y la hora de
+									cada salida.
+								</p>
+								<a href="/raids">Ver convocatorias →</a>
+							</article>
+							<article class="card">
+								<h3>Zonas nuevas de WoW Forever</h3>
+								<p>
+									El mapa incluye las zonas que añade WoW Forever. Como sus datos parten de
+									servidores Classic, confirma en el juego cualquier detalle que no coincida.
+								</p>
+								<a href="/progreso">Ver nuestro progreso →</a>
+							</article>
+						</section>`;
 				break;
 			case '/contacto':
 				html =
