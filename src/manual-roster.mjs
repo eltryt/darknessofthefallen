@@ -10,6 +10,50 @@ export async function manualRosterApi({ db, user, path, method, body, send, requ
 		send(200, importRoster(db, user, (await body()).characters));
 		return true;
 	}
+	if (path === '/api/roster/archived') {
+		requirePermission('roster.manage');
+		if (method !== 'GET') throw new HttpError(405, 'Método no permitido.');
+		send(
+			200,
+			db
+				.prepare(
+					'SELECT c.id,c.name,c.surname,c.class,c.archived_at,u.display_name FROM characters c JOIN users u ON u.id=c.user_id WHERE c.archived_at IS NOT NULL ORDER BY c.archived_at DESC LIMIT 100',
+				)
+				.all(),
+		);
+		return true;
+	}
+	const restoreMatch = path.match(/^\/api\/roster\/characters\/([^/]+)\/restore$/);
+	if (restoreMatch) {
+		requirePermission('roster.manage');
+		if (method !== 'POST') throw new HttpError(405, 'Método no permitido.');
+		const result = transaction(db, () => {
+			const c = db
+				.prepare('SELECT * FROM characters WHERE id=? AND archived_at IS NOT NULL')
+				.get(restoreMatch[1]);
+			if (!c) throw new HttpError(404, 'Personaje archivado no encontrado.');
+			const full = normalize(c.name + ' ' + c.surname);
+			if (
+				db
+					.prepare('SELECT name,surname FROM characters WHERE archived_at IS NULL')
+					.all()
+					.some((o) => normalize(o.name + ' ' + o.surname) === full)
+			)
+				throw new HttpError(409, 'Ya hay un personaje activo con ese nombre.');
+			// The owner gets back a main if the restored character is their only one.
+			const hasMain = db
+				.prepare('SELECT 1 FROM characters WHERE user_id=? AND is_main=1 AND archived_at IS NULL')
+				.get(c.user_id);
+			db.prepare('UPDATE characters SET archived_at=NULL,is_main=? WHERE id=?').run(
+				hasMain ? 0 : 1,
+				c.id,
+			);
+			audit(db, user.id, 'roster.character.restored', c.id, { name: c.name });
+			return { id: c.id };
+		});
+		send(200, result);
+		return true;
+	}
 	const characterMatch = path.match(/^\/api\/roster\/characters\/([^/]+)$/);
 	const match = characterMatch || path.match(/^\/api\/roster\/manual(?:\/([^/]+))?$/);
 	if (!match) return false;

@@ -47,6 +47,32 @@ export function mountManualRoster(host, rows, ctx, refresh) {
 		}
 	};
 
+	section.insertAdjacentHTML(
+		'beforeend',
+		`<hr><h3>Personajes archivados</h3><p>Restaurar devuelve el personaje al roster con su historial.</p><div data-archived>Cargando…</div>`,
+	);
+	const archived = section.querySelector('[data-archived]');
+	api('/api/roster/archived')
+		.then((list) => {
+			archived.innerHTML = list.length
+				? `<ul>${list.map((c) => `<li>${esc(c.name)} ${esc(c.surname || '')} · ${esc(c.class)} · ${esc(c.display_name)} <button type="button" class="secondary" data-restore="${esc(c.id)}">Restaurar</button></li>`).join('')}</ul>`
+				: 'No hay personajes archivados.';
+		})
+		.catch((e) => (archived.textContent = e.message));
+	archived.onclick = async (event) => {
+		const id = event.target.closest('[data-restore]')?.dataset.restore;
+		if (!id) return;
+		event.target.disabled = true;
+		try {
+			await api('/api/roster/characters/' + id + '/restore', 'POST', {});
+			toast('Personaje restaurado');
+			await refresh();
+		} catch (e) {
+			archived.insertAdjacentText('beforeend', ' ' + e.message);
+			event.target.disabled = false;
+		}
+	};
+
 	host.prepend(section);
 	const form = section.querySelector('form'),
 		pick = section.querySelector('[data-manual-pick]'),
