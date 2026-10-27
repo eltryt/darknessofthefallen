@@ -491,7 +491,7 @@ test('staff can edit existing roster characters without changing ownership or ac
 			(await f.request(path, 'leader', 'PATCH', value, { 'X-CSRF-Token': 'bad' })).status,
 			403,
 		);
-		assert.equal((await f.request(path, 'leader', 'DELETE')).status, 405);
+		assert.equal((await f.request(path, 'member', 'DELETE', {})).status, 403);
 		assert.equal(
 			(await f.request(path, 'leader', 'PATCH', { ...value, class: 'Invalid' })).status,
 			400,
@@ -543,6 +543,11 @@ test('staff can edit existing roster characters without changing ownership or ac
 			(await f.request(path, 'leader', 'PATCH', { ...value, name: 'Duplicate' })).status,
 			409,
 		);
+		// Staff can retire a member's character: it leaves the roster, its history stays.
+		assert.equal((await f.request(path, 'officer', 'DELETE', {})).status, 200);
+		assert.ok(f.db.prepare('SELECT archived_at FROM characters WHERE id=?').get(id).archived_at);
+		assert.ok(!(await f.request('/api/public')).body.characters.some((c) => c.name === 'Existing'));
+		assert.equal((await f.request(path, 'officer', 'DELETE', {})).status, 404);
 		f.db.prepare('UPDATE characters SET archived_at=? WHERE id=?').run('2026-01-01', id);
 		assert.equal((await f.request(path, 'leader', 'PATCH', value)).status, 404);
 	} finally {

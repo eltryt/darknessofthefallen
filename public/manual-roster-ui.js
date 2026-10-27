@@ -55,7 +55,7 @@ export function mountManualRoster(host, rows, ctx, refresh) {
 	pick.onchange = () => {
 		form.reset();
 		const row = rows.find((r) => r.id === pick.value);
-		archive.hidden = !row || row.source !== 'staff';
+		archive.hidden = !row;
 		form.elements.playerName.disabled = !!row && row.source !== 'staff';
 		status.textContent =
 			row && row.source !== 'staff'
@@ -103,13 +103,18 @@ export function mountManualRoster(host, rows, ctx, refresh) {
 		if (
 			!pick.value ||
 			!confirm(
-				'¿Archivar este personaje manual? Desaparecerá del roster y conservará su historial.',
+				'¿Archivar este personaje? Desaparecerá del roster y de la web, y conservará su historial.',
 			)
 		)
 			return;
 		busy(true);
 		try {
-			await api('/api/roster/manual/' + pick.value, 'DELETE', {});
+			const manual = rows.find((r) => r.id === pick.value)?.source === 'staff';
+			await api(
+				(manual ? '/api/roster/manual/' : '/api/roster/characters/') + pick.value,
+				'DELETE',
+				{},
+			);
 			toast('Personaje archivado');
 			await refresh();
 		} catch (e) {

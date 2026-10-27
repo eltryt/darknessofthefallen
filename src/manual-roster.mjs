@@ -15,7 +15,8 @@ export async function manualRosterApi({ db, user, path, method, body, send, requ
 	if (!match) return false;
 	requirePermission('roster.manage');
 	const id = match[1];
-	if (characterMatch && method !== 'PATCH') throw new HttpError(405, 'Método no permitido.');
+	if (characterMatch && !['PATCH', 'DELETE'].includes(method))
+		throw new HttpError(405, 'Método no permitido.');
 	if ((!id && method !== 'POST') || (id && !['PATCH', 'DELETE'].includes(method)))
 		throw new HttpError(405, 'Método no permitido.');
 	const input = method === 'DELETE' ? null : await body();
@@ -37,7 +38,16 @@ export async function manualRosterApi({ db, user, path, method, body, send, requ
 				new Date().toISOString(),
 				id,
 			);
-			audit(db, user.id, 'roster.manual.archived', id, { name: existing.name });
+			// Staff can also retire a Discord member's character; history stays.
+			audit(
+				db,
+				user.id,
+				characterMatch ? 'roster.character.archived' : 'roster.manual.archived',
+				id,
+				{
+					name: existing.name,
+				},
+			);
 			return { id };
 		}
 		const full = normalize(value.name + ' ' + value.surname);
