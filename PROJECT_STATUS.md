@@ -918,3 +918,5 @@ Publicado: `7628b5a`; backend `38652910420`, Pages `38652910475` y validación `
 - 2026-10-23: Crédito del mapa (/mapa) en un solo bloque de texto junto al botón de pantalla completa; antes se partía alrededor del enlace. Deploy 39956628023.
 
 - 2026-10-27: Search Console: /mapa marcada como Soft 404 (tenía noindex y poco contenido). Ahora es indexable (título, descripción, canonical, migas, sitemap) y tiene una guía de uso. Validación de la corrección iniciada en Search Console. Redirecciones http/www y noindex de /login son intencionados. Deploy 40484013914.
+
+- 2026-10-27: Retirados (archivados) del roster a petición: Chocolove, DaBigBoss, PotrasX, stopin1991, Kazza, Nyght y Nøxik Grimforge (32 → 25). El panel ahora permite archivar también personajes de miembros con cuenta de Discord. Pendiente identificar a «juanjo». Deploy 40486623181.
