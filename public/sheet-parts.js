@@ -4,6 +4,7 @@ import {
 	gameVersions,
 	slotLabels,
 	factions,
+	raceFactions,
 	itemQualities,
 	guideContentTypes,
 	catalogGroup,
@@ -72,7 +73,7 @@ export function sheetForm(c, { esc, roles, classes }) {
 	const { specOptions, options } = sheetHelpers(esc);
 	const version = gameVersions[c.game_version] || Object.values(gameVersions)[0];
 	const raceList = Object.keys(version.races).filter(
-		(r) => !c.faction || version.races[r] === c.faction,
+		(r) => !c.faction || raceFactions(version, r).includes(c.faction),
 	);
 	return /* HTML */ `<form id="armory-sheet" class="form armory-form">
 		<p>Los datos que todavía no conozcas pueden quedar vacíos.</p>
@@ -154,7 +155,7 @@ export function bindSheetForm(f, c, { api, toast, esc }, done) {
 			faction = f.elements.faction.value,
 			current = f.elements.race.value;
 		f.elements.race.innerHTML = options(
-			['', ...Object.keys(v.races).filter((r) => !faction || v.races[r] === faction)],
+			['', ...Object.keys(v.races).filter((r) => !faction || raceFactions(v, r).includes(faction))],
 			current,
 		);
 		f.elements.region.innerHTML = options(['', ...v.regions], f.elements.region.value);
@@ -163,7 +164,11 @@ export function bindSheetForm(f, c, { api, toast, esc }, done) {
 	f.elements.game_version.onchange = races;
 	f.elements.race.onchange = () => {
 		const v = gameVersions[f.elements.game_version.value];
-		if (f.elements.race.value) f.elements.faction.value = v.races[f.elements.race.value];
+		if (!f.elements.race.value) return;
+		// A neutral race keeps the chosen faction; a single-faction race sets it.
+		const allowed = raceFactions(v, f.elements.race.value);
+		if (!allowed.includes(f.elements.faction.value))
+			f.elements.faction.value = allowed.length === 1 ? allowed[0] : '';
 	};
 	f.elements.class.onchange = () => {
 		f.elements.spec.innerHTML = specOptions(f.elements.class.value, '');

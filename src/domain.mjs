@@ -1,4 +1,9 @@
-import { gameVersions, defaultGameVersion, factions } from '../public/armory-catalog.js';
+import {
+	gameVersions,
+	defaultGameVersion,
+	factions,
+	raceFactions,
+} from '../public/armory-catalog.js';
 import { isValidSpecForClass, normalizeSpecValue } from '../public/specs.js';
 export const ranks = [
 	'visitor',
@@ -112,9 +117,10 @@ export function armoryInput(v, className) {
 	const race = text(v.race ?? '', 'raza', 40, false);
 	if (race) {
 		if (!Object.hasOwn(catalogue.races, race)) throw new HttpError(400, 'Raza no válida.');
-		if (faction && catalogue.races[race] !== faction)
+		const allowed = raceFactions(catalogue, race);
+		if (faction && !allowed.includes(faction))
 			throw new HttpError(400, 'La raza no corresponde a la facción.');
-		faction = catalogue.races[race];
+		if (allowed.length === 1) faction = allowed[0];
 		if (catalogue.raceClasses && !catalogue.raceClasses[race]?.includes(className))
 			throw new HttpError(400, 'Esa clase no está disponible para la raza elegida.');
 	}

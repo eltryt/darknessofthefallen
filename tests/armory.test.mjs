@@ -168,6 +168,21 @@ test('sheet fields are validated against the game version catalogue', async () =
 		assert.equal(after.realm, 'Otro reino');
 		assert.equal(after.race, 'Gnomo');
 		assert.ok(after.updated_at);
+		// Cielonatos (Skyborne) are neutral: either faction is valid and is kept as chosen.
+		for (const faction of ['Alianza', 'Horda']) {
+			assert.equal(
+				(
+					await f.request(`/api/characters/${id}`, 'member', 'PATCH', {
+						race: 'Cielonato',
+						faction,
+					})
+				).status,
+				200,
+			);
+			const sky = (await f.request(`/api/armory/characters/${id}`, 'member')).body.character;
+			assert.equal(sky.race, 'Cielonato');
+			assert.equal(sky.faction, faction);
+		}
 	} finally {
 		await f.close();
 	}

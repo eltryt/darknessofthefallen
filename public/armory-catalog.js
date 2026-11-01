@@ -19,6 +19,8 @@ export const gameVersions = {
 			'No-muerto': 'Horda',
 			Tauren: 'Horda',
 			Trol: 'Horda',
+			// Skyborne (es-ES: Cielonatos): neutral, the faction is chosen at character creation.
+			Cielonato: ['Alianza', 'Horda'],
 		},
 		// No race/class restrictions until they are confirmed for Forever.
 		raceClasses: null,
@@ -65,6 +67,8 @@ export const gameVersions = {
 };
 export const defaultGameVersion = 'forever';
 export const factions = ['Alianza', 'Horda'];
+// Factions a race can belong to; neutral races list more than one.
+export const raceFactions = (version, race) => [].concat(version.races[race] || []);
 export const slotLabels = {
 	head: 'Cabeza',
 	neck: 'Cuello',
