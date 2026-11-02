@@ -8602,7 +8602,7 @@ details[data-create] > .tutorial-open,
 }
 .roulette-tables {
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+	grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
 	gap: 12px;
 }
 .roulette-table {
@@ -8655,9 +8655,11 @@ details[data-create] > .tutorial-open,
 	color: #241405;
 }
 .roulette .link-button {
+	min-height: 0;
 	padding: 0;
 	border: 0;
 	background: none;
+	box-shadow: none;
 	color: var(--gold);
 	font: inherit;
 	text-decoration: underline;
@@ -9032,4 +9034,66 @@ details[data-create] > .tutorial-open,
 	stroke-width: 2;
 	stroke-linecap: round;
 	stroke-linejoin: round;
+}
+.roulette button.roulette-again {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 9px 16px;
+	border: 1px solid #e8c477;
+	border-radius: 999px;
+	background: linear-gradient(180deg, #e8c477, #b08433);
+	box-shadow: 0 4px 14px #e8c47733;
+	color: #241405;
+	font-weight: 700;
+	cursor: pointer;
+}
+.roulette button.roulette-again[hidden] {
+	display: none;
+}
+.roulette-again svg {
+	width: 16px;
+	height: 16px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2.2;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+.roulette-round {
+	margin-left: 6px;
+	padding: 1px 8px;
+	border-radius: 999px;
+	background: #e8c47733;
+	color: #f3dcae;
+	font-size: 0.72rem;
+	font-style: normal;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+	vertical-align: middle;
+}
+.roulette-table-foot {
+	display: grid;
+	gap: 10px;
+}
+.roulette-table-main {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+.roulette-table-main button {
+	flex: 1 1 auto;
+}
+.roulette-table-tools {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding-top: 8px;
+	border-top: 1px dashed #ffffff1f;
+}
+@media (max-width: 420px) {
+	.roulette-tables {
+		grid-template-columns: minmax(0, 1fr);
+	}
 }

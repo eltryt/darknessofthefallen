@@ -22,6 +22,7 @@ export function durableDatabase(
 	rouletteDeleteSchema,
 	rouletteDmSchema,
 	rouletteLoserDmSchema,
+	rouletteRematchSchema,
 ) {
 	const execute = (sql, parameters = []) => storage.sql.exec(sql, ...parameters);
 	const db = {
@@ -102,6 +103,11 @@ export function durableDatabase(
 			!db.prepare('SELECT version FROM schema_migrations WHERE version=18').get()
 		)
 			db.exec(rouletteLoserDmSchema);
+		if (
+			rouletteRematchSchema &&
+			!db.prepare('SELECT version FROM schema_migrations WHERE version=19').get()
+		)
+			db.exec(rouletteRematchSchema);
 	});
 	return db;
 }

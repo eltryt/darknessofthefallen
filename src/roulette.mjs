@@ -111,7 +111,7 @@ function tableState(db, user, watching = []) {
 	const person = (players, id) => players.find((p) => p.id === id) || null;
 	const open = db
 		.prepare(
-			"SELECT id,created_by,stake,created_at FROM roulette_tables WHERE status='open' AND deleted_at IS NULL ORDER BY created_at",
+			"SELECT id,created_by,stake,created_at,rematch_of FROM roulette_tables WHERE status='open' AND deleted_at IS NULL ORDER BY created_at",
 		)
 		.all()
 		.map((t) => {
@@ -127,6 +127,7 @@ function tableState(db, user, watching = []) {
 				canSpin: (owner || moderate) && players.length >= 2,
 				canCancel: owner || moderate,
 				canDelete: moderate,
+				rematchOf: t.rematch_of,
 			};
 		});
 	const result = (t) => {
@@ -150,6 +151,12 @@ function tableState(db, user, watching = []) {
 			settledAt: t.settled_at,
 			canSettle: t.winner_id === user.id || moderate,
 			canDelete: moderate,
+			// "Otra ronda": any player of the table (or an officer) opens it once.
+			rematchId:
+				db
+					.prepare('SELECT id FROM roulette_tables WHERE rematch_of=? AND deleted_at IS NULL')
+					.get(t.id)?.id || null,
+			canRematch: moderate || players.some((p) => p.me),
 			// Whether the private messages went out: each player sees their own, officers both.
 			dm: {
 				winner: t.winner_id === user.id || moderate ? t.dm_status : null,
@@ -273,7 +280,7 @@ export async function rouletteApi({ db, user, path, method, body, send, requireP
 		send(200, tableState(db, user, present(db, user)));
 		return true;
 	}
-	const m = path.match(/^\/api\/roulette\/([^/]+)(?:\/(players|spin|cancel|settled))?$/);
+	const m = path.match(/^\/api\/roulette\/([^/]+)(?:\/(players|spin|cancel|settled|rematch))?$/);
 	if (!m) return false;
 	const id = decodeURIComponent(m[1]),
 		action = m[2] || 'table',
@@ -311,6 +318,67 @@ export async function rouletteApi({ db, user, path, method, body, send, requireP
 			});
 			return;
 		}
+		// Another round of a played table: same bet, every player seated again (each can
+		// retire before the spin). Whoever asks for it hosts it.
+		if (action === 'rematch') {
+			if (method !== 'POST') throw new HttpError(405, 'Método no permitido.');
+			if (t.status !== 'spun') throw new HttpError(409, 'Solo se repite una mesa ya jugada.');
+			const seats = db
+				.prepare(
+					'SELECT user_id,name,class FROM roulette_players WHERE table_id=? AND left_at IS NULL ORDER BY joined_at,user_id',
+				)
+				.all(id);
+			if (!moderate && !seats.some((p) => p.user_id === user.id))
+				throw new HttpError(403, 'Solo quien jugó la mesa (o un oficial) abre otra ronda.');
+			if (
+				db
+					.prepare('SELECT 1 FROM roulette_tables WHERE rematch_of=? AND deleted_at IS NULL')
+					.get(id)
+			)
+				throw new HttpError(409, 'Ya hay otra ronda de esta mesa.');
+			if (
+				db
+					.prepare(
+						"SELECT 1 FROM roulette_tables WHERE created_by=? AND status='open' AND deleted_at IS NULL",
+					)
+					.get(user.id)
+			)
+				throw new HttpError(409, 'Ya tienes una mesa abierta: lánzala o cancélala primero.');
+			const limit = maxBet(settings(db));
+			if (t.stake > limit)
+				throw new HttpError(409, `El valor máximo de una mesa es ahora ${limit} de oro.`);
+			const next = randomUUID();
+			db.prepare(
+				'INSERT INTO roulette_tables(id,created_by,stake,created_at,rematch_of) VALUES(?,?,?,?,?)',
+			).run(next, user.id, t.stake, now, id);
+			const insert = db.prepare(
+				'INSERT INTO roulette_players(table_id,user_id,name,class,joined_at) VALUES(?,?,?,?,?)',
+			);
+			// The host sits first; then everyone else in the order they played.
+			const me = seats.find((p) => p.user_id === user.id) || {
+				user_id: user.id,
+				...seat(db, user),
+			};
+			insert.run(next, me.user_id, me.name, me.class, now);
+			seats
+				.filter((p) => p.user_id !== user.id)
+				.slice(0, MAX_PLAYERS - 1)
+				.forEach((p, i) =>
+					insert.run(
+						next,
+						p.user_id,
+						p.name,
+						p.class,
+						new Date(Date.parse(now) + i + 1).toISOString(),
+					),
+				);
+			audit(db, user.id, 'roulette.rematch', next, {
+				from: id,
+				stake: t.stake,
+				players: seats.length,
+			});
+			return;
+		}
 		if (t.status !== 'open') throw new HttpError(409, 'Esta mesa ya está cerrada.');
 		if (action === 'players') {
 			if (method === 'PUT') {
@@ -328,11 +396,28 @@ export async function rouletteApi({ db, user, path, method, body, send, requireP
 				).run(id, user.id, me.name, me.class, now);
 				return;
 			}
+			// Retiring before the spin. When the host retires, the next player in order hosts
+			// the table; with nobody left it is cancelled.
 			if (method === 'DELETE') {
-				if (owner) throw new HttpError(409, 'Quien abre la mesa no puede salir: cancélala.');
 				db.prepare(
 					'UPDATE roulette_players SET left_at=? WHERE table_id=? AND user_id=? AND left_at IS NULL',
 				).run(now, id, user.id);
+				if (owner) {
+					const heir = db
+						.prepare(
+							'SELECT user_id FROM roulette_players WHERE table_id=? AND left_at IS NULL ORDER BY joined_at,user_id LIMIT 1',
+						)
+						.get(id);
+					if (heir) {
+						db.prepare('UPDATE roulette_tables SET created_by=? WHERE id=?').run(heir.user_id, id);
+						audit(db, user.id, 'roulette.host_changed', id, { to: heir.user_id });
+					} else {
+						db.prepare(
+							"UPDATE roulette_tables SET status='cancelled',closed_at=?,closed_by=? WHERE id=?",
+						).run(now, user.id, id);
+						audit(db, user.id, 'roulette.cancelled', id, { reason: 'empty' });
+					}
+				}
 				return;
 			}
 			throw new HttpError(405, 'Método no permitido.');

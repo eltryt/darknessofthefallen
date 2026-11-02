@@ -63,7 +63,7 @@ const characterDefaults = {
 	stats: '{}',
 };
 const lineupTables = ['raid_lineups', 'raid_lineup_slots', 'raid_callups'];
-// Columns added by migrations 017 and 018; older copies restore them as "never messaged".
+// Columns added by migrations 017 to 019; older copies restore them as "never messaged".
 const rouletteDmDefaults = {
 	dm_status: 'skipped',
 	dm_error: '',
@@ -75,6 +75,7 @@ const rouletteDmDefaults = {
 	loser_dm_attempts: 0,
 	loser_dm_next_at: 0,
 	loser_dm_sent_at: null,
+	rematch_of: null,
 };
 const tablesFor = (version) =>
 	recoveryTables.filter(
@@ -98,7 +99,7 @@ export function exportRecovery(db) {
 	return transaction(db, () => {
 		const snapshot = {
 			schemaVersion: 2,
-			databaseVersion: 18,
+			databaseVersion: 19,
 			exportedAt: new Date().toISOString(),
 			settings: JSON.parse(db.prepare('SELECT data FROM settings WHERE id=1').get().data),
 		};
@@ -112,7 +113,7 @@ export function validateRecovery(snapshot) {
 	if (
 		!snapshot ||
 		snapshot.schemaVersion !== 2 ||
-		![5, 6, 7, 8, 9, 10, 11, 15, 16, 17, 18].includes(snapshot.databaseVersion)
+		![5, 6, 7, 8, 9, 10, 11, 15, 16, 17, 18, 19].includes(snapshot.databaseVersion)
 	)
 		throw new Error('Formato no compatible: descarga una nueva exportación JSON desde el panel.');
 	if (
@@ -168,7 +169,7 @@ export function restoreRecovery(db, snapshot) {
 						? { ...characterDefaults, ...stored }
 						: // Version 15 copies predate the soft delete of migration 016.
 							table === 'roulette_tables' &&
-							  snapshot.databaseVersion < 18 &&
+							  snapshot.databaseVersion < 19 &&
 							  stored &&
 							  typeof stored === 'object'
 							? {

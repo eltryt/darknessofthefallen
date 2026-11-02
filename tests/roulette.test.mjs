@@ -128,7 +128,6 @@ test('members open tables, join, spin and the winner marks the gold as collected
 		);
 		assert.equal(table.canSpin, false);
 		assert.equal((await call('ana', '/api/roulette', 'POST', { stake: 50 })).status, 409);
-		assert.equal((await call('ana', `/api/roulette/${table.id}/players`, 'DELETE')).status, 409);
 		await call('bea', `/api/roulette/${table.id}/players`, 'PUT');
 		await call('cid', `/api/roulette/${table.id}/players`, 'PUT');
 		await call('cid', `/api/roulette/${table.id}/players`, 'DELETE');
@@ -175,6 +174,29 @@ test('members open tables, join, spin and the winner marks the gold as collected
 		const room = (await call('bea', '/api/roulette')).body.watching;
 		assert.ok(['ana', 'bea'].every((id) => room.some((w) => w.id === id)));
 		assert.equal(room.find((w) => w.id === 'ana').name, 'Anaïs');
+		// "Otra ronda": a player reopens the table with the same bet and everyone seated.
+		assert.equal((await call('cid', `/api/roulette/${table.id}/rematch`, 'POST')).status, 403);
+		const again = await call('bea', `/api/roulette/${table.id}/rematch`, 'POST');
+		assert.equal(again.status, 200);
+		const round2 = again.body.open[0];
+		assert.deepEqual(
+			[round2.stake, round2.rematchOf, round2.host.id, round2.players.map((p) => p.id)],
+			[100, table.id, 'bea', ['bea', 'ana']],
+		);
+		assert.equal(again.body.recent[0].rematchId, round2.id);
+		assert.equal((await call('ana', `/api/roulette/${table.id}/rematch`, 'POST')).status, 409);
+		// Retiring: the host's seat passes to the next player; the last one out cancels it.
+		const handed = await call('bea', `/api/roulette/${round2.id}/players`, 'DELETE');
+		assert.deepEqual(
+			[handed.body.open[0].host.id, handed.body.open[0].players.map((p) => p.id)],
+			['ana', ['ana']],
+		);
+		const vacated = await call('ana', `/api/roulette/${round2.id}/players`, 'DELETE');
+		assert.equal(vacated.body.open.length, 0);
+		assert.equal(
+			db.prepare('SELECT status FROM roulette_tables WHERE id=?').get(round2.id).status,
+			'cancelled',
+		);
 		// Officers delete (soft) a table: it leaves the lists and the ranking but stays stored.
 		assert.equal((await call('ana', `/api/roulette/${table.id}`, 'DELETE')).status, 403);
 		const gone = await call('gm', `/api/roulette/${table.id}`, 'DELETE');
@@ -196,7 +218,7 @@ test('members open tables, join, spin and the winner marks the gold as collected
 		await call('gm', `/api/roulette/${big.body.open[0].id}/cancel`, 'POST');
 		assert.equal(
 			db.prepare("SELECT COUNT(*) AS n FROM roulette_tables WHERE status='cancelled'").get().n,
-			1,
+			2,
 		);
 	} finally {
 		server.close();
@@ -208,7 +230,7 @@ test('members open tables, join, spin and the winner marks the gold as collected
 	assert.deepEqual(
 		[counts.roulette_tables, counts.roulette_players, counts.roulette_spins],
 		[
-			2,
+			3,
 			db.prepare('SELECT COUNT(*) AS n FROM roulette_players').get().n,
 			db.prepare('SELECT COUNT(*) AS n FROM roulette_spins').get().n,
 		],

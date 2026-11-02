@@ -192,6 +192,9 @@ export async function mountRoulette(host, ctx) {
 	const icon = {
 		play: svgIcon('<circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l5.5-3.5Z"/>'),
 		check: svgIcon('<path d="m5 12.5 4.5 4.5L19 7.5"/>'),
+		again: svgIcon(
+			'<path d="M4 12a8 8 0 0 1 13.7-5.7L20 8.5"/><path d="M20 4v4.5h-4.5"/><path d="M20 12a8 8 0 0 1-13.7 5.7L4 15.5"/><path d="M4 20v-4.5h4.5"/>',
+		),
 		trash: svgIcon('<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>'),
 	};
 
@@ -220,6 +223,7 @@ export async function mountRoulette(host, ctx) {
 				<p class="roulette-verdict" aria-live="polite" hidden></p>
 				<div class="roulette-actions">
 					<button type="button" class="button secondary" data-skip hidden>Saltar animación</button>
+					<button type="button" class="roulette-again" data-stage-rematch hidden></button>
 					<button type="button" class="roulette-sound" data-sound aria-pressed="false"></button>
 				</div>
 			</div>
@@ -341,7 +345,22 @@ export async function mountRoulette(host, ctx) {
 			.join('');
 	const label = (s) =>
 		s.kind === 'high' ? 'Desempate arriba' : s.kind === 'low' ? 'Desempate abajo' : '';
+	// "Jugar otra vez" under the result: opens the next round, or points at it once open.
+	let shown = null;
+	const renderAgain = () => {
+		const b = $('[data-stage-rematch]'),
+			r = shown && [...data.recent, ...data.pending].find((x) => x.id === shown);
+		const next = r?.rematchId && data.open.find((t) => t.id === r.rematchId);
+		b.hidden = !r || !(next || (r.canRematch && !r.rematchId));
+		if (b.hidden) return;
+		b.dataset.stageRematch = r.id;
+		b.dataset.goto = next ? next.id : '';
+		b.innerHTML = next
+			? `${icon.again}Ir a la nueva ronda`
+			: `${icon.again}Jugar otra vez · misma mesa`;
+	};
 	const finish = (r, fresh) => {
+		shown = r.id;
 		for (const li of results.children) {
 			const won = li.dataset.seat === r.winner?.id,
 				lost = li.dataset.seat === r.loser?.id;
@@ -359,9 +378,13 @@ export async function mountRoulette(host, ctx) {
 		const high = last(r, r.winner?.id),
 			low = last(r, r.loser?.id);
 		verdict.innerHTML = `<span>${name(r.loser)} paga <strong>${gold(r.amount)}</strong> a ${name(r.winner)}</span><small>${name(r.winner)}: casilla ${high?.number} = ${r.high} · ${name(r.loser)}: casilla ${low?.number} = ${r.low} · ${r.high} − ${r.low} = ${r.amount}</small>`;
+		renderAgain();
 	};
 	// Shows a played table: animated the first time it arrives, at once otherwise.
 	async function play(r, animate) {
+		// The button comes back with the result.
+		shown = null;
+		renderAgain();
 		results.innerHTML = seats(r);
 		verdict.hidden = true;
 		scale.textContent = `Valor de las casillas en esta mesa: 0 = 1 · 18 = ${1 + Math.floor((36 * (r.stake - 1) + 36) / 72)} · 36 = ${r.stake} de oro`;
@@ -472,7 +495,10 @@ export async function mountRoulette(host, ctx) {
 						(t) =>
 							/* HTML */ `<article class="roulette-table">
 								<div class="roulette-table-head">
-									<strong>Mesa de ${name(t.host)}</strong>
+									<strong
+										>Mesa de
+										${name(t.host)}${t.rematchOf ? ' <em class="roulette-round">Otra ronda</em>' : ''}</strong
+									>
 									<span
 										>Hasta ${gold(t.stake)} · pago máximo ${gold(t.stake - 1)} · apuntarse es
 										gratis</span
@@ -482,13 +508,20 @@ export async function mountRoulette(host, ctx) {
 									${t.players.map((p) => `<li${p.me ? ' class="is-me"' : ''}>${name(p)}</li>`).join('')}
 								</ul>
 								<div class="roulette-table-foot">
-									<small>${t.players.length}/${data.maxPlayers} jugadores</small>
-									${!t.joined ? `<button type="button" data-join="${esc(t.id)}">Me apunto</button>` : ''}
-									${t.joined && t.host?.id !== data.me ? `<button type="button" class="button secondary" data-leave="${esc(t.id)}">Salir</button>` : ''}
-									${t.canSpin ? `<button type="button" class="roulette-go" data-spin="${esc(t.id)}">¡Girar la ruleta!</button>` : ''}
-									${t.canCancel && !t.canSpin && t.players.length < 2 ? '<small>Hace falta al menos otro jugador.</small>' : ''}
-									${t.canCancel ? `<button type="button" class="link-button" data-cancel="${esc(t.id)}">Cancelar mesa</button>` : ''}
-									${t.canDelete ? `<button type="button" class="roulette-action is-icon is-danger" data-delete="${esc(t.id)}" aria-label="Borrar mesa" title="Borrar mesa">${icon.trash}</button>` : ''}
+									<small
+										>${t.players.length}/${data.maxPlayers}
+										jugadores${t.canCancel && !t.canSpin && t.players.length < 2 ? ' · hace falta al menos otro jugador' : ''}</small
+									>
+									<div class="roulette-table-main">
+										${t.canSpin ? `<button type="button" class="roulette-go" data-spin="${esc(t.id)}">¡Girar la ruleta!</button>` : ''}
+										${!t.joined ? `<button type="button" data-join="${esc(t.id)}">Me apunto</button>` : ''}
+										${t.joined ? `<button type="button" class="button secondary" data-leave="${esc(t.id)}" data-host="${t.host?.id === data.me ? (t.players.find((p) => !p.me)?.name ? esc(t.players.find((p) => !p.me).name) : '-') : ''}">Retirarse</button>` : ''}
+									</div>
+									${
+										t.canCancel || t.canDelete
+											? `<div class="roulette-table-tools">${t.canCancel ? `<button type="button" class="link-button" data-cancel="${esc(t.id)}">Cancelar mesa</button>` : '<span></span>'}${t.canDelete ? `<button type="button" class="roulette-action is-icon is-danger" data-delete="${esc(t.id)}" aria-label="Borrar mesa" title="Borrar mesa">${icon.trash}</button>` : ''}</div>`
+											: ''
+									}
 								</div>
 							</article>`,
 					)
@@ -516,6 +549,7 @@ export async function mountRoulette(host, ctx) {
 					<button type="button" class="roulette-action" data-replay="${esc(r.id)}">
 						${icon.play}Ver tirada
 					</button>
+					${r.canRematch && !r.rematchId ? `<button type="button" class="roulette-action" data-rematch="${esc(r.id)}">${icon.again}Otra ronda</button>` : ''}
 					${r.canDelete ? `<button type="button" class="roulette-action is-icon is-danger" data-delete="${esc(r.id)}" aria-label="Borrar mesa" title="Borrar mesa">${icon.trash}</button>` : ''}
 				</div>
 			</li>`;
@@ -550,6 +584,7 @@ export async function mountRoulette(host, ctx) {
 		renderRoom();
 		renderRisk();
 		renderLists();
+		renderAgain();
 		const fresh = data.recent.filter((r) => !seen.has(r.id)).reverse();
 		for (const r of fresh) {
 			seen.add(r.id);
@@ -602,8 +637,35 @@ export async function mountRoulette(host, ctx) {
 			orbit.getAnimations().forEach((a) => a.finish());
 			ball.getAnimations().forEach((a) => a.finish());
 		} else if (d.join) act(table(d.join) + '/players', 'PUT');
-		else if (d.leave) act(table(d.leave) + '/players', 'DELETE');
-		else if (d.spin) act(table(d.spin) + '/spin', 'POST');
+		else if (d.leave) {
+			// The host retiring hands the table to the next player, or cancels it if alone.
+			const heir = d.host;
+			if (
+				!heir ||
+				confirm(
+					heir === '-'
+						? '¿Retirarte? Eres el único jugador: la mesa se cancela.'
+						: `¿Retirarte? La mesa pasa a ${heir}.`,
+				)
+			)
+				act(table(d.leave) + '/players', 'DELETE');
+		} else if (d.rematch || 'stageRematch' in d) {
+			if (d.goto) {
+				host
+					.querySelector(
+						`[data-join="${CSS.escape(d.goto)}"], [data-leave="${CSS.escape(d.goto)}"]`,
+					)
+					?.closest('.roulette-table')
+					?.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'center' });
+			} else
+				act(table(d.rematch || d.stageRematch) + '/rematch', 'POST').then((ok) => {
+					if (ok)
+						$('.roulette-tables').scrollIntoView({
+							behavior: reduced() ? 'auto' : 'smooth',
+							block: 'center',
+						});
+				});
+		} else if (d.spin) act(table(d.spin) + '/spin', 'POST');
 		else if (d.cancel) {
 			if (confirm('¿Cancelar esta mesa? Nadie pagará nada.'))
 				act(table(d.cancel) + '/cancel', 'POST');
