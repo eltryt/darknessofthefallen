@@ -4,6 +4,7 @@
 // with the section open sees a table's spins as soon as it is played.
 import { classKey } from './roster-ui.js';
 import { tutorialButton } from './tutorials.js';
+import { createSound } from './roulette-sound.js';
 
 // Pocket order on a European wheel, clockwise from the zero.
 export const WHEEL = [
@@ -157,6 +158,7 @@ export async function mountRoulette(host, ctx) {
 	let data = await api('/api/roulette');
 	const seen = new Set(data.recent.map((r) => r.id));
 	const queue = [];
+	const sound = createSound();
 	let playing = false,
 		skip = false,
 		busy = false,
@@ -218,6 +220,7 @@ export async function mountRoulette(host, ctx) {
 				<p class="roulette-verdict" aria-live="polite" hidden></p>
 				<div class="roulette-actions">
 					<button type="button" class="button secondary" data-skip hidden>Saltar animación</button>
+					<button type="button" class="roulette-sound" data-sound aria-pressed="false"></button>
 				</div>
 			</div>
 		</div>
@@ -293,6 +296,7 @@ export async function mountRoulette(host, ctx) {
 	};
 	const spinTo = async (n, ms) => {
 		const next = spinAngles(wheelAngle, ballAngle, n, Math.random() * 360);
+		if (!skip) sound.spin(ms);
 		ball.classList.remove('is-in');
 		hit(null);
 		const frames = [
@@ -351,6 +355,7 @@ export async function mountRoulette(host, ctx) {
 		}
 		verdict.hidden = false;
 		verdict.classList.toggle('is-new', fresh);
+		if (fresh) sound.win();
 		const high = last(r, r.winner?.id),
 			low = last(r, r.loser?.id);
 		verdict.innerHTML = `<span>${name(r.loser)} paga <strong>${gold(r.amount)}</strong> a ${name(r.winner)}</span><small>${name(r.winner)}: casilla ${high?.number} = ${r.high} · ${name(r.loser)}: casilla ${low?.number} = ${r.low} · ${r.high} − ${r.low} = ${r.amount}</small>`;
@@ -409,8 +414,11 @@ export async function mountRoulette(host, ctx) {
 	async function countdown(r, at) {
 		results.innerHTML = seats(r);
 		verdict.hidden = true;
+		let beeped = null;
 		while (Date.now() < at) {
-			now.innerHTML = `¡Mesa de ${gold(r.stake)} en marcha! La bola sale en <strong>${Math.ceil((at - Date.now()) / 1000)}</strong>…`;
+			const left = Math.ceil((at - Date.now()) / 1000);
+			if (left !== beeped) sound.countdown((beeped = left));
+			now.innerHTML = `¡Mesa de ${gold(r.stake)} en marcha! La bola sale en <strong>${left}</strong>…`;
 			await new Promise((done) => setTimeout(done, Math.min(250, at - Date.now())));
 		}
 	}
@@ -569,13 +577,27 @@ export async function mountRoulette(host, ctx) {
 		}
 	};
 
+	// Browsers only play sound after a gesture: any press in the roulette unlocks it.
+	host.addEventListener('pointerdown', () => sound.unlock());
+	const renderSound = () => {
+		const b = $('[data-sound]');
+		b.setAttribute('aria-pressed', String(sound.enabled));
+		b.innerHTML = sound.enabled
+			? '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 9h4l5-4v14l-5-4H4Z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/></svg>Sonido'
+			: '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 9h4l5-4v14l-5-4H4Z"/><path d="m16 9 5 6M21 9l-5 6"/></svg>Silencio';
+		b.title = sound.enabled ? 'Silenciar la ruleta' : 'Activar el sonido de la ruleta';
+	};
 	host.addEventListener('click', (e) => {
 		const b = e.target.closest('button');
 		if (!b) return;
 		const d = b.dataset;
 		const table = (id) => `/api/roulette/${encodeURIComponent(id)}`;
-		if ('skip' in d) {
+		if ('sound' in d) {
+			sound.setEnabled(!sound.enabled);
+			renderSound();
+		} else if ('skip' in d) {
 			skip = true;
+			sound.stop();
 			wheel.getAnimations().forEach((a) => a.finish());
 			orbit.getAnimations().forEach((a) => a.finish());
 			ball.getAnimations().forEach((a) => a.finish());
@@ -619,6 +641,7 @@ export async function mountRoulette(host, ctx) {
 	});
 
 	renderRoom();
+	renderSound();
 	renderRisk();
 	renderLists();
 	await idle();

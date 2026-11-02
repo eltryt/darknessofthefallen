@@ -153,6 +153,7 @@ const files = {
 	'/my-callups.js': ['my-callups.js', 'text/javascript'],
 	'/journey-board.js': ['journey-board.js', 'text/javascript'],
 	'/roulette.js': ['roulette.js', 'text/javascript'],
+	'/roulette-sound.js': ['roulette-sound.js', 'text/javascript'],
 	'/item-catalog.js': ['item-catalog.js', 'text/javascript'],
 	'/profile-tour.js': ['profile-tour.js', 'text/javascript'],
 	'/motion.js': ['motion.js', 'text/javascript'],

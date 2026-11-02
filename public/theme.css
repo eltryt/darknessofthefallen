@@ -9006,3 +9006,30 @@ details[data-create] > .tutorial-open,
 		transform: none;
 	}
 }
+.roulette button.roulette-sound {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	margin-left: auto;
+	padding: 7px 12px;
+	border: 1px solid #ffffff2a;
+	border-radius: 999px;
+	background: #0006;
+	box-shadow: none;
+	color: var(--muted);
+	font-size: 0.82rem;
+	cursor: pointer;
+}
+.roulette button.roulette-sound[aria-pressed='true'] {
+	border-color: #e8c47788;
+	color: #f3dcae;
+}
+.roulette-sound svg {
+	width: 16px;
+	height: 16px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}

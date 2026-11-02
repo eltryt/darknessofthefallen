@@ -120,6 +120,7 @@ try {
 		'my-callups.js',
 		'journey-board.js',
 		'roulette.js',
+		'roulette-sound.js',
 		'item-catalog.js',
 		'profile-tour.js',
 		'motion.js',
