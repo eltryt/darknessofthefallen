@@ -89,6 +89,7 @@ const tutorialVideos = [
 	'crear-convocatoria',
 	'alineacion',
 	'botin',
+	'ruleta',
 ];
 const files = {
 	'/assets/art/strategy.webp': ['assets/art/strategy.webp', 'image/webp'],

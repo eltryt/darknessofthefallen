@@ -16,6 +16,7 @@ const tutorials = [
 	},
 	{ id: 'convocatorias', groups: ['miembros'], title: 'Apúntate a una raid', seconds: 34 },
 	{ id: 'logros', groups: ['miembros'], title: 'Logros y Camino al 60', seconds: 31 },
+	{ id: 'ruleta', groups: ['miembros'], title: 'La ruleta de la hermandad', seconds: 102 },
 	{ id: 'candidatura', groups: ['nuevos'], title: 'Únete a la hermandad', seconds: 47 },
 	{ id: 'crear-convocatoria', groups: ['oficiales'], title: 'Crear una convocatoria', seconds: 44 },
 	{ id: 'alineacion', groups: ['oficiales'], title: 'Alineación y aviso por Discord', seconds: 33 },

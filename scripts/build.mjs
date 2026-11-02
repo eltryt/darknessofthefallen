@@ -112,6 +112,8 @@ try {
 		'assets/tutorials/alineacion.webp',
 		'assets/tutorials/botin.mp4',
 		'assets/tutorials/botin.webp',
+		'assets/tutorials/ruleta.mp4',
+		'assets/tutorials/ruleta.webp',
 		'roster-ui.js',
 		'wishlist-ui.js',
 		'sheet-parts.js',

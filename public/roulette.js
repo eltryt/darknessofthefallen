@@ -3,6 +3,7 @@
 // ball runs the other way and drops into the pocket, one player after another. Everyone
 // with the section open sees a table's spins as soon as it is played.
 import { classKey } from './roster-ui.js';
+import { tutorialButton } from './tutorials.js';
 
 // Pocket order on a European wheel, clockwise from the zero.
 export const WHEEL = [
@@ -190,6 +191,7 @@ export async function mountRoulette(host, ctx) {
 					anterior.
 				</p>
 			</div>
+			${tutorialButton('ruleta', 'Ver tutorial en vídeo')}
 		</header>
 		<div class="roulette-stage">
 			<div class="roulette-wheel-wrap">${wheelSvg()}</div>

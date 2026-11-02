@@ -8174,6 +8174,13 @@ details[data-create] > .tutorial-open,
 	display: grid;
 	gap: 20px;
 }
+.roulette-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: start;
+	justify-content: space-between;
+	gap: 12px 20px;
+}
 .roulette-head h2 {
 	margin: 0 0 6px;
 }
