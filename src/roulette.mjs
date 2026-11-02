@@ -1,8 +1,10 @@
 // Ruleta de la hermandad: the High-Low gold game ("gambling") on a European roulette.
-// Everyone at a table spins; the lowest number pays the highest the bet minus that number
-// (a 5 at a 100-gold table pays 95). Players in between neither pay nor collect, and nobody
-// pays to sit down. Ties at the top or the bottom spin again among the tied players.
-// The server draws every number, so nobody can repeat a spin. Gold is paid in the game:
+// A table has a maximum value M in gold. Each pocket r (0–36) is worth
+// 1 + round(r × (M − 1) / 36) gold, so the 0 is 1 and the 36 is M. The highest result
+// wins and the lowest pays the difference between the two; players in between neither pay
+// nor collect, and nobody pays to sit down. Tied players at the top or the bottom spin
+// again and their new result replaces the old one; then everyone is compared again.
+// The server draws every pocket, so nobody can repeat a spin. Gold is paid in the game:
 // the web records who owes whom and the winner marks it as collected.
 import { randomUUID } from 'node:crypto';
 import { HttpError, can } from './domain.mjs';
@@ -11,14 +13,16 @@ import { audit, settings, transaction } from './database-core.mjs';
 export const POCKETS = 37;
 export const DEFAULT_MAX_BET = 1000;
 export const MAX_PLAYERS = 40;
+export const MIN_BET = 2;
 const RECENT = 12;
-const MAX_ROUNDS = 200;
+const MAX_ROUNDS = 5000;
 
-// The lowest number is at most 35 (the highest is above it), so a bet of 36 or more always
-// leaves something to pay; a 0 pays the whole bet.
-export const MIN_BET = POCKETS - 1;
-export const payout = (stake, low) => stake - low;
 export const maxBet = (s) => s.rouletteMaxBet ?? DEFAULT_MAX_BET;
+// The gold a pocket is worth at a table of value M, rounding halves up (in integers).
+export const rollOf = (pocket, M) =>
+	1 + Math.floor((2 * pocket * (M - 1) + (POCKETS - 1)) / (2 * (POCKETS - 1)));
+// Middle players need a value strictly between the highest and the lowest.
+export const playable = (players, M) => players === 2 || Math.min(M, POCKETS) >= 3;
 
 // A uniform pocket 0–36: rejection sampling keeps every number equally likely.
 export function spinNumber() {
@@ -29,37 +33,45 @@ export function spinNumber() {
 	}
 }
 
-// Plays a whole table for the given player ids, in order. Returns every spin in sequence,
-// the winner and loser after tie-breaks, and the first decisive round's high and low.
-export function playTable(players, random = spinNumber) {
-	const spins = [];
+// Plays a whole table of value M for the given player ids, in order. Returns every spin in
+// sequence (pocket and its gold), the winner and loser, and their final results.
+export function playTable(players, M, random = spinNumber) {
+	const spins = [],
+		current = new Map();
 	let round = 0;
-	const roll = (ids, kind) => {
+	const roll = (ids, kindOf) => {
 		if (++round > MAX_ROUNDS) throw new Error('Demasiados empates seguidos.');
-		return ids.map((userId) => {
-			const number = random();
-			spins.push({ seq: spins.length + 1, round, kind, userId, number });
-			return { userId, number };
-		});
-	};
-	const extreme = (rolls, pick) => pick(...rolls.map((r) => r.number));
-	let main = roll(players, 'main');
-	// Everyone on the same number decides nothing: the whole table spins again.
-	while (extreme(main, Math.max) === extreme(main, Math.min)) main = roll(players, 'main');
-	const high = extreme(main, Math.max),
-		low = extreme(main, Math.min);
-	const breakTie = (value, kind, pick) => {
-		let tied = main.filter((r) => r.number === value).map((r) => r.userId);
-		while (tied.length > 1) {
-			const rolls = roll(tied, kind),
-				best = extreme(rolls, pick);
-			tied = rolls.filter((r) => r.number === best).map((r) => r.userId);
+		for (const userId of ids) {
+			const number = random(),
+				value = rollOf(number, M);
+			spins.push({
+				seq: spins.length + 1,
+				round,
+				kind: kindOf(userId),
+				userId,
+				number,
+				roll: value,
+			});
+			current.set(userId, value);
 		}
-		return tied[0];
 	};
-	const winner = breakTie(high, 'high', Math.max),
-		loser = breakTie(low, 'low', Math.min);
-	return { spins, winner, loser, high, low };
+	roll(players, () => 'main');
+	for (;;) {
+		const values = [...current.values()],
+			high = Math.max(...values),
+			low = Math.min(...values);
+		// Everyone on the same result decides nothing: the whole table spins again.
+		if (high === low) {
+			roll(players, () => 'main');
+			continue;
+		}
+		const top = players.filter((id) => current.get(id) === high),
+			bottom = players.filter((id) => current.get(id) === low);
+		if (top.length === 1 && bottom.length === 1)
+			return { spins, winner: top[0], loser: bottom[0], high, low };
+		const tied = [...(top.length > 1 ? top : []), ...(bottom.length > 1 ? bottom : [])];
+		roll(tied, (id) => (current.get(id) === high ? 'high' : 'low'));
+	}
 }
 
 // The name shown at the table: the main character, else any active one, else the account.
@@ -113,7 +125,8 @@ function tableState(db, user) {
 				.prepare(
 					'SELECT seq,round,kind,user_id AS userId,number FROM roulette_spins WHERE table_id=? ORDER BY seq',
 				)
-				.all(t.id),
+				.all(t.id)
+				.map((x) => ({ ...x, roll: rollOf(x.number, t.stake) })),
 			winner: person(players, t.winner_id),
 			loser: person(players, t.loser_id),
 			high: t.high,
@@ -190,12 +203,8 @@ export async function rouletteApi({ db, user, path, method, body, send, requireP
 			stake = Number(v?.stake),
 			limit = maxBet(settings(db));
 		if (!Number.isInteger(stake) || stake < MIN_BET)
-			throw new HttpError(
-				400,
-				`La apuesta mínima es ${MIN_BET} de oro (el número más alto de la ruleta).`,
-			);
-		if (stake > limit)
-			throw new HttpError(400, `La apuesta máxima de la hermandad es ${limit} de oro.`);
+			throw new HttpError(400, `El valor de la mesa debe ser un entero de ${MIN_BET} o más.`);
+		if (stake > limit) throw new HttpError(400, `El valor máximo de una mesa es ${limit} de oro.`);
 		const id = randomUUID(),
 			now = new Date().toISOString(),
 			me = seat(db, user);
@@ -305,14 +314,13 @@ export async function rouletteApi({ db, user, path, method, body, send, requireP
 			.all(id)
 			.map((p) => p.user_id);
 		if (players.length < 2) throw new HttpError(409, 'Hacen falta al menos dos jugadores.');
-		// Tables opened before the minimum existed could otherwise owe negative gold.
-		if (t.stake < MIN_BET)
+		if (!playable(players.length, t.stake))
 			throw new HttpError(
 				409,
-				`La apuesta es menor que el mínimo (${MIN_BET}): cancela la mesa y abre otra.`,
+				'Con 3 o más jugadores la mesa debe valer al menos 3 de oro: si no, siempre hay empate.',
 			);
-		const game = playTable(players),
-			amount = payout(t.stake, game.low);
+		const game = playTable(players, t.stake),
+			amount = game.high - game.low;
 		const insert = db.prepare(
 			'INSERT INTO roulette_spins(table_id,seq,round,kind,user_id,number) VALUES(?,?,?,?,?,?)',
 		);

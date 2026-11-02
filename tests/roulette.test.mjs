@@ -4,7 +4,7 @@ import { createServer } from 'node:http';
 import { openDatabase } from '../src/db.mjs';
 import { createApp } from '../src/app.mjs';
 import { issueSession } from '../src/auth.mjs';
-import { playTable, spinNumber } from '../src/roulette.mjs';
+import { playTable, playable, rollOf, spinNumber } from '../src/roulette.mjs';
 import { exportRecovery, restoreRecovery } from '../src/recovery.mjs';
 
 const ORIGIN = 'http://localhost:3000';
@@ -13,33 +13,61 @@ const sequence =
 	() =>
 		numbers.shift();
 
-test('the lowest number pays the highest, and ties spin again among the tied', () => {
-	const plain = playTable(['a', 'b', 'c'], sequence(30, 4, 17));
-	assert.deepEqual([plain.winner, plain.loser, plain.high, plain.low], ['a', 'b', 30, 4]);
-	assert.equal(plain.spins.length, 3);
-	// a and c tie at the top; b and d at the bottom.
-	const tied = playTable(['a', 'b', 'c', 'd'], sequence(20, 3, 20, 3, 8, 12, 5, 1));
-	assert.deepEqual([tied.winner, tied.loser, tied.high, tied.low], ['c', 'd', 20, 3]);
+test('each pocket is worth 1 to M gold, rounding halves up', () => {
 	assert.deepEqual(
-		tied.spins.slice(4).map((s) => [s.kind, s.userId, s.number]),
-		[
-			['high', 'a', 8],
-			['high', 'c', 12],
-			['low', 'b', 5],
-			['low', 'd', 1],
-		],
+		[0, 18, 36].map((r) => rollOf(r, 100)),
+		[1, 51, 100],
 	);
-	// Everyone on the same number: the whole table spins again.
-	const again = playTable(['a', 'b'], sequence(7, 7, 0, 36));
-	assert.deepEqual([again.winner, again.loser, again.high, again.low], ['b', 'a', 36, 0]);
+	// 17 × 1 / 36 rounds down, 18 × 1 / 36 is a half and rounds up.
 	assert.deepEqual(
-		again.spins.map((s) => s.round),
+		[0, 17, 18, 36].map((r) => rollOf(r, 2)),
 		[1, 1, 2, 2],
 	);
+	assert.equal(rollOf(36, 1000), 1000);
 	for (let i = 0; i < 2000; i++) {
 		const n = spinNumber();
 		assert.ok(Number.isInteger(n) && n >= 0 && n <= 36);
 	}
+});
+
+test('the lowest result pays the highest the difference; ties replace results', () => {
+	// Pockets 29 → 81, 11 → 31, 18 → 51 at a table of 100.
+	const plain = playTable(['a', 'b', 'c'], 100, sequence(29, 11, 18));
+	assert.deepEqual([plain.winner, plain.loser, plain.high, plain.low], ['a', 'b', 81, 31]);
+	assert.equal(plain.spins.length, 3);
+	// a and b tie at 100. Their new spins (1 and 51) replace the old results, so a now ties
+	// c at the bottom; a's next spin (100) wins and c's (pocket 9 → 26) loses.
+	const tied = playTable(['a', 'b', 'c'], 100, sequence(36, 36, 0, 0, 18, 36, 9));
+	assert.deepEqual([tied.winner, tied.loser, tied.high, tied.low], ['a', 'c', 100, 26]);
+	assert.deepEqual(
+		tied.spins.slice(3).map((s) => [s.round, s.kind, s.userId, s.roll]),
+		[
+			[2, 'high', 'a', 1],
+			[2, 'high', 'b', 51],
+			[3, 'low', 'a', 100],
+			[3, 'low', 'c', 26],
+		],
+	);
+	// Everyone on the same result: the whole table spins again, never a zero payment.
+	const again = playTable(['a', 'b'], 100, sequence(7, 7, 0, 36));
+	assert.deepEqual([again.winner, again.loser, again.high, again.low], ['b', 'a', 100, 1]);
+	assert.deepEqual(
+		again.spins.map((s) => s.round),
+		[1, 1, 2, 2],
+	);
+	// Different pockets worth the same gold are a tie: at a table of 2, pockets 0 and 17 are 1.
+	const small = playTable(['a', 'b'], 2, sequence(0, 17, 36, 0));
+	assert.deepEqual([small.winner, small.loser, small.high - small.low], ['a', 'b', 1]);
+	// Big tables always end with one winner and one loser, paying at most M − 1.
+	for (const M of [3, 100]) {
+		const g = playTable(
+			Array.from({ length: 40 }, (_, i) => 'p' + i),
+			M,
+		);
+		assert.ok(g.winner !== g.loser && g.high - g.low >= 1 && g.high - g.low <= M - 1);
+	}
+	assert.equal(playable(3, 2), false);
+	assert.equal(playable(2, 2), true);
 });
 
 test('members open tables, join, spin and the winner marks the gold as collected', async () => {
@@ -80,9 +108,9 @@ test('members open tables, join, spin and the winner marks the gold as collected
 		const empty = await call('ana', '/api/roulette');
 		assert.equal(empty.body.maxBet, 1000);
 		assert.equal(empty.body.canConfigure, false);
-		// Over the default limit of 1000 gold, and under the minimum of 36.
+		// Over the default limit of 1000 gold, and under the minimum of 2.
 		assert.equal((await call('ana', '/api/roulette', 'POST', { stake: 1001 })).status, 400);
-		assert.equal((await call('ana', '/api/roulette', 'POST', { stake: 35 })).status, 400);
+		assert.equal((await call('ana', '/api/roulette', 'POST', { stake: 1 })).status, 400);
 		const opened = await call('ana', '/api/roulette', 'POST', { stake: 100 });
 		assert.equal(opened.status, 201);
 		const table = opened.body.open[0];
@@ -103,8 +131,9 @@ test('members open tables, join, spin and the winner marks the gold as collected
 		const [result] = spun.body.recent;
 		assert.deepEqual(result.players.map((p) => p.id).sort(), ['ana', 'bea']);
 		assert.ok(result.spins.length >= 2);
-		// The lowest pays the bet minus their number; nobody else pays.
-		assert.equal(result.amount, 100 - result.low);
+		// The lowest pays the highest the difference between their results.
+		assert.equal(result.amount, result.high - result.low);
+		assert.ok(result.low >= 1 && result.high <= 100);
 		assert.ok(result.high > result.low);
 		assert.notEqual(result.winner.id, result.loser.id);
 		assert.equal(spun.body.pending.length, 1);

@@ -85,7 +85,9 @@ export async function mountRoulette(host, ctx) {
 
 	const name = (p) =>
 		p ? `<span class="roulette-name class-${classKey(p.class)}">${esc(p.name)}</span>` : 'Alguien';
-	const chip = (n, extra = '') => `<b class="roulette-chip is-${colorOf(n)}${extra}">${n}</b>`;
+	// A result: its gold value, in the colour of the pocket it came from.
+	const chip = (s, extra = '') =>
+		`<b class="roulette-chip is-${colorOf(s.number)}${extra}" title="Casilla ${s.number} → ${s.roll} de oro">${s.roll}</b>`;
 
 	host.innerHTML = /* HTML */ `<div class="roulette">
 		<header class="roulette-head">
@@ -93,10 +95,11 @@ export async function mountRoulette(host, ctx) {
 				<span class="eyebrow">Casino de la hermandad</span>
 				<h2>Ruleta</h2>
 				<p>
-					Cada jugador de la mesa gira la ruleta una vez. Quien saca el número más bajo paga al que
-					saca el más alto la apuesta menos su número: en una mesa de 100 de oro, un 5 paga 95. Los
-					del medio ni pagan ni cobran, y apuntarse no cuesta nada. Si hay empate arriba o abajo,
-					solo los empatados vuelven a girar.
+					Cada mesa tiene un valor máximo en oro y cada casilla vale de 1 (el 0) a ese máximo (el
+					36). Quien saca el resultado más bajo paga al más alto la diferencia: en una mesa de 100,
+					un 80 y un 30 son 50 de oro. Los del medio ni pagan ni cobran, y apuntarse es gratis. Si
+					hay empate arriba o abajo, los empatados vuelven a tirar y su nueva tirada sustituye a la
+					anterior.
 				</p>
 			</div>
 		</header>
@@ -115,7 +118,7 @@ export async function mountRoulette(host, ctx) {
 			<h3 id="roulette-open-title">Mesas abiertas</h3>
 			<form class="roulette-new">
 				<label
-					>Apuesta (oro)
+					>Valor máximo (oro)
 					<input name="stake" type="number" step="1" required inputmode="numeric" />
 				</label>
 				<p class="roulette-risk" aria-live="polite"></p>
@@ -127,10 +130,10 @@ export async function mountRoulette(host, ctx) {
 		${
 			data.canConfigure
 				? /* HTML */ `<details class="roulette-config">
-						<summary>Apuesta máxima (GM)</summary>
+						<summary>Valor máximo permitido (GM)</summary>
 						<form class="roulette-limit">
 							<label
-								>Apuesta máxima por mesa, en oro
+								>Valor máximo que puede tener una mesa, en oro
 								<input
 									name="maxBet"
 									type="number"
@@ -233,18 +236,20 @@ export async function mountRoulette(host, ctx) {
 		}
 		verdict.hidden = false;
 		verdict.classList.toggle('is-new', fresh);
-		verdict.innerHTML = `<span>${name(r.loser)} paga <strong>${gold(r.amount)}</strong> a ${name(r.winner)}</span><small>Sacó un ${r.low}: ${r.stake} − ${r.low} = ${r.amount}</small>`;
+		verdict.innerHTML = `<span>${name(r.loser)} paga <strong>${gold(r.amount)}</strong> a ${name(r.winner)}</span><small>${r.high} − ${r.low} = ${r.amount}</small>`;
 	};
 	// Shows a played table: animated the first time it arrives, at once otherwise.
 	async function play(r, animate) {
 		results.innerHTML = seats(r);
 		verdict.hidden = true;
 		const rounds = new Set(r.spins.map((s) => s.round)).size;
-		now.textContent = `Mesa de ${gold(r.stake)} · ${r.players.length} jugadores${rounds > 1 ? ' · con desempates' : ''}`;
+		now.textContent = `Mesa de hasta ${gold(r.stake)} · ${r.players.length} jugadores${rounds > 1 ? ' · con desempates' : ''}`;
 		const quick = !animate || reduced();
 		skip = quick;
 		skipButton.hidden = quick;
-		const ms = Math.min(4200, Math.max(1800, 30000 / r.spins.length));
+		// Long tie-breaks speed up so a big table still ends in under a minute or so.
+		const ms = Math.min(4200, Math.max(700, 30000 / r.spins.length)),
+			pause = Math.min(900, ms / 3);
 		for (const s of r.spins) {
 			const seat = results.querySelector(`[data-seat="${CSS.escape(s.userId)}"]`),
 				player = r.players.find((p) => p.id === s.userId);
@@ -254,16 +259,27 @@ export async function mountRoulette(host, ctx) {
 				await spinTo(s.number, ms);
 				seat?.classList.remove('is-turn');
 			}
+			seat?.querySelector('.roulette-rolls');
+			// A new spin replaces the player's previous result.
+			seat?.querySelectorAll('.roulette-chip').forEach((c) => c.classList.add('is-old'));
 			seat
 				?.querySelector('.roulette-rolls')
-				.insertAdjacentHTML('beforeend', chip(s.number, s.kind === 'main' ? '' : ' is-tie'));
-			// A moment to read the number before the next player spins.
-			if (!skip) await new Promise((done) => setTimeout(done, 900));
+				.insertAdjacentHTML('beforeend', chip(s, s.kind === 'main' ? '' : ' is-tie'));
+			if (!skip) {
+				now.innerHTML = `${name(player)} · casilla ${s.number} → <strong>${gold(s.roll)}</strong>`;
+				// A moment to read the result before the next player spins.
+				await new Promise((done) => setTimeout(done, pause));
+			}
 		}
 		// Shown at once, the ball rests on the winning number.
-		if (skip) settle(quick ? r.high : r.spins.at(-1).number);
+		if (skip)
+			settle(
+				quick
+					? (r.spins.findLast((s) => s.userId === r.winner?.id)?.number ?? 0)
+					: r.spins.at(-1).number,
+			);
 		skipButton.hidden = true;
-		now.textContent = `Mesa del ${when(r.closedAt)} · apuesta de ${gold(r.stake)}`;
+		now.textContent = `Mesa del ${when(r.closedAt)} · hasta ${gold(r.stake)}`;
 		finish(r, !quick);
 	}
 	async function drain() {
@@ -289,8 +305,8 @@ export async function mountRoulette(host, ctx) {
 		form.elements.stake.max = data.maxBet;
 		risk.innerHTML =
 			Number.isInteger(stake) && stake >= data.minBet
-				? `Quien pierda pagará entre <strong>${gold(stake - (data.minBet - 1))}</strong> y <strong>${gold(stake)}</strong> (con un 0). Apuesta de ${data.minBet} a ${data.maxBet} de oro.`
-				: `Apuesta de ${data.minBet} a ${data.maxBet} de oro.`;
+				? `Cada casilla vale de 1 a ${gold(stake)}; como mucho se pagan <strong>${gold(stake - 1)}</strong>. Valor de ${data.minBet} a ${data.maxBet} de oro.`
+				: `Valor de ${data.minBet} a ${data.maxBet} de oro.`;
 	};
 	form.elements.stake.value = Math.min(100, data.maxBet);
 	form.elements.stake.addEventListener('input', renderRisk);
@@ -306,7 +322,10 @@ export async function mountRoulette(host, ctx) {
 							/* HTML */ `<article class="roulette-table">
 								<div class="roulette-table-head">
 									<strong>Mesa de ${name(t.host)}</strong>
-									<span>Apuesta de ${gold(t.stake)} · apuntarse es gratis</span>
+									<span
+										>Hasta ${gold(t.stake)} · pago máximo ${gold(t.stake - 1)} · apuntarse es
+										gratis</span
+									>
 								</div>
 								<ul class="roulette-seats" aria-label="Jugadores apuntados">
 									${t.players.map((p) => `<li${p.me ? ' class="is-me"' : ''}>${name(p)}</li>`).join('')}

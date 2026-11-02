@@ -8338,9 +8338,9 @@ details[data-create] > .tutorial-open,
 	place-items: center;
 	min-width: 28px;
 	height: 28px;
-	padding: 0 4px;
+	padding: 0 6px;
 	border: 2px solid #c9a45c;
-	border-radius: 50%;
+	border-radius: 999px;
 	color: #fff;
 	font:
 		700 0.85rem Georgia,
@@ -8354,6 +8354,10 @@ details[data-create] > .tutorial-open,
 }
 .roulette-chip.is-green {
 	background: #0f7a43;
+}
+.roulette-chip.is-old {
+	opacity: 0.4;
+	text-decoration: line-through;
 }
 .roulette-chip.is-tie {
 	border-style: dashed;
