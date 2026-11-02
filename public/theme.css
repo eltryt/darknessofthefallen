@@ -9097,3 +9097,125 @@ details[data-create] > .tutorial-open,
 		grid-template-columns: minmax(0, 1fr);
 	}
 }
+/* Roulette: open tables next to the room chat. */
+.roulette-social {
+	display: grid;
+	grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+	align-items: start;
+	gap: 20px;
+}
+.roulette-chat {
+	display: grid;
+	grid-template-rows: auto 1fr auto;
+	gap: 10px;
+	position: sticky;
+	top: 80px;
+	padding: 14px;
+	border: 1px solid #1f5a3a;
+	border-radius: 12px;
+	background: linear-gradient(180deg, #11291d, #0c1712);
+}
+.roulette-chat-log {
+	display: grid;
+	align-content: start;
+	gap: 8px;
+	height: 340px;
+	margin: 0;
+	padding: 0 4px 0 0;
+	overflow-y: auto;
+	list-style: none;
+	overscroll-behavior: contain;
+}
+.roulette-chat-log li {
+	padding: 7px 10px;
+	border-radius: 10px;
+	background: #0007;
+}
+.roulette-chat-log li.is-me {
+	background: #e8c47714;
+}
+.roulette-chat-log li.is-new {
+	animation: roulette-chat-in 0.3s ease-out;
+}
+@keyframes roulette-chat-in {
+	from {
+		opacity: 0;
+		transform: translateY(6px);
+	}
+}
+.roulette-chat-meta {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 0.82rem;
+}
+.roulette-chat-meta time {
+	color: var(--muted);
+	font-size: 0.75rem;
+}
+.roulette-chat-log p {
+	margin: 2px 0 0;
+	overflow-wrap: anywhere;
+	font-size: 0.92rem;
+}
+.roulette-chat-empty {
+	color: var(--muted);
+	font-style: italic;
+	text-align: center;
+	background: none !important;
+}
+.roulette button.roulette-chat-x {
+	min-height: 0;
+	margin-left: auto;
+	padding: 0 6px;
+	border: 0;
+	background: none;
+	box-shadow: none;
+	color: var(--muted);
+	font-size: 1rem;
+	line-height: 1;
+	cursor: pointer;
+}
+.roulette button.roulette-chat-x:hover {
+	color: #ef8a98;
+}
+.roulette-chat-form {
+	display: flex;
+	gap: 8px;
+}
+.roulette-chat-form input {
+	flex: 1;
+	min-width: 0;
+}
+.roulette-chat-form button {
+	display: grid;
+	place-items: center;
+	padding: 0 14px;
+	background: linear-gradient(180deg, #e8c477, #b08433);
+	color: #241405;
+}
+.roulette-chat-form svg {
+	width: 18px;
+	height: 18px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+@media (max-width: 960px) {
+	.roulette-social {
+		grid-template-columns: minmax(0, 1fr);
+	}
+	.roulette-chat {
+		position: static;
+	}
+	.roulette-chat-log {
+		height: 260px;
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.roulette-chat-log li.is-new {
+		animation: none;
+	}
+}

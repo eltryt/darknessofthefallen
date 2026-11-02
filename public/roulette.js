@@ -228,18 +228,39 @@ export async function mountRoulette(host, ctx) {
 				</div>
 			</div>
 		</div>
-		<section class="roulette-open" aria-labelledby="roulette-open-title">
-			<h3 id="roulette-open-title">Mesas abiertas</h3>
-			<form class="roulette-new">
-				<label
-					>Valor máximo (oro)
-					<input name="stake" type="number" step="1" required inputmode="numeric" />
-				</label>
-				<p class="roulette-risk" aria-live="polite"></p>
-				<button type="submit">Abrir mesa</button>
-			</form>
-			<div class="roulette-tables"></div>
-		</section>
+		<div class="roulette-social">
+			<section class="roulette-open" aria-labelledby="roulette-open-title">
+				<h3 id="roulette-open-title">Mesas abiertas</h3>
+				<form class="roulette-new">
+					<label
+						>Valor máximo (oro)
+						<input name="stake" type="number" step="1" required inputmode="numeric" />
+					</label>
+					<p class="roulette-risk" aria-live="polite"></p>
+					<button type="submit">Abrir mesa</button>
+				</form>
+				<div class="roulette-tables"></div>
+			</section>
+			<section class="roulette-chat" aria-labelledby="roulette-chat-title">
+				<h3 id="roulette-chat-title">Chat de la sala</h3>
+				<ol class="roulette-chat-log" aria-live="polite"></ol>
+				<form class="roulette-chat-form">
+					<input
+						name="body"
+						maxlength="300"
+						autocomplete="off"
+						placeholder="Escribe a la sala…"
+						aria-label="Mensaje para la sala"
+					/>
+					<button type="submit" aria-label="Enviar">
+						<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+							<path d="M4 12 20 4l-6 16-3-7Z" />
+							<path d="m11 13 9-9" />
+						</svg>
+					</button>
+				</form>
+			</section>
+		</div>
 		<div class="roulette-lists"></div>
 		${
 			data.canConfigure
@@ -585,6 +606,7 @@ export async function mountRoulette(host, ctx) {
 		renderRisk();
 		renderLists();
 		renderAgain();
+		renderChat();
 		const fresh = data.recent.filter((r) => !seen.has(r.id)).reverse();
 		for (const r of fresh) {
 			seen.add(r.id);
@@ -671,6 +693,7 @@ export async function mountRoulette(host, ctx) {
 				act(table(d.cancel) + '/cancel', 'POST');
 		} else if (d.settle) act(table(d.settle) + '/settled', 'PUT');
 		else if (d.unsettle) act(table(d.unsettle) + '/settled', 'DELETE');
+		else if (d.chatDelete) act('/api/roulette/chat/' + encodeURIComponent(d.chatDelete), 'DELETE');
 		else if (d.delete) {
 			if (
 				confirm(
@@ -690,6 +713,43 @@ export async function mountRoulette(host, ctx) {
 			}
 		}
 	});
+	// Chat: sent with Enter or the button; the log follows new messages unless the reader
+	// has scrolled up to read older ones.
+	let chatKey = '';
+	function renderChat() {
+		const list = data.chat || [],
+			key = list.map((m) => m.id).join(',');
+		if (key === chatKey) return;
+		const log = $('.roulette-chat-log'),
+			follow = !chatKey || log.scrollHeight - log.scrollTop - log.clientHeight < 40,
+			before = chatKey.split(',').filter(Boolean);
+		chatKey = key;
+		log.innerHTML = list.length
+			? list
+					.map(
+						(m) =>
+							`<li class="${m.me ? 'is-me' : ''}${before.length && !before.includes(String(m.id)) ? ' is-new' : ''}"><span class="roulette-chat-meta">${name(m)}<time datetime="${esc(m.at)}">${new Date(m.at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</time>${m.canDelete ? `<button type="button" class="roulette-chat-x" data-chat-delete="${m.id}" aria-label="Borrar mensaje" title="Borrar mensaje">×</button>` : ''}</span><p>${esc(m.body)}</p></li>`,
+					)
+					.join('')
+			: '<li class="roulette-chat-empty">Nadie ha escrito todavía. ¡Rompe el hielo!</li>';
+		if (follow) log.scrollTop = log.scrollHeight;
+	}
+	const chatForm = $('.roulette-chat-form');
+	chatForm.addEventListener('submit', async (e) => {
+		e.preventDefault();
+		const input = chatForm.elements.body,
+			text = input.value.trim();
+		if (!text) return;
+		input.disabled = true;
+		const ok = await act('/api/roulette/chat', 'POST', { body: text });
+		input.disabled = false;
+		if (ok) {
+			input.value = '';
+			const log = $('.roulette-chat-log');
+			log.scrollTop = log.scrollHeight;
+		}
+		input.focus();
+	});
 	form.addEventListener('submit', (e) => {
 		e.preventDefault();
 		act('/api/roulette', 'POST', { stake: Number(form.elements.stake.value) });
@@ -703,6 +763,7 @@ export async function mountRoulette(host, ctx) {
 	});
 
 	renderRoom();
+	renderChat();
 	renderSound();
 	renderRisk();
 	renderLists();

@@ -336,3 +336,74 @@ test('private messages wait for the animation to end plus a margin', () => {
 	assert.equal(revealDelay(60), Math.round(4000 + 60 * (700 + 700 / 3) + 10000));
 	assert.ok(revealDelay(2) >= 15000);
 });
+
+test('the roulette room has a chat: short messages, one per second, removable', async () => {
+	const db = openDatabase(':memory:');
+	const now = new Date().toISOString();
+	const user = (id, rank) => {
+		db.prepare('INSERT INTO users VALUES(?,?,?,?)').run(id, id, rank, now);
+		return issueSession(db, id);
+	};
+	const sessions = {
+		ana: user('ana', 'member'),
+		bea: user('bea', 'member'),
+		gm: user('gm', 'officer'),
+		vis: user('vis', 'visitor'),
+	};
+	db.prepare(
+		'INSERT INTO characters(id,user_id,name,class,role,is_main,created_at) VALUES(?,?,?,?,?,?,?)',
+	).run('c1', 'ana', 'Anaïs', 'Mago', 'DPS distancia', 1, now);
+	const server = createServer(createApp(db, { APP_ORIGIN: ORIGIN }));
+	await new Promise((r) => server.listen(0, '127.0.0.1', r));
+	const call = async (who, path, method = 'GET', value) => {
+		const s = sessions[who];
+		const r = await fetch(`http://127.0.0.1:${server.address().port}${path}`, {
+			method,
+			headers: {
+				Cookie: `session=${s.raw}`,
+				'X-CSRF-Token': s.csrf,
+				Origin: ORIGIN,
+				'Content-Type': 'application/json',
+			},
+			...(value !== undefined ? { body: JSON.stringify(value) } : {}),
+		});
+		return { status: r.status, body: await r.json() };
+	};
+	try {
+		assert.equal((await call('vis', '/api/roulette/chat', 'POST', { body: 'hola' })).status, 403);
+		assert.equal((await call('ana', '/api/roulette/chat', 'POST', { body: '   ' })).status, 400);
+		assert.equal(
+			(await call('ana', '/api/roulette/chat', 'POST', { body: 'x'.repeat(301) })).status,
+			400,
+		);
+		const sent = await call('ana', '/api/roulette/chat', 'POST', {
+			body: '  ¡Suerte\n a todos!  ',
+		});
+		assert.equal(sent.status, 201);
+		assert.deepEqual(
+			sent.body.chat.map((m) => [m.name, m.class, m.body, m.me]),
+			[['Anaïs', 'Mago', '¡Suerte a todos!', true]],
+		);
+		// One message per second per player.
+		assert.equal((await call('ana', '/api/roulette/chat', 'POST', { body: 'otra' })).status, 429);
+		await call('bea', '/api/roulette/chat', 'POST', { body: '<b>hola</b>' });
+		const seen = (await call('bea', '/api/roulette')).body.chat;
+		assert.deepEqual(
+			seen.map((m) => [m.body, m.me, m.canDelete]),
+			[
+				['¡Suerte a todos!', false, false],
+				['<b>hola</b>', true, true],
+			],
+		);
+		// Only the author or an officer removes a message; removed ones stay stored.
+		assert.equal((await call('bea', `/api/roulette/chat/${seen[0].id}`, 'DELETE')).status, 403);
+		const removed = await call('gm', `/api/roulette/chat/${seen[0].id}`, 'DELETE');
+		assert.deepEqual(
+			removed.body.chat.map((m) => m.body),
+			['<b>hola</b>'],
+		);
+		assert.equal(db.prepare('SELECT COUNT(*) AS n FROM roulette_chat').get().n, 2);
+	} finally {
+		server.close();
+	}
+});

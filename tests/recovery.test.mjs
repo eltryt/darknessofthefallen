@@ -144,7 +144,7 @@ test('schema 5 snapshots remain restorable after notification migration', () => 
 		delete snapshot.gm_notifications;
 		for (const table of [...armoryTables, ...lineupTables]) delete snapshot[table];
 		// Roulette tables arrived with version 15.
-		for (const table of ['roulette_tables', 'roulette_players', 'roulette_spins'])
+		for (const table of ['roulette_tables', 'roulette_players', 'roulette_spins', 'roulette_chat'])
 			delete snapshot[table];
 		resign(snapshot);
 		assert.equal(restoreRecovery(target, snapshot).verified, true);
@@ -190,7 +190,7 @@ test('schema 6 snapshots restore characters without armory columns and keep seed
 		snapshot.databaseVersion = 6;
 		for (const table of [...armoryTables, ...lineupTables]) delete snapshot[table];
 		// Roulette tables arrived with version 15.
-		for (const table of ['roulette_tables', 'roulette_players', 'roulette_spins'])
+		for (const table of ['roulette_tables', 'roulette_players', 'roulette_spins', 'roulette_chat'])
 			delete snapshot[table];
 		for (const row of snapshot.characters)
 			for (const column of [

@@ -16,6 +16,11 @@ export const DEFAULT_MAX_BET = 1000;
 export const MAX_PLAYERS = 40;
 export const MIN_BET = 2;
 const RECENT = 12;
+// Chat: the latest messages travel with every poll; one message per second per player.
+const CHAT_SHOWN = 50,
+	CHAT_LENGTH = 300,
+	CHAT_GAP_MS = 1000;
+const lastMessage = new Map();
 // Who has the section open: every poll is a heartbeat. Kept in memory only (the Durable
 // Object or the local server); a restart simply empties the room for a few seconds.
 const PRESENCE_MS = 10000;
@@ -221,6 +226,21 @@ function tableState(db, user, watching = []) {
 		recent,
 		pending: spun('settled_at IS NULL'),
 		ranking,
+		chat: db
+			.prepare(
+				'SELECT id,user_id,name,class,body,created_at FROM roulette_chat WHERE deleted_at IS NULL ORDER BY id DESC LIMIT ?',
+			)
+			.all(CHAT_SHOWN)
+			.reverse()
+			.map((m) => ({
+				id: m.id,
+				name: m.name,
+				class: m.class,
+				body: m.body,
+				at: m.created_at,
+				me: m.user_id === user.id,
+				canDelete: m.user_id === user.id || moderate,
+			})),
 	};
 }
 
@@ -262,6 +282,42 @@ export async function rouletteApi({ db, user, path, method, body, send, requireP
 			audit(db, user.id, 'roulette.opened', id, { stake });
 		});
 		send(201, tableState(db, user, present(db, user)));
+		return true;
+	}
+	if (path === '/api/roulette/chat' && method === 'POST') {
+		const v = await body(),
+			text = String(v?.body ?? '')
+				.replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, '')
+				.replace(/\s+/g, ' ')
+				.trim();
+		if (!text) throw new HttpError(400, 'Escribe un mensaje.');
+		if (text.length > CHAT_LENGTH)
+			throw new HttpError(400, `Máximo ${CHAT_LENGTH} caracteres por mensaje.`);
+		if (Date.now() - (lastMessage.get(user.id) || 0) < CHAT_GAP_MS)
+			throw new HttpError(429, 'Despacio: un mensaje por segundo.');
+		lastMessage.set(user.id, Date.now());
+		const me = seat(db, user);
+		db.prepare(
+			'INSERT INTO roulette_chat(user_id,name,class,body,created_at) VALUES(?,?,?,?,?)',
+		).run(user.id, me.name, me.class, text, new Date().toISOString());
+		send(201, tableState(db, user, present(db, user)));
+		return true;
+	}
+	const chat = path.match(/^\/api\/roulette\/chat\/(\d+)$/);
+	if (chat && method === 'DELETE') {
+		const m = db
+			.prepare('SELECT * FROM roulette_chat WHERE id=? AND deleted_at IS NULL')
+			.get(Number(chat[1]));
+		if (!m) throw new HttpError(404, 'Mensaje no encontrado.');
+		if (m.user_id !== user.id && !can(user, 'members.manage'))
+			throw new HttpError(403, 'Solo quien lo escribió (o un oficial) borra un mensaje.');
+		db.prepare('UPDATE roulette_chat SET deleted_at=?,deleted_by=? WHERE id=?').run(
+			new Date().toISOString(),
+			user.id,
+			m.id,
+		);
+		if (m.user_id !== user.id) audit(db, user.id, 'roulette.chat.deleted', String(m.id), {});
+		send(200, tableState(db, user, present(db, user)));
 		return true;
 	}
 	if (path === '/api/roulette/settings' && method === 'PUT') {
