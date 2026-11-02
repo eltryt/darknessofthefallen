@@ -146,6 +146,19 @@ test('members open tables, join, spin and the winner marks the gold as collected
 		const winner = settled.body.ranking.find((r) => r.id === result.winner.id);
 		assert.deepEqual([winner.won, winner.net, winner.wins], [result.amount, result.amount, 1]);
 		assert.equal((await call('ana', `/api/roulette/${table.id}/spin`, 'POST')).status, 409);
+		// Whoever has the section open (or just acted on it) is listed in the room.
+		const room = (await call('bea', '/api/roulette')).body.watching;
+		assert.ok(['ana', 'bea'].every((id) => room.some((w) => w.id === id)));
+		assert.equal(room.find((w) => w.id === 'ana').name, 'Anaïs');
+		// Officers delete (soft) a table: it leaves the lists and the ranking but stays stored.
+		assert.equal((await call('ana', `/api/roulette/${table.id}`, 'DELETE')).status, 403);
+		const gone = await call('gm', `/api/roulette/${table.id}`, 'DELETE');
+		assert.equal(gone.status, 200);
+		assert.deepEqual([gone.body.recent.length, gone.body.ranking.length], [0, 0]);
+		assert.ok(
+			db.prepare('SELECT deleted_at FROM roulette_tables WHERE id=?').get(table.id).deleted_at,
+		);
+		assert.equal((await call('gm', `/api/roulette/${table.id}/settled`, 'DELETE')).status, 404);
 		// The GM raises the limit; officers can cancel any open table.
 		assert.equal(
 			(await call('ana', '/api/roulette/settings', 'PUT', { maxBet: 5000 })).status,

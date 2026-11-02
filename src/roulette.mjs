@@ -15,6 +15,10 @@ export const DEFAULT_MAX_BET = 1000;
 export const MAX_PLAYERS = 40;
 export const MIN_BET = 2;
 const RECENT = 12;
+// Who has the section open: every poll is a heartbeat. Kept in memory only (the Durable
+// Object or the local server); a restart simply empties the room for a few seconds.
+const PRESENCE_MS = 10000;
+const viewers = new Map();
 const MAX_ROUNDS = 5000;
 
 export const maxBet = (s) => s.rouletteMaxBet ?? DEFAULT_MAX_BET;
@@ -84,7 +88,16 @@ function seat(db, user) {
 	return c ? { name: c.name, class: c.class } : { name: user.display_name, class: '' };
 }
 
-function tableState(db, user) {
+function present(db, user) {
+	const now = Date.now();
+	viewers.set(user.id, { ...seat(db, user), at: now });
+	for (const [id, v] of viewers) if (now - v.at > PRESENCE_MS) viewers.delete(id);
+	return [...viewers]
+		.map(([id, v]) => ({ id, name: v.name, class: v.class, me: id === user.id }))
+		.sort((a, b) => a.name.localeCompare(b.name, 'es'));
+}
+
+function tableState(db, user, watching = []) {
 	const s = settings(db),
 		moderate = can(user, 'members.manage');
 	const playersOf = (id) =>
@@ -97,7 +110,7 @@ function tableState(db, user) {
 	const person = (players, id) => players.find((p) => p.id === id) || null;
 	const open = db
 		.prepare(
-			"SELECT id,created_by,stake,created_at FROM roulette_tables WHERE status='open' ORDER BY created_at",
+			"SELECT id,created_by,stake,created_at FROM roulette_tables WHERE status='open' AND deleted_at IS NULL ORDER BY created_at",
 		)
 		.all()
 		.map((t) => {
@@ -112,6 +125,7 @@ function tableState(db, user) {
 				joined: players.some((p) => p.me),
 				canSpin: (owner || moderate) && players.length >= 2,
 				canCancel: owner || moderate,
+				canDelete: moderate,
 			};
 		});
 	const result = (t) => {
@@ -134,17 +148,20 @@ function tableState(db, user) {
 			amount: t.amount,
 			settledAt: t.settled_at,
 			canSettle: t.winner_id === user.id || moderate,
+			canDelete: moderate,
 		};
 	};
 	const spun = (where, ...values) =>
 		db
 			.prepare(
-				`SELECT * FROM roulette_tables WHERE status='spun' AND ${where} ORDER BY closed_at DESC`,
+				`SELECT * FROM roulette_tables WHERE status='spun' AND deleted_at IS NULL AND ${where} ORDER BY closed_at DESC`,
 			)
 			.all(...values)
 			.map(result);
 	const recent = db
-		.prepare("SELECT * FROM roulette_tables WHERE status='spun' ORDER BY closed_at DESC LIMIT ?")
+		.prepare(
+			"SELECT * FROM roulette_tables WHERE status='spun' AND deleted_at IS NULL ORDER BY closed_at DESC LIMIT ?",
+		)
 		.all(RECENT)
 		.map(result);
 	// Totals per player over every table played; the name is the latest one they used.
@@ -160,7 +177,7 @@ function tableState(db, user) {
 				SUM(CASE WHEN t.loser_id=p.user_id THEN t.amount ELSE 0 END) AS lost,
 				MAX(CASE WHEN t.winner_id=p.user_id THEN t.amount ELSE 0 END) AS best
 			 FROM roulette_players p JOIN roulette_tables t ON t.id=p.table_id
-			 WHERE t.status='spun' AND p.left_at IS NULL
+			 WHERE t.status='spun' AND t.deleted_at IS NULL AND p.left_at IS NULL
 			 GROUP BY p.user_id
 			 ORDER BY won-lost DESC, won DESC, name`,
 		)
@@ -180,6 +197,9 @@ function tableState(db, user) {
 		}));
 	return {
 		me: user.id,
+		serverTime: new Date().toISOString(),
+		watching,
+		canDelete: moderate,
 		maxBet: maxBet(s),
 		minBet: MIN_BET,
 		maxPlayers: MAX_PLAYERS,
@@ -195,7 +215,7 @@ export async function rouletteApi({ db, user, path, method, body, send, requireP
 	if (path !== '/api/roulette' && !path.startsWith('/api/roulette/')) return false;
 	requirePermission('community.read');
 	if (path === '/api/roulette' && method === 'GET') {
-		send(200, tableState(db, user));
+		send(200, tableState(db, user, present(db, user)));
 		return true;
 	}
 	if (path === '/api/roulette' && method === 'POST') {
@@ -211,7 +231,9 @@ export async function rouletteApi({ db, user, path, method, body, send, requireP
 		transaction(db, () => {
 			if (
 				db
-					.prepare("SELECT 1 FROM roulette_tables WHERE created_by=? AND status='open'")
+					.prepare(
+						"SELECT 1 FROM roulette_tables WHERE created_by=? AND status='open' AND deleted_at IS NULL",
+					)
 					.get(user.id)
 			)
 				throw new HttpError(409, 'Ya tienes una mesa abierta: lánzala o cancélala primero.');
@@ -226,7 +248,7 @@ export async function rouletteApi({ db, user, path, method, body, send, requireP
 			).run(id, user.id, me.name, me.class, now);
 			audit(db, user.id, 'roulette.opened', id, { stake });
 		});
-		send(201, tableState(db, user));
+		send(201, tableState(db, user, present(db, user)));
 		return true;
 	}
 	if (path === '/api/roulette/settings' && method === 'PUT') {
@@ -242,19 +264,31 @@ export async function rouletteApi({ db, user, path, method, body, send, requireP
 			);
 			audit(db, user.id, 'roulette.limit', 'guild', { before: maxBet(s), after: value });
 		});
-		send(200, tableState(db, user));
+		send(200, tableState(db, user, present(db, user)));
 		return true;
 	}
-	const m = path.match(/^\/api\/roulette\/([^/]+)\/(players|spin|cancel|settled)$/);
+	const m = path.match(/^\/api\/roulette\/([^/]+)(?:\/(players|spin|cancel|settled))?$/);
 	if (!m) return false;
 	const id = decodeURIComponent(m[1]),
-		action = m[2],
+		action = m[2] || 'table',
 		moderate = can(user, 'members.manage');
 	transaction(db, () => {
-		const t = db.prepare('SELECT * FROM roulette_tables WHERE id=?').get(id);
+		const t = db.prepare('SELECT * FROM roulette_tables WHERE id=? AND deleted_at IS NULL').get(id);
 		if (!t) throw new HttpError(404, 'Mesa no encontrada.');
 		const owner = t.created_by === user.id,
 			now = new Date().toISOString();
+		// Officers remove tables (test ones, mistakes): hidden everywhere, kept in the database.
+		if (action === 'table') {
+			if (method !== 'DELETE') throw new HttpError(405, 'Método no permitido.');
+			if (!moderate) throw new HttpError(403, 'Solo los oficiales pueden borrar mesas.');
+			db.prepare('UPDATE roulette_tables SET deleted_at=?,deleted_by=? WHERE id=?').run(
+				now,
+				user.id,
+				id,
+			);
+			audit(db, user.id, 'roulette.deleted', id, { status: t.status, amount: t.amount });
+			return;
+		}
 		if (action === 'settled') {
 			if (!['PUT', 'DELETE'].includes(method)) throw new HttpError(405, 'Método no permitido.');
 			if (t.status !== 'spun') throw new HttpError(409, 'Esta mesa no tiene deuda.');
@@ -335,6 +369,6 @@ export async function rouletteApi({ db, user, path, method, body, send, requireP
 			amount,
 		});
 	});
-	send(200, tableState(db, user));
+	send(200, tableState(db, user, present(db, user)));
 	return true;
 }

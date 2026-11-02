@@ -14,7 +14,9 @@ export const colorOf = (n) => (n === 0 ? 'green' : RED.has(n) ? 'red' : 'black')
 const STEP = 360 / WHEEL.length,
 	TRACK = 189,
 	POCKET = 124,
-	POLL = 4000;
+	POLL = 2000,
+	// Everyone watching starts the spins together this long after the table is played.
+	LEAD = 4000;
 const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 const gold = (n) => `${Number(n).toLocaleString('es-ES')} de oro`;
 const when = (iso) =>
@@ -106,6 +108,7 @@ export async function mountRoulette(host, ctx) {
 		<div class="roulette-stage">
 			<div class="roulette-wheel-wrap">${wheelSvg()}</div>
 			<div class="roulette-board">
+				<p class="roulette-room"></p>
 				<p class="roulette-now" aria-live="polite"></p>
 				<ol class="roulette-results"></ol>
 				<p class="roulette-verdict" aria-live="polite" hidden></p>
@@ -282,11 +285,24 @@ export async function mountRoulette(host, ctx) {
 		now.textContent = `Mesa del ${when(r.closedAt)} · hasta ${gold(r.stake)}`;
 		finish(r, !quick);
 	}
+	// A countdown to the shared start, so the whole room watches the same spin.
+	async function countdown(r, at) {
+		results.innerHTML = seats(r);
+		verdict.hidden = true;
+		while (Date.now() < at) {
+			now.innerHTML = `¡Mesa de ${gold(r.stake)} en marcha! La bola sale en <strong>${Math.ceil((at - Date.now()) / 1000)}</strong>…`;
+			await new Promise((done) => setTimeout(done, Math.min(250, at - Date.now())));
+		}
+	}
 	async function drain() {
 		if (playing) return;
 		playing = true;
 		try {
-			while (queue.length) await play(queue.shift(), true);
+			while (queue.length) {
+				const { r, at } = queue.shift();
+				if (at > Date.now()) await countdown(r, at);
+				await play(r, true);
+			}
 		} finally {
 			playing = false;
 		}
@@ -299,6 +315,13 @@ export async function mountRoulette(host, ctx) {
 		place();
 	};
 
+	// Who has the roulette open right now.
+	const renderRoom = () => {
+		const list = data.watching || [];
+		$('.roulette-room').innerHTML = list.length
+			? `<span class="roulette-live" aria-hidden="true"></span>En la sala ahora (${list.length}): ${list.map(name).join(', ')}`
+			: '';
+	};
 	const renderRisk = () => {
 		const stake = Number(form.elements.stake.value);
 		form.elements.stake.min = data.minBet;
@@ -337,6 +360,7 @@ export async function mountRoulette(host, ctx) {
 									${t.canSpin ? `<button type="button" class="roulette-go" data-spin="${esc(t.id)}">¡Girar la ruleta!</button>` : ''}
 									${t.canCancel && !t.canSpin && t.players.length < 2 ? '<small>Hace falta al menos otro jugador.</small>' : ''}
 									${t.canCancel ? `<button type="button" class="link-button" data-cancel="${esc(t.id)}">Cancelar mesa</button>` : ''}
+									${t.canDelete ? `<button type="button" class="link-button is-danger" data-delete="${esc(t.id)}">Borrar</button>` : ''}
 								</div>
 							</article>`,
 					)
@@ -354,6 +378,7 @@ export async function mountRoulette(host, ctx) {
 						: `<span class="roulette-tag">${r.settledAt ? 'Cobrado' : 'Pendiente'}</span>`
 				}
 				<button type="button" class="link-button" data-replay="${esc(r.id)}">Ver</button>
+				${r.canDelete ? `<button type="button" class="link-button is-danger" data-delete="${esc(r.id)}">Borrar</button>` : ''}
 			</li>`;
 		$('.roulette-lists').innerHTML = /* HTML */ `<section aria-labelledby="roulette-pending-title">
 				<h3 id="roulette-pending-title">Pendientes de cobrar</h3>
@@ -381,12 +406,15 @@ export async function mountRoulette(host, ctx) {
 	// New played tables (from anyone) are queued to animate for everyone watching.
 	function apply(next) {
 		data = next;
+		// The server's clock decides the shared start; this is how far ours is from it.
+		const offset = Date.parse(data.serverTime) - Date.now();
+		renderRoom();
 		renderRisk();
 		renderLists();
 		const fresh = data.recent.filter((r) => !seen.has(r.id)).reverse();
 		for (const r of fresh) {
 			seen.add(r.id);
-			queue.push(r);
+			queue.push({ r, at: Date.parse(r.closedAt) + LEAD - offset });
 		}
 		if (fresh.length) {
 			$('.roulette-stage').scrollIntoView({
@@ -428,10 +456,17 @@ export async function mountRoulette(host, ctx) {
 				act(table(d.cancel) + '/cancel', 'POST');
 		} else if (d.settle) act(table(d.settle) + '/settled', 'PUT');
 		else if (d.unsettle) act(table(d.unsettle) + '/settled', 'DELETE');
-		else if (d.replay && !playing) {
+		else if (d.delete) {
+			if (
+				confirm(
+					'¿Borrar esta mesa? Desaparece de las listas, del ranking y de las deudas. Queda guardada en el registro.',
+				)
+			)
+				act(table(d.delete), 'DELETE');
+		} else if (d.replay && !playing) {
 			const r = [...data.recent, ...data.pending].find((x) => x.id === d.replay);
 			if (r) {
-				queue.push(r);
+				queue.push({ r, at: 0 });
 				$('.roulette-stage').scrollIntoView({
 					behavior: reduced() ? 'auto' : 'smooth',
 					block: 'nearest',
@@ -452,6 +487,7 @@ export async function mountRoulette(host, ctx) {
 			toast('Tope guardado');
 	});
 
+	renderRoom();
 	renderRisk();
 	renderLists();
 	await idle();
