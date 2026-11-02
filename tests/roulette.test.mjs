@@ -4,7 +4,14 @@ import { createServer } from 'node:http';
 import { openDatabase } from '../src/db.mjs';
 import { createApp } from '../src/app.mjs';
 import { issueSession } from '../src/auth.mjs';
-import { playTable, playable, rollOf, spinNumber } from '../src/roulette.mjs';
+import {
+	deliverRouletteDMs,
+	nextRouletteDMAt,
+	playTable,
+	playable,
+	rollOf,
+	spinNumber,
+} from '../src/roulette.mjs';
 import { exportRecovery, restoreRecovery } from '../src/recovery.mjs';
 
 const ORIGIN = 'http://localhost:3000';
@@ -137,6 +144,11 @@ test('members open tables, join, spin and the winner marks the gold as collected
 		assert.ok(result.high > result.low);
 		assert.notEqual(result.winner.id, result.loser.id);
 		assert.equal(spun.body.pending.length, 1);
+		// The winner's private message is queued with the spin.
+		assert.equal(
+			db.prepare('SELECT dm_status FROM roulette_tables WHERE id=?').get(table.id).dm_status,
+			'pending',
+		);
 		assert.equal(
 			(await call(result.loser.id, `/api/roulette/${table.id}/settled`, 'PUT')).status,
 			403,
@@ -209,4 +221,66 @@ test('the ball always ends over the pocket of the drawn number', async () => {
 		wheel = next.wheel % 360;
 		ball = next.ball % 360;
 	}
+});
+
+test('the winner gets a private message with the gold won and who owes it', async () => {
+	const db = openDatabase(':memory:');
+	const now = new Date().toISOString();
+	for (const id of ['111', '222', '333'])
+		db.prepare('INSERT INTO users VALUES(?,?,?,?)').run(id, id, 'member', now);
+	const table = (id, status, winner, loser, dm) => {
+		db.prepare(
+			`INSERT INTO roulette_tables(id,created_by,stake,status,created_at,closed_at,winner_id,loser_id,high,low,amount,dm_status,dm_next_at)
+			 VALUES(?,?,?,?,?,?,?,?,?,?,?,?,0)`,
+		).run(id, winner, 100, status, now, now, winner, loser, 95, 23, 72, dm);
+		for (const [u, name, n, seq] of [
+			[winner, 'Mishuka', 34, 1],
+			[loser, 'Adrios', 8, 2],
+		]) {
+			db.prepare(
+				'INSERT INTO roulette_players(table_id,user_id,name,joined_at) VALUES(?,?,?,?)',
+			).run(id, u, name, now);
+			db.prepare('INSERT INTO roulette_spins VALUES(?,?,?,?,?,?)').run(id, seq, 1, 'main', u, n);
+		}
+	};
+	table('aaaaaaaa-win', 'spun', '111', '222', 'pending');
+	table('bbbbbbbb-old', 'spun', '333', '222', 'skipped');
+	table('cccccccc-dnd', 'spun', '333', '111', 'pending');
+	const calls = [];
+	const transport = async (url, init) => {
+		const body = JSON.parse(init.body);
+		calls.push({ url, body });
+		if (url.endsWith('/users/@me/channels'))
+			return Response.json({ id: 'dm-' + body.recipient_id });
+		// The second winner does not accept private messages.
+		if (url.includes('dm-333')) return Response.json({ code: 50007 }, { status: 403 });
+		return Response.json({ id: 'm1' });
+	};
+	const env = {
+		DISCORD_DM_ENABLED: 'true',
+		DISCORD_BOT_TOKEN: 'x'.repeat(60),
+		APP_ORIGIN: 'https://darknessofthefallen.com',
+	};
+	assert.equal(await deliverRouletteDMs(db, { ...env, DISCORD_DM_ENABLED: 'false' }, transport), 0);
+	assert.equal(calls.length, 0);
+	assert.equal(await deliverRouletteDMs(db, env, transport), 1);
+	const sent = calls.find((c) => c.url.endsWith('/channels/dm-111/messages')).body.content;
+	assert.match(sent, /Has ganado \*\*72 de oro\*\*/);
+	assert.match(sent, /casilla 34 → \*\*95\*\*/);
+	assert.match(sent, /Adrios te debe 72 de oro/);
+	assert.match(sent, /Referencia: aaaaaaaa · https:\/\/darknessofthefallen.com\/perfil#ruleta/);
+	const status = (id) =>
+		db.prepare('SELECT dm_status,dm_error FROM roulette_tables WHERE id=?').get(id);
+	assert.equal(status('aaaaaaaa-win').dm_status, 'sent');
+	assert.equal(status('bbbbbbbb-old').dm_status, 'skipped');
+	assert.deepEqual(
+		{ ...status('cccccccc-dnd') },
+		{
+			dm_status: 'failed',
+			dm_error: 'El ganador no admite mensajes privados de miembros del servidor.',
+		},
+	);
+	assert.equal(nextRouletteDMAt(db), null);
+	// Nothing left to send: a second run sends nothing again.
+	assert.equal(await deliverRouletteDMs(db, env, transport), 0);
 });

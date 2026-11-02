@@ -383,7 +383,7 @@ export function callupMessage(callup, event, origin) {
 			: `⚔️ **Darkness of the Fallen · Convocatoria**\n**${event.title}**\n${when} (hora de Madrid)\nTu puesto: **${slotLabel(callup.slot)}**\nDetalles: ${link}`;
 	return { content: content.slice(0, 1900), allowed_mentions: { parse: [] } };
 }
-async function discord(transport, env, path, payload) {
+export async function discord(transport, env, path, payload) {
 	const response = await transport(DISCORD_API + path, {
 		method: 'POST',
 		redirect: 'manual',

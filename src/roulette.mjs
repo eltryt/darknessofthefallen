@@ -9,6 +9,7 @@
 import { randomUUID } from 'node:crypto';
 import { HttpError, can } from './domain.mjs';
 import { audit, settings, transaction } from './database-core.mjs';
+import { discord, dmReady } from './raid-lineup.mjs';
 
 export const POCKETS = 37;
 export const DEFAULT_MAX_BET = 1000;
@@ -149,6 +150,8 @@ function tableState(db, user, watching = []) {
 			settledAt: t.settled_at,
 			canSettle: t.winner_id === user.id || moderate,
 			canDelete: moderate,
+			// Whether the winner's private message went out: shown to them and to officers.
+			dm: t.winner_id === user.id || moderate ? t.dm_status : null,
 		};
 	};
 	const spun = (where, ...values) =>
@@ -360,8 +363,8 @@ export async function rouletteApi({ db, user, path, method, body, send, requireP
 		);
 		for (const s of game.spins) insert.run(id, s.seq, s.round, s.kind, s.userId, s.number);
 		db.prepare(
-			`UPDATE roulette_tables SET status='spun',closed_at=?,closed_by=?,winner_id=?,loser_id=?,high=?,low=?,amount=? WHERE id=?`,
-		).run(now, user.id, game.winner, game.loser, game.high, game.low, amount, id);
+			`UPDATE roulette_tables SET status='spun',closed_at=?,closed_by=?,winner_id=?,loser_id=?,high=?,low=?,amount=?,dm_status='pending',dm_next_at=? WHERE id=?`,
+		).run(now, user.id, game.winner, game.loser, game.high, game.low, amount, Date.now(), id);
 		audit(db, user.id, 'roulette.spun', id, {
 			players: players.length,
 			winner: game.winner,
@@ -372,3 +375,147 @@ export async function rouletteApi({ db, user, path, method, body, send, requireP
 	send(200, tableState(db, user, present(db, user)));
 	return true;
 }
+
+// The winner's private message: what they won, the two results and who owes it. It is the
+// guild's record of the debt, so it names the table and links to it.
+const madrid = new Intl.DateTimeFormat('es-ES', {
+	timeZone: 'Europe/Madrid',
+	day: 'numeric',
+	month: 'long',
+	hour: '2-digit',
+	minute: '2-digit',
+});
+export function winnerMessage(db, t, origin) {
+	const seatOf = (id) =>
+		db.prepare('SELECT name FROM roulette_players WHERE table_id=? AND user_id=?').get(t.id, id)
+			?.name || 'Un jugador';
+	const lastSpin = (id) =>
+		db
+			.prepare(
+				'SELECT number FROM roulette_spins WHERE table_id=? AND user_id=? ORDER BY seq DESC LIMIT 1',
+			)
+			.get(t.id, id)?.number;
+	const players = db
+		.prepare('SELECT COUNT(*) AS n FROM roulette_players WHERE table_id=? AND left_at IS NULL')
+		.get(t.id).n;
+	const loser = seatOf(t.loser_id);
+	const content = [
+		'🎰 **Darkness of the Fallen · Ruleta**',
+		`¡Has ganado **${t.amount} de oro**!`,
+		`Mesa de hasta ${t.stake} de oro · ${players} jugadores · ${madrid.format(new Date(t.closed_at))} (hora de Madrid)`,
+		`Tu resultado: casilla ${lastSpin(t.winner_id)} → **${t.high}** · El más bajo: ${loser}, casilla ${lastSpin(t.loser_id)} → **${t.low}**`,
+		`**${loser} te debe ${t.amount} de oro** (${t.high} − ${t.low}). Cuando te lo pague en el juego, márcalo como «Cobrado».`,
+		`Referencia: ${t.id.slice(0, 8)} · ${origin}/perfil#ruleta`,
+	].join('\n');
+	return { content: content.slice(0, 1900), allowed_mentions: { parse: [] } };
+}
+
+const MAX_DM_ATTEMPTS = 5;
+const sending = new WeakSet();
+// Sends pending winner messages one by one with the call-up bot. A failure after Discord
+// may have received the message is marked uncertain and never replayed automatically.
+export async function deliverRouletteDMs(db, env, transport = fetch, limit = 10) {
+	if (!dmReady(env) || sending.has(db)) return 0;
+	sending.add(db);
+	let delivered = 0;
+	try {
+		db.prepare(
+			"UPDATE roulette_tables SET dm_status='uncertain',dm_error='Envío interrumpido: comprueba con el jugador.' WHERE dm_status='sending' AND dm_next_at<=?",
+		).run(Date.now());
+		for (let i = 0; i < limit; i++) {
+			const t = db
+				.prepare(
+					"SELECT * FROM roulette_tables WHERE dm_status='pending' AND dm_next_at<=? ORDER BY dm_next_at LIMIT 1",
+				)
+				.get(Date.now());
+			if (!t) break;
+			const set = (status, error, retryIn) => {
+				const attempts = t.dm_attempts + 1,
+					retry = retryIn !== undefined && attempts < MAX_DM_ATTEMPTS;
+				db.prepare(
+					'UPDATE roulette_tables SET dm_status=?,dm_error=?,dm_attempts=?,dm_next_at=? WHERE id=?',
+				).run(retry ? 'pending' : status, error, attempts, retry ? Date.now() + retryIn : 0, t.id);
+			};
+			// A table deleted before the message left is not announced.
+			if (t.deleted_at || t.status !== 'spun') {
+				db.prepare("UPDATE roulette_tables SET dm_status='skipped' WHERE id=?").run(t.id);
+				continue;
+			}
+			db.prepare("UPDATE roulette_tables SET dm_status='sending',dm_next_at=? WHERE id=?").run(
+				Date.now() + 120000,
+				t.id,
+			);
+			let channel;
+			try {
+				channel = await discord(transport, env, '/users/@me/channels', {
+					recipient_id: t.winner_id,
+				});
+			} catch {
+				set('failed', 'Discord no respondió al abrir el privado.', 60000 * (t.dm_attempts + 1));
+				continue;
+			}
+			if (channel.status === 429) {
+				set(
+					'failed',
+					'Límite de Discord: se reintentará.',
+					Math.ceil((channel.data.retry_after || 5) * 1000),
+				);
+				break;
+			}
+			if (channel.status >= 500) {
+				set('failed', `Discord HTTP ${channel.status}.`, 60000 * (t.dm_attempts + 1));
+				continue;
+			}
+			if (channel.status !== 200 || !channel.data.id) {
+				set(
+					'failed',
+					channel.status === 401
+						? 'El token del bot no es válido.'
+						: 'No se pudo abrir un privado con el ganador.',
+				);
+				if (channel.status === 401) break;
+				continue;
+			}
+			let message;
+			try {
+				message = await discord(
+					transport,
+					env,
+					`/channels/${channel.data.id}/messages`,
+					winnerMessage(db, t, env.APP_ORIGIN),
+				);
+			} catch {
+				db.prepare(
+					"UPDATE roulette_tables SET dm_status='uncertain',dm_error='Respuesta no confirmada.' WHERE id=?",
+				).run(t.id);
+				continue;
+			}
+			if (message.status === 200) {
+				db.prepare(
+					"UPDATE roulette_tables SET dm_status='sent',dm_error='',dm_attempts=dm_attempts+1,dm_sent_at=? WHERE id=?",
+				).run(new Date().toISOString(), t.id);
+				delivered++;
+			} else if (message.status === 429) {
+				set(
+					'failed',
+					'Límite de Discord: se reintentará.',
+					Math.ceil((message.data.retry_after || 5) * 1000),
+				);
+				break;
+			} else if (message.status >= 500)
+				set('failed', `Discord HTTP ${message.status}.`, 60000 * (t.dm_attempts + 1));
+			else
+				set(
+					'failed',
+					message.data.code === 50007
+						? 'El ganador no admite mensajes privados de miembros del servidor.'
+						: `Discord rechazó el mensaje (HTTP ${message.status}).`,
+				);
+		}
+	} finally {
+		sending.delete(db);
+	}
+	return delivered;
+}
+export const nextRouletteDMAt = (db) =>
+	db.prepare("SELECT MIN(dm_next_at) due FROM roulette_tables WHERE dm_status='pending'").get().due;

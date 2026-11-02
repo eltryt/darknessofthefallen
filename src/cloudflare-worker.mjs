@@ -25,6 +25,8 @@ import lootOfficerSchema from '../migrations/013_loot_officer.sql';
 import levelCapSchema from '../migrations/014_level_cap.sql';
 import rouletteSchema from '../migrations/015_roulette.sql';
 import rouletteDeleteSchema from '../migrations/016_roulette_delete.sql';
+import rouletteDmSchema from '../migrations/017_roulette_dm.sql';
+import { deliverRouletteDMs, nextRouletteDMAt } from './roulette.mjs';
 import { deliverPush, nextPushAt, pushReady } from './push-notifications.mjs';
 import { deliverCallups, dmReady, nextCallupAt } from './raid-lineup.mjs';
 import { syncRaidEvents } from './raid-sync.mjs';
@@ -51,6 +53,7 @@ export class Guild extends DurableObject {
 			levelCapSchema,
 			rouletteSchema,
 			rouletteDeleteSchema,
+			rouletteDmSchema,
 		);
 		repairGMRedirectFailures(this.db);
 	}
@@ -133,8 +136,11 @@ export class Guild extends DurableObject {
 			}
 		}
 		if (dmReady(this.env)) {
-			const due = nextCallupAt(this.db);
-			if (due !== null) {
+			const due = Math.min(
+				nextCallupAt(this.db) ?? Infinity,
+				nextRouletteDMAt(this.db) ?? Infinity,
+			);
+			if (due !== Infinity) {
 				const at = Math.max(Date.now() + 5000, due),
 					alarm = await this.ctx.storage.getAlarm();
 				if (alarm === null || alarm > at) await this.ctx.storage.setAlarm(at);
@@ -168,6 +174,7 @@ export class Guild extends DurableObject {
 			await deliverGM(this.db, this.env);
 			await deliverPush(this.db, { ...this.env, APP_ORIGIN: origin || this.env.APP_ORIGIN });
 			await deliverCallups(this.db, { ...this.env, APP_ORIGIN: origin || '' });
+			await deliverRouletteDMs(this.db, { ...this.env, APP_ORIGIN: origin || '' });
 		} finally {
 			await this.scheduleNotifications();
 		}

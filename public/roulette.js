@@ -171,6 +171,14 @@ export async function mountRoulette(host, ctx) {
 	const chip = (s, extra = '') =>
 		`<span class="roulette-result${extra}" title="Casilla ${s.number} → ${s.roll} de oro"><b class="roulette-chip is-${colorOf(s.number)}">${s.number}</b><span class="roulette-arrow" aria-hidden="true">→</span><strong>${s.roll}</strong><small>oro</small></span>`;
 	const last = (r, id) => r.spins.findLast((s) => s.userId === id);
+	// The winner's private message on Discord, as the winner and officers see it.
+	const dmLabel = {
+		pending: 'aviso por Discord en camino',
+		sending: 'aviso por Discord en camino',
+		sent: 'aviso enviado por Discord',
+		failed: 'no se pudo avisar por Discord',
+		uncertain: 'aviso por Discord sin confirmar',
+	};
 	const svgIcon = (d) => `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">${d}</svg>`;
 	const icon = {
 		play: svgIcon('<circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l5.5-3.5Z"/>'),
@@ -476,7 +484,7 @@ export async function mountRoulette(host, ctx) {
 					<span>${name(r.loser)} paga <strong>${gold(r.amount)}</strong> a ${name(r.winner)}</span>
 					<small
 						>${when(r.closedAt)} · ${r.players.length} jugadores · hasta
-						${gold(r.stake)}${r.settledAt ? ' · <b class="roulette-paid">Cobrado</b>' : ''}</small
+						${gold(r.stake)}${r.settledAt ? ' · <b class="roulette-paid">Cobrado</b>' : ''}${r.dm ? ` · ${dmLabel[r.dm] || ''}` : ''}</small
 					>
 				</div>
 				<div class="roulette-debt-actions">

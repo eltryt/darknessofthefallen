@@ -81,5 +81,9 @@ export function openDatabase(path = 'data/guild.sqlite') {
 				readFileSync(new URL('../migrations/016_roulette_delete.sql', import.meta.url), 'utf8'),
 			),
 		);
+	if (!db.prepare('SELECT version FROM schema_migrations WHERE version=17').get())
+		transaction(db, () =>
+			db.exec(readFileSync(new URL('../migrations/017_roulette_dm.sql', import.meta.url), 'utf8')),
+		);
 	return db;
 }
