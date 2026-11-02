@@ -17,6 +17,7 @@ export const MAX_PLAYERS = 40;
 export const MIN_BET = 2;
 const RECENT = 12;
 // Chat: the latest messages travel with every poll; one message per second per player.
+// Messages are never removed, not even by officers.
 const CHAT_SHOWN = 50,
 	CHAT_LENGTH = 300,
 	CHAT_GAP_MS = 1000;
@@ -26,6 +27,9 @@ const lastMessage = new Map();
 const PRESENCE_MS = 10000;
 const viewers = new Map();
 const MAX_ROUNDS = 5000;
+// "Otra ronda" seats everyone again, so it can't be spun until the room has watched the
+// previous table land and had this long to retire.
+export const REMATCH_WAIT_MS = 15000;
 
 export const maxBet = (s) => s.rouletteMaxBet ?? DEFAULT_MAX_BET;
 // The gold a pocket is worth at a table of value M, rounding halves up (in integers).
@@ -103,6 +107,20 @@ function present(db, user) {
 		.sort((a, b) => a.name.localeCompare(b.name, 'es'));
 }
 
+// When a table may be spun: at once, or for a rematch once the previous table's animation
+// has ended (as public/roulette.js plays it) plus REMATCH_WAIT_MS.
+function readyAt(db, t) {
+	if (!t.rematch_of) return 0;
+	const prev = db.prepare('SELECT closed_at FROM roulette_tables WHERE id=?').get(t.rematch_of),
+		spins = db
+			.prepare('SELECT COUNT(*) AS n FROM roulette_spins WHERE table_id=?')
+			.get(t.rematch_of).n;
+	const shown = prev?.closed_at
+		? Date.parse(prev.closed_at) + revealDelay(spins || 1) - DM_MARGIN
+		: 0;
+	return Math.max(Date.parse(t.created_at), shown) + REMATCH_WAIT_MS;
+}
+
 function tableState(db, user, watching = []) {
 	const s = settings(db),
 		moderate = can(user, 'members.manage');
@@ -133,6 +151,7 @@ function tableState(db, user, watching = []) {
 				canCancel: owner || moderate,
 				canDelete: moderate,
 				rematchOf: t.rematch_of,
+				readyAt: t.rematch_of ? new Date(readyAt(db, t)).toISOString() : null,
 			};
 		});
 	const result = (t) => {
@@ -239,7 +258,6 @@ function tableState(db, user, watching = []) {
 				body: m.body,
 				at: m.created_at,
 				me: m.user_id === user.id,
-				canDelete: m.user_id === user.id || moderate,
 			})),
 	};
 }
@@ -301,23 +319,6 @@ export async function rouletteApi({ db, user, path, method, body, send, requireP
 			'INSERT INTO roulette_chat(user_id,name,class,body,created_at) VALUES(?,?,?,?,?)',
 		).run(user.id, me.name, me.class, text, new Date().toISOString());
 		send(201, tableState(db, user, present(db, user)));
-		return true;
-	}
-	const chat = path.match(/^\/api\/roulette\/chat\/(\d+)$/);
-	if (chat && method === 'DELETE') {
-		const m = db
-			.prepare('SELECT * FROM roulette_chat WHERE id=? AND deleted_at IS NULL')
-			.get(Number(chat[1]));
-		if (!m) throw new HttpError(404, 'Mensaje no encontrado.');
-		if (m.user_id !== user.id && !can(user, 'members.manage'))
-			throw new HttpError(403, 'Solo quien lo escribió (o un oficial) borra un mensaje.');
-		db.prepare('UPDATE roulette_chat SET deleted_at=?,deleted_by=? WHERE id=?').run(
-			new Date().toISOString(),
-			user.id,
-			m.id,
-		);
-		if (m.user_id !== user.id) audit(db, user.id, 'roulette.chat.deleted', String(m.id), {});
-		send(200, tableState(db, user, present(db, user)));
 		return true;
 	}
 	if (path === '/api/roulette/settings' && method === 'PUT') {
@@ -495,6 +496,12 @@ export async function rouletteApi({ db, user, path, method, body, send, requireP
 			.all(id)
 			.map((p) => p.user_id);
 		if (players.length < 2) throw new HttpError(409, 'Hacen falta al menos dos jugadores.');
+		const wait = readyAt(db, t) - Date.now();
+		if (wait > 0)
+			throw new HttpError(
+				409,
+				`Espera ${Math.ceil(wait / 1000)} s: los jugadores aún pueden retirarse de esta ronda.`,
+			);
 		if (!playable(players.length, t.stake))
 			throw new HttpError(
 				409,
@@ -541,68 +548,32 @@ export function revealDelay(spins) {
 	return Math.max(15000, Math.round(4000 + spins * (ms + pause) + DM_MARGIN));
 }
 
-// Private messages after a table: the winner learns what they won and who owes it, the
-// loser what they owe and to whom. They are the guild's record of the debt, so both name
-// the table and link to it.
-const madrid = new Intl.DateTimeFormat('es-ES', {
-	timeZone: 'Europe/Madrid',
-	day: 'numeric',
-	month: 'long',
-	hour: '2-digit',
-	minute: '2-digit',
-});
+// Private messages after a table: the winner learns what they won and who pays it, the
+// loser what they owe and to whom, both with the link to the roulette.
 function tableFacts(db, t) {
 	const seatOf = (id) =>
 		db.prepare('SELECT name FROM roulette_players WHERE table_id=? AND user_id=?').get(t.id, id)
 			?.name || 'Un jugador';
-	const lastSpin = (id) =>
-		db
-			.prepare(
-				'SELECT number FROM roulette_spins WHERE table_id=? AND user_id=? ORDER BY seq DESC LIMIT 1',
-			)
-			.get(t.id, id)?.number;
-	const players = db
-		.prepare('SELECT COUNT(*) AS n FROM roulette_players WHERE table_id=? AND left_at IS NULL')
-		.get(t.id).n;
-	return {
-		winner: seatOf(t.winner_id),
-		loser: seatOf(t.loser_id),
-		winnerPocket: lastSpin(t.winner_id),
-		loserPocket: lastSpin(t.loser_id),
-		table: `Mesa de hasta ${t.stake} de oro · ${players} jugadores · ${madrid.format(new Date(t.closed_at))} (hora de Madrid)`,
-	};
+	return { winner: seatOf(t.winner_id), loser: seatOf(t.loser_id) };
 }
-const message = (lines, t, origin) => {
-	const content = [
-		'🎰 **Darkness of the Fallen · Ruleta**',
-		...lines,
-		`Referencia: ${t.id.slice(0, 8)} · ${origin}/perfil#ruleta`,
-	].join('\n');
-	return { content: content.slice(0, 1900), allowed_mentions: { parse: [] } };
-};
+// Kept short on purpose: the amount, who pays whom and the link to mark it collected.
+const message = (lines, origin) => ({
+	content: ['🎰 ' + lines[0], ...lines.slice(1), `${origin}/perfil#ruleta`]
+		.join('\n')
+		.slice(0, 1900),
+	allowed_mentions: { parse: [] },
+});
 export function winnerMessage(db, t, origin) {
 	const f = tableFacts(db, t);
 	return message(
-		[
-			`¡Has ganado **${t.amount} de oro**!`,
-			f.table,
-			`Tu resultado: casilla ${f.winnerPocket} → **${t.high}** · El más bajo: ${f.loser}, casilla ${f.loserPocket} → **${t.low}**`,
-			`**${f.loser} te debe ${t.amount} de oro** (${t.high} − ${t.low}). Cuando te lo pague en el juego, márcalo como «Cobrado».`,
-		],
-		t,
+		[`¡Has ganado **${t.amount} de oro**! Te paga **${f.loser}**.`, 'Márcalo como cobrado aquí:'],
 		origin,
 	);
 }
 export function loserMessage(db, t, origin) {
 	const f = tableFacts(db, t);
 	return message(
-		[
-			`Te ha tocado pagar **${t.amount} de oro** a **${f.winner}**.`,
-			f.table,
-			`Tu resultado: casilla ${f.loserPocket} → **${t.low}** · El más alto: ${f.winner}, casilla ${f.winnerPocket} → **${t.high}**`,
-			`Págale **${t.amount} de oro** (${t.high} − ${t.low}) dentro del juego; cuando lo reciba lo marcará como «Cobrado».`,
-		],
-		t,
+		[`Has perdido **${t.amount} de oro**. Se los pagas a **${f.winner}**.`, 'Ver el cobro:'],
 		origin,
 	);
 }

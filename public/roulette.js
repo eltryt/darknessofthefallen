@@ -163,6 +163,8 @@ export async function mountRoulette(host, ctx) {
 		skip = false,
 		busy = false,
 		listsKey = '',
+		// How far the server's clock is from ours.
+		offset = Date.parse(data.serverTime) - Date.now(),
 		wheelAngle = 0,
 		ballAngle = 0;
 
@@ -506,9 +508,27 @@ export async function mountRoulette(host, ctx) {
 	form.elements.stake.value = Math.min(100, data.maxBet);
 	form.elements.stake.addEventListener('input', renderRisk);
 
+	// "Otra ronda" seats everyone, so it can't be spun until each player has had time to
+	// retire (src/roulette.mjs, readyAt). The countdown follows the server's clock.
+	const waiting = (t) => t.readyAt && Date.parse(t.readyAt) > Date.now() + offset;
+	const tickReady = () => {
+		for (const el of host.querySelectorAll('[data-ready-at]')) {
+			const left = Math.ceil((Date.parse(el.dataset.readyAt) - Date.now() - offset) / 1000);
+			if ('note' in el.dataset)
+				el.textContent = left > 0 ? `nueva ronda: ${left} s para retirarse` : 'ya se puede girar';
+			else if (left > 0) el.textContent = `Girar en ${left} s`;
+			else {
+				el.disabled = false;
+				el.textContent = '¡Girar la ruleta!';
+				delete el.dataset.readyAt;
+			}
+		}
+	};
+	setInterval(() => host.isConnected && tickReady(), 500);
+
 	function renderLists() {
 		const key = JSON.stringify([data.open, data.recent, data.pending, data.ranking]);
-		if (key === listsKey) return;
+		if (key === listsKey) return tickReady();
 		listsKey = key;
 		$('.roulette-tables').innerHTML = data.open.length
 			? data.open
@@ -531,10 +551,10 @@ export async function mountRoulette(host, ctx) {
 								<div class="roulette-table-foot">
 									<small
 										>${t.players.length}/${data.maxPlayers}
-										jugadores${t.canCancel && !t.canSpin && t.players.length < 2 ? ' · hace falta al menos otro jugador' : ''}</small
+										jugadores${t.canCancel && !t.canSpin && t.players.length < 2 ? ' · hace falta al menos otro jugador' : ''}${waiting(t) ? ` · <b data-ready-at="${esc(t.readyAt)}" data-note></b>` : ''}</small
 									>
 									<div class="roulette-table-main">
-										${t.canSpin ? `<button type="button" class="roulette-go" data-spin="${esc(t.id)}">¡Girar la ruleta!</button>` : ''}
+										${t.canSpin ? `<button type="button" class="roulette-go" data-spin="${esc(t.id)}"${waiting(t) ? ` data-ready-at="${esc(t.readyAt)}" disabled` : ''}>¡Girar la ruleta!</button>` : ''}
 										${!t.joined ? `<button type="button" data-join="${esc(t.id)}">Me apunto</button>` : ''}
 										${t.joined ? `<button type="button" class="button secondary" data-leave="${esc(t.id)}" data-host="${t.host?.id === data.me ? (t.players.find((p) => !p.me)?.name ? esc(t.players.find((p) => !p.me).name) : '-') : ''}">Retirarse</button>` : ''}
 									</div>
@@ -595,13 +615,14 @@ export async function mountRoulette(host, ctx) {
 				<h3 id="roulette-recent-title">Últimas mesas</h3>
 				${data.recent.length ? `<ul class="roulette-debts">${data.recent.map(debt).join('')}</ul>` : '<p class="empty-note">Todavía no hay historial.</p>'}
 			</section>`;
+		tickReady();
 	}
 
 	// New played tables (from anyone) are queued to animate for everyone watching.
 	function apply(next) {
 		data = next;
 		// The server's clock decides the shared start; this is how far ours is from it.
-		const offset = Date.parse(data.serverTime) - Date.now();
+		offset = Date.parse(data.serverTime) - Date.now();
 		renderRoom();
 		renderRisk();
 		renderLists();
@@ -693,7 +714,6 @@ export async function mountRoulette(host, ctx) {
 				act(table(d.cancel) + '/cancel', 'POST');
 		} else if (d.settle) act(table(d.settle) + '/settled', 'PUT');
 		else if (d.unsettle) act(table(d.unsettle) + '/settled', 'DELETE');
-		else if (d.chatDelete) act('/api/roulette/chat/' + encodeURIComponent(d.chatDelete), 'DELETE');
 		else if (d.delete) {
 			if (
 				confirm(
@@ -728,7 +748,7 @@ export async function mountRoulette(host, ctx) {
 			? list
 					.map(
 						(m) =>
-							`<li class="${m.me ? 'is-me' : ''}${before.length && !before.includes(String(m.id)) ? ' is-new' : ''}"><span class="roulette-chat-meta">${name(m)}<time datetime="${esc(m.at)}">${new Date(m.at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</time>${m.canDelete ? `<button type="button" class="roulette-chat-x" data-chat-delete="${m.id}" aria-label="Borrar mensaje" title="Borrar mensaje">×</button>` : ''}</span><p>${esc(m.body)}</p></li>`,
+							`<li class="${m.me ? 'is-me' : ''}${before.length && !before.includes(String(m.id)) ? ' is-new' : ''}"><span class="roulette-chat-meta">${name(m)}<time datetime="${esc(m.at)}">${new Date(m.at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</time></span><p>${esc(m.body)}</p></li>`,
 					)
 					.join('')
 			: '<li class="roulette-chat-empty">Nadie ha escrito todavía. ¡Rompe el hielo!</li>';

@@ -9164,21 +9164,6 @@ details[data-create] > .tutorial-open,
 	text-align: center;
 	background: none !important;
 }
-.roulette button.roulette-chat-x {
-	min-height: 0;
-	margin-left: auto;
-	padding: 0 6px;
-	border: 0;
-	background: none;
-	box-shadow: none;
-	color: var(--muted);
-	font-size: 1rem;
-	line-height: 1;
-	cursor: pointer;
-}
-.roulette button.roulette-chat-x:hover {
-	color: #ef8a98;
-}
 .roulette-chat-form {
 	display: flex;
 	gap: 8px;

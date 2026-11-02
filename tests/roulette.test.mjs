@@ -185,6 +185,11 @@ test('members open tables, join, spin and the winner marks the gold as collected
 		);
 		assert.equal(again.body.recent[0].rematchId, round2.id);
 		assert.equal((await call('ana', `/api/roulette/${table.id}/rematch`, 'POST')).status, 409);
+		// The new round waits until everyone has seen the result and had time to retire.
+		assert.ok(Date.parse(round2.readyAt) >= Date.now() + 15000 - 2000);
+		const early = await call('bea', `/api/roulette/${round2.id}/spin`, 'POST');
+		assert.equal(early.status, 409);
+		assert.match(JSON.stringify(early.body), /pueden retirarse/);
 		// Retiring: the host's seat passes to the next player; the last one out cancels it.
 		const handed = await call('bea', `/api/roulette/${round2.id}/players`, 'DELETE');
 		assert.deepEqual(
@@ -300,14 +305,15 @@ test('winner and loser get a private message with the gold, the results and the 
 	assert.equal(calls.length, 0);
 	assert.equal(await deliverRouletteDMs(db, env, transport), 2);
 	const sent = calls.find((c) => c.url.endsWith('/channels/dm-111/messages')).body.content;
-	assert.match(sent, /Has ganado \*\*72 de oro\*\*/);
-	assert.match(sent, /casilla 34 → \*\*95\*\*/);
-	assert.match(sent, /Adrios te debe 72 de oro/);
-	assert.match(sent, /Referencia: aaaaaaaa · https:\/\/darknessofthefallen.com\/perfil#ruleta/);
+	assert.equal(
+		sent,
+		'🎰 ¡Has ganado **72 de oro**! Te paga **Adrios**.\nMárcalo como cobrado aquí:\nhttps://darknessofthefallen.com/perfil#ruleta',
+	);
 	const owed = calls.find((c) => c.url.endsWith('/channels/dm-222/messages')).body.content;
-	assert.match(owed, /Te ha tocado pagar \*\*72 de oro\*\* a \*\*Mishuka\*\*/);
-	assert.match(owed, /casilla 8 → \*\*23\*\*/);
-	assert.match(owed, /Págale \*\*72 de oro\*\* \(95 − 23\)/);
+	assert.equal(
+		owed,
+		'🎰 Has perdido **72 de oro**. Se los pagas a **Mishuka**.\nVer el cobro:\nhttps://darknessofthefallen.com/perfil#ruleta',
+	);
 	assert.equal(
 		db.prepare('SELECT loser_dm_status FROM roulette_tables WHERE id=?').get('aaaaaaaa-win')
 			.loser_dm_status,
@@ -337,7 +343,7 @@ test('private messages wait for the animation to end plus a margin', () => {
 	assert.ok(revealDelay(2) >= 15000);
 });
 
-test('the roulette room has a chat: short messages, one per second, removable', async () => {
+test('the roulette room has a chat: short messages, one per second, never removed', async () => {
 	const db = openDatabase(':memory:');
 	const now = new Date().toISOString();
 	const user = (id, rank) => {
@@ -389,19 +395,15 @@ test('the roulette room has a chat: short messages, one per second, removable', 
 		await call('bea', '/api/roulette/chat', 'POST', { body: '<b>hola</b>' });
 		const seen = (await call('bea', '/api/roulette')).body.chat;
 		assert.deepEqual(
-			seen.map((m) => [m.body, m.me, m.canDelete]),
+			seen.map((m) => [m.body, m.me]),
 			[
-				['¡Suerte a todos!', false, false],
-				['<b>hola</b>', true, true],
+				['¡Suerte a todos!', false],
+				['<b>hola</b>', true],
 			],
 		);
-		// Only the author or an officer removes a message; removed ones stay stored.
-		assert.equal((await call('bea', `/api/roulette/chat/${seen[0].id}`, 'DELETE')).status, 403);
-		const removed = await call('gm', `/api/roulette/chat/${seen[0].id}`, 'DELETE');
-		assert.deepEqual(
-			removed.body.chat.map((m) => m.body),
-			['<b>hola</b>'],
-		);
+		// Nobody removes a message, not even an officer.
+		assert.ok((await call('gm', `/api/roulette/chat/${seen[0].id}`, 'DELETE')).status >= 400);
+		assert.equal((await call('ana', '/api/roulette')).body.chat.length, 2);
 		assert.equal(db.prepare('SELECT COUNT(*) AS n FROM roulette_chat').get().n, 2);
 	} finally {
 		server.close();
