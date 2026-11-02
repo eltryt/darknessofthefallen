@@ -6,7 +6,6 @@ import {
 	factions,
 	raceFactions,
 	itemQualities,
-	guideContentTypes,
 	catalogGroup,
 } from './armory-catalog.js';
 import { attachCatalogPicker } from './item-catalog.js';
@@ -194,60 +193,141 @@ export function bindSheetForm(f, c, { api, toast, esc }, done) {
 	};
 }
 
-// Verified guide links for the character's class and specialisations.
+// Guide links for the character's class and specialisations, one card per site and one
+// clickable tile per guide. Sites without links for this spec are named in a single line.
+const guideTiles = {
+	general: [
+		'Guía general',
+		'Resumen y claves de la especialización',
+		'<path d="M4 5a2 2 0 0 1 2-2h5v17H6a2 2 0 0 0-2 2Z"/><path d="M20 5a2 2 0 0 0-2-2h-5v17h5a2 2 0 0 1 2 2Z"/>',
+	],
+	leveling: [
+		'Subida de nivel',
+		'Cómo subir del 1 al 60',
+		'<path d="M12 20V5M6 11l6-6 6 6"/><path d="M5 20h14"/>',
+	],
+	talents: [
+		'Talentos',
+		'Builds de talentos recomendadas',
+		'<circle cx="12" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="19" r="2"/><path d="M12 7v5M12 12l-6 5M12 12l6 5"/>',
+	],
+	rotation: [
+		'Rotación',
+		'Prioridades y cooldowns',
+		'<path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/>',
+	],
+	bis: [
+		'Lista BiS',
+		'El mejor equipo de cada fase',
+		'<path d="M12 3 4 6v6c0 4.5 3.4 8.2 8 9 4.6-.8 8-4.5 8-9V6Z"/><path d="m12 8 1.2 2.5 2.8.4-2 1.9.5 2.7-2.5-1.3-2.5 1.3.5-2.7-2-1.9 2.8-.4Z"/>',
+	],
+	gear: ['Equipamiento', 'Equipo recomendado', '<path d="M8 3h8l3 4-2 2v11H7V9L5 7Z"/>'],
+	stats: ['Estadísticas', 'Qué estadística priorizar', '<path d="M5 20V10M12 20V4M19 20v-7"/>'],
+	consumables: [
+		'Consumibles',
+		'Encantamientos, pociones y comida',
+		'<path d="M10 3h4M11 3v5l-5 9a2 2 0 0 0 1.8 3h8.4a2 2 0 0 0 1.8-3l-5-9V3"/><path d="M8 15h8"/>',
+	],
+};
+const guideOrder = [
+	'general',
+	'leveling',
+	'talents',
+	'rotation',
+	'bis',
+	'gear',
+	'stats',
+	'consumables',
+];
+const guideBadges = { wowhead: 'W', 'icy-veins': 'IV', archon: 'A' };
 export function renderGuides(el, sheet, { esc, me }, state = {}) {
 	const { specName, note } = sheetHelpers(esc);
 	const c = sheet.character,
 		specs = Object.keys(sheet.guides);
 	if (!(state.spec in sheet.guides)) state.spec = specs[0];
 	const providers = sheet.guides[state.spec] || [];
-	const any = providers.some((p) => p.sections.some((s) => s.links.length));
+	// Each link becomes a tile; the leveling guide is the general guide's "Subida de nivel" phase.
+	const tilesOf = (p) =>
+		p.sections
+			.flatMap((s) =>
+				s.links.map((l) => {
+					const kind = s.type === 'general' && l.phase === 'Subida de nivel' ? 'leveling' : s.type;
+					const [title, hint, icon] = guideTiles[kind];
+					return {
+						kind,
+						url: l.url,
+						title: l.phase && kind !== 'leveling' ? `${title} · ${l.phase}` : title,
+						hint,
+						icon,
+					};
+				}),
+			)
+			.sort((a, b) => guideOrder.indexOf(a.kind) - guideOrder.indexOf(b.kind));
+	const withLinks = providers
+		.map((p) => ({ ...p, tiles: tilesOf(p) }))
+		.filter((p) => p.tiles.length);
+	const without = providers.filter((p) => !withLinks.some((w) => w.id === p.id));
+	const version = esc(gameVersions[c.game_version]?.label || c.game_version);
 	el.innerHTML = /* HTML */ `${
 			specs.length > 1
 				? `<div class="bis-lists" role="group" aria-label="Especialización">${specs.map((s) => `<button type="button" class="secondary" data-guide-spec="${esc(s)}" aria-pressed="${s === state.spec}">${esc(specName(c.class, s) || 'Toda la clase')}</button>`).join('')}</div>`
 				: ''
 		}
-		<p class="notice">
-			Guías de Wowhead e Icy Veins, y enlaces comprobados por la hermandad, para ${esc(c.class)}
-			${state.spec ? esc(specName(c.class, state.spec)) : ''} en
-			${esc(gameVersions[c.game_version]?.label || c.game_version)}. Se abren en la web original;
-			aquí no se copia su contenido.
-		</p>
 		${
-			any
-				? ''
+			withLinks.length
+				? `<div class="guide-board">${withLinks
+						.map(
+							(p) =>
+								/* HTML */ `<section class="guide-source is-${esc(p.id)}">
+									<header>
+										<span class="guide-badge" aria-hidden="true"
+											>${esc(guideBadges[p.id] || p.name.slice(0, 1))}</span
+										>
+										<div>
+											<h3>${esc(p.name)}</h3>
+											<small
+												>${p.tiles.length} ${p.tiles.length === 1 ? 'guía' : 'guías'} ·
+												${version}</small
+											>
+										</div>
+										<a
+											class="guide-home"
+											href="${esc(p.homepage)}"
+											target="_blank"
+											rel="noopener noreferrer"
+											>Web ↗</a
+										>
+									</header>
+									<div class="guide-tiles">
+										${p.tiles
+											.map(
+												(t) =>
+													`<a class="guide-tile" href="${esc(t.url)}" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">${t.icon}</svg><span><strong>${esc(t.title)}</strong><small>${esc(t.hint)}</small></span><span class="guide-go" aria-hidden="true">↗</span></a>`,
+											)
+											.join('')}
+									</div>
+								</section>`,
+						)
+						.join('')}</div>`
 				: note(
-						'Aún no hay guías verificadas para esta combinación',
-						'Ningún proveedor tiene todavía un enlace comprobado compatible con esta clase, especialización y versión. El Líder los añade desde Panel → Guías externas.',
+						'Aún no hay guías para esta combinación',
+						'Ningún sitio tiene todavía guías de esta clase y especialización en esta versión. El Líder puede añadirlas desde Panel → Guías externas.',
 					)
 		}
-		<div class="guide-grid">
-			${providers
-				.map(
-					(p) =>
-						`<section class="guide-provider"><header><h3>${esc(p.name)}</h3><a href="${esc(p.homepage)}" target="_blank" rel="noopener noreferrer">Web ↗</a></header><ul>${p.sections
-							.map(
-								(s) =>
-									`<li><span>${esc(guideContentTypes[s.type])}</span>${
-										s.links.length
-											? s.links
-													.map(
-														(l) =>
-															`<a class="guide-link" href="${esc(l.url)}" target="_blank" rel="noopener noreferrer">${l.phase ? esc(l.phase) : 'Abrir'} ↗</a>`,
-													)
-													.join('')
-											: '<em>No disponible</em>'
-									}</li>`,
-							)
-							.join('')}</ul></section>`,
-				)
-				.join('')}
-		</div>
-		${
-			me.permissions.includes('armory.configure')
-				? '<p><a class="button secondary" href="/panel?tab=guides">Gestionar enlaces de guías</a></p>'
-				: ''
-		}`;
+		<p class="guide-foot">
+			Guías de ${esc(c.class)} ${state.spec ? esc(specName(c.class, state.spec)) : ''} para
+			${version}. Se abren en la web original; aquí no se copia su
+			contenido.${
+				without.length && withLinks.length
+					? ` Sin guías de Forever todavía: ${without.map((p) => esc(p.name)).join(', ')}.`
+					: ''
+			}
+			${
+				me.permissions.includes('armory.configure')
+					? '<a href="/panel?tab=guides">Gestionar enlaces</a>'
+					: ''
+			}
+		</p>`;
 	el.querySelectorAll('[data-guide-spec]').forEach(
 		(b) =>
 			(b.onclick = () => {
