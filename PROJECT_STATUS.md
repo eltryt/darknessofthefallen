@@ -924,3 +924,5 @@ Publicado: `7628b5a`; backend `38652910420`, Pages `38652910475` y validación `
 - 2026-10-27: Nøxik Grimforge restaurado al roster (24 → 26 públicos) con el nuevo botón «Restaurar» del panel. Deploy 40569963226.
 
 - 2026-11-02: Nueva raza Cielonato (Skyborne en inglés; antes «Célicos» en castellano). Es neutral: vale para Alianza y Horda, y al elegirla se mantiene la facción escogida. Deploy 41362048170.
+
+- 2026-11-02: Formulario de crear convocatoria reorganizado (Qué y cuándo / Quién va), ayudas «?» en cada campo, hora por defecto 23:00, fin automático +2 h, plazas según roster y resumen en vivo. No se pueden crear convocatorias con inicio pasado (Raid-Helper cierra inscripciones al inicio); mensaje de inscripción cerrada más claro; una convocatoria terminada se puede borrar aunque quede una petición sin respuesta. Borrada de la web la convocatoria de prueba «dfxgdfgdfg» (sigue en Discord). Deploy 41368270332.
