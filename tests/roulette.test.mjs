@@ -80,9 +80,10 @@ test('members open tables, join, spin and the winner marks the gold as collected
 		const empty = await call('ana', '/api/roulette');
 		assert.equal(empty.body.maxBet, 1000);
 		assert.equal(empty.body.canConfigure, false);
-		// 28 × 36 = 1008 is over the default limit of 1000 gold.
-		assert.equal((await call('ana', '/api/roulette', 'POST', { stake: 28 })).status, 400);
-		const opened = await call('ana', '/api/roulette', 'POST', { stake: 10 });
+		// Over the default limit of 1000 gold, and under the minimum of 36.
+		assert.equal((await call('ana', '/api/roulette', 'POST', { stake: 1001 })).status, 400);
+		assert.equal((await call('ana', '/api/roulette', 'POST', { stake: 35 })).status, 400);
+		const opened = await call('ana', '/api/roulette', 'POST', { stake: 100 });
 		assert.equal(opened.status, 201);
 		const table = opened.body.open[0];
 		assert.deepEqual(
@@ -90,7 +91,7 @@ test('members open tables, join, spin and the winner marks the gold as collected
 			[['Anaïs', 'Mago']],
 		);
 		assert.equal(table.canSpin, false);
-		assert.equal((await call('ana', '/api/roulette', 'POST', { stake: 5 })).status, 409);
+		assert.equal((await call('ana', '/api/roulette', 'POST', { stake: 50 })).status, 409);
 		assert.equal((await call('ana', `/api/roulette/${table.id}/players`, 'DELETE')).status, 409);
 		await call('bea', `/api/roulette/${table.id}/players`, 'PUT');
 		await call('cid', `/api/roulette/${table.id}/players`, 'PUT');
@@ -102,7 +103,8 @@ test('members open tables, join, spin and the winner marks the gold as collected
 		const [result] = spun.body.recent;
 		assert.deepEqual(result.players.map((p) => p.id).sort(), ['ana', 'bea']);
 		assert.ok(result.spins.length >= 2);
-		assert.equal(result.amount, (result.high - result.low) * 10);
+		// The lowest pays the bet minus their number; nobody else pays.
+		assert.equal(result.amount, 100 - result.low);
 		assert.ok(result.high > result.low);
 		assert.notEqual(result.winner.id, result.loser.id);
 		assert.equal(spun.body.pending.length, 1);
@@ -122,7 +124,7 @@ test('members open tables, join, spin and the winner marks the gold as collected
 		);
 		const limit = await call('gm', '/api/roulette/settings', 'PUT', { maxBet: 5000 });
 		assert.equal(limit.body.maxBet, 5000);
-		const big = await call('bea', '/api/roulette', 'POST', { stake: 100 });
+		const big = await call('bea', '/api/roulette', 'POST', { stake: 2500 });
 		assert.equal(big.status, 201);
 		await call('gm', `/api/roulette/${big.body.open[0].id}/cancel`, 'POST');
 		assert.equal(

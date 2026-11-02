@@ -1,6 +1,7 @@
 // Ruleta de la hermandad: the High-Low gold game ("gambling") on a European roulette.
-// Everyone at a table spins; the lowest number pays the highest the difference times the
-// table's gold per number. Ties at the top or the bottom spin again among the tied players.
+// Everyone at a table spins; the lowest number pays the highest the bet minus that number
+// (a 5 at a 100-gold table pays 95). Players in between neither pay nor collect, and nobody
+// pays to sit down. Ties at the top or the bottom spin again among the tied players.
 // The server draws every number, so nobody can repeat a spin. Gold is paid in the game:
 // the web records who owes whom and the winner marks it as collected.
 import { randomUUID } from 'node:crypto';
@@ -13,8 +14,10 @@ export const MAX_PLAYERS = 40;
 const RECENT = 12;
 const MAX_ROUNDS = 200;
 
-// The most a player can lose at a table: the widest gap on the wheel times the stake.
-export const maxLoss = (stake) => stake * (POCKETS - 1);
+// The lowest number is at most 35 (the highest is above it), so a bet of 36 or more always
+// leaves something to pay; a 0 pays the whole bet.
+export const MIN_BET = POCKETS - 1;
+export const payout = (stake, low) => stake - low;
 export const maxBet = (s) => s.rouletteMaxBet ?? DEFAULT_MAX_BET;
 
 // A uniform pocket 0–36: rejection sampling keeps every number equally likely.
@@ -165,7 +168,7 @@ function tableState(db, user) {
 	return {
 		me: user.id,
 		maxBet: maxBet(s),
-		pockets: POCKETS,
+		minBet: MIN_BET,
 		maxPlayers: MAX_PLAYERS,
 		canConfigure: can(user, 'settings.manage'),
 		open,
@@ -186,13 +189,13 @@ export async function rouletteApi({ db, user, path, method, body, send, requireP
 		const v = await body(),
 			stake = Number(v?.stake),
 			limit = maxBet(settings(db));
-		if (!Number.isInteger(stake) || stake < 1)
-			throw new HttpError(400, 'El oro por número debe ser un número entero mayor que 0.');
-		if (maxLoss(stake) > limit)
+		if (!Number.isInteger(stake) || stake < MIN_BET)
 			throw new HttpError(
 				400,
-				`Con ${stake} de oro por número se pueden perder hasta ${maxLoss(stake)}; el tope de la hermandad es ${limit}.`,
+				`La apuesta mínima es ${MIN_BET} de oro (el número más alto de la ruleta).`,
 			);
+		if (stake > limit)
+			throw new HttpError(400, `La apuesta máxima de la hermandad es ${limit} de oro.`);
 		const id = randomUUID(),
 			now = new Date().toISOString(),
 			me = seat(db, user);
@@ -221,8 +224,8 @@ export async function rouletteApi({ db, user, path, method, body, send, requireP
 		requirePermission('settings.manage');
 		const v = await body(),
 			value = Number(v?.maxBet);
-		if (!Number.isInteger(value) || value < POCKETS - 1 || value > 1000000)
-			throw new HttpError(400, `El tope debe estar entre ${POCKETS - 1} y 1000000 de oro.`);
+		if (!Number.isInteger(value) || value < MIN_BET || value > 1000000)
+			throw new HttpError(400, `El tope debe estar entre ${MIN_BET} y 1000000 de oro.`);
 		transaction(db, () => {
 			const s = settings(db);
 			db.prepare('UPDATE settings SET data=? WHERE id=1').run(
@@ -302,8 +305,14 @@ export async function rouletteApi({ db, user, path, method, body, send, requireP
 			.all(id)
 			.map((p) => p.user_id);
 		if (players.length < 2) throw new HttpError(409, 'Hacen falta al menos dos jugadores.');
+		// Tables opened before the minimum existed could otherwise owe negative gold.
+		if (t.stake < MIN_BET)
+			throw new HttpError(
+				409,
+				`La apuesta es menor que el mínimo (${MIN_BET}): cancela la mesa y abre otra.`,
+			);
 		const game = playTable(players),
-			amount = (game.high - game.low) * t.stake;
+			amount = payout(t.stake, game.low);
 		const insert = db.prepare(
 			'INSERT INTO roulette_spins(table_id,seq,round,kind,user_id,number) VALUES(?,?,?,?,?,?)',
 		);

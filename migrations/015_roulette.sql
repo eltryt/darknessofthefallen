@@ -1,6 +1,6 @@
 -- Ruleta de la hermandad: the guild's High-Low game played on a European roulette (0–36).
--- Everyone at a table spins once; the lowest number pays the highest the difference times
--- the table's gold per number. Gold changes hands in the game: the web only records who
+-- Everyone at a table spins once; the lowest number pays the highest the bet (stake)
+-- minus that number. Gold changes hands in the game: the web only records who
 -- owes whom. Tables are never deleted: cancelled ones keep their status. Additive only.
 CREATE TABLE roulette_tables(
 	id TEXT PRIMARY KEY,
