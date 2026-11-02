@@ -8355,11 +8355,25 @@ details[data-create] > .tutorial-open,
 .roulette-chip.is-green {
 	background: #0f7a43;
 }
-.roulette-chip.is-old {
+.roulette-result {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+.roulette-result strong {
+	color: #ffd88a;
+	font-family: Georgia, serif;
+	font-size: 1rem;
+}
+.roulette-arrow {
+	color: var(--muted);
+	font-size: 0.8rem;
+}
+.roulette-result.is-old {
 	opacity: 0.4;
 	text-decoration: line-through;
 }
-.roulette-chip.is-tie {
+.roulette-result.is-tie .roulette-chip {
 	border-style: dashed;
 	opacity: 0.85;
 }

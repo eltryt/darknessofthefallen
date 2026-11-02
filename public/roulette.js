@@ -88,8 +88,10 @@ export async function mountRoulette(host, ctx) {
 	const name = (p) =>
 		p ? `<span class="roulette-name class-${classKey(p.class)}">${esc(p.name)}</span>` : 'Alguien';
 	// A result: its gold value, in the colour of the pocket it came from.
+	// A result: the pocket the ball fell in (in its colour) and the gold it is worth.
 	const chip = (s, extra = '') =>
-		`<b class="roulette-chip is-${colorOf(s.number)}${extra}" title="Casilla ${s.number} → ${s.roll} de oro">${s.roll}</b>`;
+		`<span class="roulette-result${extra}" title="Casilla ${s.number} → ${s.roll} de oro"><b class="roulette-chip is-${colorOf(s.number)}">${s.number}</b><span class="roulette-arrow" aria-hidden="true">→</span><strong>${s.roll}</strong><span class="visually-hidden"> de oro</span></span>`;
+	const last = (r, id) => r.spins.findLast((s) => s.userId === id);
 
 	host.innerHTML = /* HTML */ `<div class="roulette">
 		<header class="roulette-head">
@@ -239,7 +241,9 @@ export async function mountRoulette(host, ctx) {
 		}
 		verdict.hidden = false;
 		verdict.classList.toggle('is-new', fresh);
-		verdict.innerHTML = `<span>${name(r.loser)} paga <strong>${gold(r.amount)}</strong> a ${name(r.winner)}</span><small>${r.high} − ${r.low} = ${r.amount}</small>`;
+		const high = last(r, r.winner?.id),
+			low = last(r, r.loser?.id);
+		verdict.innerHTML = `<span>${name(r.loser)} paga <strong>${gold(r.amount)}</strong> a ${name(r.winner)}</span><small>${name(r.winner)}: casilla ${high?.number} = ${r.high} · ${name(r.loser)}: casilla ${low?.number} = ${r.low} · ${r.high} − ${r.low} = ${r.amount}</small>`;
 	};
 	// Shows a played table: animated the first time it arrives, at once otherwise.
 	async function play(r, animate) {
@@ -264,7 +268,7 @@ export async function mountRoulette(host, ctx) {
 			}
 			seat?.querySelector('.roulette-rolls');
 			// A new spin replaces the player's previous result.
-			seat?.querySelectorAll('.roulette-chip').forEach((c) => c.classList.add('is-old'));
+			seat?.querySelectorAll('.roulette-result').forEach((c) => c.classList.add('is-old'));
 			seat
 				?.querySelector('.roulette-rolls')
 				.insertAdjacentHTML('beforeend', chip(s, s.kind === 'main' ? '' : ' is-tie'));
@@ -282,7 +286,7 @@ export async function mountRoulette(host, ctx) {
 					: r.spins.at(-1).number,
 			);
 		skipButton.hidden = true;
-		now.textContent = `Mesa del ${when(r.closedAt)} · hasta ${gold(r.stake)}`;
+		now.textContent = `Mesa del ${when(r.closedAt)} · hasta ${gold(r.stake)} · casilla 0 = 1, 18 = ${1 + Math.floor((36 * (r.stake - 1) + 36) / 72)}, 36 = ${r.stake}`;
 		finish(r, !quick);
 	}
 	// A countdown to the shared start, so the whole room watches the same spin.
