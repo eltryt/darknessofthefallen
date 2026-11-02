@@ -26,6 +26,7 @@ import levelCapSchema from '../migrations/014_level_cap.sql';
 import rouletteSchema from '../migrations/015_roulette.sql';
 import rouletteDeleteSchema from '../migrations/016_roulette_delete.sql';
 import rouletteDmSchema from '../migrations/017_roulette_dm.sql';
+import rouletteLoserDmSchema from '../migrations/018_roulette_loser_dm.sql';
 import { deliverRouletteDMs, nextRouletteDMAt } from './roulette.mjs';
 import { deliverPush, nextPushAt, pushReady } from './push-notifications.mjs';
 import { deliverCallups, dmReady, nextCallupAt } from './raid-lineup.mjs';
@@ -54,6 +55,7 @@ export class Guild extends DurableObject {
 			rouletteSchema,
 			rouletteDeleteSchema,
 			rouletteDmSchema,
+			rouletteLoserDmSchema,
 		);
 		repairGMRedirectFailures(this.db);
 	}

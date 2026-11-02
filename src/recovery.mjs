@@ -63,13 +63,18 @@ const characterDefaults = {
 	stats: '{}',
 };
 const lineupTables = ['raid_lineups', 'raid_lineup_slots', 'raid_callups'];
-// Columns added by migration 017; older copies restore them as "never messaged".
+// Columns added by migrations 017 and 018; older copies restore them as "never messaged".
 const rouletteDmDefaults = {
 	dm_status: 'skipped',
 	dm_error: '',
 	dm_attempts: 0,
 	dm_next_at: 0,
 	dm_sent_at: null,
+	loser_dm_status: 'skipped',
+	loser_dm_error: '',
+	loser_dm_attempts: 0,
+	loser_dm_next_at: 0,
+	loser_dm_sent_at: null,
 };
 const tablesFor = (version) =>
 	recoveryTables.filter(
@@ -93,7 +98,7 @@ export function exportRecovery(db) {
 	return transaction(db, () => {
 		const snapshot = {
 			schemaVersion: 2,
-			databaseVersion: 17,
+			databaseVersion: 18,
 			exportedAt: new Date().toISOString(),
 			settings: JSON.parse(db.prepare('SELECT data FROM settings WHERE id=1').get().data),
 		};
@@ -107,7 +112,7 @@ export function validateRecovery(snapshot) {
 	if (
 		!snapshot ||
 		snapshot.schemaVersion !== 2 ||
-		![5, 6, 7, 8, 9, 10, 11, 15, 16, 17].includes(snapshot.databaseVersion)
+		![5, 6, 7, 8, 9, 10, 11, 15, 16, 17, 18].includes(snapshot.databaseVersion)
 	)
 		throw new Error('Formato no compatible: descarga una nueva exportación JSON desde el panel.');
 	if (
@@ -163,7 +168,7 @@ export function restoreRecovery(db, snapshot) {
 						? { ...characterDefaults, ...stored }
 						: // Version 15 copies predate the soft delete of migration 016.
 							table === 'roulette_tables' &&
-							  snapshot.databaseVersion < 17 &&
+							  snapshot.databaseVersion < 18 &&
 							  stored &&
 							  typeof stored === 'object'
 							? {
@@ -191,10 +196,12 @@ export function restoreRecovery(db, snapshot) {
 					row.error = 'Recuperado de copia: revisar en Discord antes de reintentar.';
 				}
 				// A restored roulette win is never messaged again.
-				if (table === 'roulette_tables' && !['sent', 'failed', 'skipped'].includes(row.dm_status)) {
-					row.dm_status = 'skipped';
-					row.dm_error = 'Copia restaurada: no se reenvía el privado.';
-				}
+				if (table === 'roulette_tables')
+					for (const c of ['dm', 'loser_dm'])
+						if (!['sent', 'failed', 'skipped'].includes(row[`${c}_status`])) {
+							row[`${c}_status`] = 'skipped';
+							row[`${c}_error`] = 'Copia restaurada: no se reenvía el privado.';
+						}
 				if (table === 'outbox' && !row.delivered_at) row.attempts = Math.max(5, row.attempts);
 				if (table === 'raid_callups' && !['sent', 'failed'].includes(row.dm_status)) {
 					row.dm_status = 'uncertain';

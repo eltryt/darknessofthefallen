@@ -144,10 +144,14 @@ test('members open tables, join, spin and the winner marks the gold as collected
 		assert.ok(result.high > result.low);
 		assert.notEqual(result.winner.id, result.loser.id);
 		assert.equal(spun.body.pending.length, 1);
-		// The winner's private message is queued with the spin.
-		assert.equal(
-			db.prepare('SELECT dm_status FROM roulette_tables WHERE id=?').get(table.id).dm_status,
-			'pending',
+		// Both private messages (winner and loser) are queued with the spin.
+		assert.deepEqual(
+			{
+				...db
+					.prepare('SELECT dm_status,loser_dm_status FROM roulette_tables WHERE id=?')
+					.get(table.id),
+			},
+			{ dm_status: 'pending', loser_dm_status: 'pending' },
 		);
 		assert.equal(
 			(await call(result.loser.id, `/api/roulette/${table.id}/settled`, 'PUT')).status,
@@ -223,16 +227,16 @@ test('the ball always ends over the pocket of the drawn number', async () => {
 	}
 });
 
-test('the winner gets a private message with the gold won and who owes it', async () => {
+test('winner and loser get a private message with the gold, the results and the debt', async () => {
 	const db = openDatabase(':memory:');
 	const now = new Date().toISOString();
 	for (const id of ['111', '222', '333'])
 		db.prepare('INSERT INTO users VALUES(?,?,?,?)').run(id, id, 'member', now);
-	const table = (id, status, winner, loser, dm) => {
+	const table = (id, status, winner, loser, dm, loserDm = 'skipped') => {
 		db.prepare(
-			`INSERT INTO roulette_tables(id,created_by,stake,status,created_at,closed_at,winner_id,loser_id,high,low,amount,dm_status,dm_next_at)
-			 VALUES(?,?,?,?,?,?,?,?,?,?,?,?,0)`,
-		).run(id, winner, 100, status, now, now, winner, loser, 95, 23, 72, dm);
+			`INSERT INTO roulette_tables(id,created_by,stake,status,created_at,closed_at,winner_id,loser_id,high,low,amount,dm_status,dm_next_at,loser_dm_status,loser_dm_next_at)
+			 VALUES(?,?,?,?,?,?,?,?,?,?,?,?,0,?,0)`,
+		).run(id, winner, 100, status, now, now, winner, loser, 95, 23, 72, dm, loserDm);
 		for (const [u, name, n, seq] of [
 			[winner, 'Mishuka', 34, 1],
 			[loser, 'Adrios', 8, 2],
@@ -243,7 +247,7 @@ test('the winner gets a private message with the gold won and who owes it', asyn
 			db.prepare('INSERT INTO roulette_spins VALUES(?,?,?,?,?,?)').run(id, seq, 1, 'main', u, n);
 		}
 	};
-	table('aaaaaaaa-win', 'spun', '111', '222', 'pending');
+	table('aaaaaaaa-win', 'spun', '111', '222', 'pending', 'pending');
 	table('bbbbbbbb-old', 'spun', '333', '222', 'skipped');
 	table('cccccccc-dnd', 'spun', '333', '111', 'pending');
 	const calls = [];
@@ -263,12 +267,21 @@ test('the winner gets a private message with the gold won and who owes it', asyn
 	};
 	assert.equal(await deliverRouletteDMs(db, { ...env, DISCORD_DM_ENABLED: 'false' }, transport), 0);
 	assert.equal(calls.length, 0);
-	assert.equal(await deliverRouletteDMs(db, env, transport), 1);
+	assert.equal(await deliverRouletteDMs(db, env, transport), 2);
 	const sent = calls.find((c) => c.url.endsWith('/channels/dm-111/messages')).body.content;
 	assert.match(sent, /Has ganado \*\*72 de oro\*\*/);
 	assert.match(sent, /casilla 34 → \*\*95\*\*/);
 	assert.match(sent, /Adrios te debe 72 de oro/);
 	assert.match(sent, /Referencia: aaaaaaaa · https:\/\/darknessofthefallen.com\/perfil#ruleta/);
+	const owed = calls.find((c) => c.url.endsWith('/channels/dm-222/messages')).body.content;
+	assert.match(owed, /Te ha tocado pagar \*\*72 de oro\*\* a \*\*Mishuka\*\*/);
+	assert.match(owed, /casilla 8 → \*\*23\*\*/);
+	assert.match(owed, /Págale \*\*72 de oro\*\* \(95 − 23\)/);
+	assert.equal(
+		db.prepare('SELECT loser_dm_status FROM roulette_tables WHERE id=?').get('aaaaaaaa-win')
+			.loser_dm_status,
+		'sent',
+	);
 	const status = (id) =>
 		db.prepare('SELECT dm_status,dm_error FROM roulette_tables WHERE id=?').get(id);
 	assert.equal(status('aaaaaaaa-win').dm_status, 'sent');
