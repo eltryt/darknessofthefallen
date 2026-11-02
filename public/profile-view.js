@@ -4,6 +4,7 @@ import { operationTab } from './operations-ui.js';
 import { mountWishlist } from './wishlist-ui.js';
 import { mountMyCallups } from './my-callups.js';
 import { mountJourney } from './journey-board.js';
+import { mountRoulette } from './roulette.js';
 import { contactForm } from './gm-ui.js';
 import { startProfileTour } from './profile-tour.js';
 import { medal, tierNames, progressOf } from './medals.js';
@@ -29,6 +30,8 @@ const icons = {
 		'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
 	camino:
 		'<path d="M4 20c0-4 3-5 6-5s4-2 4-4-2-3-4-3-3 1-3 2"/><circle cx="18" cy="5" r="2"/><path d="M18 7v4"/>',
+	ruleta:
+		'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M12 3v6M12 15v6M3 12h6M15 12h6"/><circle cx="17.5" cy="6.5" r="1.3"/>',
 	logros:
 		'<circle cx="12" cy="14" r="6"/><path d="m8 3 4 5 4-5M12 11.5l1 2 2.2.3-1.6 1.5.4 2.2-2-1-2 1 .4-2.2-1.6-1.5 2.2-.3Z"/>',
 };
@@ -40,6 +43,7 @@ const sections = [
 	['convocatorias', 'Convocatorias'],
 	['logros', 'Logros'],
 	['camino', 'Camino al 60'],
+	['ruleta', 'Ruleta'],
 ];
 const categoryNames = {
 	asistencia: 'Asistencia',
@@ -273,6 +277,10 @@ export function createProfileView(context) {
 			if (id === 'camino') {
 				if (!me.permissions.includes('community.read')) return locked(host);
 				await mountJourney(host, context);
+			}
+			if (id === 'ruleta') {
+				if (!me.permissions.includes('community.read')) return locked(host);
+				await mountRoulette(host, context);
 			}
 			if (id === 'logros') {
 				if (!achievements) return locked(host);

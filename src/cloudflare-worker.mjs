@@ -23,6 +23,7 @@ import achievementsSchema from '../migrations/011_achievements.sql';
 import pushSchema from '../migrations/012_push.sql';
 import lootOfficerSchema from '../migrations/013_loot_officer.sql';
 import levelCapSchema from '../migrations/014_level_cap.sql';
+import rouletteSchema from '../migrations/015_roulette.sql';
 import { deliverPush, nextPushAt, pushReady } from './push-notifications.mjs';
 import { deliverCallups, dmReady, nextCallupAt } from './raid-lineup.mjs';
 import { syncRaidEvents } from './raid-sync.mjs';
@@ -47,6 +48,7 @@ export class Guild extends DurableObject {
 			pushSchema,
 			lootOfficerSchema,
 			levelCapSchema,
+			rouletteSchema,
 		);
 		repairGMRedirectFailures(this.db);
 	}

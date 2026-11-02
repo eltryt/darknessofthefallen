@@ -28,6 +28,7 @@ import { isValidSpecForClass } from '../public/specs.js';
 import { armoryApi } from './armory.mjs';
 import { achievementsApi, publicGuildAchievements } from './achievements.mjs';
 import { journeyApi } from './journey.mjs';
+import { rouletteApi } from './roulette.mjs';
 import { raidLineupApi } from './raid-lineup.mjs';
 import {
 	SESSION_MAX_AGE_SECONDS,
@@ -150,6 +151,7 @@ const files = {
 	'/sheet-parts.js': ['sheet-parts.js', 'text/javascript'],
 	'/my-callups.js': ['my-callups.js', 'text/javascript'],
 	'/journey-board.js': ['journey-board.js', 'text/javascript'],
+	'/roulette.js': ['roulette.js', 'text/javascript'],
 	'/item-catalog.js': ['item-catalog.js', 'text/javascript'],
 	'/profile-tour.js': ['profile-tour.js', 'text/javascript'],
 	'/motion.js': ['motion.js', 'text/javascript'],
@@ -512,6 +514,18 @@ export function createApp(db, env, { readAsset = readLocalAsset, discordFetch = 
 			}
 			if (await achievementsApi({ db, user, path, method, send, requirePermission })) return;
 			if (await journeyApi({ db, user, path, method, send, requirePermission })) return;
+			if (
+				await rouletteApi({
+					db,
+					user,
+					path,
+					method,
+					body: () => body(req),
+					send,
+					requirePermission,
+				})
+			)
+				return;
 			if (
 				await armoryApi({
 					db,

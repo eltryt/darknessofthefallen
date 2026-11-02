@@ -8168,3 +8168,425 @@ details[data-create] > .tutorial-open,
 		grid-template-columns: minmax(0, 1fr);
 	}
 }
+
+/* Ruleta de la hermandad: a European roulette in felt, mahogany and brass. */
+.roulette {
+	display: grid;
+	gap: 20px;
+}
+.roulette-head h2 {
+	margin: 0 0 6px;
+}
+.roulette-head p {
+	margin: 0;
+	max-width: 640px;
+	color: var(--muted);
+}
+.roulette-stage {
+	display: grid;
+	grid-template-columns: minmax(0, 420px) minmax(0, 1fr);
+	align-items: center;
+	gap: 24px;
+	padding: 20px;
+	border: 1px solid #d8b98244;
+	border-radius: 14px;
+	background: radial-gradient(circle at 30% 40%, #1f5a3a 0, #0f3523 55%, #0a2418 100%);
+	box-shadow: inset 0 0 60px #0008;
+}
+.roulette-svg {
+	display: block;
+	width: 100%;
+	height: auto;
+	filter: drop-shadow(0 10px 18px #000a);
+}
+.roulette-wheel,
+.roulette-ball-orbit,
+.roulette-ball {
+	transform-box: view-box;
+	transform-origin: 0 0;
+}
+.roulette-rim {
+	fill: #3a1f12;
+	stroke: #c9a45c;
+	stroke-width: 4;
+}
+.roulette-track {
+	fill: #5a321c;
+	stroke: #2a160c;
+	stroke-width: 2;
+}
+.roulette-track-inner {
+	fill: #1b120c;
+}
+.roulette-pocket .roulette-number-bg {
+	stroke: #c9a45c;
+	stroke-width: 0.8;
+}
+.roulette-pocket.is-red .roulette-number-bg {
+	fill: #a8172b;
+}
+.roulette-pocket.is-black .roulette-number-bg {
+	fill: #15161a;
+}
+.roulette-pocket.is-green .roulette-number-bg {
+	fill: #0f7a43;
+}
+.roulette-slot {
+	fill: #2b1a10;
+	stroke: #c9a45c;
+	stroke-width: 1.2;
+}
+.roulette-pocket text {
+	fill: #f6efe0;
+	font:
+		700 13px Georgia,
+		serif;
+	text-anchor: middle;
+	dominant-baseline: middle;
+}
+.roulette-pocket.is-hit .roulette-number-bg {
+	fill: #e8c477;
+}
+.roulette-pocket.is-hit text {
+	fill: #241405;
+}
+.roulette-pocket.is-hit .roulette-slot {
+	fill: #4a3214;
+}
+.roulette-cone {
+	fill: #6b3d20;
+	stroke: #c9a45c;
+	stroke-width: 2;
+}
+.roulette-spokes rect {
+	fill: #d9b46a;
+	stroke: #7a5a26;
+}
+.roulette-hub {
+	fill: #c9a45c;
+	stroke: #f3dcae;
+	stroke-width: 2;
+}
+.roulette-ball {
+	fill: #fbfbf8;
+	stroke: #b9b9b4;
+	stroke-width: 1;
+	transform: translateY(-189px);
+	filter: drop-shadow(0 1px 1px #0009);
+}
+.roulette-ball.is-in {
+	transform: translateY(-124px);
+}
+.roulette-board {
+	display: grid;
+	gap: 12px;
+	align-content: start;
+}
+.roulette-now {
+	margin: 0;
+	color: #f3dcae;
+	font-family: Georgia, serif;
+	font-size: 1.1rem;
+	min-height: 1.5em;
+}
+.roulette-now em {
+	color: #ffcf7a;
+	font-style: normal;
+	font-weight: 700;
+}
+.roulette-results {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+	gap: 6px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	max-height: 320px;
+	overflow: auto;
+}
+.roulette-results li {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	padding: 6px 10px;
+	border: 1px solid #ffffff1f;
+	border-radius: 8px;
+	background: #0009;
+	transition:
+		border-color 0.2s,
+		background 0.2s;
+}
+.roulette-results li.is-turn {
+	border-color: #e8c477;
+	background: #3a2a0f;
+}
+.roulette-results li.is-winner {
+	border-color: #e8c477;
+	background: linear-gradient(90deg, #6b4d16, #2d2008);
+}
+.roulette-results li.is-loser {
+	border-color: #d5485e;
+	background: linear-gradient(90deg, #5c1220, #23070c);
+}
+.roulette-rolls {
+	display: flex;
+	gap: 4px;
+}
+.roulette-chip {
+	display: inline-grid;
+	place-items: center;
+	min-width: 28px;
+	height: 28px;
+	padding: 0 4px;
+	border: 2px solid #c9a45c;
+	border-radius: 50%;
+	color: #fff;
+	font:
+		700 0.85rem Georgia,
+		serif;
+}
+.roulette-chip.is-red {
+	background: #a8172b;
+}
+.roulette-chip.is-black {
+	background: #15161a;
+}
+.roulette-chip.is-green {
+	background: #0f7a43;
+}
+.roulette-chip.is-tie {
+	border-style: dashed;
+	opacity: 0.85;
+}
+.roulette-name {
+	color: var(--class-color, var(--ink));
+	font-weight: 650;
+}
+.roulette-verdict {
+	display: grid;
+	gap: 4px;
+	margin: 0;
+	padding: 14px 16px;
+	border: 1px solid #e8c477;
+	border-radius: 12px;
+	background: linear-gradient(180deg, #2a2116, #141114);
+	color: #f6efe0;
+	font-size: 1.1rem;
+	text-align: center;
+}
+.roulette-verdict strong {
+	color: #ffd88a;
+}
+.roulette-verdict small {
+	color: var(--muted);
+	font-size: 0.85rem;
+}
+.roulette-verdict.is-new {
+	animation: roulette-win 0.9s ease-out;
+}
+@keyframes roulette-win {
+	0% {
+		transform: scale(0.85);
+		opacity: 0;
+		box-shadow: 0 0 0 #e8c47700;
+	}
+	60% {
+		transform: scale(1.04);
+		opacity: 1;
+		box-shadow: 0 0 40px #e8c477aa;
+	}
+	100% {
+		transform: scale(1);
+		box-shadow: 0 0 12px #e8c47733;
+	}
+}
+.roulette-actions {
+	display: flex;
+	gap: 8px;
+}
+.roulette-open,
+.roulette-lists > section {
+	display: grid;
+	gap: 12px;
+}
+.roulette-lists {
+	display: grid;
+	gap: 20px;
+}
+.roulette h3 {
+	margin: 0;
+	color: #f3dcae;
+	font-family: Georgia, serif;
+}
+.roulette-new {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: end;
+	gap: 12px;
+	padding: 14px 16px;
+	border: 1px solid var(--line);
+	border-radius: 12px;
+	background: var(--panel);
+}
+.roulette-new label {
+	display: grid;
+	gap: 4px;
+}
+.roulette-new input {
+	width: 140px;
+}
+.roulette-risk {
+	flex: 1 1 220px;
+	margin: 0;
+	color: var(--muted);
+	font-size: 0.92rem;
+}
+.roulette-tables {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+	gap: 12px;
+}
+.roulette-table {
+	display: grid;
+	gap: 10px;
+	padding: 14px 16px;
+	border: 1px solid #1f5a3a;
+	border-radius: 12px;
+	background: linear-gradient(180deg, #11291d, #0c1712);
+}
+.roulette-table-head {
+	display: grid;
+	gap: 2px;
+}
+.roulette-table-head span,
+.roulette-table small {
+	color: var(--muted);
+	font-size: 0.88rem;
+}
+.roulette-seats {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.roulette-seats li {
+	padding: 3px 10px;
+	border: 1px solid #ffffff22;
+	border-radius: 999px;
+	background: #0006;
+	font-size: 0.9rem;
+}
+.roulette-seats li.is-me,
+.roulette-results li.is-me {
+	outline: 1px solid var(--primary);
+}
+.roulette-table-foot {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+.roulette-table-foot button {
+	padding: 8px 14px;
+}
+.roulette-go {
+	background: linear-gradient(180deg, #e8c477, #b08433);
+	color: #241405;
+}
+.roulette .link-button {
+	padding: 0;
+	border: 0;
+	background: none;
+	color: var(--gold);
+	font: inherit;
+	text-decoration: underline;
+	cursor: pointer;
+}
+.roulette-debts {
+	display: grid;
+	gap: 6px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.roulette-debts li {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto auto auto auto;
+	align-items: center;
+	gap: 12px;
+	padding: 8px 12px;
+	border: 1px solid var(--line);
+	border-radius: 8px;
+	background: var(--panel);
+}
+.roulette-debts li.is-settled {
+	opacity: 0.7;
+}
+.roulette-debts strong {
+	color: #ffd88a;
+}
+.roulette-debts small,
+.roulette-tag {
+	color: var(--muted);
+	font-size: 0.85rem;
+}
+.roulette-debts button.secondary {
+	padding: 6px 12px;
+}
+.roulette-ranking {
+	width: 100%;
+	border-collapse: collapse;
+}
+.roulette-ranking th,
+.roulette-ranking td {
+	padding: 8px 10px;
+	border-bottom: 1px solid var(--line);
+	text-align: left;
+	white-space: nowrap;
+}
+.roulette-ranking tr.is-me td {
+	background: #c7495f14;
+}
+.roulette-ranking .is-up {
+	color: #8fd18f;
+}
+.roulette-ranking .is-down {
+	color: #ef8a98;
+}
+.roulette-config {
+	padding: 12px 16px;
+	border: 1px solid var(--line);
+	border-radius: 12px;
+	background: var(--panel);
+}
+.roulette-limit {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: end;
+	gap: 12px;
+	margin-top: 12px;
+}
+.roulette-limit label {
+	display: grid;
+	gap: 4px;
+}
+@media (max-width: 860px) {
+	.roulette-stage {
+		grid-template-columns: minmax(0, 1fr);
+		padding: 14px;
+	}
+	.roulette-wheel-wrap {
+		max-width: 360px;
+		margin: 0 auto;
+		width: 100%;
+	}
+	.roulette-debts li {
+		grid-template-columns: minmax(0, 1fr) auto;
+	}
+}
+.roulette .table-scroll {
+	overflow-x: auto;
+}

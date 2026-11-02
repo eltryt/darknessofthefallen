@@ -18,6 +18,7 @@ export function durableDatabase(
 	pushSchema,
 	lootOfficerSchema,
 	levelCapSchema,
+	rouletteSchema,
 ) {
 	const execute = (sql, parameters = []) => storage.sql.exec(sql, ...parameters);
 	const db = {
@@ -78,6 +79,11 @@ export function durableDatabase(
 			!db.prepare('SELECT version FROM schema_migrations WHERE version=14').get()
 		)
 			db.exec(levelCapSchema);
+		if (
+			rouletteSchema &&
+			!db.prepare('SELECT version FROM schema_migrations WHERE version=15').get()
+		)
+			db.exec(rouletteSchema);
 	});
 	return db;
 }
