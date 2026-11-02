@@ -189,7 +189,17 @@ async function serveStatic(request, env, url) {
 	if (tag) headers.set('ETag', tag);
 	if (stored.status === 304) return new Response(null, { status: 304, headers });
 	headers.set('Content-Type', asset.contentType);
-	return new Response(request.method === 'HEAD' ? null : stored.body, { status: 200, headers });
+	// Videos are read in ranges so players can seek; the partial answer is passed on as is.
+	const video = asset.contentType.startsWith('video/');
+	if (video)
+		for (const name of ['Accept-Ranges', 'Content-Range', 'Content-Length']) {
+			const value = stored.headers.get(name);
+			if (value) headers.set(name, value);
+		}
+	return new Response(request.method === 'HEAD' ? null : stored.body, {
+		status: video && stored.status === 206 ? 206 : 200,
+		headers,
+	});
 }
 
 export default {

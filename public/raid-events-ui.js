@@ -1,3 +1,4 @@
+import { tutorialButton } from './tutorials.js';
 const jobLabel = (status) =>
 	({
 		pending: 'Pendiente de sincronización',
@@ -125,6 +126,7 @@ export async function mountRaidEvents(host, ctx, { manage = false, mine = false 
 				manager && manage
 					? /* HTML */ `<details class="card section" data-create>
 							<summary>Crear convocatoria y publicar en Discord</summary>
+							${tutorialButton('crear-convocatoria', 'Ver tutorial en vídeo')}
 							<ol class="create-steps">
 								<li>Rellena los datos y pulsa «Crear convocatoria».</li>
 								<li>

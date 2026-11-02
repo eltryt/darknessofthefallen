@@ -1,4 +1,5 @@
 import { ClassIcon } from './components.js';
+import { tutorialButton } from './tutorials.js';
 import { buffCoverage, buffSource } from './raid-buffs.js';
 
 // Raid-Helper class names arrive in English; the web shows class colours by key.
@@ -194,6 +195,7 @@ export async function mountLineup(target, eventId, { api, esc, toast, data }, on
 				<div>
 					<span class="eyebrow">Alineación</span>
 					<h3>${esc(view.event.title)}</h3>
+					${tutorialButton('alineacion', 'Ver tutorial')}
 					<p>
 						${esc(new Date(view.event.starts_at).toLocaleString('es-ES', { timeZone: 'Europe/Madrid', dateStyle: 'full', timeStyle: 'short' }))}
 						· ${view.event.groups} grupos de ${view.event.groupSize}

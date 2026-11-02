@@ -1,6 +1,7 @@
 import { recruitmentShowcase } from './guild-showcase.js';
 import { schedulePlanner } from './schedule-ui.js';
 import { medal, tierNames } from './medals.js';
+import { tutorialButton } from './tutorials.js';
 export function createPublicLayout(context) {
 	const { esc, title, data } = context;
 	function weekSchedule() {
@@ -309,7 +310,7 @@ export function createPublicLayout(context) {
 					'Desafíos que nos hacen más fuertes.',
 					`${days} · ${s.raidStart}–${s.raidEnd}, hora de Madrid.`,
 				) +
-				`<nav class="raid-section-nav" aria-label="En esta página"><a class="button" href="#convocatorias">Convocatorias</a><a class="button secondary" href="/progreso">Progreso de la hermandad</a></nav><article class="onyxia-feature"><img src="/assets/art/onyxia.webp" alt="Ilustración de Onyxia en su guarida" width="750" height="867" loading="lazy"><div><span class="eyebrow">Azeroth nos espera</span><h2>Una banda. Un mismo desafío.</h2><p>Consulta las convocatorias para conocer el encuentro, las plazas y el horario de cada salida. El progreso registrado por la hermandad está disponible en su apartado.</p><a class="button secondary" href="/progreso">Ver progreso real →</a></div></article>` +
+				`<nav class="raid-section-nav" aria-label="En esta página"><a class="button" href="#convocatorias">Convocatorias</a><a class="button secondary" href="/progreso">Progreso de la hermandad</a>${tutorialButton('convocatorias', 'Cómo apuntarte')}</nav><article class="onyxia-feature"><img src="/assets/art/onyxia.webp" alt="Ilustración de Onyxia en su guarida" width="750" height="867" loading="lazy"><div><span class="eyebrow">Azeroth nos espera</span><h2>Una banda. Un mismo desafío.</h2><p>Consulta las convocatorias para conocer el encuentro, las plazas y el horario de cada salida. El progreso registrado por la hermandad está disponible en su apartado.</p><a class="button secondary" href="/progreso">Ver progreso real →</a></div></article>` +
 				guildFacts() +
 				weekSchedule() +
 				raidOrganization(s) +
@@ -372,7 +373,7 @@ export function createPublicLayout(context) {
 									<p>Comunidad estable, comunicación y ganas de mejorar juntos.</p>
 								</article>
 							</div>
-							${s.recruitmentOpen || document.body.dataset.applicationUrl ? `<a class="button" href="${esc(document.body.dataset.applicationUrl || '#application')}">Quiero formar parte →</a>` : '<span class="pill">Candidaturas cerradas</span>'}
+							${s.recruitmentOpen || document.body.dataset.applicationUrl ? `<a class="button" href="${esc(document.body.dataset.applicationUrl || '#application')}">Quiero formar parte →</a>` : '<span class="pill">Candidaturas cerradas</span>'}${tutorialButton('candidatura', 'Ver cómo unirte')}
 						</div>
 						<aside class="recruit-expectations">
 							<span class="eyebrow">Así jugamos</span>
@@ -559,7 +560,7 @@ export function createPublicLayout(context) {
 						<li>Consulta tu asistencia y el historial de loot.</li>
 						<li>Accede a las herramientas de tu rango.</li>
 					</ul>
-					${data.authConfigured ? '<a class="button discord-button" href="/auth/discord">Entrar con Discord ↗</a>' : '<div class="connection-pending"><strong>El acceso de miembros aún no está abierto</strong><p>Cuando se active, entrarás con tu cuenta de Discord. Mientras tanto, puedes consultar los horarios y guardar las próximas noches de raid en tu calendario.</p><div class="login-pending-actions"><a class="button secondary" href="/raids">Ver próximas raids →</a><a class="link" href="/nosotros">Conocer la hermandad</a></div></div>'}
+					${data.authConfigured ? '<a class="button discord-button" href="/auth/discord">Entrar con Discord ↗</a>' + tutorialButton('entrar', 'Ver cómo se entra', 'link tutorial-link') : '<div class="connection-pending"><strong>El acceso de miembros aún no está abierto</strong><p>Cuando se active, entrarás con tu cuenta de Discord. Mientras tanto, puedes consultar los horarios y guardar las próximas noches de raid en tu calendario.</p><div class="login-pending-actions"><a class="button secondary" href="/raids">Ver próximas raids →</a><a class="link" href="/nosotros">Conocer la hermandad</a></div></div>'}
 					<p class="login-footnote">
 						Solo usamos Discord para entrar. Nunca te pediremos crear una contraseña para esta web.
 					</p>

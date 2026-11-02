@@ -1,4 +1,5 @@
 import { initAnalytics } from './analytics.js';
+import { bindTutorials } from './tutorials.js';
 import { createPublicViews } from './public-views.js';
 import { createProfileView } from './profile-view.js';
 import { createPanelView } from './panel-view.js';
@@ -241,6 +242,7 @@ function initInstallApp() {
 	};
 }
 initMotion();
+bindTutorials();
 boot();
 initAnalytics();
 initInstallApp();

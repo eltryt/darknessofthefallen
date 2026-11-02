@@ -77,6 +77,18 @@ async function readLocalAsset(file) {
 }
 
 const date = () => new Date().toISOString();
+// Video tutorials (public/assets/tutorials): an MP4 and its poster for each one.
+const tutorialVideos = [
+	'entrar',
+	'armeria',
+	'wishlist',
+	'convocatorias',
+	'logros',
+	'candidatura',
+	'crear-convocatoria',
+	'alineacion',
+	'botin',
+];
 const files = {
 	'/assets/art/strategy.webp': ['assets/art/strategy.webp', 'image/webp'],
 	'/assets/art/tavern.webp': ['assets/art/tavern.webp', 'image/webp'],
@@ -103,6 +115,13 @@ const files = {
 	'/manual-roster-ui.js': ['manual-roster-ui.js', 'text/javascript'],
 	'/analytics.js': ['analytics.js', 'text/javascript'],
 	'/home-events.js': ['home-events.js', 'text/javascript'],
+	'/tutorials.js': ['tutorials.js', 'text/javascript'],
+	...Object.fromEntries(
+		tutorialVideos.flatMap((id) => [
+			[`/assets/tutorials/${id}.mp4`, [`assets/tutorials/${id}.mp4`, 'video/mp4']],
+			[`/assets/tutorials/${id}.webp`, [`assets/tutorials/${id}.webp`, 'image/webp']],
+		]),
+	),
 	...Object.fromEntries(iconAssets.map((file) => ['/' + file, [file, 'image/webp']])),
 	// Item catalogue built by scripts/sync-items.mjs (one file per slot group).
 	...Object.fromEntries(
@@ -211,7 +230,7 @@ export function securityHeaders(origin) {
 export function staticFile(path) {
 	if (!Object.hasOwn(files, path) || files[path][1].startsWith('text/html')) return null;
 	const [file, type] = files[path];
-	const binary = type.startsWith('image/');
+	const binary = type.startsWith('image/') || type.startsWith('video/');
 	return {
 		file,
 		contentType: binary ? type : `${type}; charset=utf-8`,

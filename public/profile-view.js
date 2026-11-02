@@ -1,4 +1,5 @@
 import { attachCharacterEditor } from './character-editor.js';
+import { tutorialButton } from './tutorials.js';
 import { operationTab } from './operations-ui.js';
 import { mountWishlist } from './wishlist-ui.js';
 import { mountMyCallups } from './my-callups.js';
@@ -169,6 +170,7 @@ export function createProfileView(context) {
 								<path d="M10 8.5v7l5.5-3.5Z" /></svg
 							><span>Guía del perfil</span>
 						</button>
+						${tutorialButton('miembros', 'Vídeos tutoriales', 'hub-tour-start')}
 					</div>
 				</div>
 				<dl class="hub-stats">

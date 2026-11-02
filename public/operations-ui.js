@@ -1,4 +1,5 @@
 import { mountManualRoster } from './manual-roster-ui.js';
+import { tutorialButton } from './tutorials.js';
 import { rosterCards } from './roster-ui.js';
 const rankLabel = (rank) =>
 	({
@@ -348,6 +349,7 @@ export async function operationTab(tab, el, ctx) {
 	if (tab === 'loot') {
 		const rows = await api('/api/loot');
 		el.innerHTML = /* HTML */ `<h2>Historial de loot</h2>
+			${tutorialButton('botin', 'Ver tutorial')}
 			<p>
 				Ganadores, candidatos, método y motivo de cada decisión. Las anulaciones conservan su
 				trazabilidad.

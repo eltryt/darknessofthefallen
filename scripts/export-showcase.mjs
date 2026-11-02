@@ -16,6 +16,7 @@ mkdirSync(join(destination, 'assets/art'), { recursive: true });
 mkdirSync(join(destination, 'assets/partners'), { recursive: true });
 mkdirSync(join(destination, 'assets/portraits'), { recursive: true });
 mkdirSync(join(destination, 'assets/achievements'), { recursive: true });
+mkdirSync(join(destination, 'assets/tutorials'), { recursive: true });
 const source = new URL('../public/', import.meta.url);
 for (const file of [
 	'theme.css',
@@ -44,6 +45,25 @@ for (const file of [
 	'manual-roster-ui.js',
 	'analytics.js',
 	'home-events.js',
+	'tutorials.js',
+	'assets/tutorials/entrar.mp4',
+	'assets/tutorials/entrar.webp',
+	'assets/tutorials/armeria.mp4',
+	'assets/tutorials/armeria.webp',
+	'assets/tutorials/wishlist.mp4',
+	'assets/tutorials/wishlist.webp',
+	'assets/tutorials/convocatorias.mp4',
+	'assets/tutorials/convocatorias.webp',
+	'assets/tutorials/logros.mp4',
+	'assets/tutorials/logros.webp',
+	'assets/tutorials/candidatura.mp4',
+	'assets/tutorials/candidatura.webp',
+	'assets/tutorials/crear-convocatoria.mp4',
+	'assets/tutorials/crear-convocatoria.webp',
+	'assets/tutorials/alineacion.mp4',
+	'assets/tutorials/alineacion.webp',
+	'assets/tutorials/botin.mp4',
+	'assets/tutorials/botin.webp',
 	'roster-ui.js',
 	'wishlist-ui.js',
 	'sheet-parts.js',
