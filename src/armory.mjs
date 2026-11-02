@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { HttpError, text, choice, can, classes, classKeys } from './domain.mjs';
 import { audit, transaction } from './database-core.mjs';
+import { guideCatalog } from './guide-catalog.mjs';
 import {
 	gameVersions,
 	bisStatuses,
@@ -10,7 +11,7 @@ import {
 	itemQualities,
 	equipmentStats,
 } from '../public/armory-catalog.js';
-import { normalizeSpecValue, isValidSpecForClass } from '../public/specs.js';
+import { normalizeSpecValue, isValidSpecForClass, specs as classSpecs } from '../public/specs.js';
 
 const now = () => new Date().toISOString();
 const LIST_LIMIT = 20,
@@ -98,15 +99,29 @@ function saveEntry(db, listId, id, e) {
 	db.prepare('UPDATE bis_lists SET updated_at=? WHERE id=?').run(now(), listId);
 }
 // Only verified links of active providers are resolved; specific specs override class-wide links.
+// The built-in catalogue (Wowhead and Icy Veins) fills any slot the Leader has not set.
 export function resolveGuides(db, c, spec) {
 	const providers = db
 		.prepare('SELECT id,name,homepage FROM guide_providers WHERE active=1 ORDER BY sort,name')
 		.all();
-	const links = db
+	const stored = db
 		.prepare(
-			"SELECT provider_id,content_type,phase,spec,url,verified_at FROM guide_links WHERE verified_at IS NOT NULL AND game_version=? AND class=? AND (spec='' OR spec=?) ORDER BY phase,spec DESC",
+			"SELECT provider_id,content_type,phase,spec,url,verified_at FROM guide_links WHERE game_version=? AND class=? AND (spec='' OR spec=?)",
 		)
 		.all(c.game_version, c.class, spec || '');
+	// A slot the Leader has set, even while still unverified, is theirs: no catalogue link.
+	const slot = (l) => [l.provider_id, l.content_type, l.phase, l.spec].join('|'),
+		taken = new Set(stored.map(slot));
+	const links = [
+		...stored.filter((l) => l.verified_at),
+		...guideCatalog.filter(
+			(g) =>
+				g.game_version === c.game_version &&
+				g.class === c.class &&
+				(g.spec === '' || g.spec === (spec || '')) &&
+				!taken.has(slot(g)),
+		),
+	].sort((a, b) => a.phase.localeCompare(b.phase) || b.spec.localeCompare(a.spec));
 	return providers.map((p) => ({
 		...p,
 		sections: Object.keys(guideContentTypes).map((type) => {
@@ -143,8 +158,11 @@ function sheet(db, user, c) {
 			.all(c.id)
 			.map((row) => ({ ...row, gems: JSON.parse(row.gems), stats: JSON.parse(row.stats) })),
 		lists,
+		// Without a specialization chosen, every specialization of the class is offered.
 		guides: Object.fromEntries(
-			(specs.length ? specs : ['']).map((spec) => [spec, resolveGuides(db, c, spec)]),
+			(specs.length ? specs : Object.keys(classSpecs[classKeys[c.class]] || { '': 1 })).map(
+				(spec) => [spec, resolveGuides(db, c, spec)],
+			),
 		),
 		...(review
 			? {

@@ -347,7 +347,33 @@ test('guide links are configured by the leader, host-checked and shown only when
 		assert.equal(created.status, 201);
 		const sections = async () =>
 			(await f.request(`/api/armory/characters/${id}`, 'member')).body.guides.arcane[0].sections;
-		assert.deepEqual((await sections()).find((s) => s.type === 'general').links, []);
+		// The Leader's unverified link holds its slot: the built-in guide for it is not shown.
+		const general = async () =>
+			(await sections()).find((s) => s.type === 'general').links.filter((l) => !l.phase);
+		assert.deepEqual(await general(), []);
+		// Other slots come from the built-in Wowhead and Icy Veins catalogue.
+		const builtIn = await sections();
+		assert.deepEqual(builtIn.find((s) => s.type === 'talents').links, [
+			{
+				url: 'https://www.wowhead.com/forever/guide/classes/mage/arcane/talent-builds-pve-dps',
+				phase: '',
+			},
+		]);
+		assert.deepEqual(
+			(await f.request(`/api/armory/characters/${id}`, 'member')).body.guides.arcane
+				.find((p) => p.id === 'icy-veins')
+				.sections.find((s) => s.type === 'general').links,
+			[
+				{
+					url: 'https://www.icy-veins.com/wow-forever/arcane-mage-ranged-dps-pve-guide',
+					phase: '',
+				},
+				{
+					url: 'https://www.icy-veins.com/wow-forever/arcane-mage-leveling',
+					phase: 'Subida de nivel',
+				},
+			],
+		);
 		assert.equal(
 			(
 				await f.request(`/api/armory/guide-links/${created.body.id}`, 'leader', 'PATCH', {
@@ -357,13 +383,17 @@ test('guide links are configured by the leader, host-checked and shown only when
 			).status,
 			200,
 		);
-		assert.deepEqual((await sections()).find((s) => s.type === 'general').links, [
-			{ url: 'https://www.wowhead.com/', phase: '' },
-		]);
+		assert.deepEqual(await general(), [{ url: 'https://www.wowhead.com/', phase: '' }]);
 		// A different class never receives the link.
 		const warrior = await f.character('raider', { class: 'Guerrero', role: 'Tanque' });
-		const other = (await f.request(`/api/armory/characters/${warrior}`, 'raider')).body.guides[''];
-		assert.ok(other.every((p) => p.sections.every((s) => !s.links.length)));
+		// Without a specialization the sheet offers every warrior specialization, with the
+		// built-in warrior guides only.
+		const other = (await f.request(`/api/armory/characters/${warrior}`, 'raider')).body.guides;
+		assert.deepEqual(Object.keys(other), ['arms', 'fury', 'protection']);
+		const urls = Object.values(other).flatMap((list) =>
+			list.flatMap((p) => p.sections.flatMap((s) => s.links.map((l) => l.url))),
+		);
+		assert.ok(urls.length && urls.every((u) => /warrior/.test(u)));
 		// Changing the URL drops the previous verification unless re-confirmed.
 		const verifiedAt = f.db.prepare('SELECT verified_at FROM guide_links').get().verified_at;
 		assert.ok(verifiedAt);

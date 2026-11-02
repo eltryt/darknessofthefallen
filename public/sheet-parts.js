@@ -208,7 +208,7 @@ export function renderGuides(el, sheet, { esc, me }, state = {}) {
 				: ''
 		}
 		<p class="notice">
-			Solo se muestran enlaces comprobados por la hermandad para ${esc(c.class)}
+			Guías de Wowhead e Icy Veins, y enlaces comprobados por la hermandad, para ${esc(c.class)}
 			${state.spec ? esc(specName(c.class, state.spec)) : ''} en
 			${esc(gameVersions[c.game_version]?.label || c.game_version)}. Se abren en la web original;
 			aquí no se copia su contenido.
