@@ -366,6 +366,7 @@ export async function mountRoulette(host, ctx) {
 		skip = quick;
 		skipButton.hidden = quick;
 		// Long tie-breaks speed up so a big table still ends in under a minute or so.
+		// src/roulette.mjs (revealDelay) mirrors these timings to hold back the Discord messages.
 		const ms = Math.min(4200, Math.max(700, 30000 / r.spins.length)),
 			pause = Math.min(900, ms / 3);
 		for (const s of r.spins) {

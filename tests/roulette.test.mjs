@@ -6,6 +6,7 @@ import { createApp } from '../src/app.mjs';
 import { issueSession } from '../src/auth.mjs';
 import {
 	deliverRouletteDMs,
+	revealDelay,
 	nextRouletteDMAt,
 	playTable,
 	playable,
@@ -144,6 +145,14 @@ test('members open tables, join, spin and the winner marks the gold as collected
 		assert.ok(result.high > result.low);
 		assert.notEqual(result.winner.id, result.loser.id);
 		assert.equal(spun.body.pending.length, 1);
+		// Both private messages wait for the room to see the spins end, plus 10 seconds.
+		const due = db
+			.prepare('SELECT dm_next_at,loser_dm_next_at FROM roulette_tables WHERE id=?')
+			.get(table.id);
+		assert.ok(
+			due.dm_next_at >= Date.now() + 15000 - 2000 && due.dm_next_at === due.loser_dm_next_at,
+		);
+		assert.equal(nextRouletteDMAt(db), due.dm_next_at);
 		// Both private messages (winner and loser) are queued with the spin.
 		assert.deepEqual(
 			{
@@ -296,4 +305,12 @@ test('winner and loser get a private message with the gold, the results and the 
 	assert.equal(nextRouletteDMAt(db), null);
 	// Nothing left to send: a second run sends nothing again.
 	assert.equal(await deliverRouletteDMs(db, env, transport), 0);
+});
+
+test('private messages wait for the animation to end plus a margin', () => {
+	// 4 spins: 4 s countdown + 4 × (4.2 s + 0.9 s) + 10 s.
+	assert.equal(revealDelay(4), 4000 + 4 * 5100 + 10000);
+	// A long table speeds up its spins but still waits for them.
+	assert.equal(revealDelay(60), Math.round(4000 + 60 * (700 + 700 / 3) + 10000));
+	assert.ok(revealDelay(2) >= 15000);
 });

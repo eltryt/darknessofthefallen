@@ -375,8 +375,8 @@ export async function rouletteApi({ db, user, path, method, body, send, requireP
 			game.high,
 			game.low,
 			amount,
-			Date.now(),
-			Date.now(),
+			Date.now() + revealDelay(game.spins.length),
+			Date.now() + revealDelay(game.spins.length),
 			id,
 		);
 		audit(db, user.id, 'roulette.spun', id, {
@@ -388,6 +388,16 @@ export async function rouletteApi({ db, user, path, method, body, send, requireP
 	});
 	send(200, tableState(db, user, present(db, user)));
 	return true;
+}
+
+// The private messages wait until the room has watched the spins (countdown, every spin
+// and its pause, as public/roulette.js plays them) plus a margin, so nobody learns the
+// result from Discord before seeing the ball land. Never less than 15 seconds.
+export const DM_MARGIN = 10000;
+export function revealDelay(spins) {
+	const ms = Math.min(4200, Math.max(700, 30000 / spins)),
+		pause = Math.min(900, ms / 3);
+	return Math.max(15000, Math.round(4000 + spins * (ms + pause) + DM_MARGIN));
 }
 
 // Private messages after a table: the winner learns what they won and who owes it, the
