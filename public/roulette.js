@@ -38,6 +38,9 @@ export function spinAngles(wheel, ball, number, extra = 0) {
 	return { wheel: nextWheel, ball: nextBall };
 }
 
+// Seen from above with depth: wood bowl, recessed pockets, brass turret and a fixed light.
+// The light and the shading rings stay still while the wheel turns under them, which is
+// what makes it read as 3D. Gradients only, no filters on the wheel, so it spins smoothly.
 function wheelSvg() {
 	const arc = (r, a) => {
 		const t = ((a - 90) * Math.PI) / 180;
@@ -48,10 +51,19 @@ function wheelSvg() {
 	const pockets = WHEEL.map((n, i) => {
 		const a0 = (i - 0.5) * STEP,
 			a1 = (i + 0.5) * STEP;
-		return `<g class="roulette-pocket is-${colorOf(n)}" data-pocket="${n}"><path class="roulette-number-bg" d="${wedge(140, 178, a0, a1)}"/><path class="roulette-slot" d="${wedge(POCKET - 14, 140, a0, a1)}"/><text transform="rotate(${(i * STEP).toFixed(3)}) translate(0 -152)">${n}</text></g>`;
+		return `<g class="roulette-pocket is-${colorOf(n)}" data-pocket="${n}"><path class="roulette-number-bg" d="${wedge(140, 178, a0, a1)}"/><path class="roulette-slot" d="${wedge(POCKET - 14, 140, a0, a1)}"/><text transform="rotate(${(i * STEP).toFixed(3)}) translate(0 -159)">${n}</text></g>`;
 	}).join('');
-	const spokes = [0, 45, 90, 135]
-		.map((a) => `<rect x="-3" y="-92" width="6" height="184" rx="3" transform="rotate(${a})"/>`)
+	// Brass frets between pockets, with a dark edge so they stand up from the slots.
+	const frets = WHEEL.map((_, i) => {
+		const a = (i + 0.5) * STEP;
+		return `<path class="roulette-fret-shadow" d="M${arc(POCKET - 14, a + 0.9)} L${arc(141, a + 0.9)}"/><path class="roulette-fret" d="M${arc(POCKET - 14, a)} L${arc(141, a)}"/>`;
+	}).join('');
+	// Four tapered turret arms ending in knobs.
+	const arms = [0, 90, 180, 270]
+		.map(
+			(a) =>
+				`<g transform="rotate(${a})"><path class="roulette-arm" d="M-7 -44 L-3.2 -90 Q0 -95 3.2 -90 L7 -44Z"/><circle class="roulette-knob" cy="-93" r="6.5"/></g>`,
+		)
 		.join('');
 	return /* HTML */ `<svg
 		class="roulette-svg"
@@ -59,17 +71,83 @@ function wheelSvg() {
 		role="img"
 		aria-label="Ruleta europea del 0 al 36"
 	>
+		<defs>
+			<radialGradient id="rl-wood" r="50%">
+				<stop offset="0.86" stop-color="#1d0e06" />
+				<stop offset="0.9" stop-color="#5a301a" />
+				<stop offset="0.955" stop-color="#8d5532" />
+				<stop offset="0.985" stop-color="#5a2f17" />
+				<stop offset="1" stop-color="#2a1309" />
+			</radialGradient>
+			<radialGradient id="rl-track" r="50%">
+				<stop offset="0.88" stop-color="#0f0804" />
+				<stop offset="0.93" stop-color="#3b2010" />
+				<stop offset="1" stop-color="#7a4626" />
+			</radialGradient>
+			<radialGradient id="rl-cone" r="50%">
+				<stop offset="0" stop-color="#b0723f" />
+				<stop offset="0.55" stop-color="#7a4523" />
+				<stop offset="1" stop-color="#2c160a" />
+			</radialGradient>
+			<linearGradient id="rl-brass" x1="0" y1="0" x2="1" y2="1">
+				<stop offset="0" stop-color="#fff2c8" />
+				<stop offset="0.35" stop-color="#dcb56a" />
+				<stop offset="0.7" stop-color="#8a6424" />
+				<stop offset="1" stop-color="#e3be72" />
+			</linearGradient>
+			<radialGradient id="rl-dome" cx="38%" cy="32%" r="70%">
+				<stop offset="0" stop-color="#fff6d6" />
+				<stop offset="0.4" stop-color="#d9b46a" />
+				<stop offset="1" stop-color="#6e4b18" />
+			</radialGradient>
+			<radialGradient id="rl-ball" cx="34%" cy="30%" r="75%">
+				<stop offset="0" stop-color="#ffffff" />
+				<stop offset="0.45" stop-color="#eeeee8" />
+				<stop offset="1" stop-color="#9b9b94" />
+			</radialGradient>
+			<radialGradient id="rl-shade" r="50%">
+				<stop offset="0" stop-color="#000" stop-opacity="0" />
+				<stop offset="0.6" stop-color="#000" stop-opacity="0" />
+				<stop offset="0.625" stop-color="#000" stop-opacity="0.55" />
+				<stop offset="0.7" stop-color="#000" stop-opacity="0.15" />
+				<stop offset="0.78" stop-color="#000" stop-opacity="0" />
+				<stop offset="0.79" stop-color="#000" stop-opacity="0.35" />
+				<stop offset="0.83" stop-color="#000" stop-opacity="0" />
+				<stop offset="0.95" stop-color="#000" stop-opacity="0" />
+				<stop offset="1" stop-color="#000" stop-opacity="0.5" />
+			</radialGradient>
+			<radialGradient id="rl-light" cx="30%" cy="22%" r="80%">
+				<stop offset="0" stop-color="#fff" stop-opacity="0.24" />
+				<stop offset="0.35" stop-color="#fff" stop-opacity="0.07" />
+				<stop offset="0.7" stop-color="#000" stop-opacity="0" />
+				<stop offset="1" stop-color="#000" stop-opacity="0.32" />
+			</radialGradient>
+			<filter id="rl-soft" x="-1" y="-1" width="3" height="3">
+				<feGaussianBlur stdDeviation="2" />
+			</filter>
+		</defs>
 		<circle class="roulette-rim" r="207" />
 		<circle class="roulette-track" r="199" />
-		<circle class="roulette-track-inner" r="179" />
+		<circle class="roulette-lip" r="179.5" />
 		<g class="roulette-wheel">
 			${pockets}
+			<g class="roulette-frets">${frets}</g>
 			<circle class="roulette-cone" r="${POCKET - 14}" />
-			<g class="roulette-spokes">${spokes}</g>
-			<circle class="roulette-hub" r="52" />
-			<image href="/assets/guild-logo-128.webp" x="-40" y="-44" width="80" height="80" />
+			<circle class="roulette-cone-ring" r="${POCKET - 15}" />
+			<g class="roulette-arms">${arms}</g>
+			<circle class="roulette-hub" r="50" />
+			<circle class="roulette-hub-well" r="43" />
+			<image href="/assets/guild-logo-128.webp" x="-38" y="-41" width="76" height="76" />
 		</g>
-		<g class="roulette-ball-orbit"><circle class="roulette-ball" r="7" /></g>
+		<circle class="roulette-shade" r="178" />
+		<circle class="roulette-light" r="207" />
+		<g class="roulette-ball-orbit">
+			<g class="roulette-ball">
+				<circle class="roulette-ball-shadow" cx="2.5" cy="3.5" r="7" />
+				<circle class="roulette-ball-body" r="7" />
+				<circle class="roulette-ball-glint" cx="-2.4" cy="-2.6" r="1.8" />
+			</g>
+		</g>
 	</svg>`;
 }
 
@@ -212,13 +290,13 @@ export async function mountRoulette(host, ctx) {
 			// The ball runs on the rim, bounces over the frets and drops into the pocket.
 			ball.animate(
 				[
-					{ transform: `translateY(-${TRACK}px)`, offset: 0 },
-					{ transform: `translateY(-${TRACK}px)`, offset: 0.62 },
-					{ transform: `translateY(-${POCKET + 30}px)`, offset: 0.74 },
-					{ transform: `translateY(-${POCKET + 46}px)`, offset: 0.8 },
-					{ transform: `translateY(-${POCKET + 6}px)`, offset: 0.88 },
-					{ transform: `translateY(-${POCKET + 14}px)`, offset: 0.93 },
-					{ transform: `translateY(-${POCKET}px)`, offset: 1 },
+					{ transform: `translateY(-${TRACK}px) scale(1)`, offset: 0 },
+					{ transform: `translateY(-${TRACK}px) scale(1)`, offset: 0.62 },
+					{ transform: `translateY(-${POCKET + 30}px) scale(1.16)`, offset: 0.74 },
+					{ transform: `translateY(-${POCKET + 46}px) scale(1.08)`, offset: 0.8 },
+					{ transform: `translateY(-${POCKET + 6}px) scale(1.1)`, offset: 0.88 },
+					{ transform: `translateY(-${POCKET + 14}px) scale(1.03)`, offset: 0.93 },
+					{ transform: `translateY(-${POCKET}px) scale(1)`, offset: 1 },
 				],
 				{ duration: ms, easing: 'ease-out' },
 			),

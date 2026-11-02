@@ -8206,21 +8206,22 @@ details[data-create] > .tutorial-open,
 	transform-origin: 0 0;
 }
 .roulette-rim {
-	fill: #3a1f12;
+	fill: url(#rl-wood);
 	stroke: #c9a45c;
-	stroke-width: 4;
+	stroke-width: 3;
 }
 .roulette-track {
-	fill: #5a321c;
-	stroke: #2a160c;
-	stroke-width: 2;
+	fill: url(#rl-track);
 }
-.roulette-track-inner {
-	fill: #1b120c;
+.roulette-lip {
+	fill: none;
+	stroke: #e3be72;
+	stroke-width: 1.5;
+	opacity: 0.8;
 }
 .roulette-pocket .roulette-number-bg {
 	stroke: #c9a45c;
-	stroke-width: 0.8;
+	stroke-width: 0.6;
 }
 .roulette-pocket.is-red .roulette-number-bg {
 	fill: #a8172b;
@@ -8232,9 +8233,13 @@ details[data-create] > .tutorial-open,
 	fill: #0f7a43;
 }
 .roulette-slot {
-	fill: #2b1a10;
-	stroke: #c9a45c;
-	stroke-width: 1.2;
+	fill: #1d1009;
+}
+.roulette-pocket.is-red .roulette-slot {
+	fill: #3a0b12;
+}
+.roulette-pocket.is-green .roulette-slot {
+	fill: #08301b;
 }
 .roulette-pocket text {
 	fill: #f6efe0;
@@ -8243,36 +8248,79 @@ details[data-create] > .tutorial-open,
 		serif;
 	text-anchor: middle;
 	dominant-baseline: middle;
+	paint-order: stroke;
+	stroke: #0007;
+	stroke-width: 1.5px;
 }
 .roulette-pocket.is-hit .roulette-number-bg {
 	fill: #e8c477;
 }
 .roulette-pocket.is-hit text {
 	fill: #241405;
+	stroke: none;
 }
 .roulette-pocket.is-hit .roulette-slot {
-	fill: #4a3214;
+	fill: #5a3d14;
+}
+.roulette-fret {
+	stroke: #e6c47a;
+	stroke-width: 1.6;
+}
+.roulette-fret-shadow {
+	stroke: #0009;
+	stroke-width: 1.4;
 }
 .roulette-cone {
-	fill: #6b3d20;
-	stroke: #c9a45c;
-	stroke-width: 2;
+	fill: url(#rl-cone);
 }
-.roulette-spokes rect {
-	fill: #d9b46a;
-	stroke: #7a5a26;
+.roulette-cone-ring {
+	fill: none;
+	stroke: url(#rl-brass);
+	stroke-width: 3;
+}
+.roulette-arm {
+	fill: url(#rl-brass);
+	stroke: #5e4114;
+	stroke-width: 0.8;
+}
+.roulette-knob {
+	fill: url(#rl-dome);
+	stroke: #5e4114;
+	stroke-width: 0.8;
 }
 .roulette-hub {
-	fill: #c9a45c;
+	fill: url(#rl-dome);
 	stroke: #f3dcae;
-	stroke-width: 2;
+	stroke-width: 1.5;
+}
+.roulette-hub-well {
+	fill: #1a0f08;
+	stroke: #6e4b18;
+	stroke-width: 1.5;
+}
+.roulette-shade {
+	fill: url(#rl-shade);
+	pointer-events: none;
+}
+.roulette-light {
+	fill: url(#rl-light);
+	pointer-events: none;
 }
 .roulette-ball {
-	fill: #fbfbf8;
-	stroke: #b9b9b4;
-	stroke-width: 1;
 	transform: translateY(-189px);
-	filter: drop-shadow(0 1px 1px #0009);
+}
+.roulette-ball-shadow {
+	fill: #000;
+	opacity: 0.6;
+	filter: url(#rl-soft);
+}
+.roulette-ball-body {
+	fill: url(#rl-ball);
+	stroke: #7d7d77;
+	stroke-width: 0.6;
+}
+.roulette-ball-glint {
+	fill: #fff;
 }
 .roulette-ball.is-in {
 	transform: translateY(-124px);
@@ -8330,9 +8378,10 @@ details[data-create] > .tutorial-open,
 }
 .roulette-seat-head {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 	justify-content: space-between;
-	gap: 8px;
+	gap: 4px 8px;
 	min-width: 0;
 }
 .roulette-seat-head .roulette-name {
