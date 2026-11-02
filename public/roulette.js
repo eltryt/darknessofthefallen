@@ -90,8 +90,14 @@ export async function mountRoulette(host, ctx) {
 	// A result: its gold value, in the colour of the pocket it came from.
 	// A result: the pocket the ball fell in (in its colour) and the gold it is worth.
 	const chip = (s, extra = '') =>
-		`<span class="roulette-result${extra}" title="Casilla ${s.number} → ${s.roll} de oro"><b class="roulette-chip is-${colorOf(s.number)}">${s.number}</b><span class="roulette-arrow" aria-hidden="true">→</span><strong>${s.roll}</strong><span class="visually-hidden"> de oro</span></span>`;
+		`<span class="roulette-result${extra}" title="Casilla ${s.number} → ${s.roll} de oro"><b class="roulette-chip is-${colorOf(s.number)}">${s.number}</b><span class="roulette-arrow" aria-hidden="true">→</span><strong>${s.roll}</strong><small>oro</small></span>`;
 	const last = (r, id) => r.spins.findLast((s) => s.userId === id);
+	const svgIcon = (d) => `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">${d}</svg>`;
+	const icon = {
+		play: svgIcon('<circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l5.5-3.5Z"/>'),
+		check: svgIcon('<path d="m5 12.5 4.5 4.5L19 7.5"/>'),
+		trash: svgIcon('<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>'),
+	};
 
 	host.innerHTML = /* HTML */ `<div class="roulette">
 		<header class="roulette-head">
@@ -112,6 +118,7 @@ export async function mountRoulette(host, ctx) {
 			<div class="roulette-board">
 				<p class="roulette-room"></p>
 				<p class="roulette-now" aria-live="polite"></p>
+				<p class="roulette-scale"></p>
 				<ol class="roulette-results"></ol>
 				<p class="roulette-verdict" aria-live="polite" hidden></p>
 				<div class="roulette-actions">
@@ -169,6 +176,7 @@ export async function mountRoulette(host, ctx) {
 		now = $('.roulette-now'),
 		results = $('.roulette-results'),
 		verdict = $('.roulette-verdict'),
+		scale = $('.roulette-scale'),
 		skipButton = $('[data-skip]'),
 		form = $('.roulette-new'),
 		risk = $('.roulette-risk');
@@ -229,15 +237,22 @@ export async function mountRoulette(host, ctx) {
 		r.players
 			.map(
 				(p) =>
-					`<li data-seat="${esc(p.id)}"${p.me ? ' class="is-me"' : ''}>${name(p)}<span class="roulette-rolls"></span></li>`,
+					`<li data-seat="${esc(p.id)}"${p.me ? ' class="is-me"' : ''}><div class="roulette-seat-head">${name(p)}<span class="roulette-badge"></span></div><div class="roulette-current"><span class="roulette-wait">Esperando turno…</span></div><div class="roulette-history" hidden></div></li>`,
 			)
 			.join('');
 	const label = (s) =>
 		s.kind === 'high' ? 'Desempate arriba' : s.kind === 'low' ? 'Desempate abajo' : '';
 	const finish = (r, fresh) => {
 		for (const li of results.children) {
-			li.classList.toggle('is-winner', li.dataset.seat === r.winner?.id);
-			li.classList.toggle('is-loser', li.dataset.seat === r.loser?.id);
+			const won = li.dataset.seat === r.winner?.id,
+				lost = li.dataset.seat === r.loser?.id;
+			li.classList.toggle('is-winner', won);
+			li.classList.toggle('is-loser', lost);
+			li.querySelector('.roulette-badge').textContent = won
+				? `Gana ${gold(r.amount)}`
+				: lost
+					? `Paga ${gold(r.amount)}`
+					: '';
 		}
 		verdict.hidden = false;
 		verdict.classList.toggle('is-new', fresh);
@@ -249,6 +264,7 @@ export async function mountRoulette(host, ctx) {
 	async function play(r, animate) {
 		results.innerHTML = seats(r);
 		verdict.hidden = true;
+		scale.textContent = `Valor de las casillas en esta mesa: 0 = 1 · 18 = ${1 + Math.floor((36 * (r.stake - 1) + 36) / 72)} · 36 = ${r.stake} de oro`;
 		const rounds = new Set(r.spins.map((s) => s.round)).size;
 		now.textContent = `Mesa de hasta ${gold(r.stake)} · ${r.players.length} jugadores${rounds > 1 ? ' · con desempates' : ''}`;
 		const quick = !animate || reduced();
@@ -266,12 +282,16 @@ export async function mountRoulette(host, ctx) {
 				await spinTo(s.number, ms);
 				seat?.classList.remove('is-turn');
 			}
-			seat?.querySelector('.roulette-rolls');
-			// A new spin replaces the player's previous result.
-			seat?.querySelectorAll('.roulette-result').forEach((c) => c.classList.add('is-old'));
-			seat
-				?.querySelector('.roulette-rolls')
-				.insertAdjacentHTML('beforeend', chip(s, s.kind === 'main' ? '' : ' is-tie'));
+			// A new spin replaces the player's previous result, which moves to the history.
+			const current = seat?.querySelector('.roulette-current'),
+				history = seat?.querySelector('.roulette-history'),
+				previous = current?.querySelector('.roulette-result');
+			if (previous) {
+				previous.classList.add('is-old');
+				history.append(previous);
+				history.hidden = false;
+			}
+			if (current) current.innerHTML = chip(s, s.kind === 'main' ? '' : ' is-tie');
 			if (!skip) {
 				now.innerHTML = `${name(player)} · casilla ${s.number} → <strong>${gold(s.roll)}</strong>`;
 				// A moment to read the result before the next player spins.
@@ -286,7 +306,7 @@ export async function mountRoulette(host, ctx) {
 					: r.spins.at(-1).number,
 			);
 		skipButton.hidden = true;
-		now.textContent = `Mesa del ${when(r.closedAt)} · hasta ${gold(r.stake)} · casilla 0 = 1, 18 = ${1 + Math.floor((36 * (r.stake - 1) + 36) / 72)}, 36 = ${r.stake}`;
+		now.textContent = `Mesa del ${when(r.closedAt)} · hasta ${gold(r.stake)}`;
 		finish(r, !quick);
 	}
 	// A countdown to the shared start, so the whole room watches the same spin.
@@ -364,25 +384,36 @@ export async function mountRoulette(host, ctx) {
 									${t.canSpin ? `<button type="button" class="roulette-go" data-spin="${esc(t.id)}">¡Girar la ruleta!</button>` : ''}
 									${t.canCancel && !t.canSpin && t.players.length < 2 ? '<small>Hace falta al menos otro jugador.</small>' : ''}
 									${t.canCancel ? `<button type="button" class="link-button" data-cancel="${esc(t.id)}">Cancelar mesa</button>` : ''}
-									${t.canDelete ? `<button type="button" class="link-button is-danger" data-delete="${esc(t.id)}">Borrar</button>` : ''}
+									${t.canDelete ? `<button type="button" class="roulette-action is-icon is-danger" data-delete="${esc(t.id)}" aria-label="Borrar mesa" title="Borrar mesa">${icon.trash}</button>` : ''}
 								</div>
 							</article>`,
 					)
 					.join('')
 			: '<p class="empty-note">No hay mesas abiertas. ¡Abre la primera!</p>';
-		const debt = (r) => /* HTML */ `<li${r.settledAt ? ' class="is-settled"' : ''}>
-				<span>${name(r.loser)} → ${name(r.winner)}</span>
-				<strong>${gold(r.amount)}</strong>
-				<small>${when(r.closedAt)}</small>
-				${
-					r.canSettle
-						? r.settledAt
-							? `<button type="button" class="link-button" data-unsettle="${esc(r.id)}">Deshacer cobro</button>`
-							: `<button type="button" class="button secondary" data-settle="${esc(r.id)}">Cobrado</button>`
-						: `<span class="roulette-tag">${r.settledAt ? 'Cobrado' : 'Pendiente'}</span>`
-				}
-				<button type="button" class="link-button" data-replay="${esc(r.id)}">Ver</button>
-				${r.canDelete ? `<button type="button" class="link-button is-danger" data-delete="${esc(r.id)}">Borrar</button>` : ''}
+		const debt = (r) =>
+			/* HTML */ `<li class="roulette-debt${r.settledAt ? ' is-settled' : ''}">
+				<div class="roulette-debt-info">
+					<span>${name(r.loser)} paga <strong>${gold(r.amount)}</strong> a ${name(r.winner)}</span>
+					<small
+						>${when(r.closedAt)} · ${r.players.length} jugadores · hasta
+						${gold(r.stake)}${r.settledAt ? ' · <b class="roulette-paid">Cobrado</b>' : ''}</small
+					>
+				</div>
+				<div class="roulette-debt-actions">
+					${
+						r.canSettle
+							? r.settledAt
+								? `<button type="button" class="roulette-action" data-unsettle="${esc(r.id)}">Deshacer cobro</button>`
+								: `<button type="button" class="roulette-action is-gold" data-settle="${esc(r.id)}">${icon.check}Cobrado</button>`
+							: r.settledAt
+								? ''
+								: '<span class="roulette-tag">Pendiente</span>'
+					}
+					<button type="button" class="roulette-action" data-replay="${esc(r.id)}">
+						${icon.play}Ver tirada
+					</button>
+					${r.canDelete ? `<button type="button" class="roulette-action is-icon is-danger" data-delete="${esc(r.id)}" aria-label="Borrar mesa" title="Borrar mesa">${icon.trash}</button>` : ''}
+				</div>
 			</li>`;
 		$('.roulette-lists').innerHTML = /* HTML */ `<section aria-labelledby="roulette-pending-title">
 				<h3 id="roulette-pending-title">Pendientes de cobrar</h3>
