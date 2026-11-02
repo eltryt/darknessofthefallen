@@ -242,6 +242,14 @@ test('web creation queues one event, protects rank and CSRF, and reconciles lost
 			(await f.request('/api/events', 'leader', 'POST', v, { 'X-CSRF-Token': 'wrong' })).status,
 			403,
 		);
+		// A start time already past would be closed to sign-ups from the outset.
+		const past = await f.request('/api/events', 'raid_leader', 'POST', {
+			...createInput(),
+			start: '2020-01-02T23:00',
+			end: '2020-01-03T01:00',
+		});
+		assert.equal(past.status, 400);
+		assert.match(past.body.error, /ya ha pasado/);
 		const r = await f.request('/api/events', 'raid_leader', 'POST', v);
 		assert.equal(r.status, 202);
 		assert.equal((await f.request('/api/events', 'raid_leader', 'POST', v)).body.id, r.body.id);
@@ -462,6 +470,29 @@ test('WoW Forever role-group template accepts matching roles and rejects mismatc
 				})
 			).status,
 			202,
+		);
+	} finally {
+		await f.close();
+	}
+});
+
+test('a finished event can be deleted even with an unanswered sign-up request', async () => {
+	const f = await fixture();
+	try {
+		const raw = base();
+		raw.id = '1550000000000000097';
+		raw.startTime = Math.floor(Date.now() / 1000) - 86400;
+		raw.endTime = raw.startTime + 7200;
+		const event = ingestRaidEvent(f.db, raw, env);
+		f.db
+			.prepare(
+				"INSERT INTO raid_jobs(id,event_id,actor_id,kind,payload,status,created_at) VALUES('stuck',?,?,'signup','{}','uncertain',?)",
+			)
+			.run(event.id, ids.leader, new Date().toISOString());
+		assert.equal((await f.request('/api/events/' + event.id, 'leader', 'DELETE', {})).status, 200);
+		assert.equal(
+			f.db.prepare("SELECT status FROM raid_jobs WHERE id='stuck'").get().status,
+			'blocked',
 		);
 	} finally {
 		await f.close();

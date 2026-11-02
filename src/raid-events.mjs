@@ -289,6 +289,12 @@ export async function raidEventsApi(ctx) {
 			start = madridInstant(v.start),
 			end = madridInstant(v.end);
 		if (end <= start) throw new HttpError(400, 'El fin debe ser posterior al inicio.');
+		// Raid-Helper closes sign-ups at the start time: a past start is closed from birth.
+		if (Date.parse(start) < Date.now() + 5 * 60000)
+			throw new HttpError(
+				400,
+				'La hora de inicio ya ha pasado o es inminente: nadie podría apuntarse. Revisa la fecha y si es por la mañana o por la noche.',
+			);
 		const meta = {
 			category: choice(v.category, categories, 'categoría'),
 			roster: text(v.roster ?? '', 'roster', 80, false),
@@ -365,10 +371,13 @@ export async function raidEventsApi(ctx) {
 	if (method === 'DELETE' && !action) {
 		requirePermission('recruitment.manage');
 		transaction(db, () => {
+			// Once the raid is over, an unanswered request can no longer change anything,
+			// so it does not hold the deletion back.
+			const over = row.state !== 'Abierta' || Date.parse(row.ends_at || row.starts_at) < Date.now();
 			if (
 				db
 					.prepare(
-						"SELECT id FROM raid_jobs WHERE event_id=? AND status IN ('pending','running','uncertain')",
+						`SELECT id FROM raid_jobs WHERE event_id=? AND status IN ('pending','running'${over ? '' : ",'uncertain'"})`,
 					)
 					.get(row.id)
 			)
@@ -376,6 +385,10 @@ export async function raidEventsApi(ctx) {
 					409,
 					'Espera a que se resuelva la sincronización pendiente antes de borrar.',
 				);
+			if (over)
+				db.prepare(
+					"UPDATE raid_jobs SET status='blocked',error='Convocatoria ya terminada y borrada de la web.' WHERE event_id=? AND status='uncertain'",
+				).run(row.id);
 			db.prepare("UPDATE raid_events SET state='Eliminada', public=0, updated_at=? WHERE id=?").run(
 				now(),
 				row.id,
@@ -438,8 +451,18 @@ export async function raidEventsApi(ctx) {
 		send(202, { ok: true });
 		return true;
 	}
-	if (!row.external_id || row.state !== 'Abierta')
-		throw new HttpError(409, 'La convocatoria no está abierta o aún no se ha publicado.');
+	if (!row.external_id)
+		throw new HttpError(
+			409,
+			'La convocatoria aún no se ha publicado en Discord. Espera un par de minutos y vuelve a intentarlo.',
+		);
+	if (row.state !== 'Abierta' || Date.parse(row.starts_at) <= Date.now())
+		throw new HttpError(
+			409,
+			row.state === 'Cancelada'
+				? 'La convocatoria está cancelada.'
+				: 'Las inscripciones están cerradas: Raid-Helper las cierra a la hora de inicio de la raid.',
+		);
 	let kind, payload;
 	if (action === 'signup') {
 		requirePermission('community.read');

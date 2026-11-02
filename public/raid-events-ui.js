@@ -50,6 +50,27 @@ export async function mountRaidEvents(host, ctx, { manage = false, mine = false 
 			.join('');
 	const input = (label, name, value = '', type = 'text', extra = '') =>
 		`<label>${label}<input name="${name}" type="${type}" value="${esc(value)}" ${extra}></label>`;
+	// Help shown on hover, keyboard focus or tap of the «?» next to each field.
+	const hints = {
+		title:
+			'El nombre que verá la gente en Discord y en la web. Por ejemplo: «Núcleo de Magma — Raid de 40».',
+		start:
+			'Fecha y hora de Madrid. Debe ser futura: Raid-Helper cierra las inscripciones al llegar esta hora.',
+		end: 'Se rellena sola 2 horas después del inicio. Si la raid acaba a la 01:00, es ya el día siguiente.',
+		category:
+			'Oficial: raid del calendario de la hermandad. Extraordinaria: fuera de los días habituales, coordinada con el GM. Voluntaria: sin compromiso de asistencia.',
+		roster:
+			'El grupo que va. Elige uno de la lista o escribe otro; las plazas se ajustan solas a 40, 20 o 10.',
+		capacity: 'Número máximo de jugadores de la raid. Normalmente 40, 20 o 10.',
+		organizer:
+			'Quien organiza la raid y puede editarla o cancelarla. Debe ser raid leader, oficial o Líder.',
+		public:
+			'Muestra la fecha, el tipo y las plazas en la página pública de Raids, sin nombres de jugadores ni enlace de Discord.',
+	};
+	const hint = (text) =>
+		`<span class="field-hint" tabindex="0" role="img" aria-label="Ayuda: ${esc(text)}" data-tip="${esc(text)}">?</span>`;
+	const field = (label, help, control) =>
+		`<label><span class="field-label">${label} ${hint(help)}</span>${control}</label>`;
 	const queue = async (path, method, value, form) => {
 		const button = form?.querySelector('[type="submit"]');
 		if (button) button.disabled = true;
@@ -104,25 +125,34 @@ export async function mountRaidEvents(host, ctx, { manage = false, mine = false 
 				manager && manage
 					? /* HTML */ `<details class="card section" data-create>
 							<summary>Crear convocatoria y publicar en Discord</summary>
+							<ol class="create-steps">
+								<li>Rellena los datos y pulsa «Crear convocatoria».</li>
+								<li>
+									La web la envía a Raid-Helper: verás «Pendiente de publicación» un par de minutos.
+								</li>
+								<li>
+									Se publica en el canal de Discord y la gente puede apuntarse allí o aquí,
+									<strong>hasta la hora de inicio</strong>.
+								</li>
+							</ol>
 							<form class="form" data-create-form>
-								<div class="form-grid">
-									${input('Nombre de la raid', 'title', '', 'text', 'required maxlength="120"')}${input('Inicio · Madrid', 'start', '', 'datetime-local', 'required')}${input('Fin · Madrid (día siguiente si acaba a la 01:00)', 'end', '', 'datetime-local', 'required')}<label
-										>Categoría<select name="category">
-											${options(categories)}
-										</select></label
-									>${input('Roster · nombre libre', 'roster', '', 'text', 'maxlength="80" list="raid-rosters"')}${input('Capacidad', 'capacity', '20', 'number', 'min="1" max="1000" required')}<label
-										>Responsable<select name="organizerId">
-											<option value="${esc(me.user.id)}">Yo</option>
-										</select></label
-									><label
-										><input type="checkbox" name="public" />Mostrar resumen público (sin jugadores
-										ni enlace privado)</label
-									>
-								</div>
-								<p>
-									La convocatoria se crea en el canal configurado de Raid-Helper. Las
-									extraordinarias deben estar coordinadas con el GM.
-								</p>
+								<fieldset class="create-group">
+									<legend>Qué y cuándo</legend>
+									<div class="form-grid">
+										${field('Nombre de la raid', hints.title, `<input name="title" type="text" required maxlength="120" placeholder="Núcleo de Magma — Raid de 40" />`)}${field('Empieza (hora de Madrid)', hints.start, `<input name="start" type="datetime-local" required />`)}${field('Termina (hora de Madrid)', hints.end, `<input name="end" type="datetime-local" required />`)}
+									</div>
+								</fieldset>
+								<fieldset class="create-group">
+									<legend>Quién va</legend>
+									<div class="form-grid">
+										${field('Tipo de convocatoria', hints.category, `<select name="category">${options(categories)}</select>`)}${field('Roster', hints.roster, `<input name="roster" type="text" maxlength="80" list="raid-rosters" placeholder="Elige de la lista o escribe uno" />`)}${field('Plazas', hints.capacity, `<input name="capacity" type="number" value="20" min="1" max="1000" required />`)}${field('Responsable', hints.organizer, `<select name="organizerId"><option value="${esc(me.user.id)}">Yo</option></select>`)}
+										<label class="create-check"
+											><input type="checkbox" name="public" />Mostrar un resumen en la web pública
+											${hint(hints.public)}</label
+										>
+									</div>
+								</fieldset>
+								<p class="create-summary" data-create-summary aria-live="polite"></p>
 								<button type="submit" ${!result.configured ? 'disabled' : ''}>
 									Crear convocatoria
 								</button>
@@ -141,8 +171,65 @@ export async function mountRaidEvents(host, ctx, { manage = false, mine = false 
 		const create = host.querySelector('[data-create-form]');
 		if (create) {
 			create.dataset.requestId = crypto.randomUUID();
+			// A tap on «?» shows its help instead of focusing the field of its label.
+			create.querySelectorAll('.field-hint').forEach((h) =>
+				h.addEventListener('click', (e) => {
+					e.preventDefault();
+					h.focus();
+				}),
+			);
+			const el = create.elements,
+				summary = create.querySelector('[data-create-summary]'),
+				submit = create.querySelector('[type="submit"]'),
+				local = (d) => {
+					const p = (n) => String(n).padStart(2, '0');
+					return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+				},
+				plusHours = (value, h) => local(new Date(new Date(value).getTime() + h * 3600000));
+			// Sensible start: the next 23:00 (raid time), ending two hours later.
+			const first = new Date();
+			if (first.getHours() >= 22) first.setDate(first.getDate() + 1);
+			first.setHours(23, 0, 0, 0);
+			el.start.value = local(first);
+			el.end.value = plusHours(el.start.value, 2);
+			let endTouched = false;
+			el.end.oninput = () => (endTouched = true);
+			el.start.oninput = () => {
+				if (!endTouched && el.start.value) el.end.value = plusHours(el.start.value, 2);
+			};
+			el.roster.oninput = () => {
+				const size = el.roster.value.match(/\b(40|20|10)\b/);
+				if (size) el.capacity.value = size[1];
+			};
+			const check = () => {
+				const start = el.start.value ? new Date(el.start.value) : null,
+					end = el.end.value ? new Date(el.end.value) : null;
+				let problem = '';
+				if (!start || !end) problem = 'Indica cuándo empieza y termina.';
+				else if (start.getTime() < Date.now() + 5 * 60000)
+					problem =
+						'Esa hora de inicio ya ha pasado o es inminente: nadie podría apuntarse. Revisa la fecha y si es por la mañana o por la noche.';
+				else if (end <= start) problem = 'La hora de fin debe ser posterior a la de inicio.';
+				const when = (d) =>
+					new Intl.DateTimeFormat('es-ES', {
+						weekday: 'long',
+						day: 'numeric',
+						month: 'long',
+						hour: '2-digit',
+						minute: '2-digit',
+					}).format(d);
+				summary.classList.toggle('is-problem', !!problem);
+				summary.textContent =
+					problem ||
+					`Se publicará «${el.title.value.trim() || 'sin nombre'}»: ${when(start)} → ${when(end)}, hora de Madrid · ${el.capacity.value || '?'} plazas · ${el.category.value}${el.roster.value.trim() ? ' · ' + el.roster.value.trim() : ''}. Inscripciones abiertas hasta el inicio.`;
+				if (result.configured) submit.disabled = !!problem;
+			};
+			create.addEventListener('input', check);
+			check();
 			create.onsubmit = (e) => {
 				e.preventDefault();
+				check();
+				if (summary.classList.contains('is-problem')) return;
 				const fd = new FormData(create);
 				queue(
 					'/api/events',
