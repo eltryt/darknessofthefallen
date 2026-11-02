@@ -7,7 +7,7 @@ import {
 } from './gm-notifications.mjs';
 import { DurableObject } from 'cloudflare:workers';
 import { Buffer } from 'node:buffer';
-import { createApp, securityHeaders, staticFile } from './app.mjs';
+import { byteRange, createApp, securityHeaders, staticFile } from './app.mjs';
 import { durableDatabase } from './cloudflare-database.mjs';
 import { deliverRecruitment } from './integrations.mjs';
 import initialSchema from '../migrations/001_initial.sql';
@@ -176,10 +176,14 @@ export class Guild extends DurableObject {
 async function serveStatic(request, env, url) {
 	const asset = staticFile(url.pathname);
 	if (!asset) return null;
+	const video = asset.contentType.startsWith('video/');
+	const forwarded = new Headers(request.headers);
+	// Ranges are cut here from the whole file, so the asset store always sends all of it.
+	if (video) forwarded.delete('Range');
 	const stored = await env.ASSETS.fetch(
 		new Request(new URL('/' + asset.file, url.origin), {
 			method: request.method,
-			headers: request.headers,
+			headers: forwarded,
 		}),
 	);
 	if (!stored.ok && stored.status !== 304) return null;
@@ -189,17 +193,22 @@ async function serveStatic(request, env, url) {
 	if (tag) headers.set('ETag', tag);
 	if (stored.status === 304) return new Response(null, { status: 304, headers });
 	headers.set('Content-Type', asset.contentType);
-	// Videos are read in ranges so players can seek; the partial answer is passed on as is.
-	const video = asset.contentType.startsWith('video/');
-	if (video)
-		for (const name of ['Accept-Ranges', 'Content-Range', 'Content-Length']) {
-			const value = stored.headers.get(name);
-			if (value) headers.set(name, value);
+	// Players (Safari above all) read videos in byte ranges to start and to seek.
+	if (video && request.method !== 'HEAD') {
+		const bytes = new Uint8Array(await stored.arrayBuffer());
+		const range = byteRange(bytes.length, request.headers.get('Range'));
+		headers.set('Accept-Ranges', 'bytes');
+		if (range === 'invalid') {
+			headers.set('Content-Range', `bytes */${bytes.length}`);
+			return new Response(null, { status: 416, headers });
 		}
-	return new Response(request.method === 'HEAD' ? null : stored.body, {
-		status: video && stored.status === 206 ? 206 : 200,
-		headers,
-	});
+		if (range) {
+			headers.set('Content-Range', `bytes ${range.start}-${range.end}/${bytes.length}`);
+			return new Response(bytes.slice(range.start, range.end + 1), { status: 206, headers });
+		}
+		return new Response(bytes, { status: 200, headers });
+	}
+	return new Response(request.method === 'HEAD' ? null : stored.body, { status: 200, headers });
 }
 
 export default {

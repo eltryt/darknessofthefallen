@@ -36,3 +36,17 @@ test('images are cached, code revalidates with a fingerprint, pages are never st
 		db.close();
 	}
 });
+
+test('video byte ranges: full, open-ended, suffix and impossible requests', async () => {
+	const { byteRange } = await import('../src/app.mjs');
+	assert.equal(byteRange(1000, null), null);
+	assert.deepEqual(byteRange(1000, 'bytes=0-99'), { start: 0, end: 99 });
+	assert.deepEqual(byteRange(1000, 'bytes=0-1'), { start: 0, end: 1 });
+	assert.deepEqual(byteRange(1000, 'bytes=900-'), { start: 900, end: 999 });
+	assert.deepEqual(byteRange(1000, 'bytes=950-5000'), { start: 950, end: 999 });
+	assert.deepEqual(byteRange(1000, 'bytes=-100'), { start: 900, end: 999 });
+	assert.equal(byteRange(1000, 'bytes=1000-'), 'invalid');
+	assert.equal(byteRange(1000, 'bytes=5-2'), 'invalid');
+	assert.equal(byteRange(1000, 'bytes=0-1,5-9'), 'invalid');
+	assert.equal(byteRange(1000, 'items=0-1'), 'invalid');
+});

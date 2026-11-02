@@ -237,6 +237,22 @@ export function staticFile(path) {
 		cacheControl: binary ? 'public, max-age=86400, stale-while-revalidate=604800' : 'no-cache',
 	};
 }
+// One byte range of a file ("bytes=0-1023", "bytes=500-", "bytes=-500"), as players ask for
+// videos: null without a Range header, 'invalid' when it cannot be served.
+export function byteRange(size, header) {
+	if (!header) return null;
+	const m = /^bytes=(\d*)-(\d*)$/.exec(String(header).trim());
+	if (!m || (m[1] === '' && m[2] === '')) return 'invalid';
+	let start, end;
+	if (m[1] === '') {
+		start = Math.max(0, size - Number(m[2]));
+		end = size - 1;
+	} else {
+		start = Number(m[1]);
+		end = m[2] === '' ? size - 1 : Math.min(Number(m[2]), size - 1);
+	}
+	return start > end || start >= size ? 'invalid' : { start, end };
+}
 async function body(req) {
 	let raw = '';
 	for await (const chunk of req) {
