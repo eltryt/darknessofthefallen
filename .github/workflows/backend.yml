@@ -85,6 +85,21 @@ jobs:
           BACKUP_TOKEN: ${{ secrets.BACKUP_TOKEN }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || vars.CLOUDFLARE_ACCOUNT_ID }}
+      - name: Configure Battle.net sign-in when its secrets are present
+        # A problem here must not block the site deploy; the profile button stays disabled.
+        continue-on-error: true
+        shell: bash
+        run: |
+          if [ -n "$BLIZZARD_CLIENT_ID" ] && [ -n "$BLIZZARD_CLIENT_SECRET" ]; then
+            node scripts/configure-battlenet.mjs
+          else
+            echo 'Battle.net secrets not configured; the profile import stays disabled.'
+          fi
+        env:
+          BLIZZARD_CLIENT_ID: ${{ secrets.BLIZZARD_CLIENT_ID }}
+          BLIZZARD_CLIENT_SECRET: ${{ secrets.BLIZZARD_CLIENT_SECRET }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || vars.CLOUDFLARE_ACCOUNT_ID }}
       - name: Configure app notification key when its secret is present
         shell: bash
         run: |

@@ -9214,3 +9214,83 @@ details[data-create] > .tutorial-open,
 		animation: none;
 	}
 }
+/* Profile: "Conectar con Battle.net" and its outcome. */
+.bnet-connect {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px 24px;
+	margin: 0 0 18px;
+	padding: 16px 18px;
+	border: 1px solid #1d5d99;
+	border-radius: 12px;
+	background: linear-gradient(120deg, #0d2238, #0b1420 70%);
+}
+.bnet-connect strong {
+	display: block;
+	margin-bottom: 4px;
+	color: #dcecff;
+}
+.bnet-connect p {
+	margin: 0;
+	max-width: 62ch;
+	color: var(--muted);
+	font-size: 0.9rem;
+}
+.button.bnet-button {
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	gap: 8px;
+	border-color: #148eff;
+	background: linear-gradient(180deg, #2a9bff, #0b6fd1);
+	color: #fff;
+}
+.button.bnet-button:hover {
+	background: linear-gradient(180deg, #47a9ff, #1580e6);
+}
+.bnet-button svg,
+.bnet-tag svg {
+	width: 18px;
+	height: 18px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.8;
+	stroke-linecap: round;
+}
+.bnet-tag {
+	display: inline-grid;
+	place-items: center;
+	margin-left: 6px;
+	color: #5fb4ff;
+}
+.bnet-tag svg {
+	width: 16px;
+	height: 16px;
+}
+.bnet-notice {
+	margin: 0 0 14px;
+	padding: 10px 14px;
+	border-radius: 10px;
+	border: 1px solid;
+	font-size: 0.92rem;
+}
+.bnet-notice.is-ok {
+	border-color: #2f7d4f;
+	background: #10291b;
+	color: #cdeed8;
+}
+.bnet-notice.is-error {
+	border-color: #8a3a46;
+	background: #2a1116;
+	color: #f3cdd3;
+}
+@media (max-width: 640px) {
+	.bnet-connect {
+		flex-direction: column;
+		align-items: stretch;
+	}
+	.button.bnet-button {
+		justify-content: center;
+	}
+}

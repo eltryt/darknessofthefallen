@@ -86,6 +86,48 @@ const recalled = () => {
 	}
 };
 
+// "Conectar con Battle.net" comes back to /perfil?battlenet=…#personajes. The outcome is
+// read once and the address cleaned, so a reload doesn't show it again.
+const bnetIcon =
+	'<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3c3.5 2.5 5 6 4.6 9.6M12 3C8.5 5.5 7 9 7.4 12.6M4 15.5c4 1.8 8 1.6 11-.6m5 .6c-4 1.8-8 1.6-11-.6M12 21c-2-3.5-2.2-7-.6-10m.6 10c2-3.5 2.2-7 .6-10"/></svg>';
+function battlenetOutcome() {
+	const q = new URLSearchParams(location.search),
+		code = q.get('battlenet');
+	if (!code) return null;
+	const url = new URL(location.href);
+	for (const k of ['battlenet', 'nuevos', 'actualizados', 'omitidos']) url.searchParams.delete(k);
+	history.replaceState(null, '', url);
+	if (code !== 'ok')
+		return {
+			ok: false,
+			text:
+				{
+					denied: 'Has cancelado la conexión con Battle.net. No se ha importado nada.',
+					invalid: 'La conexión con Battle.net no era válida. Vuelve a intentarlo.',
+					expired: 'La conexión con Battle.net ha caducado. Vuelve a intentarlo.',
+				}[code] || 'Battle.net no ha respondido. Inténtalo dentro de un rato.',
+		};
+	const n = (k) => Number(q.get(k)) || 0,
+		added = n('nuevos'),
+		updated = n('actualizados'),
+		skipped = n('omitidos');
+	const plural = (v, one, many) => `${v} ${v === 1 ? one : many}`;
+	if (!added && !updated)
+		return {
+			ok: true,
+			text: skipped
+				? `Battle.net conectado, pero no se ha importado ningún personaje (${plural(skipped, 'omitido', 'omitidos')}: archivados o por encima del límite de 30).`
+				: 'Battle.net conectado, pero tu cuenta todavía no tiene personajes de Forever.',
+		};
+	return {
+		ok: true,
+		text:
+			`Battle.net conectado: ${plural(added, 'personaje nuevo', 'personajes nuevos')} y ${plural(updated, 'actualizado', 'actualizados')}.` +
+			(skipped ? ` ${plural(skipped, 'omitido', 'omitidos')}.` : '') +
+			(added ? ' Revisa el rol de los nuevos: Battle.net no lo indica.' : ''),
+	};
+}
+
 // Mi perfil: one place for the player's characters. The selected character
 // drives every section and survives reloads (URL first, then this browser).
 export function createProfileView(context) {
@@ -99,7 +141,8 @@ export function createProfileView(context) {
 		wishCache = null,
 		armoryMode = 'equipped',
 		guideState = {},
-		renderToken = 0;
+		renderToken = 0,
+		bnetNotice = battlenetOutcome();
 
 	const current = () => location.hash.slice(1) || 'armeria';
 	const selectedCharacter = () => rows.find((c) => c.id === selected) || null;
@@ -606,11 +649,33 @@ export function createProfileView(context) {
 				}
 			</div>
 			${
+				bnetNotice
+					? `<p class="bnet-notice ${bnetNotice.ok ? 'is-ok' : 'is-error'}" role="status">${esc(bnetNotice.text)}</p>`
+					: ''
+			}
+			${
+				me.battlenet && me.permissions.includes('character.write')
+					? /* HTML */ `<div class="bnet-connect">
+							<div>
+								<strong>Trae tus personajes desde Battle.net</strong>
+								<p>
+									Autoriza tu cuenta y la web importa nombre, apellido, clase, raza y nivel de tus
+									personajes de Forever. Repítelo cuando subas de nivel. No guardamos tu acceso a
+									Battle.net.
+								</p>
+							</div>
+							<a class="button bnet-button" href="/auth/battlenet"
+								>${bnetIcon}${rows.some((c) => c.source === 'battlenet') ? 'Actualizar desde Battle.net' : 'Conectar con Battle.net'}</a
+							>
+						</div>`
+					: ''
+			}
+			${
 				rows.length
 					? `<div class="hub-char-grid">${rows
 							.map(
 								(c) =>
-									`<article class="hub-char-card class-${classKey(c.class)} ${c.id === selected ? 'is-selected' : ''}"><div class="hub-char-top">${ClassIcon({ className: c.class, size: 'large' })}<div><h3>${esc(c.name)} ${esc(c.surname)}</h3><p>${esc(c.class)}${c.spec ? ' · ' + esc(specName(c.class, c.spec)) : ''} · ${esc(c.role)}</p></div><span class="pill ${c.is_main ? 'gold' : ''}">${c.is_main ? 'Main' : 'Alter'}</span></div><div class="hub-char-actions"><button type="button" class="button secondary" data-open-armory="${esc(c.id)}">${c.id === selected ? 'Seleccionado · ver armería' : 'Ver armería'}</button><details class="hub-settings"><summary aria-label="Ajustes de ${esc(c.name)}"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg><span>Ajustes</span></summary><div class="hub-menu"><button type="button" data-character-edit="${esc(c.id)}">Editar datos básicos</button>${c.is_main ? '' : `<button type="button" data-main="${esc(c.id)}">Marcar como Main</button>`}<button type="button" class="is-danger" data-character-archive="${esc(c.id)}">Archivar personaje</button></div></details></div></article>`,
+									`<article class="hub-char-card class-${classKey(c.class)} ${c.id === selected ? 'is-selected' : ''}"><div class="hub-char-top">${ClassIcon({ className: c.class, size: 'large' })}<div><h3>${esc(c.name)} ${esc(c.surname)}</h3><p>${esc(c.class)}${c.spec ? ' · ' + esc(specName(c.class, c.spec)) : ''} · ${esc(c.role)}</p></div><span class="pill ${c.is_main ? 'gold' : ''}">${c.is_main ? 'Main' : 'Alter'}</span>${c.source === 'battlenet' ? `<span class="bnet-tag" title="Importado de Battle.net${c.level ? ' · nivel ' + esc(String(c.level)) : ''}">${bnetIcon}</span>` : ''}</div><div class="hub-char-actions"><button type="button" class="button secondary" data-open-armory="${esc(c.id)}">${c.id === selected ? 'Seleccionado · ver armería' : 'Ver armería'}</button><details class="hub-settings"><summary aria-label="Ajustes de ${esc(c.name)}"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg><span>Ajustes</span></summary><div class="hub-menu"><button type="button" data-character-edit="${esc(c.id)}">Editar datos básicos</button>${c.is_main ? '' : `<button type="button" data-main="${esc(c.id)}">Marcar como Main</button>`}<button type="button" class="is-danger" data-character-archive="${esc(c.id)}">Archivar personaje</button></div></details></div></article>`,
 							)
 							.join('')}</div>`
 					: '<div class="empty-note" role="status"><strong>Todavía no tienes personajes</strong><p>Añade el primero para incorporarte al roster y abrir su armería.</p></div>'

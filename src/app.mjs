@@ -29,6 +29,7 @@ import { armoryApi } from './armory.mjs';
 import { achievementsApi, publicGuildAchievements } from './achievements.mjs';
 import { journeyApi } from './journey.mjs';
 import { rouletteApi } from './roulette.mjs';
+import { battlenetReady, startBattlenet, finishBattlenet } from './battlenet.mjs';
 import { raidLineupApi } from './raid-lineup.mjs';
 import {
 	SESSION_MAX_AGE_SECONDS,
@@ -477,6 +478,7 @@ export function createApp(db, env, { readAsset = readLocalAsset, discordFetch = 
 					permissions: Object.keys((await import('./domain.mjs')).permissions).filter((p) =>
 						can(user, p),
 					),
+					battlenet: battlenetReady(env),
 				});
 			if (path === '/auth/discord' && method === 'GET') {
 				throttle(req, path);
@@ -507,6 +509,45 @@ export function createApp(db, env, { readAsset = readLocalAsset, discordFetch = 
 						cookie('oauth_state', '', env, 0),
 						cookie('login_next', '', env, 0),
 					],
+				});
+				return res.end();
+			}
+			// "Conectar con Battle.net": imports the member's Forever characters. Both steps
+			// answer with a redirect back to the profile, which shows the outcome.
+			if (path === '/auth/battlenet' && method === 'GET') {
+				throttle(req, path);
+				if (!user) {
+					res.writeHead(302, { ...headers, Location: '/auth/discord?next=%2Fperfil%23personajes' });
+					return res.end();
+				}
+				requirePermission('character.write');
+				const auth = startBattlenet(db, env, user);
+				res.writeHead(302, {
+					...headers,
+					Location: auth.url,
+					'Set-Cookie': cookie('bnet_state', auth.state, env, 600),
+				});
+				return res.end();
+			}
+			if (path === '/auth/battlenet/callback' && method === 'GET') {
+				throttle(req, path);
+				let back;
+				try {
+					requirePermission('character.write');
+					const r = await finishBattlenet(db, req, url, env, user);
+					back = `/perfil?battlenet=ok&nuevos=${r.added}&actualizados=${r.updated}&omitidos=${r.skipped}#personajes`;
+				} catch (error) {
+					// Only the step that failed; the Battle.net token never reaches the logs.
+					console.warn('Battle.net import failed:', error.status || '', error.message);
+					const code = ['denied', 'invalid', 'expired'].includes(error.message)
+						? error.message
+						: 'failed';
+					back = `/perfil?battlenet=${code}#personajes`;
+				}
+				res.writeHead(302, {
+					...headers,
+					Location: back,
+					'Set-Cookie': cookie('bnet_state', '', env, 0),
 				});
 				return res.end();
 			}
