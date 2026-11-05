@@ -29,11 +29,13 @@ import rouletteDmSchema from '../migrations/017_roulette_dm.sql';
 import rouletteLoserDmSchema from '../migrations/018_roulette_loser_dm.sql';
 import rouletteRematchSchema from '../migrations/019_roulette_rematch.sql';
 import rouletteChatSchema from '../migrations/020_roulette_chat.sql';
+import battlenetSyncSchema from '../migrations/021_battlenet_sync.sql';
 import { deliverRouletteDMs, nextRouletteDMAt } from './roulette.mjs';
 import { deliverPush, nextPushAt, pushReady } from './push-notifications.mjs';
 import { deliverCallups, dmReady, nextCallupAt } from './raid-lineup.mjs';
 import { syncRaidEvents } from './raid-sync.mjs';
 import { raidHelperReady } from './raid-helper.mjs';
+import { battlenetReady, nextBattlenetSyncAt, syncBattlenet } from './battlenet.mjs';
 
 export class Guild extends DurableObject {
 	constructor(ctx, env) {
@@ -60,6 +62,7 @@ export class Guild extends DurableObject {
 			rouletteLoserDmSchema,
 			rouletteRematchSchema,
 			rouletteChatSchema,
+			battlenetSyncSchema,
 		);
 		repairGMRedirectFailures(this.db);
 	}
@@ -161,6 +164,14 @@ export class Guild extends DurableObject {
 			const alarm = await this.ctx.storage.getAlarm();
 			if (alarm === null || alarm > due) await this.ctx.storage.setAlarm(due);
 		}
+		if (battlenetReady(this.env)) {
+			const due = nextBattlenetSyncAt(this.db);
+			if (due !== null) {
+				const at = Math.max(Date.now() + 60000, due),
+					alarm = await this.ctx.storage.getAlarm();
+				if (alarm === null || alarm > at) await this.ctx.storage.setAlarm(at);
+			}
+		}
 		if (this.env.RECRUITMENT_NOTIFICATIONS_ENABLED !== 'true') return;
 		const webhook = this.env.DISCORD_RECRUITMENT_WEBHOOK;
 		if (!webhook || !/^https:\/\/discord\.com\/api\/webhooks\/\d+\/[\w-]+$/.test(webhook)) return;
@@ -181,6 +192,7 @@ export class Guild extends DurableObject {
 			await deliverPush(this.db, { ...this.env, APP_ORIGIN: origin || this.env.APP_ORIGIN });
 			await deliverCallups(this.db, { ...this.env, APP_ORIGIN: origin || '' });
 			await deliverRouletteDMs(this.db, { ...this.env, APP_ORIGIN: origin || '' });
+			await syncBattlenet(this.db, this.env);
 		} finally {
 			await this.scheduleNotifications();
 		}

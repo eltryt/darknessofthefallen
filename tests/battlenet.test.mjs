@@ -9,6 +9,9 @@ import {
 	importCharacters,
 	startBattlenet,
 	finishBattlenet,
+	readProfessions,
+	syncBattlenet,
+	nextBattlenetSyncAt,
 } from '../src/battlenet.mjs';
 
 const ORIGIN = 'http://localhost:3000';
@@ -202,4 +205,91 @@ test('the profile button only appears once Battle.net is configured', async () =
 			server.close();
 		}
 	}
+});
+
+test('every six hours the web refreshes level and professions with its own token', async () => {
+	const db = setup();
+	assert.equal(nextBattlenetSyncAt(db), null);
+	const withRealm = (c, realm) => ({
+		...c,
+		protected_character: {
+			href: `https://eu.api.blizzard.com/profile/user/wow/protected-character/${realm}-${c.id}`,
+		},
+	});
+	importCharacters(
+		db,
+		{ id: 'u1' },
+		{
+			wow_accounts: [
+				{
+					characters: [
+						withRealm(bnet(1, 'Tryt', 'Urador', 9, 7, 8), 5001),
+						bnet(2, 'Solo', 'Apellido', 1, 1, 3),
+						withRealm(bnet(3, 'Otro', '', 3, 3, 4), 5001),
+					],
+				},
+			],
+		},
+	);
+	assert.ok(nextBattlenetSyncAt(db) <= Date.now());
+	const calls = [];
+	const fetcher = async (u, opts) => {
+		const url = new URL(String(u));
+		calls.push(url.pathname + ' ' + (opts.headers?.Authorization || ''));
+		if (url.pathname === '/token') {
+			assert.equal(opts.body.get('grant_type'), 'client_credentials');
+			return Response.json({ access_token: 'app-token' });
+		}
+		if (url.pathname === '/data/wow/realm/5001') return Response.json({ slug: 'reino-oculto' });
+		if (url.pathname === '/profile/wow/character/reino-oculto/tryt')
+			return Response.json({ id: 1, level: 23 });
+		if (url.pathname === '/profile/wow/character/reino-oculto/tryt/professions')
+			return Response.json({
+				primaries: [
+					{ profession: { name: 'Sastrería' }, skill_points: 120 },
+					{
+						profession: { name: 'Encantamiento' },
+						tiers: [{ skill_points: 40 }, { skill_points: 95 }],
+					},
+				],
+				secondaries: [{ profession: { name: 'Cocina' }, skill_points: 60 }],
+			});
+		// Someone else with the same name on that realm.
+		if (url.pathname === '/profile/wow/character/reino-oculto/otro')
+			return Response.json({ id: 99, level: 60 });
+		return new Response('', { status: 404 });
+	};
+	const result = await syncBattlenet(db, ENV, fetcher);
+	assert.deepEqual(result, {
+		checked: 3,
+		updated: 1,
+		missing: 2,
+		answers: { 200: 1, 404: 1, other: 1 },
+	});
+	assert.ok(
+		calls.filter((c) => !c.startsWith('/token')).every((c) => c.endsWith('Bearer app-token')),
+	);
+	const rows = chars(db);
+	const tryt = db.prepare("SELECT level,professions FROM characters WHERE name='Tryt'").get();
+	assert.deepEqual(
+		{ ...tryt },
+		{ level: 23, professions: 'Sastrería 120, Encantamiento 95, Cocina 60' },
+	);
+	// The namesake's level is not taken.
+	assert.equal(rows.find((c) => c.name === 'Otro').level, 4);
+	// Nothing is due again for six hours; a new import makes it due at once.
+	assert.equal(await syncBattlenet(db, ENV, fetcher), null);
+	assert.ok(nextBattlenetSyncAt(db) > Date.now() + 5 * 3600000);
+	importCharacters(
+		db,
+		{ id: 'u1' },
+		{ wow_accounts: [{ characters: [bnet(2, 'Solo', 'Apellido', 1, 1, 3)] }] },
+	);
+	assert.ok(nextBattlenetSyncAt(db) <= Date.now());
+	// Blizzard down: recorded, retried later, nothing changed.
+	const down = await syncBattlenet(db, ENV, async () => new Response('', { status: 503 }));
+	assert.equal(down.error, 'token 503');
+	assert.equal(await syncBattlenet(db, ENV, fetcher), null);
+	assert.equal(await syncBattlenet(db, { APP_ORIGIN: ORIGIN }, fetcher), null);
+	assert.equal(readProfessions(null), '');
 });

@@ -660,8 +660,9 @@ export function createProfileView(context) {
 								<strong>Trae tus personajes desde Battle.net</strong>
 								<p>
 									Autoriza tu cuenta y la web importa nombre, apellido, clase, raza y nivel de tus
-									personajes de Forever. Repítelo cuando subas de nivel. No guardamos tu acceso a
-									Battle.net.
+									personajes de Forever. Después, la web consulta a Blizzard cada 6 horas su nivel y
+									sus profesiones. Pulsa «Actualizar» si creas un personaje nuevo. No guardamos tu
+									acceso a Battle.net.
 								</p>
 							</div>
 							<a class="button bnet-button" href="/auth/battlenet"
