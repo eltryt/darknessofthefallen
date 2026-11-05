@@ -127,7 +127,7 @@ const files = {
 	...Object.fromEntries(iconAssets.map((file) => ['/' + file, [file, 'image/webp']])),
 	// Item catalogue built by scripts/sync-items.mjs (one file per slot group).
 	...Object.fromEntries(
-		[...catalogGroups, 'meta'].map((group) => [
+		[...catalogGroups, 'names', 'meta'].map((group) => [
 			`/catalog/${group}.json`,
 			[`catalog/${group}.json`, 'application/json'],
 		]),
@@ -155,6 +155,7 @@ const files = {
 	'/roulette.js': ['roulette.js', 'text/javascript'],
 	'/roulette-sound.js': ['roulette-sound.js', 'text/javascript'],
 	'/item-catalog.js': ['item-catalog.js', 'text/javascript'],
+	'/wowhead.js': ['wowhead.js', 'text/javascript'],
 	'/profile-tour.js': ['profile-tour.js', 'text/javascript'],
 	'/motion.js': ['motion.js', 'text/javascript'],
 	'/medals.js': ['medals.js', 'text/javascript'],
@@ -218,7 +219,7 @@ export function securityHeaders(origin) {
 		'X-Robots-Tag': 'noindex, nofollow',
 		'Referrer-Policy': 'no-referrer',
 		'Content-Security-Policy':
-			"default-src 'self'; script-src 'self' https://www.googletagmanager.com; style-src 'self'; img-src 'self' data: https://render.worldofwarcraft.com; connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com https://www.googletagmanager.com; frame-src https://wowforevermap.com; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; object-src 'none'",
+			"default-src 'self'; script-src 'self' https://www.googletagmanager.com https://wow.zamimg.com; style-src 'self' https://wow.zamimg.com; img-src 'self' data: https://render.worldofwarcraft.com https://wow.zamimg.com; connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com https://www.googletagmanager.com https://nether.wowhead.com; frame-src https://wowforevermap.com; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; object-src 'none'",
 		'Cache-Control': 'no-store',
 		'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
 		'Cross-Origin-Opener-Policy': 'same-origin',

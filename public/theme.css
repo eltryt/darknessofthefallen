@@ -5407,6 +5407,16 @@ button.doll-slot:focus-visible {
 .wish-row-main strong {
 	overflow-wrap: anywhere;
 }
+/* Item names with a Wowhead tooltip (wowhead.js): the site's colour, a dotted hint. */
+.wowhead-link {
+	color: inherit;
+	text-decoration: underline dotted var(--gold);
+	text-underline-offset: 3px;
+}
+.wowhead-link:hover,
+.wowhead-link:focus-visible {
+	color: var(--gold);
+}
 .wish-row-main small,
 .wish-row-main p {
 	margin: 0;

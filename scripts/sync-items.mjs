@@ -1,17 +1,26 @@
 // Builds the armory's item catalogue from the Blizzard Game Data API: every equippable
 // Classic item (no junk) with its Spanish name, slot, quality, levels, stats, weapon
-// damage, equip effects and icon. Writes one JSON file per armory slot group plus a
-// meta file to public/catalog. Runs in GitHub Actions (see item-catalog.yml).
+// damage, equip effects and icon. Writes one JSON file per armory slot group, a name
+// index for Wowhead links and a meta file to public/catalog. Runs in GitHub Actions (see item-catalog.yml).
 //
 // WoW Forever has no namespace in the API yet; Classic data is shown as orientative.
 // When Blizzard publishes Forever, change NAMESPACE (and MAX_ID) and run it again.
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { blizzardClient, pool } from './blizzard-api.mjs';
 import { catalogGroups } from '../public/armory-catalog.js';
+import { itemKey } from '../public/wowhead.js';
 
 export const NAMESPACE = 'static-classic1x';
 // Original Classic items end around 24,300; higher ids are later seasons (SoD and others).
 export const MAX_ID = 25000;
+// Spanish name → item id, so wishlist and loot rows (stored by name) can link to Wowhead.
+// Groups are sorted highest level first: a repeated name keeps its highest-level item.
+export function nameIndex(groups) {
+	const index = {};
+	for (const items of Object.values(groups))
+		for (const item of items) index[itemKey(item.name)] ??= item.id;
+	return index;
+}
 const OUT = new URL('../public/catalog/', import.meta.url);
 
 // Blizzard inventory types → catalogue groups (one-hand weapons fit both hands).
@@ -151,6 +160,7 @@ async function main() {
 		counts[group] = items.length;
 		await writeFile(new URL(`${group}.json`, OUT), JSON.stringify(items));
 	}
+	await writeFile(new URL('names.json', OUT), JSON.stringify(nameIndex(groups)));
 	const meta = {
 		source: 'Blizzard Game Data API',
 		namespace,

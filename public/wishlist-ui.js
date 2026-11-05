@@ -1,4 +1,5 @@
 import { slotLabels, gameVersions } from './armory-catalog.js';
+import { loadItemNames, itemLink, loadTooltips } from './wowhead.js';
 
 // One wishlist per character, organised raid → boss → loot. Known loot comes only
 // from the guild's own data: registered progress, the player's entries and the
@@ -31,9 +32,10 @@ export async function mountWishlist(host, character, refresh, ctx) {
 			'<div class="hub-empty"><h2>Elige o registra un personaje</h2><p>La wishlist se guarda por personaje.</p><a class="button" href="#personajes">Añadir personaje</a></div>';
 		return;
 	}
-	const [allWishes, loot] = await Promise.all([
+	const [allWishes, loot, itemIds] = await Promise.all([
 		api('/api/wishlists'),
 		api('/api/loot').catch(() => []),
+		loadItemNames(),
 	]);
 	if (!host.isConnected) return;
 	const wishes = allWishes.filter((w) => w.data.characterId === character.id);
@@ -96,7 +98,7 @@ export async function mountWishlist(host, character, refresh, ctx) {
 			class="wish-row ${status ? 'is-' + norm(status).replace(/\s+/g, '-') : 'is-unmarked'} ${d?.obtained ? 'is-obtained' : ''}"
 		>
 			<div class="wish-row-main">
-				<strong>${esc(name)}</strong>
+				<strong>${itemLink(name, itemIds, esc)}</strong>
 				<small>
 					${d?.slot ? esc(slotLabels[d.slot] || d.slot) + ' · ' : ''}${fromHistory ? 'Visto en el historial de botín' : `Prioridad ${Number(d.priority)}`}${d?.obtained ? ' · <b>Conseguido</b>' : ''}
 				</small>
@@ -253,6 +255,7 @@ export async function mountWishlist(host, character, refresh, ctx) {
 				</p>
 			</details>`;
 		bind();
+		loadTooltips();
 	}
 
 	const create = (value) =>

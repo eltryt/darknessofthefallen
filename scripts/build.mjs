@@ -122,6 +122,7 @@ try {
 		'roulette.js',
 		'roulette-sound.js',
 		'item-catalog.js',
+		'wowhead.js',
 		'profile-tour.js',
 		'motion.js',
 		'medals.js',

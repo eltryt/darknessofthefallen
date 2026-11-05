@@ -1,9 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { compactItem, iconName, inventoryGroups } from '../scripts/sync-items.mjs';
+import { compactItem, iconName, inventoryGroups, nameIndex } from '../scripts/sync-items.mjs';
 import { searchItems, equipmentFromItem } from '../public/item-catalog.js';
 import { catalogGroups, catalogIconUrl, catalogGroup } from '../public/armory-catalog.js';
 import { staticFile, securityHeaders } from '../src/app.mjs';
+import { itemKey, itemLink, wowheadItemUrl } from '../public/wowhead.js';
 
 const thunderfury = {
 	id: 19019,
@@ -86,15 +87,49 @@ test('the finder ignores accents and keeps only known qualities and stats', () =
 	});
 });
 
-test('catalogue files are served and only Blizzard icons may load from outside', () => {
-	for (const g of [...catalogGroups, 'meta']) assert.ok(staticFile(`/catalog/${g}.json`), g);
+test('catalogue files are served and only Blizzard and Wowhead may load from outside', () => {
+	for (const g of [...catalogGroups, 'names', 'meta'])
+		assert.ok(staticFile(`/catalog/${g}.json`), g);
+	const csp = securityHeaders('https://x')['Content-Security-Policy'];
 	assert.match(
-		securityHeaders('https://x')['Content-Security-Policy'],
-		/img-src 'self' data: https:\/\/render\.worldofwarcraft\.com;/,
+		csp,
+		/img-src 'self' data: https:\/\/render\.worldofwarcraft\.com https:\/\/wow\.zamimg\.com;/,
 	);
+	assert.match(
+		csp,
+		/script-src 'self' https:\/\/www\.googletagmanager\.com https:\/\/wow\.zamimg\.com;/,
+	);
+	assert.match(csp, /connect-src [^;]* https:\/\/nether\.wowhead\.com;/);
 	assert.equal(
 		catalogIconUrl('inv_sword_39'),
 		'https://render.worldofwarcraft.com/classic1x-eu/icons/56/inv_sword_39.jpg',
 	);
 	assert.equal(catalogIconUrl('../x'), '');
+});
+
+test('item names typed in the wishlist or loot link to their Wowhead Forever tooltip', () => {
+	const ids = new Map(
+		Object.entries(
+			nameIndex({
+				main_hand: [
+					{ id: 19019, name: 'Trueno furioso, espada bendita del Hijo del Viento' },
+					{ id: 1, name: 'Capa de la Necrópolis' },
+				],
+				back: [{ id: 23050, name: 'Capa de la Necrópolis' }],
+			}),
+		),
+	);
+	const esc = (v) => String(v).replace(/[<>&"]/g, (c) => `&#${c.charCodeAt(0)};`);
+	assert.equal(itemKey('  capa de la  NECROPOLIS '), 'capa de la necropolis');
+	assert.equal(ids.get('capa de la necropolis'), 1);
+	assert.equal(wowheadItemUrl(19019), 'https://www.wowhead.com/forever/es/item=19019');
+	assert.match(
+		itemLink('trueno furioso, espada bendita del hijo del viento', ids, esc),
+		/^<a class="wowhead-link" href="https:\/\/www\.wowhead\.com\/forever\/es\/item=19019"/,
+	);
+	assert.equal(
+		itemLink('<b>Objeto inventado</b>', ids, esc),
+		'&#60;b&#62;Objeto inventado&#60;/b&#62;',
+	);
+	assert.equal(itemLink('Lo que sea', undefined, esc), 'Lo que sea');
 });

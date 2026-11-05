@@ -1,4 +1,5 @@
 import { mountManualRoster } from './manual-roster-ui.js';
+import { loadItemNames, itemLink, loadTooltips } from './wowhead.js';
 import { tutorialButton } from './tutorials.js';
 import { rosterCards } from './roster-ui.js';
 const rankLabel = (rank) =>
@@ -347,7 +348,7 @@ export async function operationTab(tab, el, ctx) {
 		return true;
 	}
 	if (tab === 'loot') {
-		const rows = await api('/api/loot');
+		const [rows, itemIds] = await Promise.all([api('/api/loot'), loadItemNames()]);
 		el.innerHTML = /* HTML */ `<h2>Historial de loot</h2>
 			${tutorialButton('botin', 'Ver tutorial')}
 			<p>
@@ -363,7 +364,7 @@ export async function operationTab(tab, el, ctx) {
 			(r) =>
 				/* HTML */ `<tr>
 					<td>
-						${esc(r.data.item)}<small class="cell-detail"
+						${itemLink(r.data.item, itemIds, esc)}<small class="cell-detail"
 							>${esc(r.data.raidTitle)} · ${esc(r.data.boss)}<br />${esc(dateLabel(r.data.date))}</small
 						>
 					</td>
@@ -389,6 +390,7 @@ export async function operationTab(tab, el, ctx) {
 				'Los responsables de loot registran cada asignación a mano. Aún no hay un catálogo verificado de objetos ni de bosses de WoW Forever, así que se escriben manualmente.',
 			],
 		);
+		loadTooltips();
 		el.querySelector('#loot-list').onclick = async (e) => {
 			const del = e.target.closest('[data-delete-loot]'),
 				voidButton = e.target.closest('[data-void]'),
