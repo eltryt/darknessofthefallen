@@ -242,6 +242,43 @@ export function nextBattlenetSyncAt(db) {
 	return row.fresh ? Date.now() : Date.parse(row.oldest) + SYNC_EVERY_MS;
 }
 
+// Forever answers profession names in English whatever the locale: ours go by Blizzard's id,
+// with the English name as a fallback.
+const professionById = {
+	129: 'Primeros auxilios',
+	164: 'Herrería',
+	165: 'Peletería',
+	171: 'Alquimia',
+	182: 'Herboristería',
+	185: 'Cocina',
+	186: 'Minería',
+	197: 'Sastrería',
+	202: 'Ingeniería',
+	333: 'Encantamiento',
+	356: 'Pesca',
+	393: 'Desuello',
+};
+const professionByName = Object.fromEntries(
+	Object.entries({
+		'First Aid': 129,
+		Blacksmithing: 164,
+		Leatherworking: 165,
+		Alchemy: 171,
+		Herbalism: 182,
+		Cooking: 185,
+		Mining: 186,
+		Tailoring: 197,
+		Engineering: 202,
+		Enchanting: 333,
+		Fishing: 356,
+		Skinning: 393,
+	}).map(([name, id]) => [name.toLowerCase(), professionById[id]]),
+);
+const professionName = (p) => {
+	const given = String(p?.name || '').trim();
+	return professionById[p?.id] || professionByName[given.toLowerCase()] || given;
+};
+
 // Blizzard lists professions with a skill per expansion tier (Retail) or a single one
 // (Classic); either way the highest is the character's.
 export function readProfessions(data) {
@@ -251,7 +288,7 @@ export function readProfessions(data) {
 			...(p?.tiers || []).map((t) => Number(t?.skill_points) || 0),
 		);
 	return [...(data?.primaries || []), ...(data?.secondaries || [])]
-		.map((p) => [String(p?.profession?.name || '').trim(), skill(p)])
+		.map((p) => [professionName(p?.profession), skill(p)])
 		.filter(([name]) => name)
 		.map(([name, points]) => (points ? `${name} ${points}` : name))
 		.join(', ')

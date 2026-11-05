@@ -292,4 +292,15 @@ test('every six hours the web refreshes level and professions with its own token
 	assert.equal(await syncBattlenet(db, ENV, fetcher), null);
 	assert.equal(await syncBattlenet(db, { APP_ORIGIN: ORIGIN }, fetcher), null);
 	assert.equal(readProfessions(null), '');
+	// Forever answers in English: translated by id, or by name when the id is missing.
+	assert.equal(
+		readProfessions({
+			primaries: [{ profession: { id: 393, name: 'Skinning' }, skill_points: 27 }],
+			secondaries: [
+				{ profession: { name: 'Cooking' }, skill_points: 1 },
+				{ profession: { id: 129, name: 'First Aid' }, skill_points: 14 },
+			],
+		}),
+		'Desuello 27, Cocina 1, Primeros auxilios 14',
+	);
 });
