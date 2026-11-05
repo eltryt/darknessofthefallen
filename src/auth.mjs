@@ -1,5 +1,6 @@
 import { randomBytes, createHash } from 'node:crypto';
 import { HttpError, roleFromDiscord } from './domain.mjs';
+import { audit } from './database-core.mjs';
 export const SESSION_MAX_AGE_SECONDS = 7 * 24 * 60 * 60;
 export const token = () => randomBytes(32).toString('base64url');
 export const hash = (value) => createHash('sha256').update(value).digest('hex');
@@ -51,15 +52,51 @@ export function startOAuth(db, env) {
 	});
 	return { state, url: `https://discord.com/oauth2/authorize?${params}` };
 }
+// A failed sign-in is recorded for the officers (Panel → Auditoría) with what went wrong
+// and, once Discord has said who it is, the account's id and name; never a token.
+function loginFailed(db, status, reason, message, who = {}) {
+	audit(db, 'login:discord', 'auth.discord_failed', who.id || 'desconocido', {
+		reason,
+		...(who.name ? { name: who.name } : {}),
+		...(who.status ? { discordStatus: who.status } : {}),
+	});
+	return new HttpError(status, message);
+}
 export async function finishOAuth(db, req, url, env, fetcher = fetch) {
 	const state = url.searchParams.get('state'),
 		code = url.searchParams.get('code');
-	if (!state || state !== cookies(req).oauth_state || !code)
-		throw new HttpError(400, 'La autorización de Discord no es válida. Vuelve a iniciar sesión.');
+	if (url.searchParams.get('error'))
+		throw loginFailed(
+			db,
+			400,
+			'cancelled',
+			'Has cancelado la autorización en Discord. Vuelve a intentarlo y pulsa «Autorizar».',
+		);
+	if (!state || !code || !cookies(req).oauth_state)
+		// The sign-in started in another browser: typically Discord's own, which loses our cookie.
+		throw loginFailed(
+			db,
+			400,
+			'browser',
+			'El inicio de sesión no terminó en el mismo navegador en el que empezó. Si abriste la web desde la app de Discord, ábrela en Chrome o Safari y vuelve a entrar.',
+		);
+	if (state !== cookies(req).oauth_state)
+		throw loginFailed(
+			db,
+			400,
+			'state',
+			'La autorización de Discord no corresponde a este intento. Vuelve a entrar desde la web.',
+		);
 	const found = db
 		.prepare('DELETE FROM oauth_states WHERE hash=? AND expires>? RETURNING hash')
 		.get(hash(state), Date.now());
-	if (!found) throw new HttpError(400, 'La autorización ha caducado o ya se ha utilizado.');
+	if (!found)
+		throw loginFailed(
+			db,
+			400,
+			'expired',
+			'La autorización ha caducado (dura 10 minutos) o ya se usó. Vuelve a entrar.',
+		);
 	const r = await fetcher('https://discord.com/api/v10/oauth2/token', {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -72,7 +109,14 @@ export async function finishOAuth(db, req, url, env, fetcher = fetch) {
 		}),
 		signal: AbortSignal.timeout(10000),
 	});
-	if (!r.ok) throw new HttpError(502, 'Discord no ha podido completar la autorización.');
+	if (!r.ok)
+		throw loginFailed(
+			db,
+			502,
+			'token',
+			'Discord no ha podido completar la autorización. Vuelve a intentarlo en un minuto.',
+			{ status: r.status },
+		);
 	const access = await r.json();
 	const opts = {
 		headers: { Authorization: `Bearer ${access.access_token}` },
@@ -85,10 +129,39 @@ export async function finishOAuth(db, req, url, env, fetcher = fetch) {
 			opts,
 		),
 	]);
-	if (!profileRes.ok || !memberRes.ok)
-		throw new HttpError(403, 'Necesitas pertenecer al Discord de la hermandad para acceder.');
-	const profile = await profileRes.json(),
-		member = await memberRes.json();
+	const profile = profileRes.ok ? await profileRes.json() : null;
+	const who = {
+		id: profile?.id,
+		name: profile?.global_name || profile?.username,
+		status: memberRes.status,
+	};
+	if (memberRes.status === 429 || profileRes.status === 429)
+		throw loginFailed(
+			db,
+			503,
+			'rate_limited',
+			'Discord nos ha pedido esperar un momento. Vuelve a intentarlo dentro de un minuto.',
+			who,
+		);
+	if (!profile)
+		throw loginFailed(
+			db,
+			502,
+			'profile',
+			'Discord no nos ha dado tu perfil. Vuelve a intentarlo en un minuto.',
+			{ status: profileRes.status },
+		);
+	if (!memberRes.ok)
+		throw loginFailed(
+			db,
+			403,
+			memberRes.status === 404 ? 'not_in_guild' : 'member',
+			memberRes.status === 404
+				? `La cuenta de Discord «${who.name || profile.username}» no está en el servidor de la hermandad. Si usas otra cuenta en el servidor, cierra sesión en discord.com y entra con esa.`
+				: 'Discord no ha confirmado que estés en el servidor de la hermandad. Vuelve a intentarlo en un minuto.',
+			who,
+		);
+	const member = await memberRes.json();
 	const rank = roleFromDiscord(profile.id, member.roles || [], env);
 	db.prepare(
 		'INSERT INTO users VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET display_name=excluded.display_name,rank=excluded.rank,updated_at=excluded.updated_at',

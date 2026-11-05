@@ -61,16 +61,20 @@ const escHtml = (v) =>
 		(c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
 	);
 // A page a person lands on by opening a link, instead of the API's JSON error.
-export function gatePage(status, message, next) {
+// retry: a Discord sign-in that failed, with what went wrong and a way to try again.
+export function gatePage(status, message, next, retry = false) {
 	const login = status === 401;
-	const title = login
-		? 'Entra con Discord'
-		: status === 404
-			? 'Página no encontrada'
-			: 'Acceso restringido';
-	const action = login
-		? `<a class="button" href="/auth/discord${next ? '?next=' + encodeURIComponent(next) : ''}">Entrar con Discord</a><a class="button secondary" href="/">Volver al inicio</a>`
-		: '<a class="button" href="/">Volver al inicio</a>';
+	const title = retry
+		? 'No hemos podido completar la entrada'
+		: login
+			? 'Entra con Discord'
+			: status === 404
+				? 'Página no encontrada'
+				: 'Acceso restringido';
+	const action =
+		login || retry
+			? `<a class="button" href="/auth/discord${next ? '?next=' + encodeURIComponent(next) : ''}">${retry ? 'Volver a intentarlo' : 'Entrar con Discord'}</a><a class="button secondary" href="/">Volver al inicio</a>`
+			: '<a class="button" href="/">Volver al inicio</a>';
 	return `<!doctype html><html lang="es"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><meta name="robots" content="noindex" /><title>${escHtml(title)} · Darkness of the Fallen</title><link rel="stylesheet" href="/style.css" /><link rel="stylesheet" href="/theme.css" /><link rel="icon" href="/favicon.ico" sizes="any" /></head><body class="gate-body"><main class="gate-page"><img src="/assets/app-icon-512.png" alt="" width="96" height="96" /><span class="eyebrow">Darkness of the Fallen</span><h1>${escHtml(title)}</h1><p>${escHtml(login ? 'Esta parte de la web es solo para miembros de la hermandad. Entra con tu cuenta de Discord y te llevamos de vuelta aquí.' : message)}</p><div class="gate-actions">${action}</div></main></body></html>`;
 }
 async function readLocalAsset(file) {
@@ -496,11 +500,25 @@ export function createApp(db, env, { readAsset = readLocalAsset, discordFetch = 
 			}
 			if (path === '/auth/discord/callback' && method === 'GET') {
 				throttle(req, path);
-				const session = await finishOAuth(db, req, url, env);
 				let next = null;
 				try {
 					next = safeNext(decodeURIComponent(cookies(req).login_next || ''));
 				} catch {}
+				let session;
+				try {
+					session = await finishOAuth(db, req, url, env);
+				} catch (e) {
+					if (!e.status) throw e;
+					// A page that says what happened and offers another try, not raw JSON.
+					res.writeHead(e.status, {
+						...headers,
+						'Content-Type': 'text/html; charset=utf-8',
+						'Cache-Control': 'no-store',
+						'X-Robots-Tag': 'noindex, nofollow',
+						'Set-Cookie': cookie('oauth_state', '', env, 0),
+					});
+					return res.end(gatePage(e.status, e.message, next, true));
+				}
 				res.writeHead(302, {
 					...headers,
 					Location: next || '/perfil',
