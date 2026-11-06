@@ -9501,3 +9501,30 @@ button.att-state[aria-pressed='true']:hover {
 		flex-basis: 100%;
 	}
 }
+/* Configuración: "Cerrar clase" hides a whole class in Reclutamiento. */
+.spec-priority-class h4 {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 6px;
+}
+.spec-priority-class .spec-close {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	color: #9a948c;
+	font:
+		400 13px system-ui,
+		sans-serif;
+	cursor: pointer;
+}
+.spec-priority-class.is-closed {
+	border-color: #ef7b8a66;
+}
+.spec-priority-class.is-closed h4 {
+	color: #ef7b8a;
+}
+.spec-priority-class.is-closed > label {
+	opacity: 0.5;
+}

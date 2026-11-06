@@ -62,3 +62,18 @@ test('progress uses recorded results and never fabricates a kill for the referen
 	assert.ok(html.includes('En progreso'));
 	assert.ok(!html.includes('Raider.IO'));
 });
+test('closed specializations and whole closed classes are not shown', () => {
+	const settings = {
+		recruitmentOpen: true,
+		classPriorities: { Mago: 'cerrada', Sacerdote: 'media' },
+		specPriorities: { 'Mago:fire': 'alta', 'Sacerdote:shadow': 'cerrada' },
+	};
+	assert.equal(specPriority(settings, 'Mago', 'fire'), 'cerrada');
+	assert.equal(specPriority(settings, 'Sacerdote', 'holy'), 'media');
+	const html = recruitmentShowcase(settings, esc);
+	// 28 specializations minus the mage's three and shadow priest.
+	assert.equal((html.match(/data-recruit-priority=/g) || []).length, 24);
+	assert.ok(!html.includes('class-mage'));
+	assert.ok(!/data-recruit-priority="cerrada"/.test(html));
+	assert.ok(!html.includes('data-priority-filter="cerrada"'));
+});

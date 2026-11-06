@@ -896,7 +896,7 @@ export function createApp(db, env, { readAsset = readLocalAsset, discordFetch = 
 						choice(name, classes, 'clase');
 						next.classPriorities[name] = choice(
 							priority,
-							['abierta', 'alta', 'media', 'baja'],
+							['abierta', 'alta', 'media', 'baja', 'cerrada'],
 							'prioridad',
 						);
 					}
@@ -918,7 +918,7 @@ export function createApp(db, env, { readAsset = readLocalAsset, discordFetch = 
 							throw new HttpError(400, 'Especialización no válida.');
 						next.specPriorities[`${name}:${spec}`] = choice(
 							priority,
-							['abierta', 'alta', 'media', 'baja'],
+							['abierta', 'alta', 'media', 'baja', 'cerrada'],
 							'prioridad',
 						);
 					}

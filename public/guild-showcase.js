@@ -22,8 +22,10 @@ const roleGroups = [
 	['DPS distancia', 'DPS a distancia'],
 ];
 const priorityOrder = { alta: 0, media: 1, baja: 2, abierta: 3 };
-// A specialization's own priority wins; otherwise it inherits its class priority.
+// A closed class closes all its specializations; otherwise a specialization's own priority
+// wins, then its class priority. Closed ones ("cerrada") are not shown in Reclutamiento.
 export function specPriority(settings, className, specId) {
+	if (settings.classPriorities?.[className] === 'cerrada') return 'cerrada';
 	return (
 		settings.specPriorities?.[`${className}:${specId}`] ||
 		settings.classPriorities?.[className] ||
@@ -45,7 +47,7 @@ export function recruitmentSpecs(settings) {
 export function recruitmentShowcase(settings, esc, applicationUrl = '') {
 	const open = settings.recruitmentOpen;
 	const href = applicationUrl || '#application';
-	const specs = recruitmentSpecs(settings);
+	const specs = recruitmentSpecs(settings).filter((s) => s.priority !== 'cerrada');
 	const card = (s) =>
 		`<article class="spec-recruit-card class-${classKey(s.className)} priority-${esc(s.priority)}" data-recruit-priority="${esc(s.priority)}" data-recruit-roles="${esc(s.role)}|${s.role.startsWith('DPS') ? 'DPS' : ''}"><span class="spec-recruit-icons">${SpecIcon({ className: s.className, specId: s.id, size: 'large' })}${ClassIcon({ className: s.className, size: 'small' })}</span><span class="spec-recruit-text"><h4>${esc(s.name)}</h4><small>${esc(s.className)}${settings.soughtClasses?.includes(s.className) ? ' · Clase buscada' : ''}</small></span><span class="recruit-priority">${open ? priorities[s.priority] : 'Cerrado'}</span></article>`;
 	return `<section class="recruit-showcase" aria-labelledby="classes-heading">
@@ -61,6 +63,7 @@ export function recruitmentShowcase(settings, esc, applicationUrl = '') {
 							priorityOrder[a.priority] - priorityOrder[b.priority] ||
 							a.className.localeCompare(b.className, 'es'),
 					);
+				if (!list.length) return '';
 				return `<section class="spec-recruit-group" data-recruit-group><h3>${title}<span>${list.length}</span></h3><div class="spec-recruit-grid">${list.map(card).join('')}</div></section>`;
 			})
 			.join('')}

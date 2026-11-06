@@ -195,20 +195,25 @@ ${esc(s.about)}</textarea></label
 					<legend>Prioridades por especialización</legend>
 					<p>
 						Informativas: no impiden presentar candidatura. Abierta mantiene el reclutamiento sin
-						preferencias. Se muestran así en Reclutamiento.
+						preferencias. «Cerrada» oculta esa especialización en Reclutamiento, y «Cerrar clase»
+						oculta la clase entera.
 					</p>
 					<div class="spec-priority-grid">
 						${classes
-							.map(
-								(name) =>
-									`<div class="spec-priority-class"><h4>${esc(name)}</h4>${recruitmentSpecs(s)
-										.filter((x) => x.className === name)
-										.map(
-											(x) =>
-												`<label>${esc(x.name)}<select name="spec_${esc(name)}:${esc(x.id)}">${['abierta', 'alta', 'media', 'baja'].map((o) => `<option value="${o}" ${o === x.priority ? 'selected' : ''}>${o[0].toUpperCase() + o.slice(1)}</option>`).join('')}</select></label>`,
-										)
-										.join('')}</div>`,
-							)
+							.map((name) => {
+								const closed = s.classPriorities?.[name] === 'cerrada',
+									inherited =
+										s.classPriorities?.[name] && !closed ? s.classPriorities[name] : 'abierta';
+								return `<div class="spec-priority-class${closed ? ' is-closed' : ''}"><h4>${esc(name)}<label class="spec-close"><input type="checkbox" name="closed_${esc(name)}" ${closed ? 'checked' : ''} />Cerrar clase</label></h4>${recruitmentSpecs(
+									s,
+								)
+									.filter((x) => x.className === name)
+									.map((x) => {
+										const own = s.specPriorities?.[`${name}:${x.id}`] || inherited;
+										return `<label>${esc(x.name)}<select name="spec_${esc(name)}:${esc(x.id)}" ${closed ? 'disabled' : ''}>${['abierta', 'alta', 'media', 'baja', 'cerrada'].map((o) => `<option value="${o}" ${o === own ? 'selected' : ''}>${o[0].toUpperCase() + o.slice(1)}</option>`).join('')}</select></label>`;
+									})
+									.join('')}</div>`;
+							})
 							.join('')}
 					</div>
 				</fieldset>
@@ -222,18 +227,32 @@ ${esc(s.about)}</textarea></label
 			</form>`;
 			$('#settings').elements.ruleset.value = s.ruleset;
 			$('#settings').elements.lootMethod.value = s.lootMethod;
+			// "Cerrar clase" greys out its specializations at once; they keep their own values.
+			$('#settings').addEventListener('change', (e) => {
+				if (!e.target.name?.startsWith('closed_')) return;
+				const card = e.target.closest('.spec-priority-class');
+				card.classList.toggle('is-closed', e.target.checked);
+				card.querySelectorAll('select').forEach((x) => (x.disabled = e.target.checked));
+			});
 			formHandler('#settings', async (v, f) => {
 				const fields = Object.fromEntries(
-					Object.entries(v).filter(([k]) => !k.startsWith('spec_')),
+					Object.entries(v).filter(([k]) => !k.startsWith('spec_') && !k.startsWith('closed_')),
 				);
+				// A closed class is stored as its class priority; reopening it restores the rest.
+				const classPriorities = { ...(s.classPriorities || {}) };
+				for (const name of classes) {
+					if (f.elements[`closed_${name}`]?.checked) classPriorities[name] = 'cerrada';
+					else if (classPriorities[name] === 'cerrada') delete classPriorities[name];
+				}
+				// Disabled selects are not in the form data: keep their stored values.
+				const specPriorities = { ...(s.specPriorities || {}) };
+				for (const [k, value] of Object.entries(v))
+					if (k.startsWith('spec_')) specPriorities[k.slice(5)] = value;
 				data.settings = await api('/api/settings', 'PUT', {
 					...fields,
 					raidDays: new FormData(f).getAll('days'),
-					specPriorities: Object.fromEntries(
-						Object.entries(v)
-							.filter(([k]) => k.startsWith('spec_'))
-							.map(([k, value]) => [k.slice(5), value]),
-					),
+					classPriorities,
+					specPriorities,
 					soughtClasses: new FormData(f).getAll('soughtClasses'),
 					soughtRoles: new FormData(f).getAll('soughtRoles'),
 					recruitmentOpen: !!v.recruitmentOpen,
