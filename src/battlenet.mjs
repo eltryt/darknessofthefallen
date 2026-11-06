@@ -14,7 +14,7 @@ const NAMESPACE = `profile-forever-${REGION}`;
 const API = `https://${REGION}.api.blizzard.com`;
 const CHARACTER_LIMIT = 30;
 const SYNC_EVERY_MS = 6 * 3600000;
-// Characters per alarm run: each takes up to six requests, and the Worker caps them.
+// Characters per alarm run: each takes up to seven requests, and the Worker caps them.
 const SYNC_BATCH = 6;
 const callback = (env) => `${env.APP_ORIGIN}/auth/battlenet/callback`;
 
@@ -340,6 +340,35 @@ export function readEquipment(data) {
 	}
 	return out;
 }
+// The character sheet's totals: Blizzard gives each attribute as {base, effective}.
+export function readStats(data) {
+	if (!data || typeof data !== 'object') return null;
+	const n = (v) => {
+		const x = typeof v === 'object' && v ? (v.effective ?? v.base) : v;
+		return Number.isFinite(x) && x >= 0 && x < 1e7 ? Math.round(x) : undefined;
+	};
+	const stats = {
+		health: n(data.health),
+		power: n(data.power),
+		strength: n(data.strength),
+		agility: n(data.agility),
+		stamina: n(data.stamina),
+		intellect: n(data.intellect),
+		spirit: n(data.spirit),
+		armor: n(data.armor),
+	};
+	// Critical strike as a percentage: melee, ranged or spell, whichever is highest.
+	const crit = Math.max(
+		...[data.melee_crit, data.ranged_crit, data.spell_crit].map((c) =>
+			Number.isFinite(c?.value) ? c.value : -1,
+		),
+	);
+	if (crit >= 0 && crit <= 100) stats.crit = Math.round(crit * 100) / 100;
+	for (const k of Object.keys(stats)) if (stats[k] === undefined) delete stats[k];
+	const power = String(data.power_type?.name || '').trim();
+	if (Object.keys(stats).length && /^[\p{L} ]{2,20}$/u.test(power)) stats.power_name = power;
+	return Object.keys(stats).length ? stats : null;
+}
 // The character's image on Blizzard's render host, only in its known shape.
 export function readAvatar(data) {
 	const assets = data?.assets || [];
@@ -417,7 +446,7 @@ export async function syncBattlenet(db, env, fetcher = fetch) {
 	const cutoff = new Date(Date.now() - SYNC_EVERY_MS).toISOString();
 	const due = db
 		.prepare(
-			'SELECT b.character_id AS id,b.realm_id,c.name,c.surname,c.external_id,c.level,c.professions,c.avatar_url FROM battlenet_characters b JOIN characters c ON c.id=b.character_id WHERE c.archived_at IS NULL AND (b.checked_at IS NULL OR b.checked_at<?) ORDER BY b.checked_at IS NOT NULL, b.checked_at LIMIT ?',
+			'SELECT b.character_id AS id,b.realm_id,c.name,c.surname,c.external_id,c.level,c.professions,c.avatar_url,c.stats FROM battlenet_characters b JOIN characters c ON c.id=b.character_id WHERE c.archived_at IS NULL AND (b.checked_at IS NULL OR b.checked_at<?) ORDER BY b.checked_at IS NOT NULL, b.checked_at LIMIT ?',
 		)
 		.all(cutoff, SYNC_BATCH);
 	if (!due.length) return null;
@@ -483,27 +512,31 @@ export async function syncBattlenet(db, env, fetcher = fetch) {
 			const level = found.body.level;
 			const p = await get(`${found.path}/professions`, token);
 			const professions = p.ok ? readProfessions(await p.json().catch(() => null)) : '';
-			const [g, m] = await Promise.all([
+			const [g, m, st] = await Promise.all([
 				get(`${found.path}/equipment`, token),
 				get(`${found.path}/character-media`, token),
+				get(`${found.path}/statistics`, token),
 			]);
+			const stats = st.ok ? readStats(await st.json().catch(() => null)) : null;
 			const gear = g.ok ? readEquipment(await g.json().catch(() => null)) : null;
 			const avatar = m.ok ? readAvatar(await m.json().catch(() => null)) : '';
 			const next = {
 				level: Number.isInteger(level) && level >= 1 && level <= 100 ? level : c.level,
 				professions: professions || c.professions,
 				avatar: avatar || c.avatar_url,
+				stats: stats ? JSON.stringify(stats) : c.stats,
 			};
 			transaction(db, () => {
 				if (gear?.size) result.gear += saveEquipment(db, c.id, gear, now);
 				if (
 					next.level !== c.level ||
 					next.professions !== c.professions ||
-					next.avatar !== c.avatar_url
+					next.avatar !== c.avatar_url ||
+					next.stats !== c.stats
 				) {
 					db.prepare(
-						'UPDATE characters SET level=?,professions=?,avatar_url=?,synced_at=?,updated_at=? WHERE id=?',
-					).run(next.level, next.professions, next.avatar, now, now, c.id);
+						'UPDATE characters SET level=?,professions=?,avatar_url=?,stats=?,synced_at=?,updated_at=? WHERE id=?',
+					).run(next.level, next.professions, next.avatar, next.stats, now, now, c.id);
 					result.updated++;
 				} else db.prepare('UPDATE characters SET synced_at=? WHERE id=?').run(now, c.id);
 			});
@@ -511,6 +544,7 @@ export async function syncBattlenet(db, env, fetcher = fetch) {
 				!p.ok && `professions ${p.status}`,
 				!g.ok && `equipment ${g.status}`,
 				!m.ok && `media ${m.status}`,
+				!st.ok && `statistics ${st.status}`,
 			].filter(Boolean);
 			mark.run(now, missingParts.length ? `ok, ${missingParts.join(', ')}` : 'ok', c.id);
 		}

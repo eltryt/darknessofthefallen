@@ -9746,3 +9746,95 @@ button.att-state[aria-pressed='true']:hover {
 	background: #0009;
 	color: #d8cdbd;
 }
+/* Armory statistics: an emblem per attribute, its value in the emblem's colour. */
+.doll-stats {
+	grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr));
+	gap: 14px 20px;
+	padding: 16px 18px;
+	border: 1px solid #a68a5b30;
+	background: #0d0b0f;
+}
+.doll-stats > .doll-stat {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 0;
+	background: none;
+	--stat: #cdb48c;
+}
+.doll-stat.stat-health {
+	--stat: #3fd26b;
+}
+.doll-stat.stat-power {
+	--stat: #3f8cff;
+}
+.doll-stat.stat-strength {
+	--stat: #ef4b4b;
+}
+.doll-stat.stat-agility {
+	--stat: #f2c94c;
+}
+.doll-stat.stat-stamina {
+	--stat: #f08a3c;
+}
+.doll-stat.stat-intellect {
+	--stat: #d66bd6;
+}
+.doll-stat.stat-spirit {
+	--stat: #9fc2ff;
+}
+.doll-stat.stat-armor {
+	--stat: #b9b2a6;
+}
+.doll-stat.stat-crit {
+	--stat: #e0353f;
+}
+.stat-emblem {
+	position: relative;
+	display: grid;
+	flex: none;
+	place-items: center;
+	width: 46px;
+	height: 46px;
+	border: 1.5px solid var(--stat);
+	color: var(--stat);
+}
+.stat-emblem::before {
+	content: '';
+	position: absolute;
+	inset: 3px;
+	border: 1.5px solid color-mix(in srgb, var(--stat) 70%, transparent);
+	border-radius: 50%;
+}
+.stat-emblem svg {
+	width: 24px;
+	height: 24px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.8;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+.stat-health .stat-emblem svg,
+.stat-spirit .stat-emblem svg {
+	fill: currentColor;
+}
+.stat-text {
+	display: grid;
+}
+.doll-stats .stat-value {
+	margin: 0;
+	color: var(--stat);
+	font:
+		600 15px/1.2 system-ui,
+		sans-serif;
+}
+.doll-stats .stat-label {
+	color: #f3e6cf;
+	font-size: 13px;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+}
+.doll-stat.is-empty {
+	opacity: 0.55;
+}

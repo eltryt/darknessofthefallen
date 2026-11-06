@@ -36,6 +36,32 @@ const classPortraits = {
 const emptyIcon =
 	'<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9Z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg>';
 
+// Our own stat emblems, in the spirit of the official armory: a coloured frame and symbol.
+const statIcons = {
+	health:
+		'<path d="M12 19s-6.5-4.1-6.5-8.6A3.6 3.6 0 0 1 12 8.2a3.6 3.6 0 0 1 6.5 2.2C18.5 14.9 12 19 12 19Z"/>',
+	power:
+		'<path d="M10 4h4M10.5 4v5l-4.3 7.6A2 2 0 0 0 8 19.5h8a2 2 0 0 0 1.8-2.9L13.5 9V4"/><path d="M8 14h8"/>',
+	strength: '<path d="M4 9v6M7 7v10M17 7v10M20 9v6M7 12h10"/>',
+	agility:
+		'<circle cx="8" cy="8" r="1.6"/><circle cx="12" cy="6.5" r="1.6"/><circle cx="16" cy="8" r="1.6"/><path d="M12 11c-2.6 0-4.5 2.6-4.5 4.4 0 1.7 1.6 2.4 4.5 1.6 2.9.8 4.5.1 4.5-1.6 0-1.8-1.9-4.4-4.5-4.4Z"/>',
+	stamina: '<path d="m12 4 8 8-8 8-8-8Z"/><path d="M12 9v6M9 12h6"/>',
+	intellect:
+		'<path d="M9 17h6M10 20h4M8.5 14.5a5 5 0 1 1 7 0c-.8.8-1 1.4-1 2.5h-5c0-1.1-.2-1.7-1-2.5Z"/>',
+	spirit:
+		'<path d="M12 4c.8 4.4 3.6 7.2 8 8-4.4.8-7.2 3.6-8 8-.8-4.4-3.6-7.2-8-8 4.4-.8 7.2-3.6 8-8Z"/>',
+	armor: '<path d="M12 4 5 7v5c0 4.2 3 7 7 8 4-1 7-3.8 7-8V7Z"/>',
+	crit: '<circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="1.4"/><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/>',
+};
+function statCell(key, label, value) {
+	const shown = Number.isFinite(value)
+		? key === 'crit'
+			? `${value.toLocaleString('es-ES')}%`
+			: value.toLocaleString('es-ES')
+		: '—';
+	return `<div role="listitem" class="doll-stat stat-${escape(key)}${Number.isFinite(value) ? '' : ' is-empty'}"><span class="stat-emblem" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false">${statIcons[key] || ''}</svg></span><span class="stat-text"><b class="stat-value">${escape(shown)}</b><span class="stat-label">${escape(label)}</span></span></div>`;
+}
+
 function slot(name, item, side, href, buttons) {
 	const label = slotLabels[name] || name;
 	// Each slot shows its own silhouette (a faded official icon) until an item fills it.
@@ -124,12 +150,16 @@ export function paperdoll(sheet, { href = '', slotButtons = false, target = fals
 			${column('right')}
 		</div>
 		<div class="doll-weapons">${layout.bottom.map((name, i) => slot(name, items.get(name), i ? 'left' : 'right', href, slotButtons)).join('')}</div>
-		<dl class="doll-stats">${version.stats
-			.map(
-				([key, label]) =>
-					`<div><dt>${escape(label)}</dt><dd>${Number.isFinite(stats[key]) ? escape(stats[key].toLocaleString('es-ES')) : '—'}</dd></div>`,
+		<div class="doll-stats" role="list" aria-label="Estadísticas">${version.stats
+			.filter(([key]) => key !== 'crit' || Number.isFinite(stats.crit))
+			.map(([key, label]) =>
+				statCell(
+					key,
+					key === 'power' && typeof stats.power_name === 'string' ? stats.power_name : label,
+					stats[key],
+				),
 			)
-			.join('')}</dl>
+			.join('')}</div>
 		${summed ? '<p class="doll-stats-note">Suma de los atributos de las piezas elegidas del catálogo. Sin atributos base del personaje, talentos ni encantamientos.</p>' : ''}
 	</section>`;
 }

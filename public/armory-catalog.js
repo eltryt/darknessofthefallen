@@ -62,6 +62,7 @@ export const gameVersions = {
 			['intellect', 'Intelecto'],
 			['spirit', 'Espíritu'],
 			['armor', 'Armadura'],
+			['crit', 'Golpe crítico'],
 		],
 	},
 };

@@ -277,6 +277,17 @@ test('every six hours the web refreshes level and professions with its own token
 					{ slot: { type: 'FINGER_1' }, item: { id: 5404 }, name: 'Anillo', level: { value: 9 } },
 				],
 			});
+		if (url.pathname === '/profile/wow/character/reino-oculto/tryt/statistics')
+			return Response.json({
+				health: 245,
+				power: 310,
+				power_type: { name: 'Maná' },
+				strength: { base: 18, effective: 19 },
+				stamina: { base: 22, effective: 24 },
+				intellect: { base: 25, effective: 27 },
+				armor: { base: 40, effective: 47 },
+				spirit: { base: 24, effective: 24 },
+			});
 		if (url.pathname === '/profile/wow/character/reino-oculto/tryt/character-media')
 			return Response.json({
 				assets: [
@@ -349,6 +360,19 @@ test('every six hours the web refreshes level and professions with its own token
 				origin: 'manual',
 			},
 		],
+	);
+	assert.deepEqual(
+		JSON.parse(db.prepare('SELECT stats FROM characters WHERE id=?').get(trytId).stats),
+		{
+			health: 245,
+			power: 310,
+			strength: 19,
+			stamina: 24,
+			intellect: 27,
+			spirit: 24,
+			armor: 47,
+			power_name: 'Maná',
+		},
 	);
 	assert.equal(
 		db.prepare('SELECT avatar_url FROM characters WHERE id=?').get(trytId).avatar_url,
