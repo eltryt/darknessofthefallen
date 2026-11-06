@@ -131,7 +131,7 @@ export function paperdoll(sheet, { href = '', slotButtons = false, target = fals
 			<span><small>Origen</small><strong>Tu wishlist</strong></span>`
 				: `<span><small>Nivel de objeto medio</small><strong>${average ?? '—'}</strong></span>
 			<span><small>Ranuras registradas</small><strong>${sheet.equipment.length} / ${version.slots.length}</strong></span>
-			<span><small>Origen</small><strong>${sheet.equipment.some((e) => e.origin === 'provider') ? 'Battle.net' : sheet.equipment.length ? 'Manual' : 'Sin datos'}</strong></span>${armoryUrl ? `<a class="doll-armory-link" href="${escape(armoryUrl)}" target="_blank" rel="noopener noreferrer">Ver en la armería de Blizzard ↗</a>` : ''}`
+			${armoryUrl ? `<a class="doll-armory-link" href="${escape(armoryUrl)}" target="_blank" rel="noopener noreferrer">Ver en la armería de Blizzard ↗</a>` : ''}`
 		}
 		</header>
 		<div class="doll-stage">
