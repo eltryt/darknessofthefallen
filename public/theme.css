@@ -9319,3 +9319,185 @@ tr.audit-failed td {
 tr.audit-failed td:first-child {
 	box-shadow: inset 3px 0 #ef8a98;
 }
+/* Asistencia → Pasar lista: one row per player, one tap per state. */
+.att-pick > label {
+	display: grid;
+	gap: 6px;
+	max-width: 520px;
+	margin-bottom: 16px;
+}
+.att-sheet {
+	display: grid;
+	gap: 18px;
+}
+.att-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px 14px;
+	padding: 14px 16px;
+	border: 1px solid #a68a5b40;
+	border-radius: 6px;
+	background: linear-gradient(180deg, #1b1619, #121013);
+}
+.att-source {
+	flex-basis: 100%;
+	margin: 0;
+	color: #9a948c;
+	font-size: 13px;
+}
+.att-counts {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	flex: 1;
+}
+.att-count {
+	padding: 4px 10px;
+	border-radius: 999px;
+	background: #ffffff0d;
+	font-size: 13px;
+	font-weight: 700;
+}
+.att-count.is-in,
+.att-state.is-in[aria-pressed='true'] {
+	--att: #5fd38d;
+}
+.att-count.is-late,
+.att-state.is-late[aria-pressed='true'] {
+	--att: #f2c45a;
+}
+.att-count.is-out,
+.att-state.is-out[aria-pressed='true'] {
+	--att: #ef7b8a;
+}
+.att-count.is-bench,
+.att-state.is-bench[aria-pressed='true'] {
+	--att: #7fb4ff;
+}
+.att-count.is-unmarked {
+	color: #c9c2b8;
+	outline: 1px dashed #a68a5b80;
+}
+.att-count[class*='is-']:not(.is-unmarked) {
+	color: var(--att);
+	background: color-mix(in srgb, var(--att) 14%, transparent);
+}
+button.att-all {
+	padding: 10px 18px;
+	border: 1px solid #5fd38d;
+	border-radius: 999px;
+	background: linear-gradient(180deg, #3fae6c, #23784a);
+	color: #fff;
+	font-weight: 700;
+	cursor: pointer;
+}
+button.att-all:hover {
+	background: linear-gradient(180deg, #4cc47c, #2a8a55);
+}
+.att-group h4 {
+	margin: 0 0 8px;
+	color: #e1bf8a;
+	font:
+		400 18px Georgia,
+		serif;
+}
+.att-group ul {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr));
+	gap: 8px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.att-row {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	align-items: center;
+	gap: 10px;
+	padding: 8px 10px;
+	border: 1px solid color-mix(in srgb, var(--class-color, #a68a5b) 40%, #2a2427);
+	border-radius: 6px;
+	background: linear-gradient(
+		100deg,
+		color-mix(in srgb, var(--class-color, #a68a5b) 14%, #161316),
+		#121013 80%
+	);
+	box-shadow: inset 3px 0 var(--class-color, #a68a5b);
+	transition: border-color 0.15s;
+}
+.att-row.is-in {
+	border-color: #5fd38d80;
+}
+.att-row.is-late {
+	border-color: #f2c45a80;
+}
+.att-row.is-out {
+	border-color: #ef7b8a80;
+	opacity: 0.85;
+}
+.att-row.is-bench {
+	border-color: #7fb4ff80;
+}
+.att-who {
+	display: grid;
+	min-width: 0;
+}
+.att-who strong {
+	overflow: hidden;
+	color: var(--class-color, #f3e6cf);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.att-who small,
+.att-none {
+	color: #9a948c;
+	font-size: 12px;
+}
+.att-states {
+	display: flex;
+	gap: 4px;
+}
+button.att-state {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	min-height: 34px;
+	padding: 4px 9px;
+	border: 1px solid #ffffff1f;
+	border-radius: 6px;
+	background: #0000004d;
+	box-shadow: none;
+	color: #9a948c;
+	font-size: 12px;
+	font-weight: 700;
+	cursor: pointer;
+}
+button.att-state:hover {
+	border-color: #ffffff4d;
+	background: #ffffff14;
+	box-shadow: none;
+	color: #f3e6cf;
+	transform: none;
+}
+button.att-state[aria-pressed='true'],
+button.att-state[aria-pressed='true']:hover {
+	border-color: var(--att);
+	background: color-mix(in srgb, var(--att) 22%, #0000);
+	color: var(--att);
+}
+@media (max-width: 560px) {
+	.att-row {
+		grid-template-columns: auto minmax(0, 1fr);
+	}
+	.att-states {
+		grid-column: 1 / -1;
+	}
+	button.att-state {
+		flex: 1;
+		justify-content: center;
+	}
+	button.att-all {
+		flex-basis: 100%;
+	}
+}

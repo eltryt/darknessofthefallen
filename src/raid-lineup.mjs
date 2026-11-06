@@ -34,7 +34,7 @@ function managedEvent(db, user, id) {
 	return row;
 }
 // Sign-ups that can be placed: everyone except declared absences.
-function eligibleSignups(row) {
+export function eligibleSignups(row) {
 	const raw = eventRaw(row);
 	return (raw.signUps || [])
 		.filter((s) => s.userId && signupStatus(s, raw) !== 'Ausente')
@@ -61,7 +61,7 @@ function lineupRow(db, row, user) {
 	return lineup;
 }
 // Character used for attendance: the one linked to the sign-up, otherwise the member's Main.
-function characterFor(db, eventId, signup) {
+export function characterFor(db, eventId, signup) {
 	const link = db
 		.prepare(
 			'SELECT c.id,c.class FROM raid_character_links l JOIN characters c ON c.id=l.character_id WHERE l.event_id=? AND l.signup_id=? AND l.user_id=? AND c.archived_at IS NULL',

@@ -31,6 +31,7 @@ import { journeyApi } from './journey.mjs';
 import { rouletteApi } from './roulette.mjs';
 import { battlenetReady, startBattlenet, finishBattlenet } from './battlenet.mjs';
 import { raidLineupApi } from './raid-lineup.mjs';
+import { attendanceSheetApi } from './attendance-sheet.mjs';
 import {
 	SESSION_MAX_AGE_SECONDS,
 	currentSession,
@@ -170,6 +171,7 @@ const files = {
 	'/profile-view.js': ['profile-view.js', 'text/javascript'],
 	'/panel-view.js': ['panel-view.js', 'text/javascript'],
 	'/audit-view.js': ['audit-view.js', 'text/javascript'],
+	'/attendance-sheet.js': ['attendance-sheet.js', 'text/javascript'],
 	'/raid-events-ui.js': ['raid-events-ui.js', 'text/javascript'],
 	'/recruitment-ui.js': ['recruitment-ui.js', 'text/javascript'],
 	'/schedule.js': ['schedule.js', 'text/javascript'],
@@ -432,6 +434,7 @@ export function createApp(db, env, { readAsset = readLocalAsset, discordFetch = 
 				})
 			)
 				return;
+			if (attendanceSheetApi({ db, path, method, send, requirePermission })) return;
 			if (
 				await raidLineupApi({
 					db,

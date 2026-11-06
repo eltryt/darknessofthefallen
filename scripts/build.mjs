@@ -133,6 +133,7 @@ try {
 		'profile-view.js',
 		'panel-view.js',
 		'audit-view.js',
+		'attendance-sheet.js',
 		'raid-events-ui.js',
 		'recruitment-ui.js',
 		'schedule.js',

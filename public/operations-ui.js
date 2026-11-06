@@ -2,6 +2,7 @@ import { mountManualRoster } from './manual-roster-ui.js';
 import { loadItemNames, itemLink, loadTooltips } from './wowhead.js';
 import { tutorialButton } from './tutorials.js';
 import { rosterCards } from './roster-ui.js';
+import { mountAttendanceSheet } from './attendance-sheet.js';
 const rankLabel = (rank) =>
 	({
 		visitor: 'Visitante',
@@ -247,8 +248,22 @@ export async function operationTab(tab, el, ctx) {
 			</form>
 			<div id="attendance-summary"></div>
 			<div id="attendance-list"></div>
-			<section class="section">
-				<h3>Registrar o corregir asistencia</h3>
+			<section class="section att-pick">
+				<h3>Pasar lista</h3>
+				${
+					raids.length
+						? /* HTML */ `<label
+									>Raid<select id="attendance-raid">
+										<option value="">Elige una raid…</option>
+										${raids.map((r) => option(r.id, r.title + ' · ' + dateLabel(r.starts_at))).join('')}
+									</select></label
+								>
+								<div id="attendance-sheet"></div>`
+						: empty('Todavía no hay raids', 'Crea la convocatoria y aparecerá aquí.')
+				}
+			</section>
+			<details class="section">
+				<summary>Añadir o corregir a una persona concreta</summary>
 				${
 					raids.length && roster.length
 						? /* HTML */ `<form id="operation-form" class="card form">
@@ -276,7 +291,7 @@ export async function operationTab(tab, el, ctx) {
 								'Registra la convocatoria y espera a que los miembros añadan sus personajes.',
 							)
 				}
-			</section>`;
+			</details>`;
 		const load = async (values) => {
 			const q = new URLSearchParams();
 			for (const [key, value] of Object.entries(values || {})) {
@@ -317,14 +332,15 @@ export async function operationTab(tab, el, ctx) {
 					? null
 					: [
 							'Aún no hay asistencias registradas',
-							'Se anotan a mano en «Registrar o corregir asistencia». Todavía no hay conexión automática con registros de combate.',
+							'Elige una raid en «Pasar lista» y marca a cada jugador con un toque. Todavía no hay conexión automática con registros de combate.',
 						],
 			);
 		};
 		el.querySelector('#attendance-filter').onsubmit = async (e) => {
 			e.preventDefault();
 			try {
-				await load(Object.fromEntries(new FormData(e.target)));
+				filters = Object.fromEntries(new FormData(e.target));
+				await load(filters);
 			} catch (error) {
 				toast(error.message);
 			}
@@ -339,6 +355,17 @@ export async function operationTab(tab, el, ctx) {
 					toast(error.message);
 				}
 		};
+		let filters = {};
+		el.querySelector('#attendance-raid')?.addEventListener('change', async (e) => {
+			const box = el.querySelector('#attendance-sheet');
+			box.innerHTML = '';
+			if (!e.target.value) return;
+			try {
+				await mountAttendanceSheet(box, e.target.value, ctx, () => load(filters).catch(() => {}));
+			} catch (error) {
+				toast(error.message);
+			}
+		});
 		handlers.attendance = (v) =>
 			api('/api/raids/' + v.raidId + '/attendance', 'PUT', {
 				entries: [{ characterId: v.characterId, status: v.status }],
