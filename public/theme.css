@@ -9528,3 +9528,13 @@ button.att-state[aria-pressed='true']:hover {
 .spec-priority-class.is-closed > label {
 	opacity: 0.5;
 }
+/* Roster: whose alter it is, under the character's name. */
+.roster-alt-of {
+	display: block;
+	margin-top: 2px;
+	color: #c9b48d;
+	font-size: 12px;
+}
+.roster-alt-of b {
+	color: #f3dcae;
+}
