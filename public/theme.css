@@ -5066,9 +5066,15 @@ a.doll-slot:hover .doll-icon {
 }
 
 /* ===== Unified profile: slots, wishlist by boss, call-ups, boss plan ===== */
+/* Only as wide as the icon and name: Wowhead places its tooltip beside the link. */
 a.doll-slot[data-slot] {
-	width: 100%;
+	justify-self: start;
+	width: auto;
+	max-width: 100%;
 	cursor: pointer;
+}
+.doll-right a.doll-slot[data-slot] {
+	justify-self: end;
 }
 button.doll-slot {
 	/* Buttons centre their content site-wide: slots line their icons up on the edge. */
