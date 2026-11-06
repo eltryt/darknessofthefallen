@@ -1,6 +1,6 @@
 // Item catalogue for the armory: public/catalog/<group>.json, built weekly from the
 // Blizzard Game Data API (scripts/sync-items.mjs). Classic data, orientative for Forever.
-import { catalogIconUrl, itemQualities, equipmentStats } from './armory-catalog.js';
+import { catalogIconUrl, catalogGroup, itemQualities, equipmentStats } from './armory-catalog.js';
 
 const cache = new Map();
 export function loadCatalog(group) {
@@ -15,6 +15,32 @@ export function loadCatalog(group) {
 	const pending = cache.get(group);
 	pending.catch(() => cache.delete(group));
 	return pending;
+}
+
+// Icons of items imported from Battle.net, found in our catalogue by their id. Items
+// that are not in it keep the slot's silhouette.
+export function fillCatalogIcons(root) {
+	const wanted = [...root.querySelectorAll('[data-catalog-item]')];
+	const groups = new Map();
+	for (const el of wanted) {
+		const slot = el.closest('[data-doll-slot]')?.dataset.dollSlot;
+		if (!slot) continue;
+		const group = catalogGroup(slot);
+		if (!groups.has(group)) groups.set(group, []);
+		groups.get(group).push(el);
+	}
+	for (const [group, els] of groups)
+		loadCatalog(group)
+			.then((items) => {
+				const byId = new Map(items.map((i) => [String(i.id), i]));
+				for (const el of els) {
+					const url = catalogIconUrl(byId.get(el.dataset.catalogItem)?.icon);
+					if (!url) continue;
+					el.innerHTML = `<img src="${url}" alt="" width="44" height="44" loading="lazy">`;
+					el.removeAttribute('data-catalog-item');
+				}
+			})
+			.catch(() => {});
 }
 
 const fold = (value) => String(value).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();

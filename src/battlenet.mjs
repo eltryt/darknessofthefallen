@@ -8,15 +8,14 @@ import { audit, transaction } from './database-core.mjs';
 // imports their WoW Forever characters (name, surname, class, race, faction, level).
 // The Battle.net token is used for that single request and never stored. Afterwards the
 // web looks each imported character up every six hours with its own application token,
-// to keep the level and professions current. Character sheets (equipment, portrait) are
-// not imported: Blizzard does not serve them yet.
+// to keep the level, professions, equipment and portrait current.
 const REGION = 'eu';
 const NAMESPACE = `profile-forever-${REGION}`;
 const API = `https://${REGION}.api.blizzard.com`;
 const CHARACTER_LIMIT = 30;
 const SYNC_EVERY_MS = 6 * 3600000;
-// Characters per alarm run: each takes up to four requests, and the Worker caps them.
-const SYNC_BATCH = 10;
+// Characters per alarm run: each takes up to six requests, and the Worker caps them.
+const SYNC_BATCH = 6;
 const callback = (env) => `${env.APP_ORIGIN}/auth/battlenet/callback`;
 
 export function battlenetReady(env) {
@@ -279,6 +278,121 @@ const professionName = (p) => {
 	return professionById[p?.id] || professionByName[given.toLowerCase()] || given;
 };
 
+// Blizzard's equipment slots in our armory's names.
+const slotByType = {
+	HEAD: 'head',
+	NECK: 'neck',
+	SHOULDER: 'shoulders',
+	BACK: 'back',
+	CHEST: 'chest',
+	SHIRT: 'shirt',
+	TABARD: 'tabard',
+	WRIST: 'wrist',
+	HANDS: 'hands',
+	WAIST: 'waist',
+	LEGS: 'legs',
+	FEET: 'feet',
+	FINGER_1: 'finger1',
+	FINGER_2: 'finger2',
+	TRINKET_1: 'trinket1',
+	TRINKET_2: 'trinket2',
+	MAIN_HAND: 'main_hand',
+	OFF_HAND: 'off_hand',
+	RANGED: 'ranged',
+};
+const statByType = {
+	STRENGTH: 'strength',
+	AGILITY: 'agility',
+	STAMINA: 'stamina',
+	INTELLECT: 'intellect',
+	SPIRIT: 'spirit',
+	FIRE_RESISTANCE: 'fire_resistance',
+	NATURE_RESISTANCE: 'nature_resistance',
+	FROST_RESISTANCE: 'frost_resistance',
+	SHADOW_RESISTANCE: 'shadow_resistance',
+	ARCANE_RESISTANCE: 'arcane_resistance',
+};
+const qualities = ['poor', 'common', 'uncommon', 'rare', 'epic', 'legendary'];
+// The equipped items, one per slot, in the shape of character_equipment. The icon stays
+// empty: the armory takes it from our item catalogue by the item's id.
+export function readEquipment(data) {
+	const out = new Map();
+	for (const e of data?.equipped_items || []) {
+		const slot = slotByType[e?.slot?.type],
+			id = Number(e?.item?.id);
+		if (!slot || !Number.isInteger(id) || id < 1 || id > 9999999) continue;
+		const stats = {};
+		for (const s of e.stats || []) {
+			const key = statByType[s?.type?.type];
+			if (key && Number.isFinite(s.value)) stats[key] = s.value;
+		}
+		if (Number.isFinite(e.armor?.value)) stats.armor = e.armor.value;
+		const level = Number(e.level?.value);
+		const quality = String(e.quality?.type || '').toLowerCase();
+		out.set(slot, {
+			item_id: String(id),
+			item_name: String(e.name || '').slice(0, 120),
+			quality: qualities.includes(quality) ? quality : '',
+			item_level: Number.isInteger(level) && level >= 1 && level <= 1000 ? level : null,
+			enchant: String(e.enchantments?.[0]?.display_string || '').slice(0, 120),
+			stats,
+		});
+	}
+	return out;
+}
+// The character's image on Blizzard's render host, only in its known shape.
+export function readAvatar(data) {
+	const assets = data?.assets || [];
+	const url = assets.find((a) => a?.key === 'avatar')?.value || data?.avatar_url || '';
+	return /^https:\/\/render\.worldofwarcraft\.com\/forever-[a-z]{2}\/character\/[\w/-]+-avatar\.jpg$/.test(
+		url,
+	)
+		? url
+		: '';
+}
+// Blizzard is the source for the slots it reports; a slot a member filled by hand stays
+// theirs. A Blizzard item no longer equipped leaves its slot.
+function saveEquipment(db, characterId, items, now) {
+	const rows = db
+		.prepare('SELECT slot,origin FROM character_equipment WHERE character_id=?')
+		.all(characterId);
+	const manual = new Set(rows.filter((r) => r.origin === 'manual').map((r) => r.slot));
+	let changed = 0;
+	for (const r of rows)
+		if (r.origin === 'provider' && !items.has(r.slot)) {
+			db.prepare(
+				"DELETE FROM character_equipment WHERE character_id=? AND slot=? AND origin='provider'",
+			).run(characterId, r.slot);
+			changed++;
+		}
+	for (const [slot, e] of items) {
+		if (manual.has(slot)) continue;
+		const stats = JSON.stringify(e.stats);
+		const same = db
+			.prepare(
+				"SELECT 1 FROM character_equipment WHERE character_id=? AND slot=? AND origin='provider' AND item_id=? AND item_level IS ? AND enchant=? AND stats=?",
+			)
+			.get(characterId, slot, e.item_id, e.item_level, e.enchant, stats);
+		if (same) continue;
+		db.prepare(
+			"INSERT INTO character_equipment(id,character_id,slot,item_id,item_name,quality,item_level,enchant,stats,origin,provider,updated_at) VALUES(?,?,?,?,?,?,?,?,?,'provider','battlenet',?) ON CONFLICT(character_id,slot) DO UPDATE SET item_id=excluded.item_id,item_name=excluded.item_name,quality=excluded.quality,item_level=excluded.item_level,enchant=excluded.enchant,stats=excluded.stats,icon='',origin='provider',provider='battlenet',updated_at=excluded.updated_at",
+		).run(
+			randomUUID(),
+			characterId,
+			slot,
+			e.item_id,
+			e.item_name,
+			e.quality,
+			e.item_level,
+			e.enchant,
+			stats,
+			now,
+		);
+		changed++;
+	}
+	return changed;
+}
+
 // Blizzard lists professions with a skill per expansion tier (Retail) or a single one
 // (Classic); either way the highest is the character's.
 export function readProfessions(data) {
@@ -303,11 +417,11 @@ export async function syncBattlenet(db, env, fetcher = fetch) {
 	const cutoff = new Date(Date.now() - SYNC_EVERY_MS).toISOString();
 	const due = db
 		.prepare(
-			'SELECT b.character_id AS id,b.realm_id,c.name,c.surname,c.external_id,c.level,c.professions FROM battlenet_characters b JOIN characters c ON c.id=b.character_id WHERE c.archived_at IS NULL AND (b.checked_at IS NULL OR b.checked_at<?) ORDER BY b.checked_at IS NOT NULL, b.checked_at LIMIT ?',
+			'SELECT b.character_id AS id,b.realm_id,c.name,c.surname,c.external_id,c.level,c.professions,c.avatar_url FROM battlenet_characters b JOIN characters c ON c.id=b.character_id WHERE c.archived_at IS NULL AND (b.checked_at IS NULL OR b.checked_at<?) ORDER BY b.checked_at IS NOT NULL, b.checked_at LIMIT ?',
 		)
 		.all(cutoff, SYNC_BATCH);
 	if (!due.length) return null;
-	const result = { checked: due.length, updated: 0, missing: 0, answers: {} };
+	const result = { checked: due.length, updated: 0, missing: 0, gear: 0, answers: {} };
 	const mark = db.prepare(
 		'UPDATE battlenet_characters SET checked_at=?,status=? WHERE character_id=?',
 	);
@@ -369,17 +483,36 @@ export async function syncBattlenet(db, env, fetcher = fetch) {
 			const level = found.body.level;
 			const p = await get(`${found.path}/professions`, token);
 			const professions = p.ok ? readProfessions(await p.json().catch(() => null)) : '';
+			const [g, m] = await Promise.all([
+				get(`${found.path}/equipment`, token),
+				get(`${found.path}/character-media`, token),
+			]);
+			const gear = g.ok ? readEquipment(await g.json().catch(() => null)) : null;
+			const avatar = m.ok ? readAvatar(await m.json().catch(() => null)) : '';
 			const next = {
 				level: Number.isInteger(level) && level >= 1 && level <= 100 ? level : c.level,
 				professions: professions || c.professions,
+				avatar: avatar || c.avatar_url,
 			};
-			if (next.level !== c.level || next.professions !== c.professions) {
-				db.prepare(
-					'UPDATE characters SET level=?,professions=?,synced_at=?,updated_at=? WHERE id=?',
-				).run(next.level, next.professions, now, now, c.id);
-				result.updated++;
-			} else db.prepare('UPDATE characters SET synced_at=? WHERE id=?').run(now, c.id);
-			mark.run(now, p.ok ? 'ok' : `ok, professions ${p.status}`, c.id);
+			transaction(db, () => {
+				if (gear?.size) result.gear += saveEquipment(db, c.id, gear, now);
+				if (
+					next.level !== c.level ||
+					next.professions !== c.professions ||
+					next.avatar !== c.avatar_url
+				) {
+					db.prepare(
+						'UPDATE characters SET level=?,professions=?,avatar_url=?,synced_at=?,updated_at=? WHERE id=?',
+					).run(next.level, next.professions, next.avatar, now, now, c.id);
+					result.updated++;
+				} else db.prepare('UPDATE characters SET synced_at=? WHERE id=?').run(now, c.id);
+			});
+			const missingParts = [
+				!p.ok && `professions ${p.status}`,
+				!g.ok && `equipment ${g.status}`,
+				!m.ok && `media ${m.status}`,
+			].filter(Boolean);
+			mark.run(now, missingParts.length ? `ok, ${missingParts.join(', ')}` : 'ok', c.id);
 		}
 	} catch (e) {
 		// Blizzard down or the application refused: the ones left are tried again in six hours.

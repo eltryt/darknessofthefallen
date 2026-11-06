@@ -1,5 +1,6 @@
 import { ClassIcon } from './components.js';
 import { paperdoll } from './paperdoll.js';
+import { fillCatalogIcons } from './item-catalog.js';
 import { classKey } from './roster-ui.js';
 import { gameVersions } from './armory-catalog.js';
 import { sheetHelpers, factsList, renderGuides, openSlotDialog } from './sheet-parts.js';
@@ -132,6 +133,7 @@ export function createArmoryView(context) {
 		if (tab === 'guides') renderGuides(el, sheet, context, guideState);
 		if (tab === 'gear') {
 			el.innerHTML = paperdoll(sheet, { slotButtons: true });
+			fillCatalogIcons(el);
 			el.querySelectorAll('[data-slot]').forEach(
 				(b) =>
 					(b.onclick = () =>

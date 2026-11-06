@@ -5,6 +5,8 @@ import {
 	itemQualities,
 	slotIcon,
 	catalogIconUrl,
+	blizzardImage,
+	blizzardArmoryUrl,
 } from './armory-catalog.js';
 
 const escape = (value) =>
@@ -49,11 +51,14 @@ function slot(name, item, side, href, buttons) {
 		return `<${tag} class="doll-slot is-empty side-${side}"${link} title="${escape(label)} · Sin datos"><span class="doll-icon">${placeholder}</span><span class="doll-text"><span class="doll-slot-name">${escape(label)}</span><small>Sin datos</small></span></${tag}>`;
 	// Our own images, or the Blizzard icon of an item picked from the catalogue.
 	const icon = localImage(item.icon) || catalogIconUrl(item.icon);
+	// Items from Blizzard come without an icon: fillCatalogIcons() finds it by the item id.
+	const lookup =
+		!icon && /^\d+$/.test(item.item_id || '') ? ` data-catalog-item="${escape(item.item_id)}"` : '';
 	const details = [
 		item.enchant ? 'Encantamiento: ' + item.enchant : '',
 		item.gems?.length ? `${item.gems.length} ${item.gems.length === 1 ? 'gema' : 'gemas'}` : '',
 	].filter(Boolean);
-	return `<${tag} class="doll-slot side-${side} quality-${escape(item.quality || 'none')}"${link} title="${escape(label)}: ${escape(item.item_name)}${item.quality ? ' · ' + escape(itemQualities[item.quality] || item.quality) : ''}"><span class="doll-icon">${icon ? `<img src="${escape(icon)}" alt="" width="44" height="44" loading="lazy">` : placeholder}</span><span class="doll-text"><strong>${escape(item.item_name || 'Objeto sin nombre')}</strong><span class="doll-meta">${item.item_level ? `<b>${escape(item.item_level)}</b>` : ''}${details.map((d) => `<small>${escape(d)}</small>`).join('')}</span></span></${tag}>`;
+	return `<${tag} data-doll-slot="${escape(name)}" class="doll-slot side-${side} quality-${escape(item.quality || 'none')}"${link} title="${escape(label)}: ${escape(item.item_name)}${item.quality ? ' · ' + escape(itemQualities[item.quality] || item.quality) : ''}"><span class="doll-icon"${lookup}>${icon ? `<img src="${escape(icon)}" alt="" width="44" height="44" loading="lazy">` : placeholder}</span><span class="doll-text"><strong>${escape(item.item_name || 'Objeto sin nombre')}</strong><span class="doll-meta">${item.item_level ? `<b>${escape(item.item_level)}</b>` : ''}${details.map((d) => `<small>${escape(d)}</small>`).join('')}</span></span></${tag}>`;
 }
 
 // Adds up the stats of the equipped pieces (items picked from the catalogue carry them).
@@ -78,7 +83,8 @@ export function paperdoll(sheet, { href = '', slotButtons = false, target = fals
 	const average = levels.length
 		? Math.round(levels.reduce((a, b) => a + b, 0) / levels.length)
 		: null;
-	const portrait = localImage(c.avatar_url),
+	const portrait = localImage(c.avatar_url) || blizzardImage(c.avatar_url, 'main'),
+		armoryUrl = blizzardArmoryUrl(c),
 		classArt = Object.hasOwn(classPortraits, c.class) ? classPortraits[c.class] : '';
 	// A data provider's character stats win; otherwise the sum of the equipped pieces.
 	const ownStats = Object.keys(sheet.stats || {}).length > 0,
@@ -94,7 +100,7 @@ export function paperdoll(sheet, { href = '', slotButtons = false, target = fals
 			<span><small>Origen</small><strong>Tu wishlist</strong></span>`
 				: `<span><small>Nivel de objeto medio</small><strong>${average ?? '—'}</strong></span>
 			<span><small>Ranuras registradas</small><strong>${sheet.equipment.length} / ${version.slots.length}</strong></span>
-			<span><small>Origen</small><strong>${sheet.equipment.some((e) => e.origin === 'provider') ? 'Proveedor' : sheet.equipment.length ? 'Manual' : 'Sin datos'}</strong></span>`
+			<span><small>Origen</small><strong>${sheet.equipment.some((e) => e.origin === 'provider') ? 'Battle.net' : sheet.equipment.length ? 'Manual' : 'Sin datos'}</strong></span>${armoryUrl ? `<a class="doll-armory-link" href="${escape(armoryUrl)}" target="_blank" rel="noopener noreferrer">Ver en la armería de Blizzard ↗</a>` : ''}`
 		}
 		</header>
 		<div class="doll-stage">
@@ -107,7 +113,7 @@ export function paperdoll(sheet, { href = '', slotButtons = false, target = fals
 							? `<img class="doll-portrait is-class-art fade-in" src="/assets/portraits/${classArt}.webp" alt="" width="600" height="800" decoding="async" fetchpriority="high">`
 							: `<div class="doll-placeholder">${ClassIcon({ className: c.class, size: 'large' })}<span class="doll-silhouette" aria-hidden="true"></span></div>`
 				}
-				<figcaption>${portrait ? escape(c.name) : classArt ? `Retrato provisional de ${escape(c.class)}. Se sustituirá por tu personaje real cuando la web se conecte con la API de Blizzard.` : 'La imagen del personaje aparecerá cuando exista un proveedor compatible con WoW Forever.'}</figcaption>
+				<figcaption>${portrait ? escape(c.name) + (blizzardImage(c.avatar_url) ? ' · imagen de Blizzard' : '') : classArt ? `Retrato provisional de ${escape(c.class)}. Se sustituirá por tu personaje real cuando la web se conecte con la API de Blizzard.` : 'La imagen del personaje aparecerá cuando exista un proveedor compatible con WoW Forever.'}</figcaption>
 			</figure>
 			${column('right')}
 		</div>

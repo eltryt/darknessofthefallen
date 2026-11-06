@@ -138,6 +138,22 @@ export const catalogGroup = (slot) => slot.replace(/^(finger|trinket)[12]$/, '$1
 // Catalogue icons are served by Blizzard's image CDN (the media API points there);
 // the CSP allows exactly this origin. Rows store the icon name only.
 export const CATALOG_ICON_ORIGIN = 'https://render.worldofwarcraft.com';
+// A character imported from Battle.net: its image on Blizzard's render host (the avatar,
+// or the full-body render next to it) and its page in the Forever armory.
+export function blizzardImage(url, kind = 'avatar') {
+	if (
+		typeof url !== 'string' ||
+		!/^https:\/\/render\.worldofwarcraft\.com\/forever-[a-z]{2}\/character\/[\w/-]+-avatar\.jpg$/.test(
+			url,
+		)
+	)
+		return '';
+	return kind === 'main' ? url.replace(/-avatar\.jpg$/, '-main-raw.png') : url;
+}
+export const blizzardArmoryUrl = (c) =>
+	c?.source === 'battlenet' && c.name && c.surname
+		? `https://worldofwarcraft.blizzard.com/es-es/forever/eu/armory/character/${encodeURIComponent(`${c.name}-${c.surname}`.toLowerCase())}`
+		: '';
 export const catalogIconUrl = (name) =>
 	typeof name === 'string' && /^[a-z0-9_-]{1,80}$/.test(name)
 		? `${CATALOG_ICON_ORIGIN}/classic1x-eu/icons/56/${name}.jpg`

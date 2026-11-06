@@ -11,6 +11,8 @@ import { medal, tierNames, progressOf } from './medals.js';
 import { ClassIcon } from './components.js';
 import { classKey } from './roster-ui.js';
 import { paperdoll } from './paperdoll.js';
+import { fillCatalogIcons } from './item-catalog.js';
+import { blizzardImage } from './armory-catalog.js';
 import {
 	sheetHelpers,
 	factsList,
@@ -573,6 +575,7 @@ export function createProfileView(context) {
 					void armory(host);
 				}),
 		);
+		fillCatalogIcons(host);
 		host.querySelectorAll('[data-slot]').forEach(
 			(b) =>
 				(b.onclick = () =>
@@ -676,7 +679,7 @@ export function createProfileView(context) {
 					? `<div class="hub-char-grid">${rows
 							.map(
 								(c) =>
-									`<article class="hub-char-card class-${classKey(c.class)} ${c.id === selected ? 'is-selected' : ''}"><div class="hub-char-top">${ClassIcon({ className: c.class, size: 'large' })}<div><h3>${esc(c.name)} ${esc(c.surname)}</h3><p>${esc(c.class)}${c.spec ? ' · ' + esc(specName(c.class, c.spec)) : ''} · ${esc(c.role)}</p></div><span class="pill ${c.is_main ? 'gold' : ''}">${c.is_main ? 'Main' : 'Alter'}</span>${c.source === 'battlenet' ? `<span class="bnet-tag" title="Importado de Battle.net${c.level ? ' · nivel ' + esc(String(c.level)) : ''}">${bnetIcon}</span>` : ''}</div><div class="hub-char-actions"><button type="button" class="button secondary" data-open-armory="${esc(c.id)}">${c.id === selected ? 'Seleccionado · ver armería' : 'Ver armería'}</button><details class="hub-settings"><summary aria-label="Ajustes de ${esc(c.name)}"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg><span>Ajustes</span></summary><div class="hub-menu"><button type="button" data-character-edit="${esc(c.id)}">Editar datos básicos</button>${c.is_main ? '' : `<button type="button" data-main="${esc(c.id)}">Marcar como Main</button>`}<button type="button" class="is-danger" data-character-archive="${esc(c.id)}">Archivar personaje</button></div></details></div></article>`,
+									`<article class="hub-char-card class-${classKey(c.class)} ${c.id === selected ? 'is-selected' : ''}"><div class="hub-char-top">${blizzardImage(c.avatar_url) ? `<img class="hub-char-avatar" src="${esc(blizzardImage(c.avatar_url))}" alt="" width="56" height="56" loading="lazy">` : ClassIcon({ className: c.class, size: 'large' })}<div><h3>${esc(c.name)} ${esc(c.surname)}</h3><p>${esc(c.class)}${c.spec ? ' · ' + esc(specName(c.class, c.spec)) : ''} · ${esc(c.role)}</p></div><span class="pill ${c.is_main ? 'gold' : ''}">${c.is_main ? 'Main' : 'Alter'}</span>${c.source === 'battlenet' ? `<span class="bnet-tag" title="Importado de Battle.net${c.level ? ' · nivel ' + esc(String(c.level)) : ''}">${bnetIcon}</span>` : ''}</div><div class="hub-char-actions"><button type="button" class="button secondary" data-open-armory="${esc(c.id)}">${c.id === selected ? 'Seleccionado · ver armería' : 'Ver armería'}</button><details class="hub-settings"><summary aria-label="Ajustes de ${esc(c.name)}"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg><span>Ajustes</span></summary><div class="hub-menu"><button type="button" data-character-edit="${esc(c.id)}">Editar datos básicos</button>${c.is_main ? '' : `<button type="button" data-main="${esc(c.id)}">Marcar como Main</button>`}<button type="button" class="is-danger" data-character-archive="${esc(c.id)}">Archivar personaje</button></div></details></div></article>`,
 							)
 							.join('')}</div>`
 					: '<div class="empty-note" role="status"><strong>Todavía no tienes personajes</strong><p>Añade el primero para incorporarte al roster y abrir su armería.</p></div>'

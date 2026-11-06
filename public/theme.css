@@ -9685,3 +9685,20 @@ button.att-state[aria-pressed='true']:hover {
 		grid-template-columns: 1fr;
 	}
 }
+/* Battle.net: the character's avatar on profile cards and a link to Blizzard's armory. */
+.hub-char-avatar {
+	flex: none;
+	width: 56px;
+	height: 56px;
+	border: 2px solid var(--class-color, #a68a5b);
+	border-radius: 8px;
+	object-fit: cover;
+}
+.doll-armory-link {
+	align-self: center;
+	margin-left: auto;
+	color: #7fb4ff;
+	font-size: 13px;
+	font-weight: 700;
+	white-space: nowrap;
+}

@@ -12,6 +12,7 @@ import {
 	readProfessions,
 	syncBattlenet,
 	nextBattlenetSyncAt,
+	readAvatar,
 } from '../src/battlenet.mjs';
 
 const ORIGIN = 'http://localhost:3000';
@@ -254,16 +255,53 @@ test('every six hours the web refreshes level and professions with its own token
 				],
 				secondaries: [{ profession: { name: 'Cocina' }, skill_points: 60 }],
 			});
+		if (url.pathname === '/profile/wow/character/reino-oculto/tryt/equipment')
+			return Response.json({
+				equipped_items: [
+					{
+						slot: { type: 'BACK' },
+						item: { id: 4665 },
+						name: 'Capa quemada',
+						quality: { type: 'COMMON' },
+						level: { value: 8 },
+						armor: { value: 7 },
+					},
+					{
+						slot: { type: 'CHEST' },
+						item: { id: 2572 },
+						name: 'Toga de invierno cálida',
+						quality: { type: 'UNCOMMON' },
+						level: { value: 10 },
+						stats: [{ type: { type: 'STAMINA' }, value: 2 }],
+					},
+					{ slot: { type: 'FINGER_1' }, item: { id: 5404 }, name: 'Anillo', level: { value: 9 } },
+				],
+			});
+		if (url.pathname === '/profile/wow/character/reino-oculto/tryt/character-media')
+			return Response.json({
+				assets: [
+					{
+						key: 'avatar',
+						value: 'https://render.worldofwarcraft.com/forever-eu/character/11/1-avatar.jpg',
+					},
+				],
+			});
 		// Someone else with the same name on that realm.
 		if (url.pathname === '/profile/wow/character/reino-oculto/otro')
 			return Response.json({ id: 99, level: 60 });
 		return new Response('', { status: 404 });
 	};
+	// A ring the member wrote by hand stays theirs.
+	const trytId = db.prepare("SELECT id FROM characters WHERE name='Tryt'").get().id;
+	db.prepare(
+		"INSERT INTO character_equipment(id,character_id,slot,item_name,origin,updated_at) VALUES('hand-ring',?,'finger1','Anillo de la abuela','manual','2026-11-01')",
+	).run(trytId);
 	const result = await syncBattlenet(db, ENV, fetcher);
 	assert.deepEqual(result, {
 		checked: 3,
 		updated: 1,
 		missing: 2,
+		gear: 2,
 		answers: { 200: 1, 404: 1, other: 1 },
 	});
 	assert.ok(
@@ -274,6 +312,51 @@ test('every six hours the web refreshes level and professions with its own token
 	assert.deepEqual(
 		{ ...tryt },
 		{ level: 23, professions: 'Sastrería 120, Encantamiento 95, Cocina 60' },
+	);
+	assert.deepEqual(
+		db
+			.prepare(
+				'SELECT slot,item_id,item_name,quality,item_level,stats,origin FROM character_equipment WHERE character_id=? ORDER BY slot',
+			)
+			.all(trytId)
+			.map((r) => ({ ...r })),
+		[
+			{
+				slot: 'back',
+				item_id: '4665',
+				item_name: 'Capa quemada',
+				quality: 'common',
+				item_level: 8,
+				stats: '{"armor":7}',
+				origin: 'provider',
+			},
+			{
+				slot: 'chest',
+				item_id: '2572',
+				item_name: 'Toga de invierno cálida',
+				quality: 'uncommon',
+				item_level: 10,
+				stats: '{"stamina":2}',
+				origin: 'provider',
+			},
+			{
+				slot: 'finger1',
+				item_id: null,
+				item_name: 'Anillo de la abuela',
+				quality: '',
+				item_level: null,
+				stats: '{}',
+				origin: 'manual',
+			},
+		],
+	);
+	assert.equal(
+		db.prepare('SELECT avatar_url FROM characters WHERE id=?').get(trytId).avatar_url,
+		'https://render.worldofwarcraft.com/forever-eu/character/11/1-avatar.jpg',
+	);
+	assert.equal(
+		readAvatar({ assets: [{ key: 'avatar', value: 'https://evil.example/x-avatar.jpg' }] }),
+		'',
 	);
 	// The namesake's level is not taken.
 	assert.equal(rows.find((c) => c.name === 'Otro').level, 4);
