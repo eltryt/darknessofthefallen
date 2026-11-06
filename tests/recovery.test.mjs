@@ -150,6 +150,9 @@ test('schema 5 snapshots remain restorable after notification migration', () => 
 			'roulette_spins',
 			'roulette_chat',
 			'application_tracking',
+			'gm_cases',
+			'gm_case_notes',
+			'attendance_archive',
 		])
 			delete snapshot[table];
 		resign(snapshot);
@@ -202,6 +205,9 @@ test('schema 6 snapshots restore characters without armory columns and keep seed
 			'roulette_spins',
 			'roulette_chat',
 			'application_tracking',
+			'gm_cases',
+			'gm_case_notes',
+			'attendance_archive',
 		])
 			delete snapshot[table];
 		for (const row of snapshot.characters)

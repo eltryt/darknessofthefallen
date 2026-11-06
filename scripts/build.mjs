@@ -128,6 +128,7 @@ try {
 		'medals.js',
 		'encounter-catalog.js',
 		'gm-ui.js',
+		'gm-cases-ui.js',
 		'public-views.js',
 		'public-layout.js',
 		'profile-view.js',

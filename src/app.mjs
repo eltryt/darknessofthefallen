@@ -4,6 +4,7 @@ import { iconAssets } from '../public/icon-assets.js';
 import { mobileArt } from '../public/art-variants.js';
 import { slotIconSources, catalogGroups } from '../public/armory-catalog.js';
 import { gmApi, enqueueGM, gmReady } from './gm-notifications.mjs';
+import { gmCasesApi } from './gm-cases.mjs';
 import { exportRecovery } from './recovery.mjs';
 import { backupApi } from './backup-api.mjs';
 import { pushApi, pushReady, enqueuePush } from './push-notifications.mjs';
@@ -187,6 +188,7 @@ const files = {
 	'/profile-view.js': ['profile-view.js', 'text/javascript'],
 	'/panel-view.js': ['panel-view.js', 'text/javascript'],
 	'/audit-view.js': ['audit-view.js', 'text/javascript'],
+	'/gm-cases-ui.js': ['gm-cases-ui.js', 'text/javascript'],
 	'/attendance-sheet.js': ['attendance-sheet.js', 'text/javascript'],
 	'/raid-events-ui.js': ['raid-events-ui.js', 'text/javascript'],
 	'/recruitment-ui.js': ['recruitment-ui.js', 'text/javascript'],
@@ -424,6 +426,18 @@ export function createApp(db, env, { readAsset = readLocalAsset, discordFetch = 
 				res.end(value);
 			};
 			if (
+				await gmCasesApi({
+					db,
+					user,
+					path,
+					method,
+					body: () => body(req),
+					send,
+					requirePermission,
+				})
+			)
+				return;
+			if (
 				await gmApi({
 					db,
 					user,
@@ -450,7 +464,7 @@ export function createApp(db, env, { readAsset = readLocalAsset, discordFetch = 
 				})
 			)
 				return;
-			if (attendanceSheetApi({ db, path, method, send, requirePermission })) return;
+			if (attendanceSheetApi({ db, path, method, send, requirePermission, user })) return;
 			if (
 				await raidLineupApi({
 					db,

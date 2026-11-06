@@ -1,4 +1,5 @@
 import { HttpError } from './domain.mjs';
+import { audit, transaction } from './database-core.mjs';
 import { characterFor, eligibleSignups } from './raid-lineup.mjs';
 
 // "Pasar lista": everyone expected at one raid, with the character that counts and the
@@ -76,7 +77,30 @@ export function attendanceSheet(db, raidId) {
 	return { raid, source, rows };
 }
 
-export function attendanceSheetApi({ db, path, method, send, requirePermission }) {
+// "Vaciar la lista": the raid goes back to unmarked. Its marks are archived, not deleted.
+export function resetAttendance(db, raidId, user) {
+	if (!db.prepare('SELECT id FROM raids WHERE id=?').get(raidId))
+		throw new HttpError(404, 'Raid no encontrada.');
+	return transaction(db, () => {
+		const now = new Date().toISOString();
+		const n = db
+			.prepare(
+				'INSERT INTO attendance_archive(id,raid_id,user_id,character_id,status,archived_at,archived_by) SELECT id,raid_id,user_id,character_id,status,?,? FROM attendance WHERE raid_id=?',
+			)
+			.run(now, user.id, raidId).changes;
+		db.prepare('DELETE FROM attendance WHERE raid_id=?').run(raidId);
+		audit(db, user.id, 'attendance.reset', raidId, { archived: n });
+		return { archived: n };
+	});
+}
+
+export function attendanceSheetApi({ db, path, method, send, requirePermission, user }) {
+	const reset = path.match(/^\/api\/raids\/([^/]+)\/attendance\/reset$/);
+	if (reset && method === 'POST') {
+		requirePermission('attendance.manage');
+		send(200, resetAttendance(db, decodeURIComponent(reset[1]), user));
+		return true;
+	}
 	const match = path.match(/^\/api\/raids\/([^/]+)\/attendance-sheet$/);
 	if (!match || method !== 'GET') return false;
 	requirePermission('attendance.manage');

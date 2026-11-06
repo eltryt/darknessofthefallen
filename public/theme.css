@@ -9850,3 +9850,250 @@ button.att-state[aria-pressed='true']:hover {
 .doll-stat.is-empty {
 	opacity: 0.55;
 }
+/* Mensajes y avisos: messages and incidents as cases with a team thread. */
+.gm-filters {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 12px 0 16px;
+}
+.gm-count {
+	margin-left: 4px;
+	padding: 0 7px;
+	border-radius: 999px;
+	background: #0000004d;
+	font-size: 12px;
+}
+.gm-case {
+	display: grid;
+	gap: 10px;
+	margin-bottom: 14px;
+	border-left: 4px solid var(--case, #a68a5b);
+}
+.gm-case.is-new {
+	--case: #7fb4ff;
+}
+.gm-case.is-working {
+	--case: #f2c45a;
+}
+.gm-case.is-done {
+	--case: #5fd38d;
+	opacity: 0.85;
+}
+.gm-case.is-dropped {
+	--case: #7f786f;
+	opacity: 0.7;
+}
+.gm-case.is-urgent {
+	box-shadow: inset 0 0 0 1px #ef7b8a66;
+}
+.gm-case h3,
+.gm-case p {
+	margin: 0;
+}
+.gm-case-head {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+	box-shadow: none;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+.gm-status {
+	padding: 2px 10px;
+	border-radius: 999px;
+	background: color-mix(in srgb, var(--case) 20%, transparent);
+	color: var(--case);
+	font-size: 12px;
+	font-weight: 700;
+}
+.gm-urgent {
+	padding: 2px 10px;
+	border-radius: 999px;
+	background: #ef7b8a26;
+	color: #f4a1ad;
+	font-size: 12px;
+	font-weight: 700;
+}
+.gm-who {
+	margin-left: auto;
+	color: #9a948c;
+	font-size: 13px;
+}
+.gm-body {
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+.gm-meta {
+	color: #9a948c;
+	font-size: 13px;
+}
+.gm-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+}
+.gm-actions select {
+	width: auto;
+	min-width: 160px;
+}
+button.gm-state {
+	padding: 6px 12px;
+	border: 1px solid #ffffff26;
+	background: #0000004d;
+	box-shadow: none;
+	color: #c9c2b8;
+	font-size: 13px;
+}
+button.gm-state:hover {
+	background: #ffffff14;
+	transform: none;
+}
+button.gm-state[aria-pressed='true'] {
+	border-color: var(--state);
+	background: color-mix(in srgb, var(--state) 22%, transparent);
+	color: var(--state);
+	font-weight: 700;
+}
+.gm-state.is-new {
+	--state: #7fb4ff;
+}
+.gm-state.is-working {
+	--state: #f2c45a;
+}
+.gm-state.is-done {
+	--state: #5fd38d;
+}
+.gm-state.is-dropped {
+	--state: #b9b2a6;
+}
+button.gm-urgent-toggle[aria-pressed='true'] {
+	border-color: #ef7b8a;
+	color: #f4a1ad;
+}
+.gm-thread {
+	border-top: 1px solid #a68a5b30;
+	padding-top: 8px;
+}
+.gm-thread summary {
+	color: #e1bf8a;
+	font-weight: 700;
+	cursor: pointer;
+}
+.gm-notes {
+	display: grid;
+	gap: 6px;
+	max-height: 320px;
+	margin: 10px 0;
+	padding: 0;
+	overflow-y: auto;
+	list-style: none;
+}
+.gm-note {
+	padding: 7px 10px;
+	border-radius: 8px;
+	background: #0000004d;
+}
+.gm-note.is-me {
+	background: #e1bf8a14;
+}
+.gm-note p {
+	margin: 2px 0 0;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+.gm-note-meta {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 13px;
+}
+.gm-note-meta time,
+.gm-event time {
+	color: #7f786f;
+	font-size: 12px;
+}
+button.gm-note-x {
+	min-height: 0;
+	margin-left: auto;
+	padding: 0 6px;
+	border: 0;
+	background: none;
+	box-shadow: none;
+	color: #9a948c;
+	cursor: pointer;
+}
+button.gm-note-x:hover {
+	background: none;
+	color: #ef8a98;
+	transform: none;
+}
+.gm-event {
+	display: flex;
+	justify-content: space-between;
+	gap: 8px;
+	padding: 2px 10px;
+	color: #9a948c;
+	font-size: 13px;
+	font-style: italic;
+}
+.gm-empty {
+	color: #9a948c;
+	font-size: 13px;
+}
+.gm-note-form {
+	display: flex;
+	gap: 8px;
+}
+.gm-note-form input {
+	flex: 1;
+	min-width: 0;
+}
+.gm-report {
+	margin: 8px 0 20px;
+}
+.gm-report summary {
+	color: #e1bf8a;
+	font-weight: 700;
+	cursor: pointer;
+}
+@media (max-width: 560px) {
+	.gm-who {
+		flex-basis: 100%;
+		margin-left: 0;
+	}
+}
+/* Pasar lista: the save bar stays in view while scrolling a long list. */
+.att-save {
+	position: sticky;
+	bottom: 12px;
+	z-index: 5;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px 12px;
+	padding: 10px 14px;
+	border: 1px solid #a68a5b55;
+	border-radius: 8px;
+	background: #151215f2;
+	box-shadow: 0 8px 24px #000a;
+}
+.att-save > span {
+	flex: 1 1 200px;
+	color: #c9c2b8;
+	font-size: 14px;
+}
+.att-save.is-dirty {
+	border-color: #f2c45a;
+}
+.att-save.is-dirty strong {
+	color: #f2c45a;
+}
+.att-row.is-changed {
+	outline: 1px dashed #f2c45a;
+	outline-offset: 2px;
+}

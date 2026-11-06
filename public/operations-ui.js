@@ -355,13 +355,26 @@ export async function operationTab(tab, el, ctx) {
 					toast(error.message);
 				}
 		};
-		let filters = {};
+		let filters = {},
+			sheet = null,
+			shownRaid = '';
 		el.querySelector('#attendance-raid')?.addEventListener('change', async (e) => {
+			if (
+				sheet?.dirty() &&
+				!confirm('Hay cambios sin guardar en la lista. ¿Cambiar de raid y perderlos?')
+			) {
+				e.target.value = shownRaid;
+				return;
+			}
 			const box = el.querySelector('#attendance-sheet');
 			box.innerHTML = '';
+			sheet = null;
+			shownRaid = e.target.value;
 			if (!e.target.value) return;
 			try {
-				await mountAttendanceSheet(box, e.target.value, ctx, () => load(filters).catch(() => {}));
+				sheet = await mountAttendanceSheet(box, e.target.value, ctx, () =>
+					load(filters).catch(() => {}),
+				);
 			} catch (error) {
 				toast(error.message);
 			}

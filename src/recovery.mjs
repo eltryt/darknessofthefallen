@@ -29,6 +29,9 @@ export const recoveryTables = [
 	'outbox',
 	'gm_messages',
 	'gm_notifications',
+	'gm_cases',
+	'gm_case_notes',
+	'attendance_archive',
 	'raid_lineups',
 	'raid_lineup_slots',
 	'raid_callups',
@@ -89,7 +92,8 @@ const tablesFor = (version) =>
 			(version >= 11 || !t.endsWith('_achievements')) &&
 			(version >= 15 || !t.startsWith('roulette_')) &&
 			(version >= 20 || t !== 'roulette_chat') &&
-			(version >= 22 || t !== 'application_tracking'),
+			(version >= 22 || t !== 'application_tracking') &&
+			(version >= 23 || !(t.startsWith('gm_case') || t === 'attendance_archive')),
 	);
 const digest = (value) => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const content = (s) => ({
@@ -103,7 +107,7 @@ export function exportRecovery(db) {
 	return transaction(db, () => {
 		const snapshot = {
 			schemaVersion: 2,
-			databaseVersion: 22,
+			databaseVersion: 23,
 			exportedAt: new Date().toISOString(),
 			settings: JSON.parse(db.prepare('SELECT data FROM settings WHERE id=1').get().data),
 		};
@@ -117,7 +121,7 @@ export function validateRecovery(snapshot) {
 	if (
 		!snapshot ||
 		snapshot.schemaVersion !== 2 ||
-		![5, 6, 7, 8, 9, 10, 11, 15, 16, 17, 18, 19, 20, 22].includes(snapshot.databaseVersion)
+		![5, 6, 7, 8, 9, 10, 11, 15, 16, 17, 18, 19, 20, 22, 23].includes(snapshot.databaseVersion)
 	)
 		throw new Error('Formato no compatible: descarga una nueva exportación JSON desde el panel.');
 	if (

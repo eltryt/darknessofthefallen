@@ -84,3 +84,27 @@ test('a raid without sign-ups lists every member once, by their main', () => {
 	);
 	assert.throws(() => attendanceSheet(db, 'nope'), /no encontrada/);
 });
+
+test('emptying a raid archives its marks instead of deleting them', async () => {
+	const { resetAttendance } = await import('../src/attendance-sheet.mjs');
+	const db = setup();
+	db.prepare(
+		"INSERT INTO raids(id,title,starts_at,source) VALUES('r1','Manual','2030-01-01T22:00:00Z','manual')",
+	).run();
+	db.prepare("INSERT INTO attendance VALUES('a1','r1','m1','c1','Asistió')").run();
+	db.prepare("INSERT INTO attendance VALUES('a2','r1','m2','c2','Asistió')").run();
+	assert.deepEqual(resetAttendance(db, 'r1', { id: 'm3' }), { archived: 2 });
+	assert.equal(db.prepare('SELECT count(*) n FROM attendance').get().n, 0);
+	assert.deepEqual(
+		db
+			.prepare('SELECT id,status,archived_by FROM attendance_archive ORDER BY id')
+			.all()
+			.map((r) => ({ ...r })),
+		[
+			{ id: 'a1', status: 'Asistió', archived_by: 'm3' },
+			{ id: 'a2', status: 'Asistió', archived_by: 'm3' },
+		],
+	);
+	assert.ok(attendanceSheet(db, 'r1').rows.every((r) => r.status === null));
+	assert.throws(() => resetAttendance(db, 'nope', { id: 'm3' }), /no encontrada/);
+});

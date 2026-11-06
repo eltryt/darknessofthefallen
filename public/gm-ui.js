@@ -1,3 +1,4 @@
+import { mountCases } from './gm-cases-ui.js';
 export function contactForm(host, ctx, kind = 'contact', { subject = '', heading = '' } = {}) {
 	const { field, area, formHandler, api, toast } = ctx;
 	host.innerHTML = /* HTML */ `<h2>
@@ -83,11 +84,8 @@ async function pushControl(box, { api, toast }) {
 	render();
 }
 export async function gmInbox(host, ctx) {
-	const { api, esc, empty, toast } = ctx;
-	const [messages, notifications] = await Promise.all([
-		api('/api/gm-messages'),
-		api('/api/gm-notifications'),
-	]);
+	const { api, esc, toast } = ctx;
+	const notifications = await api('/api/gm-notifications');
 	host.innerHTML = /* HTML */ `<section class="card push-control" data-push>
 			<h3>Avisos en la app</h3>
 			<p data-push-note>Comprobando avisos…</p>
@@ -97,20 +95,11 @@ export async function gmInbox(host, ctx) {
 		<p>
 			${notifications.configured ? 'Avisos al canal privado de Discord activados.' : 'Los mensajes se guardan aquí. El webhook aún no está activado.'}
 		</p>
-		<div data-report></div>
-		${
-			messages
-				.map(
-					(m) =>
-						/* HTML */ `<article class="card section" id="message-${esc(m.id)}">
-							<span class="pill">${m.kind === 'incident' ? 'Incidencia' : 'Contacto'}</span>
-							<h3>${esc(m.subject)}</h3>
-							<p>${esc(m.message)}</p>
-							<small>${esc(m.created_at)}</small>
-						</article>`,
-				)
-				.join('') || empty('Sin mensajes', 'Aquí aparecerán los contactos y las incidencias.')
-		}
+		<div data-cases></div>
+		<details class="gm-report">
+			<summary>Registrar una incidencia</summary>
+			<div data-report></div>
+		</details>
 		<h3>Estado de los avisos</h3>
 		${notifications.rows
 			.map(
@@ -127,6 +116,7 @@ export async function gmInbox(host, ctx) {
 			)
 			.join('')}`;
 	contactForm(host.querySelector('[data-report]'), ctx, 'incident');
+	await mountCases(host.querySelector('[data-cases]'), ctx);
 	pushControl(host.querySelector('[data-push]'), ctx).catch(() => {});
 	host.querySelectorAll('[data-retry]').forEach(
 		(b) =>
@@ -145,8 +135,4 @@ export async function gmInbox(host, ctx) {
 				}
 			}),
 	);
-	const record = new URLSearchParams(location.search).get('record');
-	const selected = messages.find((m) => m.id === record);
-	if (selected)
-		document.getElementById('message-' + selected.id)?.scrollIntoView({ block: 'center' });
 }

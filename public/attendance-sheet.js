@@ -1,8 +1,9 @@
 import { ClassIcon } from './components.js';
 import { spanishClass } from './lineup-board.js';
 
-// "Pasar lista": one tap marks a player, and it is saved at once. "Todos asistieron" marks
-// everyone in the list; the rest is changed player by player afterwards.
+// "Pasar lista": taps and "Todos asistieron" are a draft until "Guardar lista" sends them.
+// "Deshacer cambios" drops the draft; "Vaciar la lista" leaves the raid unmarked again
+// (its saved marks are archived on the server, not deleted).
 const states = [
 	['Asistió', '✓', 'Asistió', 'is-in'],
 	['Llegó tarde', '⏱', 'Tarde', 'is-late'],
@@ -25,23 +26,35 @@ const sources = {
 };
 
 export async function mountAttendanceSheet(target, raidId, { api, esc, toast }, onSaved) {
-	let sheet = await api(`/api/raids/${encodeURIComponent(raidId)}/attendance-sheet`);
-	const save = async (rows, status) => {
-		const entries = rows
-			.filter((r) => r.characterId)
-			.map((r) => ({ characterId: r.characterId, status }));
-		for (let i = 0; i < entries.length; i += 100)
-			await api(`/api/raids/${encodeURIComponent(raidId)}/attendance`, 'PUT', {
-				entries: entries.slice(i, i + 100),
-			});
-		for (const r of rows) if (r.characterId) r.status = status;
+	const url = `/api/raids/${encodeURIComponent(raidId)}`;
+	let sheet = await api(`${url}/attendance-sheet`);
+	// userId → status chosen and not saved yet.
+	const draft = new Map();
+	const current = (r) => draft.get(r.userId) ?? r.status;
+	const mark = (r, status) => {
+		if (!r.characterId) return;
+		if (status === r.status) draft.delete(r.userId);
+		else draft.set(r.userId, status);
+	};
+	const reload = async () => {
+		sheet = await api(`${url}/attendance-sheet`);
+		draft.clear();
 		render();
 		onSaved?.();
 	};
+	const save = async () => {
+		const entries = sheet.rows
+			.filter((r) => draft.has(r.userId))
+			.map((r) => ({ characterId: r.characterId, status: draft.get(r.userId) }));
+		for (let i = 0; i < entries.length; i += 100)
+			await api(`${url}/attendance`, 'PUT', { entries: entries.slice(i, i + 100) });
+		await reload();
+	};
 	function row(r) {
-		const key = classKey[r.class] || 'unknown';
+		const key = classKey[r.class] || 'unknown',
+			status = current(r);
 		return /* HTML */ `<li
-			class="att-row class-${key} ${r.status ? states.find((s) => s[0] === r.status)?.[3] || '' : 'is-unmarked'}"
+			class="att-row class-${key} ${status ? states.find((s) => s[0] === status)?.[3] || '' : 'is-unmarked'} ${draft.has(r.userId) ? 'is-changed' : ''}"
 		>
 			${r.class ? ClassIcon({ className: r.class, size: 'small' }) : '<span class="lineup-noicon">?</span>'}
 			<span class="att-who"
@@ -55,7 +68,7 @@ export async function mountAttendanceSheet(target, raidId, { api, esc, toast }, 
 					? `<span class="att-states" role="group" aria-label="Asistencia de ${esc(r.characterName || r.name)}">${states
 							.map(
 								([status, mark, label, cls]) =>
-									`<button type="button" class="att-state ${cls}" data-user="${esc(r.userId)}" data-status="${esc(status)}" aria-pressed="${r.status === status}" title="${esc(status)}"><span aria-hidden="true">${mark}</span>${esc(label)}</button>`,
+									`<button type="button" class="att-state ${cls}" data-user="${esc(r.userId)}" data-status="${esc(status)}" aria-pressed="${current(r) === status}" title="${esc(status)}"><span aria-hidden="true">${mark}</span>${esc(label)}</button>`,
 							)
 							.join('')}</span>`
 					: '<em class="att-none">Sin personaje en la web: no cuenta</em>'
@@ -64,8 +77,9 @@ export async function mountAttendanceSheet(target, raidId, { api, esc, toast }, 
 	}
 	function render() {
 		const rows = sheet.rows,
-			count = (s) => rows.filter((r) => r.status === s).length,
-			pending = rows.filter((r) => r.characterId && !r.status).length;
+			count = (s) => rows.filter((r) => current(r) === s).length,
+			pending = rows.filter((r) => r.characterId && !current(r)).length,
+			saved = rows.some((r) => r.status);
 		const groups = [];
 		for (const r of rows) {
 			const name = groupName(r.slot);
@@ -93,6 +107,16 @@ export async function mountAttendanceSheet(target, raidId, { api, esc, toast }, 
 			</header>
 			${
 				rows.length
+					? `<div class="att-save ${draft.size ? 'is-dirty' : ''}" role="status">
+						<span>${draft.size ? `<strong>${draft.size} ${draft.size === 1 ? 'cambio sin guardar' : 'cambios sin guardar'}</strong>` : saved ? 'Lista guardada.' : 'Marca a cada jugador y guarda la lista.'}</span>
+						<button type="button" data-save ${draft.size ? '' : 'disabled'}>Guardar lista</button>
+						<button type="button" class="secondary" data-undo ${draft.size ? '' : 'hidden'}>Deshacer cambios</button>
+						<button type="button" class="secondary danger" data-reset ${saved ? '' : 'hidden'}>Vaciar la lista</button>
+					</div>`
+					: ''
+			}
+			${
+				rows.length
 					? groups
 							.map(
 								(g) =>
@@ -104,41 +128,50 @@ export async function mountAttendanceSheet(target, raidId, { api, esc, toast }, 
 		</div>`;
 	}
 	target.onclick = async (e) => {
-		const b = e.target.closest('[data-status]');
-		if (b) {
+		const b = e.target.closest('button');
+		if (!b || b.disabled) return;
+		if (b.dataset.status) {
 			const r = sheet.rows.find((x) => x.userId === b.dataset.user);
-			if (!r || r.status === b.dataset.status) return;
+			if (r) mark(r, b.dataset.status);
+			render();
+		} else if ('all' in b.dataset) {
+			for (const r of sheet.rows) mark(r, 'Asistió');
+			render();
+			toast('Todos marcados como asistencia. Pulsa «Guardar lista» para guardarlo.');
+		} else if ('undo' in b.dataset) {
+			draft.clear();
+			render();
+		} else if ('save' in b.dataset) {
 			b.disabled = true;
 			try {
-				await save([r], b.dataset.status);
+				await save();
+				toast('Lista guardada');
 			} catch (error) {
 				toast(error.message);
 				render();
 			}
-			return;
-		}
-		if (e.target.closest('[data-all]')) {
-			const others = sheet.rows.filter((r) => r.characterId && r.status && r.status !== 'Asistió');
+		} else if ('reset' in b.dataset) {
 			if (
-				others.length &&
 				!confirm(
-					`¿Marcar a todos como «Asistió»? ${others.length} ya tienen otro estado y se cambiarán.`,
+					'¿Vaciar la lista de esta raid? Todos quedan sin marcar. Lo guardado se archiva y queda en la auditoría.',
 				)
 			)
 				return;
+			b.disabled = true;
 			try {
-				await save(sheet.rows, 'Asistió');
-				toast('Todos marcados como asistencia');
+				const r = await api(`${url}/attendance/reset`, 'POST', {});
+				await reload();
+				toast(`Lista vaciada (${r.archived} archivadas)`);
 			} catch (error) {
 				toast(error.message);
+				render();
 			}
 		}
 	};
 	render();
 	return {
-		async reload() {
-			sheet = await api(`/api/raids/${encodeURIComponent(raidId)}/attendance-sheet`);
-			render();
-		},
+		// Unsaved marks, so changing raid can ask first.
+		dirty: () => draft.size > 0,
+		reload,
 	};
 }
