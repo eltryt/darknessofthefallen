@@ -1,4 +1,5 @@
 import { ClassIcon } from './components.js';
+import { wowheadItemUrl } from './wowhead.js';
 import {
 	gameVersions,
 	slotLabels,
@@ -76,6 +77,14 @@ function slot(name, item, side, href, buttons) {
 			: '';
 	if (!item)
 		return `<${tag} class="doll-slot is-empty side-${side}"${link} title="${escape(label)} · Sin datos"><span class="doll-icon">${placeholder}</span><span class="doll-text"><span class="doll-slot-name">${escape(label)}</span><small>Sin datos</small></span></${tag}>`;
+	// An item with its id is a link to Wowhead Forever in Spanish, so hovering it shows the
+	// item's tooltip; clicking still opens our slot details (the click handler stops it).
+	const wowhead = /^\d+$/.test(item.item_id || '') ? wowheadItemUrl(item.item_id) : '';
+	const itemTag = buttons && wowhead ? 'a' : tag,
+		itemLink =
+			buttons && wowhead
+				? ` href="${escape(wowhead)}" role="button" data-slot="${escape(name)}" aria-haspopup="dialog" aria-label="${escape(label)}: ${escape(item.item_name)}. Abrir detalles"`
+				: link;
 	// Our own images, or the Blizzard icon of an item picked from the catalogue.
 	const icon = localImage(item.icon) || catalogIconUrl(item.icon);
 	// Items from Blizzard come without an icon: fillCatalogIcons() finds it by the item id.
@@ -85,7 +94,10 @@ function slot(name, item, side, href, buttons) {
 		item.enchant ? 'Encantamiento: ' + item.enchant : '',
 		item.gems?.length ? `${item.gems.length} ${item.gems.length === 1 ? 'gema' : 'gemas'}` : '',
 	].filter(Boolean);
-	return `<${tag} data-doll-slot="${escape(name)}" class="doll-slot side-${side} quality-${escape(item.quality || 'none')}"${link} title="${escape(label)}: ${escape(item.item_name)}${item.quality ? ' · ' + escape(itemQualities[item.quality] || item.quality) : ''}"><span class="doll-icon"${lookup}>${icon ? `<img src="${escape(icon)}" alt="" width="44" height="44" loading="lazy">` : placeholder}</span><span class="doll-text"><strong>${escape(item.item_name || 'Objeto sin nombre')}</strong><span class="doll-meta">${item.item_level ? `<b>${escape(item.item_level)}</b>` : ''}${details.map((d) => `<small>${escape(d)}</small>`).join('')}</span></span></${tag}>`;
+	const title = wowhead
+		? ''
+		: ` title="${escape(label)}: ${escape(item.item_name)}${item.quality ? ' · ' + escape(itemQualities[item.quality] || item.quality) : ''}"`;
+	return `<${itemTag} data-doll-slot="${escape(name)}" class="doll-slot side-${side} quality-${escape(item.quality || 'none')}"${itemLink}${title}><span class="doll-icon"${lookup}>${icon ? `<img src="${escape(icon)}" alt="" width="44" height="44" loading="lazy">` : placeholder}</span><span class="doll-text"><strong>${escape(item.item_name || 'Objeto sin nombre')}</strong><span class="doll-meta">${item.item_level ? `<b>${escape(item.item_level)}</b>` : ''}${details.map((d) => `<small>${escape(d)}</small>`).join('')}</span></span></${itemTag}>`;
 }
 
 // Adds up the stats of the equipped pieces (items picked from the catalogue carry them).

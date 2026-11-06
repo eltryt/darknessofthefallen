@@ -5066,6 +5066,10 @@ a.doll-slot:hover .doll-icon {
 }
 
 /* ===== Unified profile: slots, wishlist by boss, call-ups, boss plan ===== */
+a.doll-slot[data-slot] {
+	width: 100%;
+	cursor: pointer;
+}
 button.doll-slot {
 	/* Buttons centre their content site-wide: slots line their icons up on the edge. */
 	justify-content: flex-start;

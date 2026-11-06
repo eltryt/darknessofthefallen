@@ -1,6 +1,7 @@
 import { ClassIcon } from './components.js';
 import { paperdoll } from './paperdoll.js';
 import { fillCatalogIcons } from './item-catalog.js';
+import { loadTooltips } from './wowhead.js';
 import { classKey } from './roster-ui.js';
 import { gameVersions } from './armory-catalog.js';
 import { sheetHelpers, factsList, renderGuides, openSlotDialog } from './sheet-parts.js';
@@ -134,6 +135,11 @@ export function createArmoryView(context) {
 		if (tab === 'gear') {
 			el.innerHTML = paperdoll(sheet, { slotButtons: true });
 			fillCatalogIcons(el);
+			// Item slots are Wowhead links for the hover tooltip; a click opens our details.
+			el.querySelectorAll('a[data-slot]').forEach((a) =>
+				a.addEventListener('click', (e) => e.preventDefault()),
+			);
+			loadTooltips();
 			el.querySelectorAll('[data-slot]').forEach(
 				(b) =>
 					(b.onclick = () =>
