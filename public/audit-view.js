@@ -17,6 +17,14 @@ const actions = {
 	'raid.sync.completed': 'Sincronizó las convocatorias',
 	'roster.imported': 'Importó el roster',
 	'roster.character.restored': 'Recuperó un personaje del roster',
+	'roster.character.archived': 'Archivó un personaje del roster',
+	'roster.character.updated': 'Editó un personaje del roster',
+	'roster.manual.created': 'Añadió un miembro a mano',
+	'roster.manual.updated': 'Editó un miembro añadido a mano',
+	'roster.manual.archived': 'Archivó un miembro añadido a mano',
+	'member.removed': 'Sacó a un miembro de la hermandad',
+	'attendance.updated': 'Registró asistencia',
+	'attendance.deleted': 'Borró una asistencia',
 	'settings.updated': 'Cambió la configuración',
 	'data.exported': 'Descargó la exportación',
 	'data.restored': 'Restauró una copia',
@@ -67,7 +75,15 @@ function detail(r) {
 			? `Error: ${c.error}`
 			: `${c.checked ?? 0} revisados, ${c.updated ?? 0} actualizados, ${c.missing ?? 0} sin ficha en Blizzard`;
 	const keys = Object.keys(c);
-	return keys.length ? keys.slice(0, 6).join(', ') : '';
+	// Other entries: their values when short, otherwise the fields that changed.
+	return keys
+		.slice(0, 6)
+		.map((k) =>
+			['string', 'number', 'boolean'].includes(typeof c[k]) && String(c[k]).length <= 40
+				? `${k}: ${c[k]}`
+				: k,
+		)
+		.join(', ');
 }
 const when = (iso) => {
 	const d = new Date(iso);
@@ -120,7 +136,7 @@ export async function auditTab(el, { api, esc, table }, state = { kind: '', q: '
 									</td>
 									<td title="${esc(r.action)}">${esc(actions[r.action] || r.action)}</td>
 									<td title="${esc(r.target)}">
-										${esc(r.target_name || (r.target === r.actor_id ? '—' : r.target))}
+										${esc(r.target_name || (r.target === r.actor_id || r.target === 'characters' ? '—' : r.target))}
 									</td>
 									<td>${esc(detail(r))}</td>
 								</tr>`,
