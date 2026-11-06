@@ -13,6 +13,7 @@ export const recoveryTables = [
 	'character_reviews',
 	'character_officer_notes',
 	'applications',
+	'application_tracking',
 	'raids',
 	'attendance',
 	'loot',
@@ -87,7 +88,8 @@ const tablesFor = (version) =>
 			(version >= 10 || !t.startsWith('raid_boss_')) &&
 			(version >= 11 || !t.endsWith('_achievements')) &&
 			(version >= 15 || !t.startsWith('roulette_')) &&
-			(version >= 20 || t !== 'roulette_chat'),
+			(version >= 20 || t !== 'roulette_chat') &&
+			(version >= 22 || t !== 'application_tracking'),
 	);
 const digest = (value) => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const content = (s) => ({
@@ -101,7 +103,7 @@ export function exportRecovery(db) {
 	return transaction(db, () => {
 		const snapshot = {
 			schemaVersion: 2,
-			databaseVersion: 20,
+			databaseVersion: 22,
 			exportedAt: new Date().toISOString(),
 			settings: JSON.parse(db.prepare('SELECT data FROM settings WHERE id=1').get().data),
 		};
@@ -115,7 +117,7 @@ export function validateRecovery(snapshot) {
 	if (
 		!snapshot ||
 		snapshot.schemaVersion !== 2 ||
-		![5, 6, 7, 8, 9, 10, 11, 15, 16, 17, 18, 19, 20].includes(snapshot.databaseVersion)
+		![5, 6, 7, 8, 9, 10, 11, 15, 16, 17, 18, 19, 20, 22].includes(snapshot.databaseVersion)
 	)
 		throw new Error('Formato no compatible: descarga una nueva exportación JSON desde el panel.');
 	if (

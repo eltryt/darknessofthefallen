@@ -141,13 +141,15 @@ test('anonymous applications are limited per address', async () => {
 	const server = createServer(createApp(db, { APP_ORIGIN: 'http://localhost:3000' }));
 	await new Promise((r) => server.listen(0, '127.0.0.1', r));
 	try {
+		// A different Discord each time: one open application per person is tested elsewhere.
+		let n = 0;
 		const send = () =>
 			fetch(`http://127.0.0.1:${server.address().port}/api/applications`, {
 				method: 'POST',
 				headers: { Origin: 'http://localhost:3000', 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					name: 'Candidato',
-					discord: 'handle',
+					discord: `handle${n++}`,
 					character: 'Uno',
 					class: 'Guerrero',
 					role: 'Tanque',

@@ -30,6 +30,7 @@ import rouletteLoserDmSchema from '../migrations/018_roulette_loser_dm.sql';
 import rouletteRematchSchema from '../migrations/019_roulette_rematch.sql';
 import rouletteChatSchema from '../migrations/020_roulette_chat.sql';
 import battlenetSyncSchema from '../migrations/021_battlenet_sync.sql';
+import applicationTrackingSchema from '../migrations/022_application_tracking.sql';
 import { deliverRouletteDMs, nextRouletteDMAt } from './roulette.mjs';
 import { deliverPush, nextPushAt, pushReady } from './push-notifications.mjs';
 import { deliverCallups, dmReady, nextCallupAt } from './raid-lineup.mjs';
@@ -63,6 +64,7 @@ export class Guild extends DurableObject {
 			rouletteRematchSchema,
 			rouletteChatSchema,
 			battlenetSyncSchema,
+			applicationTrackingSchema,
 		);
 		repairGMRedirectFailures(this.db);
 	}

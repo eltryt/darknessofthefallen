@@ -4,7 +4,11 @@ import { contactForm } from './gm-ui.js';
 import { rosterTable } from './roster-ui.js';
 import { createPublicLayout } from './public-layout.js';
 import { mountRaidEvents } from './raid-events-ui.js';
-import { prepareApplication, applicationReceipt } from './recruitment-ui.js';
+import {
+	prepareApplication,
+	applicationReceipt,
+	mountApplicantIdentity,
+} from './recruitment-ui.js';
 import { attachSchedulePlanner } from './schedule-ui.js';
 // Embedded on /mapa; the server's Content-Security-Policy allows exactly this origin.
 export const MAP_URL = 'https://wowforevermap.com/';
@@ -491,6 +495,7 @@ export function createPublicViews(context) {
 			['#search', '#class', '#role'].forEach((s) => $(s).addEventListener('input', renderRoster));
 		}
 		prepareApplication($('#application'));
+		mountApplicantIdentity($('#application'), { api, esc });
 		formHandler('#application', async (v, f) => {
 			const result = await api('/api/applications', 'POST', { ...v, consent: !!v.consent });
 			applicationReceipt(f, result, esc);

@@ -33,6 +33,21 @@ import { battlenetReady, startBattlenet, finishBattlenet } from './battlenet.mjs
 import { raidLineupApi } from './raid-lineup.mjs';
 import { attendanceSheetApi } from './attendance-sheet.mjs';
 import {
+	applicantIdentity,
+	applicantPage,
+	applicationByToken,
+	applicationsOf,
+	discordKey,
+	endApplicant,
+	finishApplicantOAuth,
+	isApplicantCallback,
+	notifyApplicant,
+	requireNoOpenApplication,
+	startApplicantOAuth,
+	trackApplication,
+	trackingUrl,
+} from './applicant.mjs';
+import {
 	SESSION_MAX_AGE_SECONDS,
 	currentSession,
 	startOAuth,
@@ -62,7 +77,8 @@ const escHtml = (v) =>
 		(c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
 	);
 // A page a person lands on by opening a link, instead of the API's JSON error.
-// retry: a Discord sign-in that failed, with what went wrong and a way to try again.
+// retry: a Discord sign-in that failed, with what went wrong and a way to try again
+// (true for members' sign-in, or the address that starts the sign-in again).
 export function gatePage(status, message, next, retry = false) {
 	const login = status === 401;
 	const title = retry
@@ -74,7 +90,7 @@ export function gatePage(status, message, next, retry = false) {
 				: 'Acceso restringido';
 	const action =
 		login || retry
-			? `<a class="button" href="/auth/discord${next ? '?next=' + encodeURIComponent(next) : ''}">${retry ? 'Volver a intentarlo' : 'Entrar con Discord'}</a><a class="button secondary" href="/">Volver al inicio</a>`
+			? `<a class="button" href="${typeof retry === 'string' ? escHtml(retry) : `/auth/discord${next ? '?next=' + encodeURIComponent(next) : ''}`}">${retry ? 'Volver a intentarlo' : 'Entrar con Discord'}</a><a class="button secondary" href="/">Volver al inicio</a>`
 			: '<a class="button" href="/">Volver al inicio</a>';
 	return `<!doctype html><html lang="es"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><meta name="robots" content="noindex" /><title>${escHtml(title)} · Darkness of the Fallen</title><link rel="stylesheet" href="/style.css" /><link rel="stylesheet" href="/theme.css" /><link rel="icon" href="/favicon.ico" sizes="any" /></head><body class="gate-body"><main class="gate-page"><img src="/assets/app-icon-512.png" alt="" width="96" height="96" /><span class="eyebrow">Darkness of the Fallen</span><h1>${escHtml(title)}</h1><p>${escHtml(login ? 'Esta parte de la web es solo para miembros de la hermandad. Entra con tu cuenta de Discord y te llevamos de vuelta aquí.' : message)}</p><div class="gate-actions">${action}</div></main></body></html>`;
 }
@@ -502,6 +518,94 @@ export function createApp(db, env, { readAsset = readLocalAsset, discordFetch = 
 				});
 				return res.end();
 			}
+			// Candidates: identify with Discord only to apply or see their own applications.
+			if (path === '/auth/candidato' && method === 'GET') {
+				throttle(req, path);
+				const auth = startApplicantOAuth(db, env),
+					next = safeNext(url.searchParams.get('next'));
+				res.writeHead(302, {
+					...headers,
+					Location: auth.url,
+					'Set-Cookie': [
+						cookie('applicant_state', auth.state, env, 600),
+						cookie('applicant_next', next ? encodeURIComponent(next) : '', env, next ? 600 : 0),
+					],
+				});
+				return res.end();
+			}
+			if (path === '/auth/candidato/salir' && method === 'GET') {
+				endApplicant(db, req);
+				res.writeHead(302, {
+					...headers,
+					Location: '/candidatura',
+					'Set-Cookie': cookie('applicant', '', env, 0),
+				});
+				return res.end();
+			}
+			if (path === '/auth/discord/callback' && method === 'GET' && isApplicantCallback(req, url)) {
+				throttle(req, path);
+				let next = null;
+				try {
+					next = safeNext(decodeURIComponent(cookies(req).applicant_next || ''));
+				} catch {}
+				const clear = [cookie('applicant_state', '', env, 0), cookie('applicant_next', '', env, 0)];
+				let done;
+				try {
+					done = await finishApplicantOAuth(db, req, url, env);
+				} catch (e) {
+					if (!e.status) throw e;
+					res.writeHead(e.status, {
+						...headers,
+						'Content-Type': 'text/html; charset=utf-8',
+						'Cache-Control': 'no-store',
+						'X-Robots-Tag': 'noindex, nofollow',
+						'Set-Cookie': clear,
+					});
+					return res.end(
+						gatePage(
+							e.status,
+							e.message,
+							null,
+							`/auth/candidato?next=${encodeURIComponent(next || '/candidatura')}`,
+						),
+					);
+				}
+				res.writeHead(302, {
+					...headers,
+					Location: next || '/candidatura',
+					'Set-Cookie': [cookie('applicant', done.raw, env, done.maxAge), ...clear],
+				});
+				return res.end();
+			}
+			// The candidate's own page: by private link, or identified with Discord.
+			const tracked = path.match(/^\/candidatura(?:\/([\w-]+))?\/?$/);
+			if (tracked && ['GET', 'HEAD'].includes(method)) {
+				throttle(req, '/candidatura');
+				// A member signed in counts by their Discord id; the name shown is their own.
+				const identity = applicantIdentity(db, req, user),
+					applicant = identity && {
+						...identity,
+						username: identity.username || user?.display_name || '',
+						member: !identity.username,
+					};
+				let view;
+				if (tracked[1]) {
+					const row = applicationByToken(db, tracked[1]);
+					view = { rows: row ? [row] : [], applicant, byLink: true, missing: !row };
+				} else view = { rows: identity ? applicationsOf(db, identity) : [], applicant };
+				res.writeHead(view.missing ? 404 : 200, {
+					...headers,
+					'Content-Type': 'text/html; charset=utf-8',
+					'Cache-Control': 'no-store',
+					'X-Robots-Tag': 'noindex, nofollow',
+					'Referrer-Policy': 'no-referrer',
+				});
+				return res.end(method === 'HEAD' ? '' : applicantPage(escHtml, view));
+			}
+			if (path === '/api/applicant' && method === 'GET') {
+				const a = applicantIdentity(db, req, user);
+				return send(200, { identified: !!a, username: a?.username || '', member: !!user });
+			}
 			if (path === '/auth/discord/callback' && method === 'GET') {
 				throttle(req, path);
 				let next = null;
@@ -763,14 +867,21 @@ export function createApp(db, env, { readAsset = readLocalAsset, discordFetch = 
 				};
 				if (v.consent !== true)
 					throw new HttpError(400, 'Debes aceptar el tratamiento de tu candidatura.');
+				// Identified with Discord: the account name comes from Discord, not from the form.
+				const who = applicantIdentity(db, req, user);
+				if (who?.username) a.discord = who.username;
+				const key = discordKey(a.discord);
 				const id = randomUUID();
+				let trackToken;
 				transaction(db, () => {
+					requireNoOpenApplication(db, key, who?.discordId);
 					db.prepare('INSERT INTO applications(id,data,created_at,updated_at) VALUES(?,?,?,?)').run(
 						id,
 						JSON.stringify(a),
 						date(),
 						date(),
 					);
+					trackToken = trackApplication(db, id, key, who?.discordId);
 					if (pushReady(env)) enqueuePush(db, 'recruitment', id);
 					if (gmReady(env)) enqueueGM(db, 'recruitment', id);
 					else if (
@@ -780,16 +891,29 @@ export function createApp(db, env, { readAsset = readLocalAsset, discordFetch = 
 						db.prepare('INSERT INTO outbox(id,application_id) VALUES(?,?)').run(randomUUID(), id);
 					audit(db, user?.id || 'candidate', 'application.created', id, {});
 				});
-				return send(201, { id, message: 'Candidatura recibida. Los oficiales la revisarán.' });
+				return send(201, {
+					id,
+					message: 'Candidatura recibida. Los oficiales la revisarán.',
+					trackUrl: trackingUrl(env, trackToken),
+					identified: !!who,
+				});
 			}
 			if (path === '/api/applications' && method === 'GET') {
 				requirePermission('recruitment.manage');
 				return send(
 					200,
 					db
-						.prepare('SELECT * FROM applications ORDER BY created_at DESC LIMIT 500')
+						.prepare(
+							`SELECT a.*,t.token,t.discord_id IS NOT NULL AS identified,t.notice_status,t.notified_at,u.display_name AS notified_by_name
+							 FROM applications a LEFT JOIN application_tracking t ON t.application_id=a.id
+							 LEFT JOIN users u ON u.id=t.notified_by ORDER BY a.created_at DESC LIMIT 500`,
+						)
 						.all()
-						.map((r) => ({ ...r, data: JSON.parse(r.data) })),
+						.map(({ token: t, ...r }) => ({
+							...r,
+							data: JSON.parse(r.data),
+							trackUrl: t ? trackingUrl(env, t) : null,
+						})),
 				);
 			}
 			if (/^\/api\/applications\/[^/]+$/.test(path) && method === 'DELETE') {
@@ -799,6 +923,7 @@ export function createApp(db, env, { readAsset = readLocalAsset, discordFetch = 
 					if (!db.prepare('SELECT id FROM applications WHERE id=?').get(id))
 						throw new HttpError(404, 'Candidatura no encontrada.');
 					db.prepare('DELETE FROM outbox WHERE application_id=?').run(id);
+					db.prepare('DELETE FROM application_tracking WHERE application_id=?').run(id);
 					db.prepare("DELETE FROM gm_notifications WHERE kind='recruitment' AND target_id=?").run(
 						id,
 					);
@@ -806,6 +931,21 @@ export function createApp(db, env, { readAsset = readLocalAsset, discordFetch = 
 					audit(db, user.id, 'application.deleted', id, {});
 				});
 				return send(200, { ok: true });
+			}
+			const notice = path.match(/^\/api\/applications\/([^/]+)\/notify$/);
+			if (notice && method === 'POST') {
+				requirePermission('recruitment.manage');
+				const v = await body(req);
+				return send(
+					200,
+					await notifyApplicant(
+						db,
+						env,
+						notice[1],
+						user,
+						text(v.note ?? '', 'mensaje', 1500, false),
+					),
+				);
 			}
 			if (path.startsWith('/api/applications/') && method === 'PATCH') {
 				requirePermission('recruitment.manage');

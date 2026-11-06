@@ -25,6 +25,7 @@ export function durableDatabase(
 	rouletteRematchSchema,
 	rouletteChatSchema,
 	battlenetSyncSchema,
+	applicationTrackingSchema,
 ) {
 	const execute = (sql, parameters = []) => storage.sql.exec(sql, ...parameters);
 	const db = {
@@ -120,6 +121,11 @@ export function durableDatabase(
 			!db.prepare('SELECT version FROM schema_migrations WHERE version=21').get()
 		)
 			db.exec(battlenetSyncSchema);
+		if (
+			applicationTrackingSchema &&
+			!db.prepare('SELECT version FROM schema_migrations WHERE version=22').get()
+		)
+			db.exec(applicationTrackingSchema);
 	});
 	return db;
 }

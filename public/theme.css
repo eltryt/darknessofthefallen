@@ -9538,3 +9538,150 @@ button.att-state[aria-pressed='true']:hover {
 .roster-alt-of b {
 	color: #f3dcae;
 }
+/* Candidates: optional Discord identity on the form, the private link, /candidatura. */
+.applicant-identity {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px 16px;
+	margin-bottom: 16px;
+	padding: 12px 14px;
+	border: 1px solid #5865f266;
+	border-radius: 6px;
+	background: #5865f214;
+}
+.applicant-identity p {
+	flex: 1 1 320px;
+	margin: 0;
+}
+.application-track {
+	display: grid;
+	gap: 8px;
+	margin: 14px 0;
+	padding: 12px 14px;
+	border: 1px solid #e1bf8a55;
+	border-radius: 6px;
+	background: #e1bf8a0f;
+}
+.application-track p {
+	margin: 0;
+}
+.application-track-row {
+	display: flex;
+	gap: 8px;
+}
+.application-track-row input {
+	flex: 1;
+	min-width: 0;
+	font-family: ui-monospace, monospace;
+	font-size: 13px;
+}
+.application-contact {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin: 8px 0 12px;
+}
+.application-contact small {
+	flex-basis: 100%;
+	color: #9a948c;
+}
+.pill.is-verified {
+	border-color: #5fd38d80;
+	color: #8fe0ad;
+}
+.applicant-page {
+	max-width: 720px;
+	text-align: left;
+}
+.applicant-page > img,
+.applicant-page > .eyebrow,
+.applicant-page > h1 {
+	align-self: center;
+	text-align: center;
+}
+.applicant-card {
+	display: grid;
+	gap: 10px;
+	width: 100%;
+	margin: 8px 0;
+	padding: 16px;
+	border: 1px solid #a68a5b55;
+	border-radius: 8px;
+	background: #121013;
+}
+.applicant-card header {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+.applicant-card h2 {
+	margin: 0;
+	font-size: 22px;
+}
+.applicant-status {
+	padding: 4px 12px;
+	border-radius: 999px;
+	background: #e1bf8a22;
+	color: #f3dcae;
+	font-weight: 700;
+}
+.applicant-card.is-rejected .applicant-status {
+	background: #ef7b8a22;
+	color: #f4b6bf;
+}
+.applicant-steps {
+	display: flex;
+	gap: 6px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.applicant-steps li {
+	flex: 1;
+	padding: 6px 4px;
+	border-top: 3px solid #ffffff1f;
+	color: #7f786f;
+	font-size: 12px;
+	text-align: center;
+}
+.applicant-steps li.is-done {
+	border-color: #5fd38d;
+	color: #b9e8c9;
+}
+.applicant-steps li.is-now {
+	border-color: #e1bf8a;
+	color: #f3dcae;
+	font-weight: 700;
+}
+.applicant-card.is-rejected .applicant-steps li.is-now {
+	border-color: #ef7b8a;
+	color: #f4b6bf;
+}
+.applicant-meta,
+.applicant-link,
+.applicant-note,
+.applicant-who {
+	margin: 0;
+	color: #9a948c;
+	font-size: 13px;
+}
+.applicant-card dl {
+	display: grid;
+	grid-template-columns: max-content 1fr;
+	gap: 4px 12px;
+}
+.applicant-card dd {
+	margin: 0;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+@media (max-width: 560px) {
+	.applicant-card dl {
+		grid-template-columns: 1fr;
+	}
+}
