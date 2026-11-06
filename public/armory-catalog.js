@@ -150,6 +150,21 @@ export function blizzardImage(url, kind = 'avatar') {
 		return '';
 	return kind === 'main' ? url.replace(/-avatar\.jpg$/, '-main-raw.png') : url;
 }
+// Blizzard's armory backdrop for each race (none yet for the Skyborne).
+const raceBackdrops = {
+	Humano: 'human',
+	Enano: 'dwarf',
+	'Elfo de la noche': 'night_elf',
+	Gnomo: 'gnome',
+	Orco: 'orc',
+	'No-muerto': 'undead',
+	Tauren: 'tauren',
+	Trol: 'troll',
+};
+export const raceBackdrop = (race) =>
+	Object.hasOwn(raceBackdrops, race)
+		? `https://render.worldofwarcraft.com/profile-backgrounds/v2/armory_bg_race_${raceBackdrops[race]}.jpg`
+		: '';
 export const blizzardArmoryUrl = (c) =>
 	c?.source === 'battlenet' && c.name && c.surname
 		? `https://worldofwarcraft.blizzard.com/es-es/forever/eu/armory/character/${encodeURIComponent(`${c.name}-${c.surname}`.toLowerCase())}`

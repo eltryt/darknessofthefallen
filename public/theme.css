@@ -9702,3 +9702,47 @@ button.att-state[aria-pressed='true']:hover {
 	font-weight: 700;
 	white-space: nowrap;
 }
+/* Armory: Blizzard's render over its race backdrop, framed close like their armory. */
+.doll-figure.is-blizzard {
+	padding: 0;
+	align-content: end;
+	isolation: isolate;
+}
+.doll-backdrop {
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	object-position: center 35%;
+}
+.doll-figure.is-blizzard::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	background:
+		radial-gradient(ellipse at 50% 55%, transparent 35%, #0b090cb3 100%),
+		linear-gradient(180deg, transparent 60%, #0b090ce6);
+	pointer-events: none;
+}
+.doll-portrait.is-render {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	object-position: center 58%;
+	transform: scale(1.4);
+	transform-origin: 50% 78%;
+	filter: drop-shadow(0 14px 18px #000a);
+}
+.doll-figure.is-blizzard figcaption {
+	position: relative;
+	margin-bottom: 12px;
+	padding: 3px 10px;
+	border-radius: 999px;
+	background: #0009;
+	color: #d8cdbd;
+}

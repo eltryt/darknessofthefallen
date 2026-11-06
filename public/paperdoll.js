@@ -7,6 +7,7 @@ import {
 	catalogIconUrl,
 	blizzardImage,
 	blizzardArmoryUrl,
+	raceBackdrop,
 } from './armory-catalog.js';
 
 const escape = (value) =>
@@ -85,6 +86,10 @@ export function paperdoll(sheet, { href = '', slotButtons = false, target = fals
 		: null;
 	const portrait = localImage(c.avatar_url) || blizzardImage(c.avatar_url, 'main'),
 		armoryUrl = blizzardArmoryUrl(c),
+		// Blizzard's render comes on a wide transparent canvas: framed like their armory,
+		// over the backdrop of the character's race.
+		blizzard = !!blizzardImage(c.avatar_url),
+		backdrop = blizzard ? raceBackdrop(c.race) : '',
 		classArt = Object.hasOwn(classPortraits, c.class) ? classPortraits[c.class] : '';
 	// A data provider's character stats win; otherwise the sum of the equipped pieces.
 	const ownStats = Object.keys(sheet.stats || {}).length > 0,
@@ -105,10 +110,11 @@ export function paperdoll(sheet, { href = '', slotButtons = false, target = fals
 		</header>
 		<div class="doll-stage">
 			${column('left')}
-			<figure class="doll-figure class-tint">
+			<figure class="doll-figure class-tint${blizzard ? ' is-blizzard' : ''}">
+				${backdrop ? `<img class="doll-backdrop" src="${escape(backdrop)}" alt="" decoding="async">` : ''}
 				${
 					portrait
-						? `<img class="doll-portrait fade-in" src="${escape(portrait)}" alt="Imagen de ${escape(c.name)}" decoding="async">`
+						? `<img class="doll-portrait fade-in${blizzard ? ' is-render' : ''}" src="${escape(portrait)}" alt="Imagen de ${escape(c.name)}" decoding="async">`
 						: classArt
 							? `<img class="doll-portrait is-class-art fade-in" src="/assets/portraits/${classArt}.webp" alt="" width="600" height="800" decoding="async" fetchpriority="high">`
 							: `<div class="doll-placeholder">${ClassIcon({ className: c.class, size: 'large' })}<span class="doll-silhouette" aria-hidden="true"></span></div>`
