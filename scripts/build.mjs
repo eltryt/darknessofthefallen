@@ -132,6 +132,7 @@ try {
 		'public-layout.js',
 		'profile-view.js',
 		'panel-view.js',
+		'audit-view.js',
 		'raid-events-ui.js',
 		'recruitment-ui.js',
 		'schedule.js',

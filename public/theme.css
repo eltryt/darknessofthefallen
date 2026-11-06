@@ -9294,3 +9294,28 @@ details[data-create] > .tutorial-open,
 		justify-content: center;
 	}
 }
+/* Panel → Auditoría: filters, search and failed entries in red. */
+.audit-filters {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+	margin-bottom: 14px;
+}
+.audit-kinds {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+.audit-filters input {
+	flex: 1 1 220px;
+	max-width: 320px;
+}
+tr.audit-failed td {
+	background: #ef8a9814;
+	color: #f4c2ca;
+}
+tr.audit-failed td:first-child {
+	box-shadow: inset 3px 0 #ef8a98;
+}

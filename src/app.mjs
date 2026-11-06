@@ -169,6 +169,7 @@ const files = {
 	'/public-layout.js': ['public-layout.js', 'text/javascript'],
 	'/profile-view.js': ['profile-view.js', 'text/javascript'],
 	'/panel-view.js': ['panel-view.js', 'text/javascript'],
+	'/audit-view.js': ['audit-view.js', 'text/javascript'],
 	'/raid-events-ui.js': ['raid-events-ui.js', 'text/javascript'],
 	'/recruitment-ui.js': ['recruitment-ui.js', 'text/javascript'],
 	'/schedule.js': ['schedule.js', 'text/javascript'],
@@ -942,7 +943,31 @@ export function createApp(db, env, { readAsset = readLocalAsset, discordFetch = 
 			}
 			if (path === '/api/audit' && method === 'GET') {
 				requirePermission('audit.read');
-				return send(200, db.prepare('SELECT * FROM audit ORDER BY id DESC LIMIT 200').all());
+				// Names for who did it and what it was about; a filter by kind and a search by name.
+				const kinds = {
+					failed:
+						"a.action LIKE '%failed%' OR (a.action='character.battlenet_sync' AND a.changes LIKE '%\"error\"%')",
+					login: "a.action LIKE 'auth.%'",
+					battlenet: "a.action LIKE 'character.battlenet%'",
+				};
+				const kind = kinds[url.searchParams.get('kind')] || '1',
+					q = String(url.searchParams.get('q') || '')
+						.trim()
+						.slice(0, 60);
+				return send(
+					200,
+					db
+						.prepare(
+							`SELECT a.*, u.display_name AS actor_name, COALESCE(ut.display_name, c.name) AS target_name
+							 FROM audit a
+							 LEFT JOIN users u ON u.id=a.actor_id
+							 LEFT JOIN users ut ON ut.id=a.target
+							 LEFT JOIN characters c ON c.id=a.target
+							 WHERE (${kind}) AND (?='' OR u.display_name LIKE ? OR ut.display_name LIKE ? OR c.name LIKE ? OR a.changes LIKE ? OR a.actor_id=?)
+							 ORDER BY a.id DESC LIMIT 200`,
+						)
+						.all(q, ...Array(4).fill(`%${q}%`), q),
+				);
 			}
 			if (path === '/api/export' && method === 'GET') {
 				requirePermission('backup.export');

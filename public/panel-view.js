@@ -4,6 +4,7 @@ import { operationTab } from './operations-ui.js';
 import { applicationInbox } from './recruitment-ui.js';
 import { guideAdmin } from './armory-admin-ui.js';
 import { recruitmentSpecs } from './guild-showcase.js';
+import { auditTab } from './audit-view.js';
 export function createPanelView(context) {
 	const {
 		$,
@@ -154,21 +155,7 @@ export function createPanelView(context) {
 						'La edición de raids y asistencia se implementará en la siguiente fase.',
 					);
 		}
-		if (tab === 'audit') {
-			const rows = await api('/api/audit');
-			el.innerHTML = table(
-				['Fecha', 'Usuario', 'Acción', 'Objeto'],
-				rows.map(
-					(r) =>
-						/* HTML */ `<tr>
-							<td>${esc(r.created_at)}</td>
-							<td>${esc(r.actor_id)}</td>
-							<td>${esc(r.action)}</td>
-							<td>${esc(r.target)}</td>
-						</tr>`,
-				),
-			);
-		}
+		if (tab === 'audit') await auditTab(el, { api, esc, table });
 		if (tab === 'export')
 			el.innerHTML = /* HTML */ `<div class="card">
 				<h2>Copia de los datos de la hermandad</h2>
