@@ -6,6 +6,7 @@ import {
 	itemQualities,
 	slotIcon,
 	catalogIconUrl,
+	foreverIconUrl,
 	blizzardImage,
 	blizzardArmoryUrl,
 	raceBackdrop,
@@ -85,9 +86,9 @@ function slot(name, item, side, href, buttons) {
 			buttons && wowhead
 				? ` href="${escape(wowhead)}" role="button" data-slot="${escape(name)}" aria-haspopup="dialog" aria-label="${escape(label)}: ${escape(item.item_name)}. Abrir detalles"`
 				: link;
-	// Our own images, or the Blizzard icon of an item picked from the catalogue.
-	const icon = localImage(item.icon) || catalogIconUrl(item.icon);
-	// Items from Blizzard come without an icon: fillCatalogIcons() finds it by the item id.
+	// Our own images, Forever's icon of an imported item, or the icon of a catalogue pick.
+	const icon = localImage(item.icon) || foreverIconUrl(item.icon) || catalogIconUrl(item.icon);
+	// A Blizzard item whose icon is not known yet: fillCatalogIcons() tries the catalogue.
 	const lookup =
 		!icon && /^\d+$/.test(item.item_id || '') ? ` data-catalog-item="${escape(item.item_id)}"` : '';
 	const details = [

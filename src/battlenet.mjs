@@ -16,6 +16,8 @@ const CHARACTER_LIMIT = 30;
 const SYNC_EVERY_MS = 6 * 3600000;
 // Characters per alarm run: each takes up to seven requests, and the Worker caps them.
 const SYNC_BATCH = 6;
+// Item icons asked to Blizzard per refresh; an icon already known for that item is reused.
+const ICON_FETCHES = 30;
 const callback = (env) => `${env.APP_ORIGIN}/auth/battlenet/callback`;
 
 export function battlenetReady(env) {
@@ -379,6 +381,50 @@ export function readAvatar(data) {
 		? url
 		: '';
 }
+// The icon Forever gives an item (its media asset), kept as "forever:<file id>". Forever has
+// its own items and icons, so the Classic catalogue is only the fallback.
+export function readItemIcon(data) {
+	for (const a of data?.assets || []) {
+		const m =
+			a?.key === 'icon' &&
+			/^https:\/\/render\.worldofwarcraft\.com\/forever-eu\/icons\/56\/(\d{1,10})\.jpg$/.exec(
+				a.value,
+			);
+		if (m) return `forever:${m[1]}`;
+	}
+	return '';
+}
+
+// Blizzard items of one character still without an icon get Forever's.
+async function fillIcons(db, characterId, media, budget) {
+	const rows = db
+		.prepare(
+			"SELECT slot,item_id FROM character_equipment WHERE character_id=? AND origin='provider' AND icon=''",
+		)
+		.all(characterId);
+	let filled = 0;
+	for (const r of rows) {
+		if (!/^\d+$/.test(r.item_id || '')) continue;
+		let icon =
+			db
+				.prepare(
+					"SELECT icon FROM character_equipment WHERE item_id=? AND icon LIKE 'forever:%' LIMIT 1",
+				)
+				.get(r.item_id)?.icon || '';
+		if (!icon && budget.left > 0) {
+			budget.left--;
+			const m = await media(r.item_id);
+			icon = m.ok ? readItemIcon(await m.json().catch(() => null)) : '';
+		}
+		if (!icon) continue;
+		db.prepare(
+			"UPDATE character_equipment SET icon=? WHERE character_id=? AND slot=? AND origin='provider'",
+		).run(icon, characterId, r.slot);
+		filled++;
+	}
+	return filled;
+}
+
 // Blizzard is the source for the slots it reports; a slot a member filled by hand stays
 // theirs. A Blizzard item no longer equipped leaves its slot.
 function saveEquipment(db, characterId, items, now) {
@@ -450,7 +496,8 @@ export async function syncBattlenet(db, env, fetcher = fetch) {
 		)
 		.all(cutoff, SYNC_BATCH);
 	if (!due.length) return null;
-	const result = { checked: due.length, updated: 0, missing: 0, gear: 0, answers: {} };
+	const result = { checked: due.length, updated: 0, missing: 0, gear: 0, icons: 0, answers: {} };
+	const budget = { left: ICON_FETCHES };
 	const mark = db.prepare(
 		'UPDATE battlenet_characters SET checked_at=?,status=? WHERE character_id=?',
 	);
@@ -540,6 +587,12 @@ export async function syncBattlenet(db, env, fetcher = fetch) {
 					result.updated++;
 				} else db.prepare('UPDATE characters SET synced_at=? WHERE id=?').run(now, c.id);
 			});
+			result.icons += await fillIcons(
+				db,
+				c.id,
+				(id) => get(`/data/wow/media/item/${id}`, token, `static-forever-${REGION}`),
+				budget,
+			);
 			const missingParts = [
 				!p.ok && `professions ${p.status}`,
 				!g.ok && `equipment ${g.status}`,

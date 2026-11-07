@@ -297,6 +297,19 @@ test('every six hours the web refreshes level and professions with its own token
 					},
 				],
 			});
+		// Forever's own icon for the cloak; the robe's media is not found.
+		if (
+			url.pathname === '/data/wow/media/item/4665' &&
+			url.searchParams.get('namespace') === 'static-forever-eu'
+		)
+			return Response.json({
+				assets: [
+					{
+						key: 'icon',
+						value: 'https://render.worldofwarcraft.com/forever-eu/icons/56/133763.jpg',
+					},
+				],
+			});
 		// Someone else with the same name on that realm.
 		if (url.pathname === '/profile/wow/character/reino-oculto/otro')
 			return Response.json({ id: 99, level: 60 });
@@ -313,6 +326,7 @@ test('every six hours the web refreshes level and professions with its own token
 		updated: 1,
 		missing: 2,
 		gear: 2,
+		icons: 1,
 		answers: { 200: 1, 404: 1, other: 1 },
 	});
 	assert.ok(
@@ -410,4 +424,27 @@ test('every six hours the web refreshes level and professions with its own token
 		}),
 		'Desuello 27, Cocina 1, Primeros auxilios 14',
 	);
+});
+
+test('an item icon is read from Forever media only', async () => {
+	const { readItemIcon } = await import('../src/battlenet.mjs');
+	assert.equal(
+		readItemIcon({
+			assets: [
+				{ key: 'icon', value: 'https://render.worldofwarcraft.com/forever-eu/icons/56/135641.jpg' },
+			],
+		}),
+		'forever:135641',
+	);
+	assert.equal(
+		readItemIcon({ assets: [{ key: 'icon', value: 'https://evil.example/icons/56/1.jpg' }] }),
+		'',
+	);
+	assert.equal(readItemIcon(null), '');
+	const { foreverIconUrl } = await import('../public/armory-catalog.js');
+	assert.equal(
+		foreverIconUrl('forever:135641'),
+		'https://render.worldofwarcraft.com/forever-eu/icons/56/135641.jpg',
+	);
+	assert.equal(foreverIconUrl('inv_sword_04'), '');
 });

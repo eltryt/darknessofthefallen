@@ -170,6 +170,11 @@ export const blizzardArmoryUrl = (c) =>
 	c?.source === 'battlenet' && c.name && c.surname
 		? `https://worldofwarcraft.blizzard.com/es-es/forever/eu/armory/character/${encodeURIComponent(`${c.name}-${c.surname}`.toLowerCase())}`
 		: '';
+// The icon of an item imported from Forever, stored as "forever:<file id>".
+export const foreverIconUrl = (value) => {
+	const m = /^forever:(\d{1,10})$/.exec(typeof value === 'string' ? value : '');
+	return m ? `${CATALOG_ICON_ORIGIN}/forever-eu/icons/56/${m[1]}.jpg` : '';
+};
 export const catalogIconUrl = (name) =>
 	typeof name === 'string' && /^[a-z0-9_-]{1,80}$/.test(name)
 		? `${CATALOG_ICON_ORIGIN}/classic1x-eu/icons/56/${name}.jpg`
