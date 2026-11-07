@@ -7,6 +7,7 @@ import {
 	slotIcon,
 	catalogIconUrl,
 	foreverIconUrl,
+	foreverIconFallback,
 	blizzardImage,
 	blizzardArmoryUrl,
 	raceBackdrop,
@@ -21,6 +22,19 @@ const escape = (value) =>
 // must be proxied or stored locally before they can be shown.
 const localImage = (value) =>
 	typeof value === 'string' && /^\/(?!\/)[\w/.-]+$/.test(value) ? value : '';
+// A Forever icon that Blizzard does not serve is swapped once for its fallback copy.
+if (typeof document !== 'undefined')
+	document.addEventListener(
+		'error',
+		(event) => {
+			const img = event.target;
+			if (img instanceof HTMLImageElement && img.dataset.iconFallback) {
+				img.src = img.dataset.iconFallback;
+				delete img.dataset.iconFallback;
+			}
+		},
+		true,
+	);
 // Provisional class portraits, shown until the Blizzard API (or another provider)
 // supplies the real character image.
 const classPortraits = {
@@ -88,6 +102,7 @@ function slot(name, item, side, href, buttons) {
 				: link;
 	// Our own images, Forever's icon of an imported item, or the icon of a catalogue pick.
 	const icon = localImage(item.icon) || foreverIconUrl(item.icon) || catalogIconUrl(item.icon);
+	const fallback = icon && icon === foreverIconUrl(item.icon) ? foreverIconFallback(item.icon) : '';
 	// A Blizzard item whose icon is not known yet: fillCatalogIcons() tries the catalogue.
 	const lookup =
 		!icon && /^\d+$/.test(item.item_id || '') ? ` data-catalog-item="${escape(item.item_id)}"` : '';
@@ -98,7 +113,7 @@ function slot(name, item, side, href, buttons) {
 	const title = wowhead
 		? ''
 		: ` title="${escape(label)}: ${escape(item.item_name)}${item.quality ? ' · ' + escape(itemQualities[item.quality] || item.quality) : ''}"`;
-	return `<${itemTag} data-doll-slot="${escape(name)}" class="doll-slot side-${side} quality-${escape(item.quality || 'none')}"${itemLink}${title}><span class="doll-icon"${lookup}>${icon ? `<img src="${escape(icon)}" alt="" width="44" height="44" loading="lazy">` : placeholder}</span><span class="doll-text"><strong>${escape(item.item_name || 'Objeto sin nombre')}</strong><span class="doll-meta">${item.item_level ? `<b>${escape(item.item_level)}</b>` : ''}${details.map((d) => `<small>${escape(d)}</small>`).join('')}</span></span></${itemTag}>`;
+	return `<${itemTag} data-doll-slot="${escape(name)}" class="doll-slot side-${side} quality-${escape(item.quality || 'none')}"${itemLink}${title}><span class="doll-icon"${lookup}>${icon ? `<img src="${escape(icon)}"${fallback ? ` data-icon-fallback="${escape(fallback)}"` : ''} alt="" width="44" height="44" loading="lazy">` : placeholder}</span><span class="doll-text"><strong>${escape(item.item_name || 'Objeto sin nombre')}</strong><span class="doll-meta">${item.item_level ? `<b>${escape(item.item_level)}</b>` : ''}${details.map((d) => `<small>${escape(d)}</small>`).join('')}</span></span></${itemTag}>`;
 }
 
 // Adds up the stats of the equipped pieces (items picked from the catalogue carry them).

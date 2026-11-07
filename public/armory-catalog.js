@@ -175,6 +175,12 @@ export const foreverIconUrl = (value) => {
 	const m = /^forever:([1-9]\d{0,9})$/.exec(typeof value === 'string' ? value : '');
 	return m ? `${CATALOG_ICON_ORIGIN}/forever-eu/icons/56/${m[1]}.jpg` : '';
 };
+// Blizzard does not serve every Forever icon under forever-eu (e.g. 135020, 134593); the same
+// file id under the retail path is the fallback when the Forever one fails to load.
+export const foreverIconFallback = (value) => {
+	const m = /^forever:([1-9]\d{0,9})$/.exec(typeof value === 'string' ? value : '');
+	return m ? `${CATALOG_ICON_ORIGIN}/eu/icons/56/${m[1]}.jpg` : '';
+};
 export const catalogIconUrl = (name) =>
 	typeof name === 'string' && /^[a-z0-9_-]{1,80}$/.test(name)
 		? `${CATALOG_ICON_ORIGIN}/classic1x-eu/icons/56/${name}.jpg`

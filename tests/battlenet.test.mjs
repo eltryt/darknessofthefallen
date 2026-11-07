@@ -441,11 +441,16 @@ test('an item icon is read from Forever media only', async () => {
 		'',
 	);
 	assert.equal(readItemIcon(null), '');
-	const { foreverIconUrl } = await import('../public/armory-catalog.js');
+	const { foreverIconUrl, foreverIconFallback } = await import('../public/armory-catalog.js');
 	assert.equal(
 		foreverIconUrl('forever:135641'),
 		'https://render.worldofwarcraft.com/forever-eu/icons/56/135641.jpg',
 	);
 	assert.equal(foreverIconUrl('inv_sword_04'), '');
 	assert.equal(foreverIconUrl('forever:0'), '');
+	assert.equal(
+		foreverIconFallback('forever:135020'),
+		'https://render.worldofwarcraft.com/eu/icons/56/135020.jpg',
+	);
+	assert.equal(foreverIconFallback('inv_sword_04'), '');
 });
