@@ -240,7 +240,8 @@ export function nextBattlenetSyncAt(db) {
 		)
 		.get();
 	if (!row.n) return null;
-	return row.fresh ? Date.now() : Date.parse(row.oldest) + SYNC_EVERY_MS;
+	const next = row.fresh ? Date.now() : Date.parse(row.oldest) + SYNC_EVERY_MS;
+	return iconsPending(db) ? Math.min(next, lastIconPass + ICON_RETRY_MS) : next;
 }
 
 // Forever answers profession names in English whatever the locale: ours go by Blizzard's id,
@@ -395,13 +396,26 @@ export function readItemIcon(data) {
 	return '';
 }
 
-// Blizzard items of one character still without an icon get Forever's.
-async function fillIcons(db, characterId, media, budget) {
+// Blizzard items still without an icon. They are looked up right away (every ten minutes
+// at most), not at the character's next six-hour refresh.
+const ICON_RETRY_MS = 10 * 60000;
+let lastIconPass = 0;
+const iconsPending = (db) =>
+	db
+		.prepare(
+			"SELECT 1 FROM character_equipment e JOIN battlenet_characters b ON b.character_id=e.character_id WHERE e.origin='provider' AND e.icon='' AND e.item_id GLOB '[0-9]*' LIMIT 1",
+		)
+		.get();
+
+// Blizzard items without an icon get Forever's. An item Blizzard has no icon for is marked
+// "forever:0" so it is not asked again; the armory then tries the Classic catalogue.
+async function fillIcons(db, media, budget) {
+	lastIconPass = Date.now();
 	const rows = db
 		.prepare(
-			"SELECT slot,item_id FROM character_equipment WHERE character_id=? AND origin='provider' AND icon=''",
+			"SELECT e.character_id,e.slot,e.item_id FROM character_equipment e JOIN battlenet_characters b ON b.character_id=e.character_id WHERE e.origin='provider' AND e.icon='' AND e.item_id GLOB '[0-9]*'",
 		)
-		.all(characterId);
+		.all();
 	let filled = 0;
 	for (const r of rows) {
 		if (!/^\d+$/.test(r.item_id || '')) continue;
@@ -414,13 +428,17 @@ async function fillIcons(db, characterId, media, budget) {
 		if (!icon && budget.left > 0) {
 			budget.left--;
 			const m = await media(r.item_id);
-			icon = m.ok ? readItemIcon(await m.json().catch(() => null)) : '';
+			icon = m.ok
+				? readItemIcon(await m.json().catch(() => null)) || 'forever:0'
+				: m.status === 404
+					? 'forever:0'
+					: '';
 		}
 		if (!icon) continue;
 		db.prepare(
 			"UPDATE character_equipment SET icon=? WHERE character_id=? AND slot=? AND origin='provider'",
-		).run(icon, characterId, r.slot);
-		filled++;
+		).run(icon, r.character_id, r.slot);
+		if (icon !== 'forever:0') filled++;
 	}
 	return filled;
 }
@@ -495,7 +513,7 @@ export async function syncBattlenet(db, env, fetcher = fetch) {
 			'SELECT b.character_id AS id,b.realm_id,c.name,c.surname,c.external_id,c.level,c.professions,c.avatar_url,c.stats FROM battlenet_characters b JOIN characters c ON c.id=b.character_id WHERE c.archived_at IS NULL AND (b.checked_at IS NULL OR b.checked_at<?) ORDER BY b.checked_at IS NOT NULL, b.checked_at LIMIT ?',
 		)
 		.all(cutoff, SYNC_BATCH);
-	if (!due.length) return null;
+	if (!due.length && (!iconsPending(db) || Date.now() < lastIconPass + ICON_RETRY_MS)) return null;
 	const result = { checked: due.length, updated: 0, missing: 0, gear: 0, icons: 0, answers: {} };
 	const budget = { left: ICON_FETCHES };
 	const mark = db.prepare(
@@ -587,12 +605,6 @@ export async function syncBattlenet(db, env, fetcher = fetch) {
 					result.updated++;
 				} else db.prepare('UPDATE characters SET synced_at=? WHERE id=?').run(now, c.id);
 			});
-			result.icons += await fillIcons(
-				db,
-				c.id,
-				(id) => get(`/data/wow/media/item/${id}`, token, `static-forever-${REGION}`),
-				budget,
-			);
 			const missingParts = [
 				!p.ok && `professions ${p.status}`,
 				!g.ok && `equipment ${g.status}`,
@@ -601,6 +613,11 @@ export async function syncBattlenet(db, env, fetcher = fetch) {
 			].filter(Boolean);
 			mark.run(now, missingParts.length ? `ok, ${missingParts.join(', ')}` : 'ok', c.id);
 		}
+		result.icons = await fillIcons(
+			db,
+			(id) => get(`/data/wow/media/item/${id}`, token, `static-forever-${REGION}`),
+			budget,
+		);
 	} catch (e) {
 		// Blizzard down or the application refused: the ones left are tried again in six hours.
 		const now = new Date().toISOString();

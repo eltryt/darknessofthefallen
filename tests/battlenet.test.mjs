@@ -447,4 +447,5 @@ test('an item icon is read from Forever media only', async () => {
 		'https://render.worldofwarcraft.com/forever-eu/icons/56/135641.jpg',
 	);
 	assert.equal(foreverIconUrl('inv_sword_04'), '');
+	assert.equal(foreverIconUrl('forever:0'), '');
 });

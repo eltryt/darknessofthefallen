@@ -172,7 +172,7 @@ export const blizzardArmoryUrl = (c) =>
 		: '';
 // The icon of an item imported from Forever, stored as "forever:<file id>".
 export const foreverIconUrl = (value) => {
-	const m = /^forever:(\d{1,10})$/.exec(typeof value === 'string' ? value : '');
+	const m = /^forever:([1-9]\d{0,9})$/.exec(typeof value === 'string' ? value : '');
 	return m ? `${CATALOG_ICON_ORIGIN}/forever-eu/icons/56/${m[1]}.jpg` : '';
 };
 export const catalogIconUrl = (name) =>
