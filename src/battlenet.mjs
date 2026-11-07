@@ -7,13 +7,13 @@ import { audit, transaction } from './database-core.mjs';
 // "Conectar con Battle.net": each member authorises their own account once and the web
 // imports their WoW Forever characters (name, surname, class, race, faction, level).
 // The Battle.net token is used for that single request and never stored. Afterwards the
-// web looks each imported character up every six hours with its own application token,
+// web looks each imported character up every hour with its own application token,
 // to keep the level, professions, equipment and portrait current.
 const REGION = 'eu';
 const NAMESPACE = `profile-forever-${REGION}`;
 const API = `https://${REGION}.api.blizzard.com`;
 const CHARACTER_LIMIT = 30;
-const SYNC_EVERY_MS = 6 * 3600000;
+const SYNC_EVERY_MS = 3600000;
 // Characters per alarm run: each takes up to seven requests, and the Worker caps them.
 const SYNC_BATCH = 6;
 // Item icons asked to Blizzard per refresh; an icon already known for that item is reused.
@@ -232,7 +232,7 @@ export function importCharacters(db, user, profile) {
 }
 
 // When the alarm should next refresh characters: now for ones never checked, otherwise
-// six hours after the oldest check. Null while nobody has imported a character.
+// an hour after the oldest check. Null while nobody has imported a character.
 export function nextBattlenetSyncAt(db) {
 	const row = db
 		.prepare(
@@ -619,7 +619,7 @@ export async function syncBattlenet(db, env, fetcher = fetch) {
 			budget,
 		);
 	} catch (e) {
-		// Blizzard down or the application refused: the ones left are tried again in six hours.
+		// Blizzard down or the application refused: the ones left are tried again in an hour.
 		const now = new Date().toISOString();
 		for (const c of due)
 			db.prepare(

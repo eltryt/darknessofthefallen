@@ -208,7 +208,7 @@ test('the profile button only appears once Battle.net is configured', async () =
 	}
 });
 
-test('every six hours the web refreshes level and professions with its own token', async () => {
+test('every hour the web refreshes level and professions with its own token', async () => {
 	const db = setup();
 	assert.equal(nextBattlenetSyncAt(db), null);
 	const withRealm = (c, realm) => ({
@@ -398,9 +398,9 @@ test('every six hours the web refreshes level and professions with its own token
 	);
 	// The namesake's level is not taken.
 	assert.equal(rows.find((c) => c.name === 'Otro').level, 4);
-	// Nothing is due again for six hours; a new import makes it due at once.
+	// Nothing is due again for an hour; a new import makes it due at once.
 	assert.equal(await syncBattlenet(db, ENV, fetcher), null);
-	assert.ok(nextBattlenetSyncAt(db) > Date.now() + 5 * 3600000);
+	assert.ok(nextBattlenetSyncAt(db) > Date.now() + 50 * 60000);
 	importCharacters(
 		db,
 		{ id: 'u1' },
