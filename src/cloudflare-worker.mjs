@@ -123,7 +123,14 @@ export class Guild extends DurableObject {
 			},
 		};
 		await this.app(req, res);
-		await this.scheduleNotifications();
+		// Reading pages queues nothing new: their check of the alarms runs once a minute at
+		// most (each check reads several tables). Writes always check; the alarm reschedules
+		// itself after every run.
+		const reading = request.method === 'GET' || request.method === 'HEAD';
+		if (!reading || Date.now() - (this.scheduledAt || 0) > 60000) {
+			this.scheduledAt = Date.now();
+			await this.scheduleNotifications();
+		}
 		return response || new Response('Application response unavailable.', { status: 500 });
 	}
 

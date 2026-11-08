@@ -26,6 +26,33 @@ const lastMessage = new Map();
 // Object or the local server); a restart simply empties the room for a few seconds.
 const PRESENCE_MS = 10000;
 const viewers = new Map();
+// The ranking goes over every table ever played, and the room asks for it every two
+// seconds: it is kept until a roulette change (any write through rouletteApi) or a minute.
+const RANKING_TTL_MS = 60000;
+const rankingCache = new WeakMap();
+function rankingRows(db) {
+	const cached = rankingCache.get(db);
+	if (cached && Date.now() - cached.at < RANKING_TTL_MS) return cached.rows;
+	const rows = db
+		.prepare(
+			`SELECT p.user_id,
+				(SELECT name FROM roulette_players WHERE user_id=p.user_id ORDER BY joined_at DESC LIMIT 1) AS name,
+				(SELECT class FROM roulette_players WHERE user_id=p.user_id ORDER BY joined_at DESC LIMIT 1) AS class,
+				COUNT(*) AS played,
+				SUM(CASE WHEN t.winner_id=p.user_id THEN 1 ELSE 0 END) AS wins,
+				SUM(CASE WHEN t.loser_id=p.user_id THEN 1 ELSE 0 END) AS losses,
+				SUM(CASE WHEN t.winner_id=p.user_id THEN t.amount ELSE 0 END) AS won,
+				SUM(CASE WHEN t.loser_id=p.user_id THEN t.amount ELSE 0 END) AS lost,
+				MAX(CASE WHEN t.winner_id=p.user_id THEN t.amount ELSE 0 END) AS best
+			 FROM roulette_players p JOIN roulette_tables t ON t.id=p.table_id
+			 WHERE t.status='spun' AND t.deleted_at IS NULL AND p.left_at IS NULL
+			 GROUP BY p.user_id
+			 ORDER BY won-lost DESC, won DESC, name`,
+		)
+		.all();
+	rankingCache.set(db, { at: Date.now(), rows });
+	return rows;
+}
 const MAX_ROUNDS = 5000;
 // "Otra ronda" seats everyone again, so it can't be spun until the room has watched the
 // previous table land and had this long to retire.
@@ -202,36 +229,19 @@ function tableState(db, user, watching = []) {
 		.all(RECENT)
 		.map(result);
 	// Totals per player over every table played; the name is the latest one they used.
-	const ranking = db
-		.prepare(
-			`SELECT p.user_id,
-				(SELECT name FROM roulette_players WHERE user_id=p.user_id ORDER BY joined_at DESC LIMIT 1) AS name,
-				(SELECT class FROM roulette_players WHERE user_id=p.user_id ORDER BY joined_at DESC LIMIT 1) AS class,
-				COUNT(*) AS played,
-				SUM(CASE WHEN t.winner_id=p.user_id THEN 1 ELSE 0 END) AS wins,
-				SUM(CASE WHEN t.loser_id=p.user_id THEN 1 ELSE 0 END) AS losses,
-				SUM(CASE WHEN t.winner_id=p.user_id THEN t.amount ELSE 0 END) AS won,
-				SUM(CASE WHEN t.loser_id=p.user_id THEN t.amount ELSE 0 END) AS lost,
-				MAX(CASE WHEN t.winner_id=p.user_id THEN t.amount ELSE 0 END) AS best
-			 FROM roulette_players p JOIN roulette_tables t ON t.id=p.table_id
-			 WHERE t.status='spun' AND t.deleted_at IS NULL AND p.left_at IS NULL
-			 GROUP BY p.user_id
-			 ORDER BY won-lost DESC, won DESC, name`,
-		)
-		.all()
-		.map((r) => ({
-			id: r.user_id,
-			name: r.name,
-			class: r.class,
-			played: r.played,
-			wins: r.wins,
-			losses: r.losses,
-			won: r.won,
-			lost: r.lost,
-			net: r.won - r.lost,
-			best: r.best,
-			me: r.user_id === user.id,
-		}));
+	const ranking = rankingRows(db).map((r) => ({
+		id: r.user_id,
+		name: r.name,
+		class: r.class,
+		played: r.played,
+		wins: r.wins,
+		losses: r.losses,
+		won: r.won,
+		lost: r.lost,
+		net: r.won - r.lost,
+		best: r.best,
+		me: r.user_id === user.id,
+	}));
 	return {
 		me: user.id,
 		serverTime: new Date().toISOString(),
@@ -265,6 +275,8 @@ function tableState(db, user, watching = []) {
 export async function rouletteApi({ db, user, path, method, body, send, requirePermission }) {
 	if (path !== '/api/roulette' && !path.startsWith('/api/roulette/')) return false;
 	requirePermission('community.read');
+	// Anything but reading may change who won what.
+	if (method !== 'GET') rankingCache.delete(db);
 	if (path === '/api/roulette' && method === 'GET') {
 		send(200, tableState(db, user, present(db, user)));
 		return true;
