@@ -240,8 +240,7 @@ export function nextBattlenetSyncAt(db) {
 		)
 		.get();
 	if (!row.n) return null;
-	const next = row.fresh ? Date.now() : Date.parse(row.oldest) + SYNC_EVERY_MS;
-	return iconsPending(db) ? Math.min(next, lastIconPass + ICON_RETRY_MS) : next;
+	return row.fresh ? Date.now() : Date.parse(row.oldest) + SYNC_EVERY_MS;
 }
 
 // Forever answers profession names in English whatever the locale: ours go by Blizzard's id,
@@ -396,35 +395,31 @@ export function readItemIcon(data) {
 	return '';
 }
 
-// Blizzard items still without an icon. They are looked up right away (every ten minutes
-// at most), not at the character's next six-hour refresh.
-const ICON_RETRY_MS = 10 * 60000;
-let lastIconPass = 0;
-const iconsPending = (db) =>
-	db
-		.prepare(
-			"SELECT 1 FROM character_equipment e JOIN battlenet_characters b ON b.character_id=e.character_id WHERE e.origin='provider' AND e.icon='' AND e.item_id GLOB '[0-9]*' LIMIT 1",
-		)
-		.get();
-
-// Blizzard items without an icon get Forever's. An item Blizzard has no icon for is marked
-// "forever:0" so it is not asked again; the armory then tries the Classic catalogue.
-async function fillIcons(db, media, budget) {
-	lastIconPass = Date.now();
+// Blizzard items of the characters just refreshed that still have no icon get Forever's.
+// Icons already known are read once per refresh (one pass over the table, not one per item).
+// An item Blizzard has no icon for is marked "forever:0" so it is not asked again.
+async function fillIcons(db, characterIds, media, budget) {
+	if (!characterIds.length) return 0;
+	const known = new Map(
+		db
+			.prepare(
+				"SELECT item_id,icon FROM character_equipment WHERE origin='provider' AND icon LIKE 'forever:%'",
+			)
+			.all()
+			.map((r) => [r.item_id, r.icon]),
+	);
 	const rows = db
 		.prepare(
-			"SELECT e.character_id,e.slot,e.item_id FROM character_equipment e JOIN battlenet_characters b ON b.character_id=e.character_id WHERE e.origin='provider' AND e.icon='' AND e.item_id GLOB '[0-9]*'",
+			`SELECT character_id,slot,item_id FROM character_equipment WHERE origin='provider' AND icon='' AND character_id IN (${characterIds.map(() => '?').join(',')})`,
 		)
-		.all();
+		.all(...characterIds);
+	const update = db.prepare(
+		"UPDATE character_equipment SET icon=? WHERE character_id=? AND slot=? AND origin='provider'",
+	);
 	let filled = 0;
 	for (const r of rows) {
 		if (!/^\d+$/.test(r.item_id || '')) continue;
-		let icon =
-			db
-				.prepare(
-					"SELECT icon FROM character_equipment WHERE item_id=? AND icon LIKE 'forever:%' LIMIT 1",
-				)
-				.get(r.item_id)?.icon || '';
+		let icon = known.get(r.item_id) || '';
 		if (!icon && budget.left > 0) {
 			budget.left--;
 			const m = await media(r.item_id);
@@ -433,11 +428,10 @@ async function fillIcons(db, media, budget) {
 				: m.status === 404
 					? 'forever:0'
 					: '';
+			if (icon) known.set(r.item_id, icon);
 		}
 		if (!icon) continue;
-		db.prepare(
-			"UPDATE character_equipment SET icon=? WHERE character_id=? AND slot=? AND origin='provider'",
-		).run(icon, r.character_id, r.slot);
+		update.run(icon, r.character_id, r.slot);
 		if (icon !== 'forever:0') filled++;
 	}
 	return filled;
@@ -513,7 +507,7 @@ export async function syncBattlenet(db, env, fetcher = fetch) {
 			'SELECT b.character_id AS id,b.realm_id,c.name,c.surname,c.external_id,c.level,c.professions,c.avatar_url,c.stats FROM battlenet_characters b JOIN characters c ON c.id=b.character_id WHERE c.archived_at IS NULL AND (b.checked_at IS NULL OR b.checked_at<?) ORDER BY b.checked_at IS NOT NULL, b.checked_at LIMIT ?',
 		)
 		.all(cutoff, SYNC_BATCH);
-	if (!due.length && (!iconsPending(db) || Date.now() < lastIconPass + ICON_RETRY_MS)) return null;
+	if (!due.length) return null;
 	const result = { checked: due.length, updated: 0, missing: 0, gear: 0, icons: 0, answers: {} };
 	const budget = { left: ICON_FETCHES };
 	const mark = db.prepare(
@@ -615,6 +609,7 @@ export async function syncBattlenet(db, env, fetcher = fetch) {
 		}
 		result.icons = await fillIcons(
 			db,
+			due.map((c) => c.id),
 			(id) => get(`/data/wow/media/item/${id}`, token, `static-forever-${REGION}`),
 			budget,
 		);
