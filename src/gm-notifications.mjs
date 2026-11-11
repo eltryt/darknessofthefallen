@@ -155,7 +155,9 @@ export function captureRaidIncidents(db, env) {
 	if (!gmReady(env)) return;
 	// Only newly failed jobs, not the historical backlog at activation.
 	for (const job of db
-		.prepare("SELECT id FROM raid_jobs WHERE status='blocked' AND created_at>=? LIMIT 20")
+		.prepare(
+			"SELECT j.id,j.error,e.title FROM raid_jobs j LEFT JOIN raid_events e ON e.id=j.event_id WHERE j.status='blocked' AND j.created_at>=? LIMIT 20",
+		)
 		.all(new Date(Date.now() - 15 * 60000).toISOString())) {
 		const key = 'raid-job:' + job.id;
 		transaction(db, () => {
@@ -166,7 +168,10 @@ export function captureRaidIncidents(db, env) {
 				'incident',
 				null,
 				'Operación de convocatoria bloqueada',
-				'Una operación de Raid-Helper requiere revisión. Consulta Panel → Raids. Referencia: ' +
+				// Says which event and why, so whoever reads it knows what to fix.
+				`La convocatoria «${job.title || 'sin título'}» no se ha podido publicar o actualizar en Discord.` +
+					(job.error ? `\nMotivo: ${job.error}` : '') +
+					'\nRevísala en Panel → Convocatorias (botón «Reintentar conexión»). Referencia: ' +
 					job.id,
 				new Date().toISOString(),
 			);

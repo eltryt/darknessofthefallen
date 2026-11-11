@@ -10,6 +10,8 @@ import { ProviderError } from './raid-helper.mjs';
 
 const API = 'https://discord.com/api/v10';
 const snowflake = (value) => /^\d{17,20}$/.test(String(value || ''));
+// View channel, send messages, embed links, read message history, use external emojis.
+const CHANNEL_PERMISSIONS = 1024 + 2048 + 16384 + 65536 + 262144;
 export const botReady = (env) =>
 	typeof env.DISCORD_BOT_TOKEN === 'string' &&
 	/^[\w.-]{50,120}$/.test(env.DISCORD_BOT_TOKEN) &&
@@ -732,9 +734,27 @@ export async function connectBot(db, env, { transport = fetch, readAsset }) {
 	else
 		try {
 			await botRest(env, transport, 'GET', `/channels/${channel}`);
+			// The calls channel is read-only for players: the bot gives itself, in that channel
+			// only, what it needs to publish (it can, holding «Gestionar roles»).
+			const me = await botRest(env, transport, 'GET', '/users/@me');
+			await botRest(env, transport, 'PUT', `/channels/${channel}/permissions/${me.id}`, {
+				type: 1,
+				allow: String(CHANNEL_PERMISSIONS),
+				deny: '0',
+			});
 			report.channel = 'ok';
 		} catch (e) {
-			report.channel = botError(e);
+			report.channel =
+				e.status === 403
+					? 'El bot no puede escribir en el canal. En Discord: ajustes del canal → Permisos → añade «Convocatorias» y permite Ver canal, Enviar mensajes, Insertar enlaces, Leer el historial y Usar emojis externos.'
+					: botError(e);
 		}
+	// Events that could not be published for lack of permission go out again by themselves.
+	if (report.channel === 'ok')
+		report.retried = db
+			.prepare(
+				"UPDATE raid_jobs SET status='pending',next_at=0,error='' WHERE status='blocked' AND kind='create' AND event_id IN (SELECT id FROM raid_events WHERE provider='bot' AND external_id IS NULL AND starts_at>?)",
+			)
+			.run(new Date().toISOString()).changes;
 	return report;
 }

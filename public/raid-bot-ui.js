@@ -93,7 +93,8 @@ export async function mountRaidBot(host, ctx) {
 			${r.created} iconos
 			subidos${r.failed.length ? `, ${r.failed.length} pendientes (pulsa otra vez en un minuto)` : ''}.
 			Botones: ${r.endpoint === 'ok' ? 'conectados a la web ✓' : esc(r.endpoint)}. Canal:
-			${r.channel === 'ok' ? 'visible para el bot ✓' : esc(r.channel)}.
+			${r.channel === 'ok' ? 'el bot puede publicar ✓' : esc(r.channel)}.
+			${r.retried ? `Se vuelven a publicar ${r.retried} convocatorias que estaban bloqueadas.` : ''}
 		</p>`;
 	const howTo = /* HTML */ `<div class="bot-howto">
 		<strong>Cómo se apunta un jugador</strong>

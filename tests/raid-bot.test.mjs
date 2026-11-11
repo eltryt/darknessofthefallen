@@ -66,6 +66,8 @@ async function fixture() {
 			discord.fail = null;
 			return Response.json({ retry_after: 1 }, { status });
 		}
+		if (path.endsWith('/users/@me')) return Response.json({ id: '1550000000000000501' });
+		if (/\/channels\/\d+\/permissions\/\d+$/.test(path)) return new Response(null, { status: 204 });
 		if (path.endsWith('/applications/@me'))
 			return Response.json({ id: '1550000000000000500', name: 'Bot QA', verify_key: verifyKey });
 		if (path.endsWith('/emojis')) {
@@ -454,10 +456,14 @@ test('a publication Discord did not answer is retried without posting twice', as
 		assert.equal(event.job.status, 'blocked');
 		assert.match(event.job.error, /permiso/);
 		assert.equal(f.discord.messages.size, 0);
-		// Fixed in Discord: «Reintentar» publishes it once.
-		await f.request(`/api/events/${created.body.id}/retry`, 'raid_leader', 'POST', {
-			requestId: randomUUID(),
-		});
+		// «Conectar» gives the bot its permission in the channel and queues the event again.
+		const again = await f.request('/api/raid-bot/connect', 'officer', 'POST', {});
+		assert.equal(again.body.report.channel, 'ok');
+		assert.equal(again.body.report.retried, 1);
+		const grant = f.discord.calls.find((c) => c.method === 'PUT' && /\/permissions\//.test(c.path));
+		assert.match(grant.path, /\/channels\/1550997172982382723\/permissions\/1550000000000000501$/);
+		assert.equal(grant.body.type, 1);
+		assert.equal(BigInt(grant.body.allow) & 2048n, 2048n);
 		await f.sync();
 		event = (await f.request('/api/events/' + created.body.id, 'raid_leader')).body;
 		assert.equal(event.state, 'Abierta');
