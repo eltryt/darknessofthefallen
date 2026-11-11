@@ -612,7 +612,13 @@ ${esc(event.description || '')}</textarea>
 			clearInterval(timer);
 			return;
 		}
-		if (!selected && !lineupOpen && !host.querySelector('[data-create][open]'))
+		// Only while someone is looking: a tab left in the background does not keep asking.
+		if (
+			document.visibilityState === 'visible' &&
+			!selected &&
+			!lineupOpen &&
+			!host.querySelector('[data-create][open]')
+		)
 			load().catch(() => {});
 	}, 30000);
 }

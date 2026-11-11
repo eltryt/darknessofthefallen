@@ -97,7 +97,10 @@ export class Guild extends DurableObject {
 		u.total += rows;
 		// The object is put to sleep when idle and the totals kept in memory go with it, so a
 		// single expensive call is written down at once (once per ten minutes per kind).
-		if (rows >= 2000 && Date.now() - (this.spikes.get(key) || 0) > USAGE_FLUSH_MS) {
+		if (
+			rows >= (key === 'start' ? 500 : 2000) &&
+			Date.now() - (this.spikes.get(key) || 0) > USAGE_FLUSH_MS
+		) {
 			this.spikes.set(key, Date.now());
 			try {
 				audit(this.db, 'system:usage', 'system.usage', 'durable-object', {
