@@ -80,7 +80,10 @@ export class Guild extends DurableObject {
 			raidBotSchema,
 		);
 		repairGMRedirectFailures(this.db);
-		this.usage = { since: Date.now(), alarms: 0, keys: new Map() };
+		this.usage = { since: Date.now(), alarms: 0, total: 0, keys: new Map() };
+		this.spikes = new Map();
+		// What starting the object reads (schema checks and repairs run on every wake-up).
+		this.countRows('start', 0);
 	}
 
 	// Adds the rows read since `start` to `key`; every ten minutes the totals go to the audit.
@@ -91,13 +94,27 @@ export class Guild extends DurableObject {
 		entry.calls++;
 		entry.rows += rows;
 		u.keys.set(key, entry);
-		if (Date.now() - u.since < USAGE_FLUSH_MS) return;
+		u.total += rows;
+		// The object is put to sleep when idle and the totals kept in memory go with it, so a
+		// single expensive call is written down at once (once per ten minutes per kind).
+		if (rows >= 2000 && Date.now() - (this.spikes.get(key) || 0) > USAGE_FLUSH_MS) {
+			this.spikes.set(key, Date.now());
+			try {
+				audit(this.db, 'system:usage', 'system.usage', 'durable-object', {
+					spike: key,
+					rows,
+				});
+			} catch (e) {
+				console.warn('Usage audit failed', e?.message);
+			}
+		}
+		if (Date.now() - u.since < USAGE_FLUSH_MS && u.total < 50000) return;
 		const top = [...u.keys]
 			.sort((a, b) => b[1].rows - a[1].rows)
 			.slice(0, 15)
 			.map(([k, v]) => `${k} · ${v.calls}× · ${v.rows} filas`);
 		const total = [...u.keys.values()].reduce((n, v) => n + v.rows, 0);
-		this.usage = { since: Date.now(), alarms: 0, keys: new Map() };
+		this.usage = { since: Date.now(), alarms: 0, total: 0, keys: new Map() };
 		try {
 			audit(this.db, 'system:usage', 'system.usage', 'durable-object', {
 				minutes: Math.round((Date.now() - (u.since || Date.now())) / 60000) || 10,
