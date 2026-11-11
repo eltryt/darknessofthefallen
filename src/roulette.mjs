@@ -551,6 +551,8 @@ export async function rouletteApi({ db, user, path, method, body, send, requireP
 			'INSERT INTO roulette_spins(table_id,seq,round,kind,user_id,number) VALUES(?,?,?,?,?,?)',
 		);
 		for (const s of game.spins) insert.run(id, s.seq, s.round, s.kind, s.userId, s.number);
+		// Both private messages go at the same moment.
+		const dmAt = Date.now() + revealDelay(game.spins.length);
 		db.prepare(
 			`UPDATE roulette_tables SET status='spun',closed_at=?,closed_by=?,winner_id=?,loser_id=?,high=?,low=?,amount=?,dm_status='pending',dm_next_at=?,loser_dm_status='pending',loser_dm_next_at=? WHERE id=?`,
 		).run(
@@ -561,8 +563,8 @@ export async function rouletteApi({ db, user, path, method, body, send, requireP
 			game.high,
 			game.low,
 			amount,
-			Date.now() + revealDelay(game.spins.length),
-			Date.now() + revealDelay(game.spins.length),
+			dmAt,
+			dmAt,
 			id,
 		);
 		audit(db, user.id, 'roulette.spun', id, {
