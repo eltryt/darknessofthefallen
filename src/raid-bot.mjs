@@ -368,7 +368,7 @@ export function renderMessage(doc, eventId, emojis, origin, closed = false) {
 	else
 		lines.push(
 			'',
-			'📝 Para apuntarte necesitas **entrar en la web con Discord** y tener tu personaje **vinculado con Battle.net** (Mi perfil → Battle.net).',
+			'📝 Para apuntarte necesitas **entrar en la web con Discord** y tener tu personaje **actualizado desde Battle.net** (Mi perfil → Personajes → Actualizar desde Battle.net).',
 		);
 	const fields = [];
 	const group = (title, members, line) => {

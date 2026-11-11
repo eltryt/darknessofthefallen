@@ -543,7 +543,7 @@ export async function raidEventsApi(ctx) {
 			if (row.provider === 'bot' && (character.source !== 'battlenet' || !character.synced_at))
 				throw new HttpError(
 					400,
-					'Para apuntarte, vincula antes este personaje con Battle.net en Mi perfil.',
+					'Para apuntarte, antes actualiza este personaje en Mi perfil → Personajes → Actualizar desde Battle.net.',
 				);
 			const cls = (raw.classes || []).find((c) => c.name === v.className);
 			if (!cls)

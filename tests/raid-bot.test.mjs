@@ -250,16 +250,20 @@ test('an event is published with one sign-up button and sign-ups arrive from Dis
 		assert.equal(done.body.type, 4);
 		assert.equal(done.body.data.flags, 64);
 		assert.ok(done.body.data.content.includes('**Merlina** · Mago · Escarcha'));
-		const select = done.body.data.components[0].components[0];
+		// It ends there: no menu after signing up.
+		assert.equal(done.body.data.components, undefined);
+		// Pressing «Apuntarme» again offers the spec change; picking one closes the menu.
+		const change = await f.press(ids.member, `rs:a:${id}`);
+		assert.match(change.body.data.content, /Ya estás apuntado/);
+		const select = change.body.data.components[0].components[0];
 		assert.deepEqual(
 			select.options.map((o) => o.label),
 			['Arcano', 'Fuego', 'Escarcha'],
 		);
-		// The spec can be changed from the same private answer.
-		assert.match(
-			(await f.press(ids.member, select.custom_id, ['Arcano'])).body.data.content,
-			/Mago · Arcano/,
-		);
+		const picked = await f.press(ids.member, select.custom_id, ['Arcano']);
+		assert.equal(picked.body.type, 7);
+		assert.deepEqual(picked.body.data.components, []);
+		assert.match(picked.body.data.content, /Mago · Arcano/);
 		await f.press(ids.member, select.custom_id, ['Escarcha']);
 
 		const after = (await f.request('/api/events/' + id, 'member')).body;

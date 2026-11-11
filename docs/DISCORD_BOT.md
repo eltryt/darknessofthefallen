@@ -74,7 +74,7 @@ Cuando está todo, la puesta en marcha se pliega y el editor queda en una línea
 ### Cómo se apunta un jugador
 
 1. Entra en la web con su cuenta de Discord.
-2. En **Mi perfil** vincula su personaje con **Battle.net**.
+2. En **Mi perfil → Personajes** pulsa **Actualizar desde Battle.net**.
 3. En la convocatoria de Discord pulsa **✅ Apuntarme**.
 
 Solo cuentan los personajes **validados con Battle.net** (importados desde Mi perfil). Con uno

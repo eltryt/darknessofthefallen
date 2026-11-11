@@ -75,8 +75,8 @@ function notValidated(env, mine) {
 	return say(
 		(mine
 			? 'Ninguno de tus personajes validados es de una clase de esta convocatoria.'
-			: 'Para apuntarte necesitas **entrar en la web con Discord** y **vincular tu personaje con Battle.net**.') +
-			'\n1. Entra en la web con tu cuenta de Discord.\n2. En **Mi perfil**, pulsa **Battle.net** e importa tu personaje.\n3. Vuelve aquí y pulsa **Apuntarme**.',
+			: 'Para apuntarte necesitas **entrar en la web con Discord** y **actualizar tu personaje desde Battle.net**.') +
+			'\n1. Entra en la web con tu cuenta de Discord.\n2. Ve a **Mi perfil → Personajes** y pulsa **Actualizar desde Battle.net**.\n3. Vuelve aquí y pulsa **Apuntarme**.',
 		profile
 			? {
 					components: [
@@ -144,16 +144,23 @@ function join(db, env, eventId, user, character, emojis, specName) {
 		return say(`**${fullName(character)}** (${cls.name}): elige tu especialización.`, {
 			components: [specMenu(eventId, cls, character, emojis)],
 		});
+	// Pressing «Apuntarme» again while signed up with this character changes the spec.
+	const current = doc.signUps.find((s) => s.userId === user.id && s.className === cls.name);
+	if (!specName && current && cls.specs.length > 1)
+		return say(`Ya estás apuntado con **${current.name}** · ${cls.name} · ${current.specName}.`, {
+			components: [specMenu(eventId, cls, character, emojis, current.specName)],
+		});
 	const signup = signUp(db, env, eventId, user, cls, character, spec);
-	return say(
+	const content =
 		`✅ Apuntado con **${signup.name}** · ${cls.name}${signup.specName ? ' · ' + signup.specName : ''}.` +
-			(signup.status === 'queued'
-				? '\n⏳ La raid o tu rol están completos: quedas en cola y subes solo si se libera una plaza.'
-				: ''),
-		cls.specs.length > 1
-			? { components: [specMenu(eventId, cls, character, emojis, signup.specName)] }
-			: {},
-	);
+		(signup.status === 'queued'
+			? '\n⏳ La raid o tu rol están completos: quedas en cola y subes solo si se libera una plaza.'
+			: '') +
+		(cls.specs.length > 1 ? '\nPara cambiar de especialización, pulsa otra vez «Apuntarme».' : '');
+	// Done: a spec picked from the menu replaces that menu with the confirmation.
+	return specName
+		? { type: 7, data: { content, components: [], allowed_mentions: { parse: [] } } }
+		: say(content);
 }
 function component(db, env, interaction) {
 	const [prefix, kind, eventId, ...rest] = String(interaction.data?.custom_id || '').split(':'),

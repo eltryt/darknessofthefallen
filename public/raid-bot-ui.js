@@ -100,12 +100,12 @@ export async function mountRaidBot(host, ctx) {
 		<strong>Cómo se apunta un jugador</strong>
 		<ol>
 			<li>Entra en la web con su cuenta de Discord.</li>
-			<li>En <em>Mi perfil</em> vincula su personaje con <em>Battle.net</em>.</li>
+			<li>En <em>Mi perfil → Personajes</em> pulsa <em>Actualizar desde Battle.net</em>.</li>
 			<li>En la convocatoria de Discord pulsa <em>✅ Apuntarme</em>.</li>
 		</ol>
 		<p class="muted">
-			Sin personaje vinculado con Battle.net el bot no le deja apuntarse y le explica estos pasos.
-			Las convocatorias se crean más arriba, en «Crear convocatoria y publicar en Discord».
+			Sin personaje actualizado desde Battle.net el bot no le deja apuntarse y le explica estos
+			pasos. Las convocatorias se crean más arriba, en «Crear convocatoria y publicar en Discord».
 		</p>
 	</div>`;
 
@@ -270,7 +270,8 @@ ${esc(config.description)}</textarea>
 			</p>
 			<p>
 				📝 Para apuntarte necesitas <strong>entrar en la web con Discord</strong> y tener tu
-				personaje <strong>vinculado con Battle.net</strong> (Mi perfil → Battle.net).
+				personaje <strong>actualizado desde Battle.net</strong> (Mi perfil → Personajes → Actualizar
+				desde Battle.net).
 			</p>
 			<div class="bot-preview-groups">${groups.join('')}</div>
 			${config.imageUrl ? '<p class="muted">[imagen de cabecera]</p>' : ''}
