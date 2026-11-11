@@ -1,3 +1,4 @@
+import { audit } from './database-core.mjs';
 import gmSchema from '../migrations/006_gm_notifications.sql';
 import {
 	deliverGM,
@@ -40,6 +41,11 @@ import { deliverCallups, dmReady, nextCallupAt } from './raid-lineup.mjs';
 import { syncRaidEvents } from './raid-sync.mjs';
 import { raidHelperReady } from './raid-helper.mjs';
 import { battlenetReady, nextBattlenetSyncAt, syncBattlenet } from './battlenet.mjs';
+// Rows read per route and per alarm job, summed in memory and written to the audit every
+// ten minutes ("system.usage"), to see what spends the daily Durable Objects allowance.
+const USAGE_FLUSH_MS = 10 * 60000;
+const routeKey = (method, path) =>
+	`${method} ${path.replace(/\/[0-9a-f-]{8,}(?=\/|$)/gi, '/:id').replace(/\/\d+(?=\/|$)/g, '/:n')}`;
 // An alarm this far past its time is not going to fire on its own.
 const STALE_ALARM_MS = 120000;
 
@@ -74,6 +80,34 @@ export class Guild extends DurableObject {
 			raidBotSchema,
 		);
 		repairGMRedirectFailures(this.db);
+		this.usage = { since: Date.now(), alarms: 0, keys: new Map() };
+	}
+
+	// Adds the rows read since `start` to `key`; every ten minutes the totals go to the audit.
+	countRows(key, start) {
+		const rows = (this.db.rowsRead || 0) - start,
+			u = this.usage;
+		const entry = u.keys.get(key) || { calls: 0, rows: 0 };
+		entry.calls++;
+		entry.rows += rows;
+		u.keys.set(key, entry);
+		if (Date.now() - u.since < USAGE_FLUSH_MS) return;
+		const top = [...u.keys]
+			.sort((a, b) => b[1].rows - a[1].rows)
+			.slice(0, 15)
+			.map(([k, v]) => `${k} · ${v.calls}× · ${v.rows} filas`);
+		const total = [...u.keys.values()].reduce((n, v) => n + v.rows, 0);
+		this.usage = { since: Date.now(), alarms: 0, keys: new Map() };
+		try {
+			audit(this.db, 'system:usage', 'system.usage', 'durable-object', {
+				minutes: Math.round((Date.now() - (u.since || Date.now())) / 60000) || 10,
+				rows: total,
+				alarms: u.alarms,
+				top,
+			});
+		} catch (e) {
+			console.warn('Usage audit failed', e?.message);
+		}
 	}
 
 	async fetch(request) {
@@ -127,14 +161,18 @@ export class Guild extends DurableObject {
 				response = new Response(request.method === 'HEAD' ? null : body, { status, headers });
 			},
 		};
+		const start = this.db.rowsRead || 0;
 		await this.app(req, res);
+		this.countRows(routeKey(request.method, url.pathname), start);
 		// Reading pages queues nothing new: their check of the alarms runs once a minute at
 		// most (each check reads several tables). Writes always check; the alarm reschedules
 		// itself after every run.
 		const reading = request.method === 'GET' || request.method === 'HEAD';
 		if (!reading || Date.now() - (this.scheduledAt || 0) > 60000) {
 			this.scheduledAt = Date.now();
+			const scheduleStart = this.db.rowsRead || 0;
 			await this.scheduleNotifications();
+			this.countRows('request schedule', scheduleStart);
 		}
 		return response || new Response('Application response unavailable.', { status: 500 });
 	}
@@ -219,14 +257,19 @@ export class Guild extends DurableObject {
 			['roulette-dm', () => deliverRouletteDMs(this.db, { ...this.env, APP_ORIGIN: origin || '' })],
 			['battlenet', () => syncBattlenet(this.db, this.env)],
 		];
+		this.usage.alarms++;
 		for (const [name, step] of steps) {
+			const start = this.db.rowsRead || 0;
 			try {
 				await step();
 			} catch (e) {
 				console.error(`Alarm step ${name} failed: ${e?.name || 'Error'}`);
 			}
+			this.countRows(`alarm ${name}`, start);
 		}
+		const start = this.db.rowsRead || 0;
 		await this.scheduleNotifications();
+		this.countRows('alarm schedule', start);
 	}
 }
 

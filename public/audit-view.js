@@ -4,6 +4,7 @@ const actions = {
 	'auth.discord_failed': 'No pudo entrar con Discord',
 	'character.battlenet_import': 'Importó personajes de Battle.net',
 	'character.battlenet_sync': 'Actualización automática de Battle.net',
+	'system.usage': 'Consumo de lecturas de la base de datos',
 	'character.created': 'Creó un personaje',
 	'character.updated': 'Editó un personaje',
 	'character.main': 'Cambió su personaje principal',

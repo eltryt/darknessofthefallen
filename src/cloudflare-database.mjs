@@ -30,21 +30,29 @@ export function durableDatabase(
 	raidBotSchema,
 ) {
 	const execute = (sql, parameters = []) => storage.sql.exec(sql, ...parameters);
+	// Rows read so far (Cloudflare bills Durable Objects by rows read): the worker measures
+	// each request and each alarm job with it.
+	const read = (cursor) => {
+		const rows = cursor.toArray();
+		db.rowsRead += cursor.rowsRead || 0;
+		return rows;
+	};
 	const db = {
+		rowsRead: 0,
 		exec(sql) {
-			execute(sql).toArray();
+			read(execute(sql));
 		},
 		prepare(sql) {
 			return {
 				all(...parameters) {
-					return execute(sql, parameters).toArray();
+					return read(execute(sql, parameters));
 				},
 				get(...parameters) {
-					return execute(sql, parameters).toArray()[0];
+					return read(execute(sql, parameters))[0];
 				},
 				run(...parameters) {
 					const cursor = execute(sql, parameters);
-					cursor.toArray();
+					read(cursor);
 					return { changes: cursor.rowsWritten };
 				},
 			};
