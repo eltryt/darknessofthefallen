@@ -3,7 +3,7 @@ import { audit, transaction } from './database-core.mjs';
 import { can, HttpError } from './domain.mjs';
 import { raidHelper, raidHelperReady, ProviderError } from './raid-helper.mjs';
 import { canManageEvent, eventRaw, restricted, signupFingerprint } from './raid-events.mjs';
-import { botEnv, botError, botEvent, botProvider, botReady } from './raid-bot.mjs';
+import { botActive, botEnv, botError, botEvent, botProvider, botReady } from './raid-bot.mjs';
 const stamp = () => new Date().toISOString();
 const snowflake = (value) => /^\d{17,20}$/.test(String(value || ''));
 function unpack(value) {
@@ -342,7 +342,9 @@ export async function syncRaidEvents(db, env, transport = fetch, { force = false
 			if (own) ingestRaidEvent(db, own.doc, botEnv(env, own.doc), e.id);
 			else cancelled(db, db.prepare('SELECT * FROM raid_events WHERE id=?').get(e.id));
 		}
-		if (!raidHelperReady(env)) {
+		// Raid-Helper is no longer used once our bot is connected: its old events stay as
+		// history and it is not read again.
+		if (!raidHelperReady(env) || botActive(db, env)) {
 			db.prepare("UPDATE raid_sync SET next_at=?,last_success=?,error='' WHERE id=1").run(
 				time + 300000,
 				stamp(),
