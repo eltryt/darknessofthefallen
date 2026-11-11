@@ -32,6 +32,8 @@ import rouletteChatSchema from '../migrations/020_roulette_chat.sql';
 import battlenetSyncSchema from '../migrations/021_battlenet_sync.sql';
 import applicationTrackingSchema from '../migrations/022_application_tracking.sql';
 import gmCasesSchema from '../migrations/023_gm_cases.sql';
+import raidBotSchema from '../migrations/024_raid_bot.sql';
+import { botReady, deliverBotRenders, nextBotRenderAt } from './raid-bot.mjs';
 import { deliverRouletteDMs, nextRouletteDMAt } from './roulette.mjs';
 import { deliverPush, nextPushAt, pushReady } from './push-notifications.mjs';
 import { deliverCallups, dmReady, nextCallupAt } from './raid-lineup.mjs';
@@ -69,6 +71,7 @@ export class Guild extends DurableObject {
 			battlenetSyncSchema,
 			applicationTrackingSchema,
 			gmCasesSchema,
+			raidBotSchema,
 		);
 		repairGMRedirectFailures(this.db);
 	}
@@ -169,7 +172,12 @@ export class Guild extends DurableObject {
 			);
 			if (due !== Infinity) await this.arm(Math.max(Date.now() + 5000, due));
 		}
-		if (raidHelperReady(this.env)) {
+		if (botReady(this.env)) {
+			// A press in Discord or an edit on the website reaches the message in a second.
+			const due = nextBotRenderAt(this.db);
+			if (due !== null) await this.arm(Math.max(Date.now() + 1000, due));
+		}
+		if (raidHelperReady(this.env) || botReady(this.env)) {
 			const sync = this.db.prepare('SELECT next_at FROM raid_sync WHERE id=1').get(),
 				job = this.db
 					.prepare("SELECT MIN(next_at) due FROM raid_jobs WHERE status='pending'")
@@ -199,7 +207,8 @@ export class Guild extends DurableObject {
 				'recruitment',
 				() => origin && deliverRecruitment(this.db, { ...this.env, APP_ORIGIN: origin }),
 			],
-			['raid-sync', () => syncRaidEvents(this.db, this.env)],
+			['raid-sync', () => syncRaidEvents(this.db, { ...this.env, APP_ORIGIN: origin || '' })],
+			['raid-bot', () => deliverBotRenders(this.db, { ...this.env, APP_ORIGIN: origin || '' })],
 			['raid-incidents', () => captureRaidIncidents(this.db, this.env)],
 			['gm', () => deliverGM(this.db, this.env)],
 			[

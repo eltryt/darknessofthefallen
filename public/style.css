@@ -3712,3 +3712,137 @@ body > header .brand-logo {
 	gap: 10px;
 	margin-top: 8px;
 }
+
+/* Editor del bot de inscripciones (Panel → Convocatorias). */
+.bot-editor summary {
+	cursor: pointer;
+	font-size: 17px;
+}
+.bot-status {
+	list-style: none;
+	padding: 0;
+	margin: 12px 0;
+	font-size: 13px;
+}
+.bot-status li {
+	padding: 3px 0;
+}
+.bot-ok {
+	color: var(--green);
+}
+.bot-pending {
+	color: var(--muted);
+}
+.bot-form fieldset {
+	margin: 18px 0;
+}
+.bot-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+	margin: 6px 0;
+}
+.bot-row input,
+.bot-row select {
+	width: auto;
+	flex: 1 1 130px;
+	min-width: 0;
+	margin: 0;
+}
+.bot-row input[type='number'] {
+	flex: 0 1 110px;
+}
+.bot-icon {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	flex: 0 1 190px;
+}
+.bot-icon > span {
+	display: inline-flex;
+	width: 24px;
+	justify-content: center;
+}
+.bot-glyph {
+	border-radius: 4px;
+	vertical-align: middle;
+}
+.bot-glyph-text {
+	font-size: 12px;
+}
+.bot-small {
+	padding: 6px 10px;
+	flex: 0 0 auto;
+}
+.bot-check {
+	display: block;
+	margin: 8px 0;
+}
+.bot-classes {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+	gap: 12px;
+	margin-bottom: 12px;
+}
+.bot-class {
+	border: 1px solid var(--line);
+	border-radius: 7px;
+	padding: 10px 12px;
+}
+.bot-spec {
+	padding-left: 14px;
+}
+.bot-preview {
+	background: #2b2d31;
+	border-left: 4px solid var(--primary);
+	border-radius: 4px;
+	padding: 14px 16px;
+	max-width: 620px;
+	font-family: 'Segoe UI', system-ui, sans-serif;
+	font-size: 13px;
+	margin-bottom: 16px;
+}
+.bot-preview p {
+	margin: 6px 0;
+}
+.bot-preview-title {
+	font-size: 16px;
+}
+.bot-preview-text {
+	white-space: pre-wrap;
+}
+.bot-preview-groups {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 8px;
+	margin: 10px 0;
+}
+.bot-preview-groups span {
+	display: block;
+	margin-top: 4px;
+}
+.bot-buttons {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin-top: 8px;
+}
+.bot-button {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	background: #4e5058;
+	border-radius: 4px;
+	padding: 6px 12px;
+	color: #fff;
+}
+.bot-button.bot-danger {
+	background: #da373c;
+}
+@media (max-width: 560px) {
+	.bot-classes,
+	.bot-preview-groups {
+		grid-template-columns: 1fr;
+	}
+}

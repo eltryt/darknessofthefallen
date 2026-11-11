@@ -63,6 +63,7 @@ import {
 } from './auth.mjs';
 import { deliverRecruitment } from './integrations.mjs';
 import { raidEventsApi } from './raid-events.mjs';
+import { raidBotApi, raidBotInteraction } from './raid-bot-api.mjs';
 import { operations, publicProgress } from './operations.mjs';
 // Where to return after signing in: only a path on this site, never another origin.
 export const safeNext = (value) =>
@@ -191,6 +192,7 @@ const files = {
 	'/gm-cases-ui.js': ['gm-cases-ui.js', 'text/javascript'],
 	'/attendance-sheet.js': ['attendance-sheet.js', 'text/javascript'],
 	'/raid-events-ui.js': ['raid-events-ui.js', 'text/javascript'],
+	'/raid-bot-ui.js': ['raid-bot-ui.js', 'text/javascript'],
 	'/recruitment-ui.js': ['recruitment-ui.js', 'text/javascript'],
 	'/schedule.js': ['schedule.js', 'text/javascript'],
 	'/schedule-ui.js': ['schedule-ui.js', 'text/javascript'],
@@ -384,6 +386,11 @@ export function createApp(db, env, { readAsset = readLocalAsset, discordFetch = 
 			}
 			// Token-authenticated, so it runs before cookie sessions and the browser-origin check.
 			if (await backupApi({ db, req, path, method, env, send, throttle })) return;
+			// Signed by Discord (Ed25519), so it also runs before sessions and the origin check.
+			if (path === '/api/discord/interactions' && method === 'POST') {
+				const answer = await raidBotInteraction(db, env, req);
+				return send(answer.status, answer.body);
+			}
 			const user = await sessionUser(req),
 				s = settings(db);
 			const requireUser = () => {
@@ -475,6 +482,21 @@ export function createApp(db, env, { readAsset = readLocalAsset, discordFetch = 
 					send,
 					env,
 					requireUser,
+				})
+			)
+				return;
+			if (
+				await raidBotApi({
+					db,
+					user,
+					path,
+					method,
+					body: () => body(req),
+					send,
+					env,
+					requirePermission,
+					readAsset,
+					transport: discordFetch,
 				})
 			)
 				return;

@@ -3,6 +3,15 @@ import { audit, transaction } from './database-core.mjs';
 import { can, HttpError, text, choice } from './domain.mjs';
 import { raidHelperReady } from './raid-helper.mjs';
 import { madridInstant } from './raid-time.mjs';
+import {
+	botActive,
+	botChannel,
+	botEvent,
+	botMeta,
+	botReady,
+	botState,
+	signupsOpen,
+} from './raid-bot.mjs';
 export const categories = ['Oficial', 'Extraordinaria', 'Voluntaria'];
 const now = () => new Date().toISOString();
 const groupRoles = {
@@ -40,6 +49,10 @@ export function mayView(user, row) {
 export function signupStatus(signup, raw) {
 	const cls = (raw.classes || []).find((c) => c.name === signup.className);
 	if (signup.status === 'queued') return 'Suplente';
+	// The bot's template says what each extra option means, whatever its name.
+	if (cls?.kind === 'bench') return 'Suplente';
+	if (cls?.kind === 'absence') return 'Ausente';
+	if (cls?.kind === 'tentative') return 'Pendiente de confirmación';
 	if (cls?.type === 'default') {
 		const name = signup.className.toLowerCase();
 		if (['bench', 'reserve', 'suplente', 'reserva'].includes(name)) return 'Suplente';
@@ -77,6 +90,7 @@ export function projectEvent(db, row, user, env) {
 		syncedAt: row.synced_at,
 		canManage: manage,
 		canDelete: can(user, 'recruitment.manage'),
+		provider: row.provider,
 	};
 	if (!member) return result;
 	result.organizer =
@@ -86,6 +100,7 @@ export function projectEvent(db, row, user, env) {
 	result.organizerId = manage ? row.organizer_id : undefined;
 	result.public = Boolean(row.public);
 	result.externalId = row.external_id;
+	if (row.provider === 'bot') result.description = raw.description || '';
 	result.discordUrl = row.external_id
 		? `https://discord.com/channels/${env.DISCORD_GUILD_ID}/${row.channel_id}/${row.external_id}`
 		: null;
@@ -264,7 +279,9 @@ export async function raidEventsApi(ctx) {
 			.get();
 		send(200, {
 			events: rows.map((r) => projectEvent(db, r, user, env)),
-			configured: raidHelperReady(env),
+			configured: raidHelperReady(env) || botActive(db, env),
+			// Who publishes the next event created here.
+			publisher: botActive(db, env) ? 'bot' : 'raid-helper',
 			sync: can(user, 'attendance.manage')
 				? sync
 				: {
@@ -279,17 +296,21 @@ export async function raidEventsApi(ctx) {
 	}
 	if (path === '/api/events' && method === 'POST') {
 		requirePermission('attendance.manage');
-		if (!raidHelperReady(env))
+		const own = botActive(db, env),
+			channel = own ? botChannel(botState(db).config, env) : env.RAID_HELPER_CHANNEL_ID;
+		if (!own && !raidHelperReady(env))
 			throw new HttpError(
 				503,
-				'Falta activar Raid-Helper. Consulta la configuración del proyecto.',
+				'Falta activar el bot de inscripciones o Raid-Helper. Consulta la configuración del proyecto.',
 			);
+		if (own && !/^\d{17,20}$/.test(channel))
+			throw new HttpError(409, 'Falta indicar el canal de Discord de las convocatorias.');
 		const v = await body(),
 			title = text(v.title, 'nombre', 120),
 			start = madridInstant(v.start),
 			end = madridInstant(v.end);
 		if (end <= start) throw new HttpError(400, 'El fin debe ser posterior al inicio.');
-		// Raid-Helper closes sign-ups at the start time: a past start is closed from birth.
+		// Sign-ups close at the start time: a past start is closed from birth.
 		if (Date.parse(start) < Date.now() + 5 * 60000)
 			throw new HttpError(
 				400,
@@ -320,10 +341,11 @@ export async function raidEventsApi(ctx) {
 			stamp = now();
 		transaction(db, () => {
 			db.prepare(
-				'INSERT INTO raid_events(id,channel_id,organizer_id,title,starts_at,ends_at,category,roster,public,capacity,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)',
+				'INSERT INTO raid_events(id,provider,channel_id,organizer_id,title,starts_at,ends_at,category,roster,public,capacity,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)',
 			).run(
 				id,
-				env.RAID_HELPER_CHANNEL_ID,
+				own ? 'bot' : 'raid-helper',
+				channel,
 				organizer,
 				title,
 				start,
@@ -334,7 +356,11 @@ export async function raidEventsApi(ctx) {
 				size,
 				stamp,
 			);
-			const description = `${meta.category} · ${meta.roster || 'Sin roster fijo'}\n[DOTF:${id}]`;
+			// The bot shows category and roster itself and takes its text from the form or,
+			// when left empty, from the template.
+			const description = own
+				? text(v.description ?? '', 'descripción', 1500, false) || botState(db).config.description
+				: `${meta.category} · ${meta.roster || 'Sin roster fijo'}\n[DOTF:${id}]`;
 			enqueueRaidJob(
 				db,
 				user,
@@ -421,6 +447,11 @@ export async function raidEventsApi(ctx) {
 				now(),
 				row.id,
 			);
+			if (row.provider === 'bot')
+				botMeta(db, row.id, {
+					category: v.category,
+					roster: text(v.roster ?? '', 'roster', 80, false),
+				});
 			audit(db, user.id, 'raid.classified', row.id, {
 				category: v.category,
 				roster: v.roster,
@@ -430,7 +461,13 @@ export async function raidEventsApi(ctx) {
 		send(200, { ok: true });
 		return true;
 	}
-	if (!raidHelperReady(env)) throw new HttpError(503, 'Raid-Helper no está configurado.');
+	if (row.provider === 'bot' ? !botReady(env) : !raidHelperReady(env))
+		throw new HttpError(
+			503,
+			row.provider === 'bot'
+				? 'El bot de inscripciones no está configurado.'
+				: 'Raid-Helper no está configurado.',
+		);
 	if (action === 'retry') {
 		requireManage(user, row);
 		const job = db
@@ -456,12 +493,18 @@ export async function raidEventsApi(ctx) {
 			409,
 			'La convocatoria aún no se ha publicado en Discord. Espera un par de minutos y vuelve a intentarlo.',
 		);
-	if (row.state !== 'Abierta' || Date.parse(row.starts_at) <= Date.now())
+	const own = row.provider === 'bot' ? botEvent(db, row.id) : null;
+	if (
+		row.state !== 'Abierta' ||
+		Date.parse(row.starts_at) <= Date.now() ||
+		// The bot's template may close sign-ups some time before the start.
+		(own && action === 'signup' && !signupsOpen(own.doc))
+	)
 		throw new HttpError(
 			409,
 			row.state === 'Cancelada'
 				? 'La convocatoria está cancelada.'
-				: 'Las inscripciones están cerradas: Raid-Helper las cierra a la hora de inicio de la raid.',
+				: 'Las inscripciones de esta convocatoria ya están cerradas.',
 		);
 	let kind, payload;
 	if (action === 'signup') {
@@ -551,12 +594,15 @@ export async function raidEventsApi(ctx) {
 				endTime: Date.parse(end) / 1000,
 				advancedSettings: { limit: capacity(v.capacity) },
 				...(roles.length ? { roles } : {}),
+				...(row.provider === 'bot' && typeof v.description === 'string'
+					? { description: text(v.description, 'descripción', 1500, false) }
+					: {}),
 			};
 		} else return false;
 	}
 	if (['update', 'cancel'].includes(kind) && raw.lastUpdated !== undefined)
 		payload._base = raw.lastUpdated;
 	transaction(db, () => enqueueRaidJob(db, user, row, kind, payload, v.requestId));
-	send(202, { ok: true, message: 'Operación guardada. Pendiente de confirmación de Raid-Helper.' });
+	send(202, { ok: true, message: 'Operación guardada. Pendiente de confirmación en Discord.' });
 	return true;
 }

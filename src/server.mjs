@@ -6,6 +6,7 @@ import { createApp } from './app.mjs';
 import { syncRaidEvents } from './raid-sync.mjs';
 import { deliverRecruitment } from './integrations.mjs';
 import { deliverCallups } from './raid-lineup.mjs';
+import { deliverBotRenders } from './raid-bot.mjs';
 if (existsSync('.env')) process.loadEnvFile('.env');
 const db = openDatabase(process.env.DATABASE_PATH),
 	env = { APP_ORIGIN: 'http://localhost:3000', ...process.env };
@@ -22,6 +23,7 @@ const timer = setInterval(async () => {
 	try {
 		await deliverRecruitment(db, env);
 		await syncRaidEvents(db, env);
+		await deliverBotRenders(db, env);
 		captureRaidIncidents(db, env);
 		await deliverGM(db, env);
 		await deliverCallups(db, env);

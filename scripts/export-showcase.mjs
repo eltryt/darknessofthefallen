@@ -88,6 +88,7 @@ for (const file of [
 	'audit-view.js',
 	'attendance-sheet.js',
 	'raid-events-ui.js',
+	'raid-bot-ui.js',
 	'recruitment-ui.js',
 	'schedule.js',
 	'schedule-ui.js',

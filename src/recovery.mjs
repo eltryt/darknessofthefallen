@@ -26,6 +26,8 @@ export const recoveryTables = [
 	'raid_signup_cancellations',
 	'raid_jobs',
 	'raid_sync',
+	'raid_bot_config',
+	'raid_bot_events',
 	'outbox',
 	'gm_messages',
 	'gm_notifications',
@@ -93,7 +95,8 @@ const tablesFor = (version) =>
 			(version >= 15 || !t.startsWith('roulette_')) &&
 			(version >= 20 || t !== 'roulette_chat') &&
 			(version >= 22 || t !== 'application_tracking') &&
-			(version >= 23 || !(t.startsWith('gm_case') || t === 'attendance_archive')),
+			(version >= 23 || !(t.startsWith('gm_case') || t === 'attendance_archive')) &&
+			(version >= 24 || !t.startsWith('raid_bot_')),
 	);
 const digest = (value) => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const content = (s) => ({
@@ -107,7 +110,7 @@ export function exportRecovery(db) {
 	return transaction(db, () => {
 		const snapshot = {
 			schemaVersion: 2,
-			databaseVersion: 23,
+			databaseVersion: 24,
 			exportedAt: new Date().toISOString(),
 			settings: JSON.parse(db.prepare('SELECT data FROM settings WHERE id=1').get().data),
 		};
@@ -121,7 +124,7 @@ export function validateRecovery(snapshot) {
 	if (
 		!snapshot ||
 		snapshot.schemaVersion !== 2 ||
-		![5, 6, 7, 8, 9, 10, 11, 15, 16, 17, 18, 19, 20, 22, 23].includes(snapshot.databaseVersion)
+		![5, 6, 7, 8, 9, 10, 11, 15, 16, 17, 18, 19, 20, 22, 23, 24].includes(snapshot.databaseVersion)
 	)
 		throw new Error('Formato no compatible: descarga una nueva exportación JSON desde el panel.');
 	if (
@@ -143,7 +146,7 @@ export function restoreRecovery(db, snapshot) {
 	// Refuse to merge into an existing database, even one containing only sessions.
 	for (const table of [...recoveryTables, 'sessions', 'oauth_states']) {
 		// Both start with migration-seeded rows that the snapshot replaces.
-		if (table === 'raid_sync' || table === 'guide_providers') continue;
+		if (['raid_sync', 'guide_providers', 'raid_bot_config'].includes(table)) continue;
 		if (
 			db
 				.prepare(
@@ -159,6 +162,8 @@ export function restoreRecovery(db, snapshot) {
 		db.exec('DELETE FROM raid_sync; DELETE FROM audit;');
 		// Older snapshots keep the providers seeded by migration 007.
 		if (snapshot.databaseVersion >= 7) db.exec('DELETE FROM guide_providers;');
+		// Older snapshots keep the empty bot configuration seeded by migration 024.
+		if (snapshot.databaseVersion >= 24) db.exec('DELETE FROM raid_bot_config;');
 		for (const table of recoveryTables) {
 			if (!tablesFor(snapshot.databaseVersion).includes(table)) continue;
 			const columns = db
@@ -175,18 +180,24 @@ export function restoreRecovery(db, snapshot) {
 					stored &&
 					typeof stored === 'object'
 						? { ...characterDefaults, ...stored }
-						: // Version 15 copies predate the soft delete of migration 016.
-							table === 'roulette_tables' &&
-							  snapshot.databaseVersion < 19 &&
+						: // Before migration 024 every event was published by Raid-Helper.
+							table === 'raid_events' &&
+							  snapshot.databaseVersion < 24 &&
 							  stored &&
 							  typeof stored === 'object'
-							? {
-									deleted_at: null,
-									deleted_by: null,
-									...rouletteDmDefaults,
-									...stored,
-								}
-							: stored;
+							? { provider: 'raid-helper', ...stored }
+							: // Version 15 copies predate the soft delete of migration 016.
+								table === 'roulette_tables' &&
+								  snapshot.databaseVersion < 19 &&
+								  stored &&
+								  typeof stored === 'object'
+								? {
+										deleted_at: null,
+										deleted_by: null,
+										...rouletteDmDefaults,
+										...stored,
+									}
+								: stored;
 				if (
 					!original ||
 					typeof original !== 'object' ||
@@ -215,6 +226,11 @@ export function restoreRecovery(db, snapshot) {
 				if (table === 'raid_callups' && !['sent', 'failed'].includes(row.dm_status)) {
 					row.dm_status = 'uncertain';
 					row.dm_error = 'Copia restaurada: comprueba con el jugador antes de reenviar.';
+				}
+				// Restored messages are not edited again until someone changes the event.
+				if (table === 'raid_bot_events') {
+					row.dirty = 0;
+					row.closed = 1;
 				}
 				if (table === 'raid_sync') {
 					row.next_at = 0;

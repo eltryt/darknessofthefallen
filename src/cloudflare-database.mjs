@@ -27,6 +27,7 @@ export function durableDatabase(
 	battlenetSyncSchema,
 	applicationTrackingSchema,
 	gmCasesSchema,
+	raidBotSchema,
 ) {
 	const execute = (sql, parameters = []) => storage.sql.exec(sql, ...parameters);
 	const db = {
@@ -132,6 +133,11 @@ export function durableDatabase(
 			!db.prepare('SELECT version FROM schema_migrations WHERE version=23').get()
 		)
 			db.exec(gmCasesSchema);
+		if (
+			raidBotSchema &&
+			!db.prepare('SELECT version FROM schema_migrations WHERE version=24').get()
+		)
+			db.exec(raidBotSchema);
 	});
 	return db;
 }

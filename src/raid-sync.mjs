@@ -3,6 +3,7 @@ import { audit, transaction } from './database-core.mjs';
 import { can, HttpError } from './domain.mjs';
 import { raidHelper, raidHelperReady, ProviderError } from './raid-helper.mjs';
 import { canManageEvent, eventRaw, restricted, signupFingerprint } from './raid-events.mjs';
+import { botEnv, botError, botEvent, botProvider, botReady } from './raid-bot.mjs';
 const stamp = () => new Date().toISOString();
 const snowflake = (value) => /^\d{17,20}$/.test(String(value || ''));
 function unpack(value) {
@@ -120,6 +121,7 @@ function safeError(e) {
 	if (e.reason === 'locked template')
 		return 'La plantilla de Raid-Helper está bloqueada; utiliza una plantilla disponible.';
 	if (e instanceof HttpError) return e.message;
+	if (e.service === 'bot') return botError(e);
 	if (e instanceof ProviderError)
 		return `Raid-Helper respondió HTTP ${e.status}. Revisa acceso, configuración o disponibilidad.`;
 	return (
@@ -132,12 +134,14 @@ function safeError(e) {
 }
 async function runJob(db, env, provider, job) {
 	let row = db.prepare('SELECT * FROM raid_events WHERE id=?').get(job.event_id);
+	// The bot's channel is chosen on the website; ingestRaidEvent checks it against the event.
+	if (row.provider === 'bot') env = { ...env, RAID_HELPER_CHANNEL_ID: row.channel_id };
 	const payload = JSON.parse(job.payload),
 		actor = db.prepare('SELECT * FROM users WHERE id=?').get(job.actor_id);
 	if (job.kind === 'create') {
 		if (!can(actor, 'attendance.manage') || !canManageEvent(actor, row))
 			throw new HttpError(403, 'El autor ya no tiene permiso para publicar la convocatoria.');
-		const response = await provider.create(payload);
+		const response = await provider.create(payload, row.id, job.attempts > 1);
 		let event = unpack(response);
 		if (!snowflake(event.id)) throw new ProviderError(502);
 		// Persist the returned ID before any subsequent read can fail.
@@ -267,7 +271,7 @@ function reconcile(db, job, row) {
 	if (done) db.prepare("UPDATE raid_jobs SET status='done',error='' WHERE id=?").run(job.id);
 }
 export async function syncRaidEvents(db, env, transport = fetch, { force = false } = {}) {
-	if (!raidHelperReady(env)) return;
+	if (!raidHelperReady(env) && !botReady(env)) return;
 	const status = db.prepare('SELECT * FROM raid_sync WHERE id=1').get(),
 		time = Date.now();
 	const pending = db
@@ -279,20 +283,25 @@ export async function syncRaidEvents(db, env, transport = fetch, { force = false
 	db.prepare(
 		"UPDATE raid_jobs SET status='uncertain',error='Operación interrumpida: comprobando el resultado externo.' WHERE status='running'",
 	).run();
-	const provider = raidHelper(env, transport);
+	const helper = raidHelper(env, transport),
+		bot = botProvider(db, env, transport);
 	try {
 		// One outbound write per tick. Reads and job execution share this lease.
+		// Only jobs whose publisher (Raid-Helper or the bot) is configured are taken.
 		const job = db
 			.prepare(
-				"SELECT * FROM raid_jobs WHERE status='pending' AND next_at<=? ORDER BY created_at LIMIT 1",
+				`SELECT j.* FROM raid_jobs j JOIN raid_events e ON e.id=j.event_id WHERE j.status='pending' AND j.next_at<=? AND e.provider IN (${[raidHelperReady(env) && "'raid-helper'", botReady(env) && "'bot'"].filter(Boolean).join(',')}) ORDER BY j.created_at LIMIT 1`,
 			)
 			.get(time);
 		if (job) {
 			db.prepare("UPDATE raid_jobs SET status='running',attempts=attempts+1 WHERE id=?").run(
 				job.id,
 			);
+			const own =
+				db.prepare('SELECT provider FROM raid_events WHERE id=?').get(job.event_id)?.provider ===
+				'bot';
 			try {
-				await runJob(db, env, provider, job);
+				await runJob(db, env, own ? bot : helper, job);
 				db.prepare("UPDATE raid_jobs SET status='done',error='' WHERE id=?").run(job.id);
 				audit(db, job.actor_id, 'raid.sync.completed', job.event_id, {
 					jobId: job.id,
@@ -301,7 +310,15 @@ export async function syncRaidEvents(db, env, transport = fetch, { force = false
 			} catch (e) {
 				// 429 and explicit 4xx rejection mean no write was accepted. A network/5xx
 				// failure may have occurred after acceptance, so wait for reconciliation.
-				const retry = e instanceof ProviderError && e.status === 429;
+				// A bot creation that got no answer is safe to repeat: the next attempt looks for
+				// the message it may have left before posting another.
+				const repeat =
+					own &&
+					job.kind === 'create' &&
+					job.attempts < 5 &&
+					!(e instanceof HttpError) &&
+					!(e.status >= 400 && e.status < 500);
+				const retry = (e instanceof ProviderError && e.status === 429) || repeat;
 				const blocked =
 					e instanceof HttpError ||
 					(e instanceof ProviderError && e.status >= 400 && e.status < 500 && !retry);
@@ -311,14 +328,33 @@ export async function syncRaidEvents(db, env, transport = fetch, { force = false
 					safeError(e),
 					job.id,
 				);
-				if (retry) throw e;
+				if (retry && !own) throw e;
 			}
 		}
+		// The bot's events live here: no remote list to read, only their state to refresh
+		// (finished, or its message deleted in Discord).
+		for (const e of db
+			.prepare(
+				"SELECT id,channel_id FROM raid_events WHERE provider='bot' AND external_id IS NOT NULL AND state='Abierta'",
+			)
+			.all()) {
+			const own = botEvent(db, e.id);
+			if (own) ingestRaidEvent(db, own.doc, botEnv(env, own.doc), e.id);
+			else cancelled(db, db.prepare('SELECT * FROM raid_events WHERE id=?').get(e.id));
+		}
+		if (!raidHelperReady(env)) {
+			db.prepare("UPDATE raid_sync SET next_at=?,last_success=?,error='' WHERE id=1").run(
+				time + 300000,
+				stamp(),
+			);
+			return;
+		}
+		const provider = helper;
 		const summaries = await provider.list();
 		// Adopt an uncertain create only by its unique, saved correlation marker.
 		const creates = db
 			.prepare(
-				"SELECT j.* FROM raid_jobs j JOIN raid_events e ON e.id=j.event_id WHERE j.kind='create' AND j.status='uncertain' AND e.external_id IS NULL",
+				"SELECT j.* FROM raid_jobs j JOIN raid_events e ON e.id=j.event_id WHERE j.kind='create' AND j.status='uncertain' AND e.external_id IS NULL AND e.provider='raid-helper'",
 			)
 			.all();
 		for (const job of creates) {
@@ -336,7 +372,7 @@ export async function syncRaidEvents(db, env, transport = fetch, { force = false
 		// absence from one list or failed pagination alone never means cancellation.
 		for (const e of db
 			.prepare(
-				"SELECT external_id FROM raid_events WHERE external_id IS NOT NULL AND state IN ('Abierta','Pendiente de publicación')",
+				"SELECT external_id FROM raid_events WHERE external_id IS NOT NULL AND provider='raid-helper' AND state IN ('Abierta','Pendiente de publicación')",
 			)
 			.all())
 			ids.add(e.external_id);

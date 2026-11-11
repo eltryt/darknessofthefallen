@@ -122,5 +122,9 @@ export function openDatabase(path = 'data/guild.sqlite') {
 		transaction(db, () =>
 			db.exec(readFileSync(new URL('../migrations/023_gm_cases.sql', import.meta.url), 'utf8')),
 		);
+	if (!db.prepare('SELECT version FROM schema_migrations WHERE version=24').get())
+		transaction(db, () =>
+			db.exec(readFileSync(new URL('../migrations/024_raid_bot.sql', import.meta.url), 'utf8')),
+		);
 	return db;
 }

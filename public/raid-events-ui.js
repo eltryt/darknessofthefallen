@@ -30,6 +30,7 @@ const madrid = (value) =>
 				.replace(' ', 'T')
 		: '';
 import { mountLineup } from './lineup-board.js';
+import { mountRaidBot } from './raid-bot-ui.js';
 export async function mountRaidEvents(host, ctx, { manage = false, mine = false } = {}) {
 	const { api, esc, me, toast } = ctx;
 	if (document.body.dataset.showcase) {
@@ -39,6 +40,14 @@ export async function mountRaidEvents(host, ctx, { manage = false, mine = false 
 			>Ver convocatorias actualizadas ↗</a
 		>`;
 		return;
+	}
+	// The panel also holds the editor of the guild's own sign-up bot, in a part of the
+	// page that the periodic refresh of the events never rewrites.
+	if (manage) {
+		const outer = host;
+		outer.innerHTML = '';
+		host = outer.appendChild(document.createElement('div'));
+		mountRaidBot(outer.appendChild(document.createElement('div')), ctx).catch(() => {});
 	}
 	let result,
 		selected = null,
@@ -80,7 +89,7 @@ export async function mountRaidEvents(host, ctx, { manage = false, mine = false 
 				...value,
 				requestId: form?.dataset.requestId || crypto.randomUUID(),
 			});
-			toast('Solicitud guardada; pendiente de confirmar en Raid-Helper.');
+			toast('Solicitud guardada; pendiente de confirmar en Discord.');
 			await load();
 			if (selected) await detail(selected);
 		} catch (e) {
@@ -97,11 +106,15 @@ export async function mountRaidEvents(host, ctx, { manage = false, mine = false 
 				<button type="button" class="secondary" data-refresh>Actualizar</button>
 			</div>
 			<p>
-				Horarios de Madrid. Las inscripciones se sincronizan con Raid-Helper aproximadamente cada
-				cinco minutos. «Confirmado» indica inscripción activa en Raid-Helper, no asistencia
-				histórica.
+				Horarios de Madrid.
+				${
+					result.publisher === 'bot'
+						? 'Las convocatorias las publica el bot de la hermandad: lo que se apunta en Discord aparece aquí al momento.'
+						: 'Las inscripciones se sincronizan con Raid-Helper aproximadamente cada cinco minutos.'
+				}
+				«Confirmado» indica inscripción activa, no asistencia histórica.
 			</p>
-			${!result.configured ? '<p class="notice">La conexión con Raid-Helper está pendiente de activación. No se simulan eventos ni inscripciones.</p>' : ''}${manager && result.sync?.error ? `<p class="error">${esc(result.sync.error)}</p>` : ''}${result.configured ? `<p class="muted">Última sincronización: ${esc(date(result.sync?.last_success))}</p>` : ''}
+			${!result.configured ? '<p class="notice">La conexión con Discord (bot de inscripciones o Raid-Helper) está pendiente de activación. No se simulan eventos ni inscripciones.</p>' : ''}${manager && result.sync?.error ? `<p class="error">${esc(result.sync.error)}</p>` : ''}${result.configured ? `<p class="muted">Última sincronización: ${esc(date(result.sync?.last_success))}</p>` : ''}
 			<form class="filters" data-filters>
 				${input('Desde', 'from', filters.from, 'date')}<label
 					>Tipo<select name="category">
@@ -130,7 +143,8 @@ export async function mountRaidEvents(host, ctx, { manage = false, mine = false 
 							<ol class="create-steps">
 								<li>Rellena los datos y pulsa «Crear convocatoria».</li>
 								<li>
-									La web la envía a Raid-Helper: verás «Pendiente de publicación» un par de minutos.
+									La web la envía a Discord: verás «Pendiente de publicación» hasta un par de
+									minutos.
 								</li>
 								<li>
 									Se publica en el canal de Discord y la gente puede apuntarse allí o aquí,
@@ -154,6 +168,20 @@ export async function mountRaidEvents(host, ctx, { manage = false, mine = false 
 										>
 									</div>
 								</fieldset>
+								${
+									result.publisher === 'bot'
+										? /* HTML */ `<fieldset class="create-group">
+												<legend>Mensaje de Discord</legend>
+												<label
+													>Texto de la convocatoria (vacío: el de la plantilla del bot)<textarea
+														name="description"
+														rows="3"
+														maxlength="1500"
+													></textarea>
+												</label>
+											</fieldset>`
+										: ''
+								}
 								<p class="create-summary" data-create-summary aria-live="polite"></p>
 								<button type="submit" ${!result.configured ? 'disabled' : ''}>
 									Crear convocatoria
@@ -300,7 +328,7 @@ export async function mountRaidEvents(host, ctx, { manage = false, mine = false 
 			button.onclick = async () => {
 				if (
 					!confirm(
-						'¿Borrar esta convocatoria de la web? Se conservará el historial. No se cancela ni borra en Discord/Raid-Helper.',
+						'¿Borrar esta convocatoria de la web? Se conservará el historial. No se cancela ni borra en Discord: para quitar su mensaje, usa «Cancelar convocatoria».',
 					)
 				)
 					return;
@@ -400,8 +428,20 @@ export async function mountRaidEvents(host, ctx, { manage = false, mine = false 
 									<div class="form-grid">
 										${input('Nombre', 'title', event.title, 'text', 'required maxlength="120"')}${input('Inicio · Madrid', 'start', madrid(event.starts_at), 'datetime-local', 'required')}${input('Fin · Madrid', 'end', madrid(event.ends_at), 'datetime-local', 'required')}${input('Capacidad', 'capacity', event.capacity ?? 20, 'number', 'min="1" max="1000" required')}${event.roleLimits.map((r, i) => input(`Límite ${esc(r.name)} (vacío: conservar)`, 'role' + i, '', 'number', 'min="1" max="1000"')).join('')}
 									</div>
+									${
+										event.provider === 'bot'
+											? /* HTML */ `<label
+													>Texto de la convocatoria<textarea
+														name="description"
+														rows="3"
+														maxlength="1500"
+													>
+${esc(event.description || '')}</textarea>
+												</label>`
+											: ''
+									}
 									<button type="submit" ${busy || event.state !== 'Abierta' ? 'disabled' : ''}>
-										Guardar horario y capacidad en Raid-Helper
+										Guardar y actualizar en Discord
 									</button>
 								</form>
 							</details>
@@ -442,6 +482,7 @@ export async function mountRaidEvents(host, ctx, { manage = false, mine = false 
 						start: fd.get('start'),
 						end: fd.get('end'),
 						capacity: Number(fd.get('capacity')),
+						...(fd.has('description') ? { description: fd.get('description').trim() } : {}),
 						revision: event.revision,
 						roleLimits: event.roleLimits.flatMap((r, i) =>
 							fd.get('role' + i) ? [{ name: r.name, limit: Number(fd.get('role' + i)) }] : [],
@@ -474,7 +515,7 @@ export async function mountRaidEvents(host, ctx, { manage = false, mine = false 
 			cancel.onclick = () => {
 				if (
 					confirm(
-						'¿Cancelar esta convocatoria? Se eliminará su mensaje de Raid-Helper y se conservará el historial en la web.',
+						'¿Cancelar esta convocatoria? Se eliminará su mensaje de Discord y se conservará el historial en la web.',
 					)
 				)
 					queue('/api/events/' + id + '/cancel', 'POST', { revision: event.revision });
@@ -507,13 +548,13 @@ export async function mountRaidEvents(host, ctx, { manage = false, mine = false 
 											${characters.map((c) => /* HTML */ `<option value="${esc(c.id)}" ${current?.characterId === c.id ? 'selected' : ''}>${esc(c.name)} · ${esc(c.class)} · ${esc(c.spec || 'Sin especialización')}</option>`).join('')}
 										</select></label
 									><label
-										>Opción de Raid-Helper<select name="className">
+										>Clase u opción<select name="className">
 											${options(
 												event.classes.map((c) => c.name),
 												current?.className,
 											)}
 										</select></label
-									><label>Especialización en Raid-Helper<select name="specName"></select></label>
+									><label>Especialización<select name="specName"></select></label>
 								</div>
 								<p>
 									Selecciona la clase o grupo de rol y la especialización correspondientes a tu
