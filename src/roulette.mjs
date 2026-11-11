@@ -30,6 +30,25 @@ const viewers = new Map();
 // seconds: it is kept until a roulette change (any write through rouletteApi) or a minute.
 const RANKING_TTL_MS = 60000;
 const rankingCache = new WeakMap();
+// What each person last got from the room. Polls in between reuse it (with the clock and
+// who is watching refreshed) until a roulette change, a private message sent, or STATE_TTL_MS.
+const STATE_TTL_MS = 20000;
+const stateCache = new WeakMap();
+const forget = (db) => {
+	rankingCache.delete(db);
+	stateCache.delete(db);
+};
+function roomFor(db, user) {
+	const watching = present(db, user);
+	let mine = stateCache.get(db);
+	if (!mine) stateCache.set(db, (mine = new Map()));
+	const cached = mine.get(user.id);
+	if (cached && Date.now() - cached.at < STATE_TTL_MS)
+		return { ...cached.state, serverTime: new Date().toISOString(), watching };
+	const state = tableState(db, user, watching);
+	mine.set(user.id, { at: Date.now(), state });
+	return state;
+}
 function rankingRows(db) {
 	const cached = rankingCache.get(db);
 	if (cached && Date.now() - cached.at < RANKING_TTL_MS) return cached.rows;
@@ -127,7 +146,14 @@ function seat(db, user) {
 
 function present(db, user) {
 	const now = Date.now();
-	viewers.set(user.id, { ...seat(db, user), at: now });
+	// The seat name is looked up once a minute, not on every poll.
+	const prev = viewers.get(user.id);
+	const fresh = prev && now - prev.seatAt < 60000;
+	viewers.set(user.id, {
+		...(fresh ? { name: prev.name, class: prev.class } : seat(db, user)),
+		seatAt: fresh ? prev.seatAt : now,
+		at: now,
+	});
 	for (const [id, v] of viewers) if (now - v.at > PRESENCE_MS) viewers.delete(id);
 	return [...viewers]
 		.map(([id, v]) => ({ id, name: v.name, class: v.class, me: id === user.id }))
@@ -276,9 +302,9 @@ export async function rouletteApi({ db, user, path, method, body, send, requireP
 	if (path !== '/api/roulette' && !path.startsWith('/api/roulette/')) return false;
 	requirePermission('community.read');
 	// Anything but reading may change who won what.
-	if (method !== 'GET') rankingCache.delete(db);
+	if (method !== 'GET') forget(db);
 	if (path === '/api/roulette' && method === 'GET') {
-		send(200, tableState(db, user, present(db, user)));
+		send(200, roomFor(db, user));
 		return true;
 	}
 	if (path === '/api/roulette' && method === 'POST') {
@@ -617,6 +643,8 @@ export async function deliverRouletteDMs(db, env, transport = fetch, limit = 10)
 					)
 					.get(Date.now());
 				if (!t) break;
+				// The room shows whether each message went out.
+				forget(db);
 				const tries = t[`${c}_attempts`];
 				const set = (status, error, retryIn) => {
 					const attempts = tries + 1,
