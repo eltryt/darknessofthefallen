@@ -253,7 +253,54 @@ export class Guild extends DurableObject {
 			await this.ctx.storage.setAlarm(Date.now() + 60000);
 	}
 
+	// Which jobs were due when the alarm fired (to find what wakes the object so often).
+	dueJobs() {
+		const now = Date.now() + 1000,
+			due = [];
+		const check = (name, at) => at !== null && at !== undefined && at <= now && due.push(name);
+		try {
+			if (gmReady(this.env))
+				check(
+					'gm',
+					this.db
+						.prepare(
+							"SELECT MIN(next_at) due FROM gm_notifications WHERE status IN ('pending','sending')",
+						)
+						.get().due,
+				);
+			if (pushReady(this.env)) check('push', nextPushAt(this.db));
+			if (dmReady(this.env)) {
+				check('callups', nextCallupAt(this.db));
+				check('roulette-dm', nextRouletteDMAt(this.db));
+			}
+			if (botReady(this.env)) check('raid-bot', nextBotRenderAt(this.db));
+			if (raidHelperReady(this.env) || botReady(this.env)) {
+				check(
+					'raid-sync',
+					this.db.prepare('SELECT next_at FROM raid_sync WHERE id=1').get().next_at,
+				);
+				check(
+					'raid-jobs',
+					this.db.prepare("SELECT MIN(next_at) due FROM raid_jobs WHERE status='pending'").get()
+						.due,
+				);
+			}
+			if (battlenetReady(this.env)) check('battlenet', nextBattlenetSyncAt(this.db));
+		} catch (e) {
+			due.push('error ' + (e?.message || e));
+		}
+		return due;
+	}
+
 	async alarm() {
+		if (Date.now() - (this.spikes.get('alarm-due') || 0) > USAGE_FLUSH_MS) {
+			this.spikes.set('alarm-due', Date.now());
+			try {
+				audit(this.db, 'system:usage', 'system.usage', 'durable-object', {
+					alarm: this.dueJobs().join(', ') || 'nada pendiente',
+				});
+			} catch {}
+		}
 		const origin = this.env.APP_ORIGIN || (await this.ctx.storage.get('application-origin'));
 		// Each job runs on its own: one that throws no longer skips the rest or fails the
 		// whole alarm (repeated failures are what leave Cloudflare's alarm stuck).
