@@ -8,6 +8,16 @@ import { enqueuePush, pushReady } from './push-notifications.mjs';
 export function repairGMRedirectFailures(db) {
 	return transaction(db, () => {
 		const action = 'notification.redirect_runtime_repair';
+		// Runs on every start of the object: first a cheap look (by the status index) for any
+		// notification it would repair, instead of searching the whole audit for the marker.
+		if (
+			!db
+				.prepare(
+					"SELECT 1 FROM gm_notifications WHERE status='uncertain' AND message_id IS NULL AND last_error='Respuesta no confirmada: revisa el canal antes de reintentar.' AND created_at<='2026-10-11T12:29:08.000Z' LIMIT 1",
+				)
+				.get()
+		)
+			return 0;
 		if (db.prepare('SELECT 1 FROM audit WHERE action=?').get(action)) return 0;
 		const repaired = db
 			.prepare(
