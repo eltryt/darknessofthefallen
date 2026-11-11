@@ -18,11 +18,11 @@ export const botReady = (env) =>
 // Class and specialization icons of the website, uploaded as emojis of the bot's
 // application (they do not use the server's emoji slots).
 export const botIcons = iconAssets
-	.filter((file) => /^assets\/icons\/(spec\/)?\w+\.webp$/.test(file))
+	.filter((file) => /^assets\/icons\/((spec|role)\/)?\w+\.webp$/.test(file))
 	.map((file) => ({ name: file.match(/(\w+)\.webp$/)[1], file }));
 const iconNames = new Set(botIcons.map((icon) => icon.name));
 
-const classKeys = {
+export const classKeys = {
 	warrior: 'Guerrero',
 	paladin: 'Paladín',
 	hunter: 'Cazador',
@@ -55,7 +55,7 @@ export function defaultConfig() {
 				limit: null,
 				specs: Object.entries(specCatalog[key]).map(([id, spec]) => ({
 					name: spec.name,
-					icon: 'spec_' + id,
+					icon: 'spec_' + (spec.icon || id),
 					roleName: spec.category,
 				})),
 			})),
@@ -64,10 +64,10 @@ export function defaultConfig() {
 			{ name: 'Ausente', icon: '🚫', type: 'default', kind: 'absence', limit: null, specs: [] },
 		],
 		roles: [
-			{ name: 'Tanque', icon: '🛡️', limit: null },
-			{ name: 'Sanador', icon: '💚', limit: null },
-			{ name: 'DPS melee', icon: '⚔️', limit: null },
-			{ name: 'DPS distancia', icon: '🏹', limit: null },
+			{ name: 'Tanque', icon: 'role_tank', limit: null },
+			{ name: 'Sanador', icon: 'role_healer', limit: null },
+			{ name: 'DPS melee', icon: 'role_dps', limit: null },
+			{ name: 'DPS distancia', icon: 'role_dps', limit: null },
 		],
 	};
 }
@@ -192,9 +192,7 @@ export function botState(db) {
 }
 // New events go out through the bot once it is connected and switched on.
 export function botActive(db, env) {
-	if (!botReady(env)) return false;
-	const state = botState(db);
-	return state.config.enabled && snowflake(state.app.id);
+	return botReady(env) && snowflake(botState(db).app.id);
 }
 export const botChannel = (config, env) => config.channelId || env.RAID_HELPER_CHANNEL_ID || '';
 // ingestRaidEvent() checks the channel against the configured one; the bot's channel
@@ -333,7 +331,7 @@ function clip(lines) {
 	if (kept.length < lines.length) kept.push(`… y ${lines.length - kept.length} más`);
 	return kept.join('\n') || '—';
 }
-// The Discord message of an event: embed with the sign-ups and one button per class.
+// The Discord message of an event: embed with the sign-ups and the sign-up buttons.
 export function renderMessage(doc, eventId, emojis, origin, closed = false) {
 	const look = doc.look || {},
 		icon = (value) => emojiText(emojiOf(value, emojis)),
@@ -365,6 +363,11 @@ export function renderMessage(doc, eventId, emojis, origin, closed = false) {
 		.join(' · ');
 	if (roleLine) lines.push(roleLine);
 	if (closed) lines.push('', '🔒 **Inscripciones cerradas**');
+	else
+		lines.push(
+			'',
+			'📝 Para apuntarte necesitas **entrar en la web con Discord** y tener tu personaje **vinculado con Battle.net** (Mi perfil → Battle.net).',
+		);
 	const fields = [];
 	const group = (title, members, line) => {
 		if (members.length && fields.length < 24)
@@ -414,6 +417,7 @@ export function renderMessage(doc, eventId, emojis, origin, closed = false) {
 		...(look.footer ? { footer: { text: look.footer.slice(0, 200) } } : {}),
 		...(look.imageUrl ? { image: { url: look.imageUrl } } : {}),
 	};
+	// One button signs up with the player's own character: its class comes from the web.
 	const button = (cls) => {
 		const emoji = emojiOf(cls.icon, emojis);
 		return {
@@ -421,25 +425,31 @@ export function renderMessage(doc, eventId, emojis, origin, closed = false) {
 			style: 2,
 			custom_id: `rs:c:${eventId}:${cls.name}`,
 			disabled: closed,
+			label: cls.name,
 			...(emoji ? { emoji } : {}),
-			...(look.buttonLabels !== false || !emoji ? { label: cls.name } : {}),
 		};
 	};
-	const rows = [],
-		classes = doc.classes.filter((c) => c.type !== 'default').map(button);
-	for (let i = 0; i < classes.length; i += 5)
-		rows.push({ type: 1, components: classes.slice(i, i + 5) });
-	const last = doc.classes.filter((c) => c.type === 'default').map(button);
-	last.push({
-		type: 2,
-		style: 4,
-		custom_id: `rs:x:${eventId}`,
-		label: 'Retirarme',
-		disabled: closed,
-	});
+	const main = [
+		{
+			type: 2,
+			style: 3,
+			custom_id: `rs:a:${eventId}`,
+			label: 'Apuntarme',
+			emoji: { name: '✅' },
+			disabled: closed,
+		},
+		...doc.classes.filter((c) => c.type === 'default').map(button),
+		{ type: 2, style: 4, custom_id: `rs:x:${eventId}`, label: 'Retirarme', disabled: closed },
+	].slice(0, 5);
+	const rows = [{ type: 1, components: main }];
 	if (look.showWebLink !== false && /^https:\/\//.test(origin || ''))
-		last.push({ type: 2, style: 5, label: 'Ver en la web', url: `${origin}/raids` });
-	rows.push({ type: 1, components: last });
+		rows.push({
+			type: 1,
+			components: [
+				{ type: 2, style: 5, label: 'Mi perfil (Battle.net)', url: `${origin}/perfil` },
+				{ type: 2, style: 5, label: 'Ver en la web', url: `${origin}/raids` },
+			],
+		});
 	return { embeds: [embed], components: rows, allowed_mentions: { parse: [] } };
 }
 

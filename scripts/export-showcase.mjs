@@ -12,6 +12,7 @@ if (memberApp) {
 		throw Error('MEMBER_APP_URL must be an HTTPS origin without a path.');
 }
 mkdirSync(join(destination, 'assets/icons/spec'), { recursive: true });
+mkdirSync(join(destination, 'assets/icons/role'), { recursive: true });
 mkdirSync(join(destination, 'assets/art'), { recursive: true });
 mkdirSync(join(destination, 'assets/partners'), { recursive: true });
 mkdirSync(join(destination, 'assets/portraits'), { recursive: true });

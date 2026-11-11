@@ -53,38 +53,53 @@ marcadas como «Sin aviso».
 
 ## Inscripciones a convocatorias con el bot propio
 
-El mismo bot puede publicar las convocatorias en Discord en lugar de Raid-Helper, con un botón
-por clase y los iconos de clase y especialización de la web. Todo se edita en
-**Panel → Convocatorias → Bot de inscripciones en Discord** (Oficiales y Líder):
+La hermandad ya no usa Raid-Helper para convocatorias nuevas: en cuanto el token del bot está
+instalado, todas las convocatorias que se crean en la web las publica este bot. Las de
+Raid-Helper anteriores se quedan como historial.
 
-1. **Conectar con Discord y subir iconos**: lee la aplicación del bot, sube los 35 iconos de
-   `public/assets/icons` como emojis de la aplicación (no ocupan huecos del servidor) y apunta
-   los botones de Discord a `https://darknessofthefallen.com/api/discord/interactions`.
-   Se puede pulsar otra vez sin duplicar nada.
-2. **Dar permisos al bot en el servidor**: el enlace pide Ver canal, Enviar mensajes, Insertar
-   enlaces, Leer el historial y Usar emojis externos. En el canal de convocatorias tienen que
-   estar permitidos.
-3. Indicar el canal (vacío: el de Raid-Helper), el rol a mencionar y activar «Publicar las
-   convocatorias nuevas con este bot». Las de Raid-Helper ya publicadas siguen como estaban.
+Todo está en **Panel → Convocatorias → 🤖 Bot de inscripciones en Discord** (Oficiales y Líder).
 
-Desde el editor se cambian clases, especializaciones, iconos (de la web, emoji estándar o
-`<:nombre:id>` del servidor), roles y sus límites, límite por clase, opciones extra (suplente,
-tentativo, ausente), texto, imagen, color, pie, agrupación por clase o rol y el cierre de
-inscripciones antes del inicio. Al guardar, los mensajes de las convocatorias abiertas se
-editan en Discord en unos segundos. El título, horario, plazas y texto de cada convocatoria se
-editan en su ficha; cancelarla borra su mensaje.
+### Puesta en marcha (una vez)
 
-Funcionamiento:
+1. **Conectar con Discord**: sube los iconos de la web (clases, especializaciones y los de rol
+   de WoW) como emojis de la aplicación y conecta los botones de Discord con
+   `https://darknessofthefallen.com/api/discord/interactions`. Discord limita cuántos emojis
+   se suben seguidos: si faltan, el paso lo dice; se vuelve a pulsar al cabo de un minuto.
+2. **Dar permisos**: el enlace pide Ver canal, Enviar mensajes, Insertar enlaces, Leer el
+   historial y Usar emojis externos.
+3. **Canal**: el ID del canal de convocatorias (vacío: el de siempre).
 
-- Solo se apuntan quienes tienen un **personaje registrado en la web**: para una clase, un
-  personaje de esa clase (el principal si hay varios); para suplente, tentativo o ausente,
-  cualquier personaje. Si no, el bot responde en privado con el enlace a /perfil. La inscripción
-  queda vinculada a ese personaje para la alineación y la asistencia.
-- Clase con varias especializaciones → menú privado para elegir una. Las plazas van por orden
-  de llegada; por encima del límite de la raid, del rol o de la clase se queda en cola y sube
-  sola cuando alguien se retira.
+Cuando está todo, la puesta en marcha se pliega y el editor queda en una línea.
+
+### Cómo se apunta un jugador
+
+1. Entra en la web con su cuenta de Discord.
+2. En **Mi perfil** vincula su personaje con **Battle.net**.
+3. En la convocatoria de Discord pulsa **✅ Apuntarme**.
+
+Solo cuentan los personajes **validados con Battle.net** (importados desde Mi perfil). Con uno
+solo, entra directamente con su clase y la especialización guardada en la web; con varios,
+elige personaje en un menú privado; si la web no sabe su especialización, la elige en otro.
+La respuesta privada permite cambiarla. Suplente, Tentativo y Ausente piden también un
+personaje validado. Sin él, el bot responde en privado con los tres pasos y el enlace a Mi
+perfil, y el mensaje de cada convocatoria lo recuerda. Desde la web se aplica la misma regla.
+
+Las plazas van por orden de llegada; por encima del límite de la raid, del rol o de la clase
+se queda en cola y sube solo cuando alguien se retira.
+
+### Ajustes (plegados)
+
+«⚙️ Ajustes del mensaje, roles y clases»: texto por defecto, rol a mencionar, cierre de
+inscripciones, color, imagen, pie, agrupación por clase o rol; roles con su icono y máximo;
+clases con su icono, máximo y especializaciones (icono y rol de cada una); y los botones extra.
+Al guardar, se actualizan los mensajes de las convocatorias abiertas. «Restaurar plantilla por
+defecto» vuelve a las 9 clases con sus iconos. El título, horario, plazas y texto de cada
+convocatoria se editan en su ficha; cancelarla borra su mensaje.
+
+### Seguridad y fallos
+
 - Discord firma cada pulsación (Ed25519) y la web la comprueba con la clave pública de la
-  aplicación; no hace falta Gateway ni ningún servidor encendido aparte del Worker.
+  aplicación; no hace falta Gateway ni otro servidor aparte del Worker.
 - Si Discord no responde al publicar, se reintenta buscando antes el mensaje en el canal, para
   no publicarlo dos veces. Sin permisos en el canal, la convocatoria queda «Requiere revisión»
-  con el motivo y se reintenta desde la web.
+  con el motivo.

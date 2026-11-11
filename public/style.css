@@ -3846,3 +3846,86 @@ body > header .brand-logo {
 		grid-template-columns: 1fr;
 	}
 }
+.bot-steps {
+	list-style: none;
+	padding: 0;
+	margin: 16px 0;
+	display: grid;
+	gap: 12px;
+}
+.bot-step {
+	display: flex;
+	gap: 14px;
+	align-items: flex-start;
+	border: 1px solid var(--line);
+	border-radius: 7px;
+	padding: 12px 14px;
+}
+.bot-step p {
+	margin: 4px 0 10px;
+	font-size: 13px;
+}
+.bot-step-mark {
+	flex: 0 0 28px;
+	height: 28px;
+	border-radius: 50%;
+	display: grid;
+	place-items: center;
+	border: 1px solid var(--gold);
+	color: var(--gold);
+	font-weight: 700;
+}
+.bot-step.is-done .bot-step-mark {
+	background: var(--green);
+	border-color: var(--green);
+	color: #111;
+}
+.bot-step > div {
+	flex: 1;
+	min-width: 0;
+}
+.bot-howto {
+	border-left: 3px solid var(--gold);
+	padding: 10px 14px;
+	margin: 16px 0;
+	background: #ffffff08;
+}
+.bot-howto ol {
+	margin: 8px 0;
+	padding-left: 20px;
+}
+.bot-fold {
+	border: 1px solid var(--line);
+	border-radius: 7px;
+	margin: 10px 0;
+}
+.bot-fold > summary {
+	cursor: pointer;
+	padding: 10px 14px;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	flex-wrap: wrap;
+}
+.bot-fold-body {
+	padding: 4px 14px 14px;
+}
+.bot-fold-icons {
+	display: inline-flex;
+	gap: 2px;
+	opacity: 0.85;
+}
+.bot-fold.bot-class {
+	margin: 6px 0;
+}
+.bot-button.bot-go {
+	background: #248046;
+}
+.bot-save {
+	margin-top: 14px;
+}
+.bot-check-inline {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}

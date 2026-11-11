@@ -42,8 +42,16 @@ async function fixture() {
 		sessions[rank] = issueSession(db, id);
 	}
 	db.prepare(
-		"INSERT INTO characters(id,user_id,name,class,role,spec,is_main,created_at) VALUES('char1',?,'Merlina','Mago','DPS distancia','Escarcha',1,?)",
-	).run(ids.member, new Date().toISOString());
+		"INSERT INTO characters(id,user_id,name,class,role,spec,is_main,source,synced_at,created_at) VALUES('char1',?,'Merlina','Mago','DPS distancia','Escarcha',1,'battlenet',?,?)",
+	).run(ids.member, new Date().toISOString(), new Date().toISOString());
+	// Registered by hand, never validated with Battle.net: cannot sign up.
+	db.prepare("INSERT INTO users VALUES(?,'QA guest','member',?)").run(
+		ids.guest,
+		new Date().toISOString(),
+	);
+	db.prepare(
+		"INSERT INTO characters(id,user_id,name,class,role,spec,created_at) VALUES('manual1',?,'Manual','Guerrero','DPS melee','Armas',?)",
+	).run(ids.guest, new Date().toISOString());
 	// A stand-in for Discord's API: the application, its emojis and the channel's messages.
 	const discord = { messages: new Map(), emojis: [], calls: [], fail: null, next: 1 };
 	const transport = async (url, options) => {
@@ -189,20 +197,26 @@ test('connecting uploads the class icons and reports what is ready', async () =>
 	}
 });
 
-test('the bot cannot be switched on before it is connected', async () => {
+test('with the bot installed, events wait until it is connected (no Raid-Helper)', async () => {
 	const f = await fixture();
 	try {
-		const { config } = (await f.request('/api/raid-bot', 'officer')).body;
-		const r = await f.request('/api/raid-bot', 'officer', 'PUT', {
-			config: { ...config, enabled: true },
+		const begin = start();
+		const r = await f.request('/api/events', 'raid_leader', 'POST', {
+			title: 'Sin conectar',
+			start: begin,
+			end: begin.replace('T23:00', 'T23:59'),
+			category: 'Oficial',
+			capacity: 20,
+			requestId: randomUUID(),
 		});
 		assert.equal(r.status, 409);
+		assert.match(r.body.error, /Conecta primero el bot/);
 	} finally {
 		await f.close();
 	}
 });
 
-test('an event is published with class buttons and sign-ups arrive from Discord', async () => {
+test('an event is published with one sign-up button and sign-ups arrive from Discord', async () => {
 	const f = await fixture();
 	try {
 		const { id } = await published(f);
@@ -214,26 +228,37 @@ test('an event is published with class buttons and sign-ups arrive from Discord'
 		assert.equal(message.embeds[0].title, 'Núcleo de Magma');
 		assert.match(message.embeds[0].description, /Traed pociones/);
 		const buttons = message.components.flatMap((row) => row.components);
-		const mage = buttons.find((b) => b.custom_id === `rs:c:${id}:Mago`);
-		assert.equal(mage.emoji.name, 'mage');
-		assert.match(mage.emoji.id, /^\d{17,20}$/);
+		assert.ok(buttons.some((b) => b.custom_id === `rs:a:${id}` && b.label === 'Apuntarme'));
 		assert.ok(buttons.some((b) => b.custom_id === `rs:x:${id}`));
+		assert.ok(!buttons.some((b) => b.custom_id === `rs:c:${id}:Mago`));
+		assert.match(message.embeds[0].description, /Battle\.net/);
+		assert.match(message.embeds[0].description, /<:role_tank:\d+> Tanque/);
 
 		// Unsigned or forged calls never get in.
-		assert.equal((await f.press(ids.member, `rs:c:${id}:Mago`, null, { forge: true })).status, 401);
+		assert.equal((await f.press(ids.member, `rs:a:${id}`, null, { forge: true })).status, 401);
 
-		// Class button → private menu of specializations → signed up.
-		const menu = await f.press(ids.member, `rs:c:${id}:Mago`);
-		assert.equal(menu.body.type, 4);
-		assert.equal(menu.body.data.flags, 64);
-		const select = menu.body.data.components[0].components[0];
+		// Not validated with Battle.net: refused privately, with the steps.
+		const refused = await f.press(ids.guest, `rs:a:${id}`);
+		assert.equal(refused.body.data.flags, 64);
+		assert.match(refused.body.data.content, /Battle\.net/);
+		assert.match((await f.press(ids.guest, `rs:c:${id}:Ausente`)).body.data.content, /Battle\.net/);
+
+		// «Apuntarme»: the only validated character, with the spec saved on the web.
+		const done = await f.press(ids.member, `rs:a:${id}`);
+		assert.equal(done.body.type, 4);
+		assert.equal(done.body.data.flags, 64);
+		assert.ok(done.body.data.content.includes('**Merlina** · Mago · Escarcha'));
+		const select = done.body.data.components[0].components[0];
 		assert.deepEqual(
 			select.options.map((o) => o.label),
 			['Arcano', 'Fuego', 'Escarcha'],
 		);
-		const done = await f.press(ids.member, select.custom_id, ['Escarcha']);
-		assert.equal(done.body.type, 7);
-		assert.match(done.body.data.content, /Mago · Escarcha/);
+		// The spec can be changed from the same private answer.
+		assert.match(
+			(await f.press(ids.member, select.custom_id, ['Arcano'])).body.data.content,
+			/Mago · Arcano/,
+		);
+		await f.press(ids.member, select.custom_id, ['Escarcha']);
 
 		const after = (await f.request('/api/events/' + id, 'member')).body;
 		assert.equal(after.signups.length, 1);
@@ -253,13 +278,13 @@ test('an event is published with class buttons and sign-ups arrive from Discord'
 
 		// «Ausente» needs no menu and answers by updating the message itself.
 		const absent = await f.press(ids.member, `rs:c:${id}:Ausente`);
-		assert.equal(absent.body.type, 7);
+		assert.match(absent.body.data.content, /Ausente/);
 		assert.equal(
 			(await f.request('/api/events/' + id, 'member')).body.signups[0].status,
 			'Ausente',
 		);
 		const left = await f.press(ids.member, `rs:x:${id}`);
-		assert.equal(left.body.type, 7);
+		assert.match(left.body.data.content, /retirado/);
 		assert.equal((await f.request('/api/events/' + id, 'member')).body.signups.length, 0);
 		assert.match((await f.press(ids.member, `rs:x:${id}`)).body.data.content, /No estabas/);
 	} finally {
@@ -271,19 +296,29 @@ test('a full raid queues sign-ups and promotes them when a place frees up', asyn
 	const f = await fixture();
 	try {
 		const { id } = await published(f, 1);
-		// Without a character of that class registered on the website, nobody gets in.
-		const refused = await f.press(ids.guest, `rs:c:${id}:Guerrero`);
-		assert.match(refused.body.data.content, /personaje de esa clase registrado/);
-		assert.equal(refused.body.data.flags, 64);
-		assert.match((await f.press(ids.guest, `rs:c:${id}:Ausente`)).body.data.content, /registrado/);
-		assert.match((await f.press(ids.member, `rs:c:${id}:Guerrero`)).body.data.content, /Guerrero/);
-		f.db
-			.prepare(
-				"INSERT INTO characters(id,user_id,name,class,role,spec,created_at) VALUES('char2',?,'Thrall','Guerrero','DPS melee','Armas',?)",
-			)
-			.run(ids.officer, new Date().toISOString());
-		await f.press(ids.member, `rs:s:${id}:Mago`, ['Fuego']);
-		const queued = await f.press(ids.officer, `rs:s:${id}:Guerrero`, ['Armas']);
+		// Two validated characters: the player picks one, then its spec (none saved on the web).
+		for (const [cid, name, cls] of [
+			['char2', 'Thrall', 'Guerrero'],
+			['char3', 'Garrosh', 'Brujo'],
+		])
+			f.db
+				.prepare(
+					"INSERT INTO characters(id,user_id,name,class,role,spec,source,synced_at,created_at) VALUES(?,?,?,?,'DPS melee','','battlenet',?,?)",
+				)
+				.run(cid, ids.officer, name, cls, new Date().toISOString(), new Date().toISOString());
+		await f.press(ids.member, `rs:a:${id}`);
+		const pick = await f.press(ids.officer, `rs:a:${id}`);
+		assert.deepEqual(
+			pick.body.data.components[0].components[0].options.map((o) => o.label),
+			['Thrall', 'Garrosh'],
+		);
+		const spec = await f.press(ids.officer, `rs:p:${id}`, ['char2']);
+		assert.match(spec.body.data.content, /elige tu especialización/);
+		const queued = await f.press(
+			ids.officer,
+			spec.body.data.components[0].components[0].custom_id,
+			['Armas'],
+		);
 		assert.match(queued.body.data.content, /en cola/);
 		let event = (await f.request('/api/events/' + id, 'raid_leader')).body;
 		assert.deepEqual(event.signups.map((s) => s.status).sort(), ['Confirmado', 'Suplente']);
@@ -307,6 +342,17 @@ test('edits on the website reach the Discord message', async () => {
 		const [messageId] = [...f.discord.messages][0];
 		await deliverBotRenders(f.db, env, f.transport);
 
+		// A character not validated with Battle.net cannot sign up from the website either.
+		f.db.prepare("UPDATE characters SET source='manual' WHERE id='char1'").run();
+		const manual = await f.request(`/api/events/${id}/signup`, 'member', 'POST', {
+			characterId: 'char1',
+			className: 'Mago',
+			specName: 'Arcano',
+			requestId: randomUUID(),
+		});
+		assert.equal(manual.status, 400);
+		assert.match(manual.body.error, /Battle\.net/);
+		f.db.prepare("UPDATE characters SET source='battlenet' WHERE id='char1'").run();
 		// A sign-up made on the website.
 		const signup = await f.request(`/api/events/${id}/signup`, 'member', 'POST', {
 			characterId: 'char1',
@@ -379,7 +425,7 @@ test('edits on the website reach the Discord message', async () => {
 			f.db.prepare('SELECT state FROM raid_events WHERE id=?').get(id).state,
 			'Cancelada',
 		);
-		assert.match((await f.press(ids.member, `rs:c:${id}:Mago`)).body.data.content, /ya no existe/);
+		assert.match((await f.press(ids.member, `rs:a:${id}`)).body.data.content, /ya no existe/);
 	} finally {
 		await f.close();
 	}

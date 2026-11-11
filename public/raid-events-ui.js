@@ -65,7 +65,7 @@ export async function mountRaidEvents(host, ctx, { manage = false, mine = false 
 		title:
 			'El nombre que verá la gente en Discord y en la web. Por ejemplo: «Núcleo de Magma — Raid de 40».',
 		start:
-			'Fecha y hora de Madrid. Debe ser futura: Raid-Helper cierra las inscripciones al llegar esta hora.',
+			'Fecha y hora de Madrid. Debe ser futura: las inscripciones se cierran al llegar esta hora.',
 		end: 'Se rellena sola 2 horas después del inicio. Si la raid acaba a la 01:00, es ya el día siguiente.',
 		category:
 			'Oficial: raid del calendario de la hermandad. Extraordinaria: fuera de los días habituales, coordinada con el GM. Voluntaria: sin compromiso de asistencia.',
@@ -114,7 +114,7 @@ export async function mountRaidEvents(host, ctx, { manage = false, mine = false 
 				}
 				«Confirmado» indica inscripción activa, no asistencia histórica.
 			</p>
-			${!result.configured ? '<p class="notice">La conexión con Discord (bot de inscripciones o Raid-Helper) está pendiente de activación. No se simulan eventos ni inscripciones.</p>' : ''}${manager && result.sync?.error ? `<p class="error">${esc(result.sync.error)}</p>` : ''}${result.configured ? `<p class="muted">Última sincronización: ${esc(date(result.sync?.last_success))}</p>` : ''}
+			${!result.configured ? '<p class="notice">El bot de inscripciones está pendiente de conectar: sigue los pasos de «Bot de inscripciones en Discord», más abajo.</p>' : ''}${manager && result.sync?.error ? `<p class="error">${esc(result.sync.error)}</p>` : ''}${result.configured ? `<p class="muted">Última sincronización: ${esc(date(result.sync?.last_success))}</p>` : ''}
 			<form class="filters" data-filters>
 				${input('Desde', 'from', filters.from, 'date')}<label
 					>Tipo<select name="category">

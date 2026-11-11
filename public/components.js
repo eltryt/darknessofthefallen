@@ -29,7 +29,9 @@ export function SpecIcon({ className, specId, size = 'small' }) {
 	const key = Object.hasOwn(classes, className) ? classes[className] : '';
 	const specs = getSpecsForClass(key),
 		id = normalizeSpecValue(specId);
-	return Object.hasOwn(specs, id) ? icon(`spec/spec_${id}`, specs[id].name, size) : '';
+	return Object.hasOwn(specs, id)
+		? icon(`spec/spec_${specs[id].icon || id}`, specs[id].name, size)
+		: '';
 }
 export function ClassWithSpecIcon({ className, specId }) {
 	return `<span class="class-with-spec">${ClassIcon({ className })}${SpecIcon({ className, specId })}</span>`;

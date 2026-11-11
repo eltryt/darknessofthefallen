@@ -5,6 +5,9 @@ import { audit, transaction } from './database-core.mjs';
 import { HttpError } from './domain.mjs';
 import { signupFingerprint } from './raid-events.mjs';
 import { ingestRaidEvent } from './raid-sync.mjs';
+import { normalizeSpecValue, specs as specCatalog } from '../public/specs.js';
+import { classKeys } from './raid-bot.mjs';
+const classKey = Object.fromEntries(Object.entries(classKeys).map(([key, name]) => [name, key]));
 import {
 	applySignup,
 	applyTemplate,
@@ -57,141 +60,181 @@ const say = (content, extra = {}) => ({
 	data: { content, flags: 64, allowed_mentions: { parse: [] }, ...extra },
 });
 
-// Only characters registered on the website can sign up: a class needs a character of that
-// class, and the extra options (bench, tentative, absence) need any character at all.
-function registeredCharacter(db, userId, cls) {
-	return cls.type === 'default'
-		? db
-				.prepare(
-					'SELECT id,name,surname FROM characters WHERE user_id=? AND archived_at IS NULL ORDER BY is_main DESC,created_at LIMIT 1',
-				)
-				.get(userId)
-		: db
-				.prepare(
-					'SELECT id,name,surname FROM characters WHERE user_id=? AND class=? AND archived_at IS NULL ORDER BY is_main DESC,created_at LIMIT 1',
-				)
-				.get(userId, cls.name);
-}
-function notRegistered(env, cls) {
+// Only validated characters sign up: imported from Battle.net into the website by their
+// owner, who therefore entered the website with Discord. Nobody signs up with a name typed
+// in Discord.
+export const validatedCharacters = (db, userId) =>
+	db
+		.prepare(
+			"SELECT id,name,surname,class,spec FROM characters WHERE user_id=? AND archived_at IS NULL AND source='battlenet' AND synced_at IS NOT NULL ORDER BY is_main DESC,created_at",
+		)
+		.all(userId);
+const fullName = (c) => [c.name, c.surname].filter(Boolean).join(' ');
+function notValidated(env, mine) {
 	const profile = /^https:\/\//.test(env.APP_ORIGIN || '') ? `${env.APP_ORIGIN}/perfil` : null;
 	return say(
-		(cls.type === 'default'
-			? 'Para apuntarte necesitas tener un personaje registrado en la web de la hermandad.'
-			: `Para apuntarte como **${cls.name}** necesitas un personaje de esa clase registrado en la web de la hermandad.`) +
-			(profile ? `\nRegístralo en ${profile} y vuelve a pulsar el botón.` : ''),
+		(mine
+			? 'Ninguno de tus personajes validados es de una clase de esta convocatoria.'
+			: 'Para apuntarte necesitas **entrar en la web con Discord** y **vincular tu personaje con Battle.net**.') +
+			'\n1. Entra en la web con tu cuenta de Discord.\n2. En **Mi perfil**, pulsa **Battle.net** e importa tu personaje.\n3. Vuelve aquí y pulsa **Apuntarme**.',
 		profile
 			? {
 					components: [
 						{
 							type: 1,
-							components: [{ type: 2, style: 5, label: 'Registrar personaje', url: profile }],
+							components: [{ type: 2, style: 5, label: 'Ir a Mi perfil', url: profile }],
 						},
 					],
 				}
 			: {},
 	);
 }
-function signUp(db, env, eventId, member, cls, specName) {
-	const user = member.user;
-	{
-		const { doc } = botEvent(db, eventId),
-			previous = doc.signUps.find((s) => s.userId === user.id);
-		const character = registeredCharacter(db, user.id, cls);
-		if (!character) return null;
-		// Extra options keep the name of the class sign-up they replace.
-		const name =
-			cls.type === 'default' && previous
-				? previous.name
-				: [character.name, character.surname].filter(Boolean).join(' ');
-		const signup = applySignup(doc, { userId: user.id, name, className: cls.name, specName });
-		saveDoc(db, eventId, doc);
-		ingestBot(db, env, eventId);
-		if (cls.type !== 'default')
-			db.prepare('INSERT OR REPLACE INTO raid_character_links VALUES(?,?,?,?,?)').run(
-				eventId,
-				String(signup.id),
-				user.id,
-				character.id,
-				signupFingerprint(signup),
-			);
-		return doc.signUps.find((s) => s.id === signup.id);
-	}
+// The template's spec that matches the one saved on the character, if any.
+function characterSpec(cls, character) {
+	if (cls.specs.length === 1) return cls.specs[0].name;
+	const key = classKey[character.class],
+		id = normalizeSpecValue(character.spec || ''),
+		name = key && specCatalog[key]?.[id]?.name;
+	return cls.specs.find((s) => s.name === name || s.name === character.spec)?.name || '';
+}
+function signUp(db, env, eventId, user, cls, character, specName) {
+	const { doc } = botEvent(db, eventId),
+		previous = doc.signUps.find((s) => s.userId === user.id);
+	// Extra options keep the name of the sign-up they replace.
+	const name = cls.type === 'default' && previous ? previous.name : fullName(character);
+	const signup = applySignup(doc, { userId: user.id, name, className: cls.name, specName });
+	saveDoc(db, eventId, doc);
+	ingestBot(db, env, eventId);
+	if (cls.type !== 'default')
+		db.prepare('INSERT OR REPLACE INTO raid_character_links VALUES(?,?,?,?,?)').run(
+			eventId,
+			String(signup.id),
+			user.id,
+			character.id,
+			signupFingerprint(signup),
+		);
+	return botEvent(db, eventId).doc.signUps.find((s) => s.id === signup.id);
+}
+const specMenu = (eventId, cls, character, emojis, current) => ({
+	type: 1,
+	components: [
+		{
+			type: 3,
+			custom_id: `rs:s:${eventId}:${character.id}`,
+			placeholder: current ? `Cambiar especialización (${current})` : 'Elige tu especialización',
+			options: cls.specs.map((spec) => {
+				const emoji = emojiOf(spec.icon, emojis);
+				return {
+					label: spec.name,
+					value: spec.name,
+					...(spec.roleName ? { description: spec.roleName } : {}),
+					...(emoji ? { emoji } : {}),
+				};
+			}),
+		},
+	],
+});
+// Signs up with one character, or asks for the spec when the web does not know it.
+function join(db, env, eventId, user, character, emojis, specName) {
+	const doc = botEvent(db, eventId).doc,
+		cls = doc.classes.find((c) => c.type !== 'default' && c.name === character.class);
+	if (!cls) return notValidated(env, true);
+	const spec = specName || characterSpec(cls, character);
+	if (cls.specs.length > 1 && !cls.specs.some((s) => s.name === spec))
+		return say(`**${fullName(character)}** (${cls.name}): elige tu especialización.`, {
+			components: [specMenu(eventId, cls, character, emojis)],
+		});
+	const signup = signUp(db, env, eventId, user, cls, character, spec);
+	return say(
+		`✅ Apuntado con **${signup.name}** · ${cls.name}${signup.specName ? ' · ' + signup.specName : ''}.` +
+			(signup.status === 'queued'
+				? '\n⏳ La raid o tu rol están completos: quedas en cola y subes solo si se libera una plaza.'
+				: ''),
+		cls.specs.length > 1
+			? { components: [specMenu(eventId, cls, character, emojis, signup.specName)] }
+			: {},
+	);
 }
 function component(db, env, interaction) {
 	const [prefix, kind, eventId, ...rest] = String(interaction.data?.custom_id || '').split(':'),
-		className = rest.join(':'),
-		member = interaction.member;
-	if (prefix !== 'rs' || !snowflake(member?.user?.id)) return say('Acción no reconocida.');
+		target = rest.join(':'),
+		user = interaction.member?.user;
+	if (prefix !== 'rs' || !snowflake(user?.id)) return say('Acción no reconocida.');
 	const event = botEvent(db, eventId),
 		row = db.prepare('SELECT state FROM raid_events WHERE id=?').get(eventId);
 	if (!event || !row || ['Eliminada', 'Cancelada'].includes(row.state))
 		return say('Esta convocatoria ya no existe.');
 	if (row.state !== 'Abierta' || !signupsOpen(event.doc))
 		return say('🔒 Las inscripciones de esta convocatoria están cerradas.');
-	const { emojis } = botState(db),
-		message = () => renderMessage(botEvent(db, eventId).doc, eventId, emojis, env.APP_ORIGIN);
+	const { emojis } = botState(db);
 	if (kind === 'x') {
-		if (!event.doc.signUps.some((s) => s.userId === member.user.id))
+		if (!event.doc.signUps.some((s) => s.userId === user.id))
 			return say('No estabas apuntado a esta convocatoria.');
 		const doc = event.doc;
-		doc.signUps = doc.signUps.filter((s) => s.userId !== member.user.id);
+		doc.signUps = doc.signUps.filter((s) => s.userId !== user.id);
 		saveDoc(db, eventId, doc);
 		ingestBot(db, env, eventId);
-		return { type: 7, data: message() };
+		return say('Te has retirado de la convocatoria.');
 	}
-	const cls = event.doc.classes.find((c) => c.name === className);
-	if (!cls) return say('Esa opción ya no está disponible. Prueba con los botones actuales.');
-	if (['c', 's'].includes(kind) && !registeredCharacter(db, member.user.id, cls))
-		return notRegistered(env, cls);
-	if (kind === 'c') {
-		if (cls.type !== 'default' && cls.specs.length > 1)
-			return say(`Elige tu especialización de **${cls.name}**:`, {
-				components: [
-					{
-						type: 1,
-						components: [
-							{
-								type: 3,
-								custom_id: `rs:s:${eventId}:${cls.name}`,
-								placeholder: 'Especialización',
-								options: cls.specs.map((spec) => {
-									const emoji = emojiOf(spec.icon, emojis);
-									return {
-										label: spec.name,
-										value: spec.name,
-										...(spec.roleName ? { description: spec.roleName } : {}),
-										...(emoji ? { emoji } : {}),
-									};
-								}),
-							},
-						],
-					},
-				],
-			});
-		signUp(db, env, eventId, member, cls, cls.specs[0]?.name || '');
-		return { type: 7, data: message() };
+	const characters = validatedCharacters(db, user.id);
+	if (!characters.length) return notValidated(env, false);
+	const playable = characters.filter((c) =>
+		event.doc.classes.some((cls) => cls.type !== 'default' && cls.name === c.class),
+	);
+	const value = String(interaction.data.values?.[0] || '');
+	// «Apuntarme»: the only character goes straight in; with several, the player picks one.
+	if (kind === 'a') {
+		if (!playable.length) return notValidated(env, true);
+		if (playable.length === 1) return join(db, env, eventId, user, playable[0], emojis);
+		return say('¿Con qué personaje te apuntas?', {
+			components: [
+				{
+					type: 1,
+					components: [
+						{
+							type: 3,
+							custom_id: `rs:p:${eventId}`,
+							placeholder: 'Elige personaje',
+							options: playable.slice(0, 25).map((c) => {
+								const emoji = emojiOf(
+									event.doc.classes.find((cls) => cls.name === c.class)?.icon,
+									emojis,
+								);
+								return {
+									label: fullName(c).slice(0, 100),
+									value: c.id,
+									description: c.class,
+									...(emoji ? { emoji } : {}),
+								};
+							}),
+						},
+					],
+				},
+			],
+		});
+	}
+	if (kind === 'p') {
+		const character = playable.find((c) => c.id === value);
+		return character
+			? join(db, env, eventId, user, character, emojis)
+			: say('Ese personaje ya no está disponible.');
 	}
 	if (kind === 's') {
-		const signup = signUp(
-			db,
-			env,
-			eventId,
-			member,
-			cls,
-			String(interaction.data.values?.[0] || ''),
-		);
-		return {
-			type: 7,
-			data: {
-				content:
-					`✅ Apuntado como **${cls.name} · ${signup.specName}** (${signup.name}).` +
-					(signup.status === 'queued'
-						? '\n⏳ La raid o tu rol están completos: quedas en cola y subes solo si se libera una plaza.'
-						: ''),
-				components: [],
-				allowed_mentions: { parse: [] },
-			},
-		};
+		const character = playable.find((c) => c.id === target);
+		return character
+			? join(db, env, eventId, user, character, emojis, value)
+			: say('Ese personaje ya no está disponible.');
+	}
+	if (kind === 'c') {
+		const cls = event.doc.classes.find((c) => c.name === target);
+		if (!cls) return say('Esa opción ya no está disponible. Prueba con los botones actuales.');
+		// Messages published before the single button still carry class buttons.
+		if (cls.type !== 'default') {
+			const character = playable.find((c) => c.class === cls.name);
+			return character ? join(db, env, eventId, user, character, emojis) : notValidated(env, true);
+		}
+		const signup = signUp(db, env, eventId, user, cls, characters[0], '');
+		return say(`Marcado como **${cls.name}** (${signup.name}).`);
 	}
 	return say('Acción no reconocida.');
 }
@@ -278,8 +321,6 @@ export async function raidBotApi({
 	if (path === '/api/raid-bot' && method === 'PUT') {
 		const v = await body(),
 			config = cleanConfig(v.config);
-		if (config.enabled && !snowflake(botState(db).app.id))
-			throw new HttpError(409, 'Conecta primero el bot con Discord y después actívalo.');
 		let updated = [];
 		transaction(db, () => {
 			db.prepare('UPDATE raid_bot_config SET data=?,updated_at=? WHERE id=1').run(

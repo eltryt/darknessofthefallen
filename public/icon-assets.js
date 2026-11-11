@@ -34,6 +34,16 @@ export const iconAssets = [
 	'assets/icons/spec/spec_archery.webp',
 	'assets/icons/spec/spec_feral.webp',
 	'assets/icons/spec/spec_guardian.webp',
+	// Specs whose icon differs from another class's spec of the same name.
+	'assets/icons/spec/spec_paladin_protection.webp',
+	'assets/icons/spec/spec_paladin_holy.webp',
+	'assets/icons/spec/spec_priest_holy.webp',
+	'assets/icons/spec/spec_druid_restore.webp',
+	'assets/icons/spec/spec_shaman_restore.webp',
+	// Role icons of the game's group finder (Wowhead).
+	'assets/icons/role/role_tank.webp',
+	'assets/icons/role/role_healer.webp',
+	'assets/icons/role/role_dps.webp',
 	// Class portraits shown in the armory figure.
 	...['warrior', 'paladin', 'hunter', 'rogue', 'priest', 'shaman', 'mage', 'warlock', 'druid'].map(
 		(c) => `assets/portraits/${c}.webp`,

@@ -298,10 +298,17 @@ export async function raidEventsApi(ctx) {
 		requirePermission('attendance.manage');
 		const own = botActive(db, env),
 			channel = own ? botChannel(botState(db).config, env) : env.RAID_HELPER_CHANNEL_ID;
+		// Our own bot publishes as soon as its token is installed; Raid-Helper is no longer
+		// used for new events.
+		if (!own && botReady(env))
+			throw new HttpError(
+				409,
+				'Conecta primero el bot: Panel → Convocatorias → Bot de inscripciones → «Conectar con Discord».',
+			);
 		if (!own && !raidHelperReady(env))
 			throw new HttpError(
 				503,
-				'Falta activar el bot de inscripciones o Raid-Helper. Consulta la configuración del proyecto.',
+				'Falta activar el bot de inscripciones. Consulta la configuración del proyecto.',
 			);
 		if (own && !/^\d{17,20}$/.test(channel))
 			throw new HttpError(409, 'Falta indicar el canal de Discord de las convocatorias.');
@@ -532,12 +539,15 @@ export async function raidEventsApi(ctx) {
 				.get(v.characterId, target);
 			if (!character)
 				throw new HttpError(400, 'Selecciona un personaje registrado de este jugador.');
-			const cls = (raw.classes || []).find((c) => c.name === v.className);
-			if (!cls)
+			// The bot's events take only characters validated with Battle.net.
+			if (row.provider === 'bot' && (character.source !== 'battlenet' || !character.synced_at))
 				throw new HttpError(
 					400,
-					'Selecciona una opción disponible en la plantilla de Raid-Helper.',
+					'Para apuntarte, vincula antes este personaje con Battle.net en Mi perfil.',
 				);
+			const cls = (raw.classes || []).find((c) => c.name === v.className);
+			if (!cls)
+				throw new HttpError(400, 'Selecciona una clase u opción disponible en la convocatoria.');
 			if (cls.type !== 'default') {
 				const groupRole = groupRoles[cls.name.toLowerCase()];
 				if (
@@ -554,7 +564,7 @@ export async function raidEventsApi(ctx) {
 			}
 			const specs = cls.specs || [];
 			if (specs.length && !specs.some((s) => s.name === v.specName))
-				throw new HttpError(400, 'Selecciona una especialización de Raid-Helper.');
+				throw new HttpError(400, 'Selecciona una especialización de la convocatoria.');
 			kind = 'signup';
 			payload = {
 				userId: target,

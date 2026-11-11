@@ -9,8 +9,8 @@ export const specs = {
 
 	// Paladin specializations
 	paladin: {
-		holy: { name: 'Sagrado', category: 'Sanador' },
-		protection: { name: 'Protección', category: 'Tanque' },
+		holy: { name: 'Sagrado', category: 'Sanador', icon: 'paladin_holy' },
+		protection: { name: 'Protección', category: 'Tanque', icon: 'paladin_protection' },
 		retribution: { name: 'Reprensión', category: 'DPS melee' },
 	},
 
@@ -31,7 +31,7 @@ export const specs = {
 	// Priest specializations
 	priest: {
 		discipline: { name: 'Disciplina', category: 'Sanador' },
-		holy: { name: 'Sagrado', category: 'Sanador' },
+		holy: { name: 'Sagrado', category: 'Sanador', icon: 'priest_holy' },
 		shadow: { name: 'Sombras', category: 'DPS distancia' },
 	},
 
@@ -39,7 +39,7 @@ export const specs = {
 	shaman: {
 		elemental: { name: 'Elemental', category: 'DPS distancia' },
 		enhancement: { name: 'Mejora', category: 'DPS melee' },
-		restore: { name: 'Restauración', category: 'Sanador' },
+		restore: { name: 'Restauración', category: 'Sanador', icon: 'shaman_restore' },
 	},
 
 	// Mage specializations
@@ -60,7 +60,7 @@ export const specs = {
 	druid: {
 		balance: { name: 'Equilibrio', category: 'DPS distancia' },
 		feral: { name: 'Feral', category: 'DPS melee' },
-		restore: { name: 'Restauración', category: 'Sanador' },
+		restore: { name: 'Restauración', category: 'Sanador', icon: 'druid_restore' },
 		guardian: { name: 'Guardián', category: 'Tanque' },
 	},
 };
