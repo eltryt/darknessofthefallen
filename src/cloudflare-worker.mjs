@@ -38,6 +38,8 @@ import { deliverCallups, dmReady, nextCallupAt } from './raid-lineup.mjs';
 import { syncRaidEvents } from './raid-sync.mjs';
 import { raidHelperReady } from './raid-helper.mjs';
 import { battlenetReady, nextBattlenetSyncAt, syncBattlenet } from './battlenet.mjs';
+// An alarm this far past its time is not going to fire on its own.
+const STALE_ALARM_MS = 120000;
 
 export class Guild extends DurableObject {
 	constructor(ctx, env) {
@@ -134,6 +136,19 @@ export class Guild extends DurableObject {
 		return response || new Response('Application response unavailable.', { status: 500 });
 	}
 
+	// Brings the alarm forward to `at`. An alarm already well in the past never fires again
+	// (Cloudflare gives up after failed retries and leaves it set), and since this only ever
+	// moves the alarm earlier, such a stale one used to stop every scheduled job for good:
+	// raid sync stopped on 2026-11-08 that way. A stale alarm is replaced.
+	async arm(at) {
+		const alarm = await this.ctx.storage.getAlarm();
+		if (alarm === null || alarm > at || alarm < Date.now() - STALE_ALARM_MS) {
+			if (alarm !== null && alarm < Date.now() - STALE_ALARM_MS)
+				console.warn(`Stale alarm from ${new Date(alarm).toISOString()} replaced`);
+			await this.ctx.storage.setAlarm(at);
+		}
+	}
+
 	async scheduleNotifications() {
 		if (gmReady(this.env)) {
 			const row = this.db
@@ -141,47 +156,29 @@ export class Guild extends DurableObject {
 					"SELECT MIN(next_at) due FROM gm_notifications WHERE status IN ('pending','sending')",
 				)
 				.get();
-			if (row.due !== null) {
-				const due = Math.max(Date.now() + 60000, row.due),
-					alarm = await this.ctx.storage.getAlarm();
-				if (alarm === null || alarm > due) await this.ctx.storage.setAlarm(due);
-			}
+			if (row.due !== null) await this.arm(Math.max(Date.now() + 60000, row.due));
 		}
 		if (pushReady(this.env)) {
 			const due = nextPushAt(this.db);
-			if (due !== null) {
-				const at = Math.max(Date.now() + 2000, due),
-					alarm = await this.ctx.storage.getAlarm();
-				if (alarm === null || alarm > at) await this.ctx.storage.setAlarm(at);
-			}
+			if (due !== null) await this.arm(Math.max(Date.now() + 2000, due));
 		}
 		if (dmReady(this.env)) {
 			const due = Math.min(
 				nextCallupAt(this.db) ?? Infinity,
 				nextRouletteDMAt(this.db) ?? Infinity,
 			);
-			if (due !== Infinity) {
-				const at = Math.max(Date.now() + 5000, due),
-					alarm = await this.ctx.storage.getAlarm();
-				if (alarm === null || alarm > at) await this.ctx.storage.setAlarm(at);
-			}
+			if (due !== Infinity) await this.arm(Math.max(Date.now() + 5000, due));
 		}
 		if (raidHelperReady(this.env)) {
 			const sync = this.db.prepare('SELECT next_at FROM raid_sync WHERE id=1').get(),
 				job = this.db
 					.prepare("SELECT MIN(next_at) due FROM raid_jobs WHERE status='pending'")
 					.get();
-			const due = Math.max(Date.now() + 15000, Math.min(sync.next_at, job.due ?? Infinity));
-			const alarm = await this.ctx.storage.getAlarm();
-			if (alarm === null || alarm > due) await this.ctx.storage.setAlarm(due);
+			await this.arm(Math.max(Date.now() + 15000, Math.min(sync.next_at, job.due ?? Infinity)));
 		}
 		if (battlenetReady(this.env)) {
 			const due = nextBattlenetSyncAt(this.db);
-			if (due !== null) {
-				const at = Math.max(Date.now() + 60000, due),
-					alarm = await this.ctx.storage.getAlarm();
-				if (alarm === null || alarm > at) await this.ctx.storage.setAlarm(at);
-			}
+			if (due !== null) await this.arm(Math.max(Date.now() + 60000, due));
 		}
 		if (this.env.RECRUITMENT_NOTIFICATIONS_ENABLED !== 'true') return;
 		const webhook = this.env.DISCORD_RECRUITMENT_WEBHOOK;
@@ -195,18 +192,32 @@ export class Guild extends DurableObject {
 
 	async alarm() {
 		const origin = this.env.APP_ORIGIN || (await this.ctx.storage.get('application-origin'));
-		if (origin) await deliverRecruitment(this.db, { ...this.env, APP_ORIGIN: origin });
-		try {
-			await syncRaidEvents(this.db, this.env);
-			captureRaidIncidents(this.db, this.env);
-			await deliverGM(this.db, this.env);
-			await deliverPush(this.db, { ...this.env, APP_ORIGIN: origin || this.env.APP_ORIGIN });
-			await deliverCallups(this.db, { ...this.env, APP_ORIGIN: origin || '' });
-			await deliverRouletteDMs(this.db, { ...this.env, APP_ORIGIN: origin || '' });
-			await syncBattlenet(this.db, this.env);
-		} finally {
-			await this.scheduleNotifications();
+		// Each job runs on its own: one that throws no longer skips the rest or fails the
+		// whole alarm (repeated failures are what leave Cloudflare's alarm stuck).
+		const steps = [
+			[
+				'recruitment',
+				() => origin && deliverRecruitment(this.db, { ...this.env, APP_ORIGIN: origin }),
+			],
+			['raid-sync', () => syncRaidEvents(this.db, this.env)],
+			['raid-incidents', () => captureRaidIncidents(this.db, this.env)],
+			['gm', () => deliverGM(this.db, this.env)],
+			[
+				'push',
+				() => deliverPush(this.db, { ...this.env, APP_ORIGIN: origin || this.env.APP_ORIGIN }),
+			],
+			['callups', () => deliverCallups(this.db, { ...this.env, APP_ORIGIN: origin || '' })],
+			['roulette-dm', () => deliverRouletteDMs(this.db, { ...this.env, APP_ORIGIN: origin || '' })],
+			['battlenet', () => syncBattlenet(this.db, this.env)],
+		];
+		for (const [name, step] of steps) {
+			try {
+				await step();
+			} catch (e) {
+				console.error(`Alarm step ${name} failed: ${e?.name || 'Error'}`);
+			}
 		}
+		await this.scheduleNotifications();
 	}
 }
 
