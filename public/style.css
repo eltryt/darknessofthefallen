@@ -3929,3 +3929,17 @@ body > header .brand-logo {
 	align-items: center;
 	gap: 8px;
 }
+.bot-preview-author {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	color: #dbdee1;
+	margin: 4px 0;
+}
+.bot-preview-author img {
+	border-radius: 50%;
+}
+.bot-preview-text {
+	border-left: 3px solid #4e5058;
+	padding-left: 8px;
+}

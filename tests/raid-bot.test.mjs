@@ -227,13 +227,14 @@ test('an event is published with one sign-up button and sign-ups arrive from Dis
 		assert.equal(event.provider, 'bot');
 		const [messageId, message] = [...f.discord.messages][0];
 		assert.equal(event.externalId, messageId);
-		assert.equal(message.embeds[0].title, 'Núcleo de Magma');
+		assert.equal(message.embeds[0].title, '⚔️ Núcleo de Magma');
 		assert.match(message.embeds[0].description, /Traed pociones/);
 		const buttons = message.components.flatMap((row) => row.components);
 		assert.ok(buttons.some((b) => b.custom_id === `rs:a:${id}` && b.label === 'Apuntarme'));
 		assert.ok(buttons.some((b) => b.custom_id === `rs:x:${id}`));
 		assert.ok(!buttons.some((b) => b.custom_id === `rs:c:${id}:Mago`));
-		assert.match(message.embeds[0].description, /Battle\.net/);
+		// The how-to goes in the footer, next to the guild's crest.
+		assert.match(message.embeds[0].footer.text, /Actualizar desde Battle\.net/);
 		assert.match(message.embeds[0].description, /<:role_tank:\d+> Tanque/);
 
 		// Unsigned or forged calls never get in.
@@ -403,7 +404,7 @@ test('edits on the website reach the Discord message', async () => {
 
 		assert.equal(await deliverBotRenders(f.db, env, f.transport), 1);
 		const message = f.discord.messages.get(messageId);
-		assert.equal(message.embeds[0].title, 'Guarida de Onyxia');
+		assert.equal(message.embeds[0].title, '⚔️ Guarida de Onyxia');
 		assert.equal(message.embeds[0].color, 0x112233);
 		assert.match(message.embeds[0].description, /Capa de escamas/);
 		assert.match(message.embeds[0].description, /Tanque \*\*0\/2\*\*/);

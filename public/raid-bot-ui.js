@@ -262,20 +262,27 @@ ${esc(config.description)}</textarea>
 								`<div><strong>${glyph(s.cls.icon)} ${esc(s.cls.name)} (1)</strong><span>${glyph(s.spec?.icon)} ${s.name}</span></div>`,
 						);
 		return /* HTML */ `<div class="bot-preview" style="border-left-color:${esc(config.color)}">
-			<strong class="bot-preview-title">Núcleo de Magma — ejemplo</strong>
-			${config.description ? `<p class="bot-preview-text">${esc(config.description)}</p>` : ''}
-			<p>📅 martes, 23:00 · en 3 días<br />👥 <strong>${sample.length}/20</strong> inscritos</p>
+			<small class="bot-preview-author"
+				><img src="/assets/app-icon-192.png" alt="" width="18" height="18" /> Convocatoria
+				Oficial</small
+			>
+			<strong class="bot-preview-title">⚔️ Núcleo de Magma — ejemplo</strong>
+			<p>📅 <strong>martes, 23:00 → 01:00</strong> · en 3 días<br />Roster de 20 · 👑 Tryt</p>
 			<p>
+				👥 <strong>${sample.length}/20</strong> inscritos
+				<code
+					>${'▰'.repeat(Math.ceil(sample.length / 2))}${'▱'.repeat(10 - Math.ceil(sample.length / 2))}</code
+				><br />
 				${config.roles.map((r) => `${glyph(r.icon)} ${esc(r.name)} <strong>${sample.filter((s) => s.spec?.roleName === r.name).length}${r.limit ? '/' + r.limit : ''}</strong>`).join(' · ')}
 			</p>
-			<p>
-				📝 Para apuntarte necesitas <strong>entrar en la web con Discord</strong> y tener tu
-				personaje <strong>actualizado desde Battle.net</strong> (Mi perfil → Personajes → Actualizar
-				desde Battle.net).
-			</p>
+			${config.description ? `<p class="bot-preview-text">${esc(config.description)}</p>` : ''}
+			<p class="muted">━━━━━━━━━━━━━━━━━━━━</p>
 			<div class="bot-preview-groups">${groups.join('')}</div>
 			${config.imageUrl ? '<p class="muted">[imagen de cabecera]</p>' : ''}
-			${config.footer ? `<small class="muted">${esc(config.footer)}</small>` : ''}
+			<small class="bot-preview-author"
+				><img src="/assets/app-icon-192.png" alt="" width="18" height="18" />
+				${esc([config.footer, 'Para apuntarte: entra en la web con Discord → Mi perfil → Personajes → Actualizar desde Battle.net'].filter(Boolean).join(' · '))}</small
+			>
 			<div class="bot-buttons">
 				<span class="bot-button bot-go">✅ Apuntarme</span
 				>${extra.map((c) => `<span class="bot-button">${glyph(c.icon)}${esc(c.name)}</span>`).join('')}<span

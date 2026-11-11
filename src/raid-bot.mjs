@@ -346,30 +346,39 @@ export function renderMessage(doc, eventId, emojis, origin, closed = false) {
 	const specIcon = (s) =>
 			icon(classOf(doc, s.className)?.specs?.find((x) => x.name === s.specName)?.icon),
 		classIcon = (s) => icon(classOf(doc, s.className)?.icon);
+	// Header: when, who leads, how full; then a rule and the sign-ups below.
 	const lines = [];
-	if (doc.description) lines.push(doc.description, '');
-	lines.push(`📅 <t:${doc.startTime}:F> · <t:${doc.startTime}:R>`);
-	if (Number.isFinite(doc.endTime)) lines.push(`⏱️ Termina <t:${doc.endTime}:t>`);
-	const tags = [doc.category, doc.roster].filter(Boolean).map(plain).join(' · ');
-	if (tags) lines.push(`🏷️ ${tags}`);
-	if (doc.leaderName) lines.push(`👑 ${plain(doc.leaderName)}`);
+	const when = Number.isFinite(doc.endTime)
+		? `<t:${doc.startTime}:F> → <t:${doc.endTime}:t>`
+		: `<t:${doc.startTime}:F>`;
+	lines.push(`📅 **${when}** · <t:${doc.startTime}:R>`);
+	const tags = [doc.roster, doc.leaderName ? `👑 ${plain(doc.leaderName)}` : '']
+		.filter(Boolean)
+		.map((t) => (t.startsWith('👑') ? t : plain(t)));
+	if (tags.length) lines.push(tags.join('  ·  '));
+	const filled = limit ? Math.min(10, Math.ceil((active.length / limit) * 10)) : 0;
 	lines.push(
+		'',
 		`👥 **${active.length}${limit ? '/' + limit : ''}** inscritos` +
-			(queued.length ? ` · ⏳ ${queued.length} en cola` : ''),
+			(limit ? `  \`${'▰'.repeat(filled)}${'▱'.repeat(10 - filled)}\`` : '') +
+			(queued.length ? `  ·  ⏳ ${queued.length} en cola` : ''),
 	);
 	const roleLine = doc.roles
 		.map((r) => {
 			const count = active.filter((s) => s.roleName === r.name).length;
 			return `${icon(r.icon)} ${plain(r.name)} **${count}${r.limit ? '/' + r.limit : ''}**`.trim();
 		})
-		.join(' · ');
+		.join('  ·  ');
 	if (roleLine) lines.push(roleLine);
-	if (closed) lines.push('', '🔒 **Inscripciones cerradas**');
-	else
+	if (doc.description)
 		lines.push(
 			'',
-			'📝 Para apuntarte necesitas **entrar en la web con Discord** y tener tu personaje **actualizado desde Battle.net** (Mi perfil → Personajes → Actualizar desde Battle.net).',
+			...String(doc.description)
+				.split('\n')
+				.map((l) => `> ${l}`),
 		);
+	if (closed) lines.push('', '🔒 **Inscripciones cerradas**');
+	lines.push('', '━━━━━━━━━━━━━━━━━━━━');
 	const fields = [];
 	const group = (title, members, line) => {
 		if (members.length && fields.length < 24)
@@ -411,12 +420,34 @@ export function renderMessage(doc, eventId, emojis, origin, closed = false) {
 			all.filter((s) => s.className === cls.name),
 			(s) => plain(s.name),
 		);
+	const web = /^https:\/\//.test(origin || ''),
+		logo = web ? `${origin}/assets/app-icon-192.png` : null;
+	// The how-to stays in the footer, small, next to the guild's crest.
+	const footer = [
+		look.footer,
+		closed
+			? ''
+			: 'Para apuntarte: entra en la web con Discord → Mi perfil → Personajes → Actualizar desde Battle.net',
+	]
+		.filter(Boolean)
+		.join('  ·  ');
 	const embed = {
-		title: String(doc.title).slice(0, 256),
+		...(doc.category
+			? {
+					author: {
+						name: `Convocatoria ${doc.category}`.slice(0, 256),
+						...(logo ? { icon_url: logo } : {}),
+					},
+				}
+			: {}),
+		title: `⚔️ ${doc.title}`.slice(0, 256),
+		...(web ? { url: `${origin}/raids` } : {}),
 		description: lines.join('\n').slice(0, 4000),
 		color: parseInt((look.color || '#8b1e2d').slice(1), 16),
 		fields,
-		...(look.footer ? { footer: { text: look.footer.slice(0, 200) } } : {}),
+		...(footer
+			? { footer: { text: footer.slice(0, 2048), ...(logo ? { icon_url: logo } : {}) } }
+			: {}),
 		...(look.imageUrl ? { image: { url: look.imageUrl } } : {}),
 	};
 	// One button signs up with the player's own character: its class comes from the web.
