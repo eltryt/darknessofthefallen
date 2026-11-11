@@ -1,0 +1,28 @@
+name: Probe Raid-Helper templates
+on:
+  workflow_dispatch:
+    inputs:
+      templates:
+        description: 'Comma-separated template ids to try'
+        default: 'wowclassic,wowsod,wowera'
+permissions:
+  contents: read
+concurrency:
+  group: cloudflare-backend
+  cancel-in-progress: false
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Create, inspect and delete one labelled test event per template
+        run: node scripts/probe-raid-helper-templates.mjs
+        env:
+          RAID_HELPER_API_KEY: ${{ secrets.RAID_HELPER_API_KEY }}
+          DISCORD_GUILD_ID: ${{ secrets.DISCORD_GUILD_ID }}
+          DISCORD_LEADER_ID: ${{ secrets.DISCORD_LEADER_ID }}
+          PROBE_TEMPLATES: ${{ inputs.templates }}
