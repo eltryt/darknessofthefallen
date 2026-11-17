@@ -629,6 +629,34 @@ export function publicGuildAchievements(db, now = new Date().toISOString()) {
 	return guildCatalog.map((item) => present(item, earned[item.id], metrics[item.id]));
 }
 
+// Recalculating every member at once reads ~100k rows (each one's whole history), and the
+// home page asks for the achievements on every visit. So a visit recalculates only the
+// viewer's (and the guild's): each member's are awarded when they look. What every member
+// shares (raids, progress, loot) is kept ten minutes, and the viewer's own five.
+const SHARED_TTL_MS = 10 * 60000;
+const MINE_TTL_MS = 5 * 60000;
+const viewCache = new WeakMap();
+function viewerMetrics(db, userId) {
+	const nowMs = Date.now(),
+		now = new Date(nowMs).toISOString();
+	let c = viewCache.get(db);
+	if (!c || nowMs - c.at > SHARED_TTL_MS) {
+		const since = achievementsSince(db),
+			shared = sharedData(db, since),
+			guild = guildMetrics(db, since, shared);
+		award(db, 'guild_achievements', null, guildCatalog, guild, now);
+		c = { at: nowMs, since, shared, guild, mine: new Map() };
+		viewCache.set(db, c);
+	}
+	let mine = c.mine.get(userId);
+	if (!mine || nowMs - mine.at > MINE_TTL_MS) {
+		mine = { at: nowMs, metrics: playerMetrics(db, userId, c.since, c.shared) };
+		award(db, 'user_achievements', userId, playerCatalog, mine.metrics, now);
+		c.mine.set(userId, mine);
+	}
+	return { since: c.since, mine: mine.metrics, guild: c.guild };
+}
+
 export async function achievementsApi({ db, user, path, method, send, requirePermission }) {
 	if (path === '/api/achievements/pact' && method === 'POST') {
 		requirePermission('community.read');
@@ -642,7 +670,7 @@ export async function achievementsApi({ db, user, path, method, send, requirePer
 	}
 	if (path !== '/api/achievements' || method !== 'GET') return false;
 	requirePermission('community.read');
-	const { since, metrics, guild } = refreshAchievements(db);
+	const { since, mine: myMetrics, guild } = viewerMetrics(db, user.id);
 	const rows = db.prepare('SELECT * FROM user_achievements').all();
 	const points = {};
 	for (const r of rows) points[r.user_id] = (points[r.user_id] || 0) + TIER_POINTS[r.tier];
@@ -664,7 +692,7 @@ export async function achievementsApi({ db, user, path, method, send, requirePer
 		since,
 		points: points[user.id] || 0,
 		achievements: playerCatalog.map((item) =>
-			present(item, mine[item.id], metrics[user.id]?.[item.id]),
+			present(item, mine[item.id], myMetrics[item.id]),
 		),
 		leaderboard: {
 			top: members.slice(0, 10).map(({ name, points, rank }) => ({ name, points, rank })),

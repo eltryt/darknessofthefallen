@@ -14,6 +14,10 @@ const NAMESPACE = `profile-forever-${REGION}`;
 const API = `https://${REGION}.api.blizzard.com`;
 const CHARACTER_LIMIT = 30;
 const SYNC_EVERY_MS = 3600000;
+// A run also takes the characters that would fall due within this margin, so refreshes
+// gather into batches instead of one alarm per character (each run has a fixed cost in
+// rows read).
+const SYNC_GATHER_MS = 15 * 60000;
 // Characters per alarm run: each takes up to seven requests, and the Worker caps them.
 const SYNC_BATCH = 6;
 // Item icons asked to Blizzard per refresh; an icon already known for that item is reused.
@@ -400,19 +404,22 @@ export function readItemIcon(data) {
 // An item Blizzard has no icon for is marked "forever:0" so it is not asked again.
 async function fillIcons(db, characterIds, media, budget) {
 	if (!characterIds.length) return 0;
-	const known = new Map(
-		db
-			.prepare(
-				"SELECT item_id,icon FROM character_equipment WHERE origin='provider' AND icon LIKE 'forever:%'",
-			)
-			.all()
-			.map((r) => [r.item_id, r.icon]),
-	);
 	const rows = db
 		.prepare(
 			`SELECT character_id,slot,item_id FROM character_equipment WHERE origin='provider' AND icon='' AND character_id IN (${characterIds.map(() => '?').join(',')})`,
 		)
 		.all(...characterIds);
+	// Nearly always nothing is missing: then the table is not gone through at all.
+	const wanted = [...new Set(rows.map((r) => r.item_id).filter((id) => /^\d+$/.test(id || '')))];
+	if (!wanted.length) return 0;
+	const known = new Map(
+		db
+			.prepare(
+				`SELECT item_id,icon FROM character_equipment WHERE origin='provider' AND icon LIKE 'forever:%' AND item_id IN (${wanted.map(() => '?').join(',')})`,
+			)
+			.all(...wanted)
+			.map((r) => [r.item_id, r.icon]),
+	);
 	const update = db.prepare(
 		"UPDATE character_equipment SET icon=? WHERE character_id=? AND slot=? AND origin='provider'",
 	);
@@ -501,7 +508,7 @@ export function readProfessions(data) {
 // for the member's character. What Blizzard answered is kept per character and in the audit.
 export async function syncBattlenet(db, env, fetcher = fetch) {
 	if (!battlenetReady(env)) return null;
-	const cutoff = new Date(Date.now() - SYNC_EVERY_MS).toISOString();
+	const cutoff = new Date(Date.now() - SYNC_EVERY_MS + SYNC_GATHER_MS).toISOString();
 	const due = db
 		.prepare(
 			'SELECT b.character_id AS id,b.realm_id,c.name,c.surname,c.external_id,c.level,c.professions,c.avatar_url,c.stats FROM battlenet_characters b JOIN characters c ON c.id=b.character_id WHERE c.archived_at IS NULL AND (b.checked_at IS NULL OR b.checked_at<?) ORDER BY b.checked_at IS NOT NULL, b.checked_at LIMIT ?',
