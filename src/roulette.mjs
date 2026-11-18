@@ -555,18 +555,7 @@ export async function rouletteApi({ db, user, path, method, body, send, requireP
 		const dmAt = Date.now() + revealDelay(game.spins.length);
 		db.prepare(
 			`UPDATE roulette_tables SET status='spun',closed_at=?,closed_by=?,winner_id=?,loser_id=?,high=?,low=?,amount=?,dm_status='pending',dm_next_at=?,loser_dm_status='pending',loser_dm_next_at=? WHERE id=?`,
-		).run(
-			now,
-			user.id,
-			game.winner,
-			game.loser,
-			game.high,
-			game.low,
-			amount,
-			dmAt,
-			dmAt,
-			id,
-		);
+		).run(now, user.id, game.winner, game.loser, game.high, game.low, amount, dmAt, dmAt, id);
 		audit(db, user.id, 'roulette.spun', id, {
 			players: players.length,
 			winner: game.winner,

@@ -21,7 +21,15 @@ export function discordSecrets(env) {
 		} catch {
 			throw new Error('DISCORD_ROLE_MAP must be valid JSON.');
 		}
-		const roles = ['member', 'raider', 'raid_leader', 'loot_officer', 'recruitment_officer', 'officer', 'leader'];
+		const roles = [
+			'member',
+			'raider',
+			'raid_leader',
+			'loot_officer',
+			'recruitment_officer',
+			'officer',
+			'leader',
+		];
 		if (
 			!map ||
 			Array.isArray(map) ||

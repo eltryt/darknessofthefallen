@@ -691,9 +691,7 @@ export async function achievementsApi({ db, user, path, method, send, requirePer
 	send(200, {
 		since,
 		points: points[user.id] || 0,
-		achievements: playerCatalog.map((item) =>
-			present(item, mine[item.id], myMetrics[item.id]),
-		),
+		achievements: playerCatalog.map((item) => present(item, mine[item.id], myMetrics[item.id])),
 		leaderboard: {
 			top: members.slice(0, 10).map(({ name, points, rank }) => ({ name, points, rank })),
 			me: me ? { rank: me.rank, points: me.points, total: members.length } : null,
