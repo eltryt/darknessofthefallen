@@ -380,8 +380,8 @@ export function renderMessage(doc, eventId, emojis, origin, closed = false) {
 	if (closed) lines.push('', '🔒 **Inscripciones cerradas**');
 	lines.push('', '━━━━━━━━━━━━━━━━━━━━');
 	const fields = [];
-	// Discord lays inline fields out three per row. The classes (or roles) always show, empty
-	// ones with «—», and every block starts a new row: the grid stays square.
+	// Discord lays inline fields out up to three per row. The classes (or roles) always show,
+	// empty ones with «—», and every block starts a new row.
 	// A field holds 1024 characters (about 11 people with two custom emojis each): a long
 	// list continues in the next column instead of ending in «… y N más».
 	const group = (title, members, line, always = false) => {
@@ -404,9 +404,14 @@ export function renderMessage(doc, eventId, emojis, origin, closed = false) {
 			rest = last ? [] : rest.slice(Math.max(take, 1));
 		}
 	};
+	// A row of one or two lists closes with a non-inline blank field rather than empty columns:
+	// Discord then gives each list half (or all) of the width, so long names stay on one line,
+	// and the blank field leaves a little air between blocks.
 	const newRow = () => {
-		while (fields.length % 3 && fields.length < 25)
-			fields.push({ name: '\u200b', value: '\u200b', inline: true });
+		let open = 0;
+		for (let i = fields.length - 1; i >= 0 && fields[i].inline; i--) open++;
+		if (open % 3 && fields.length < 25)
+			fields.push({ name: '\u200b', value: '\u200b', inline: false });
 	};
 	if (look.groupBy === 'role') {
 		// Inside each role, players of the same class sit together (template order),
@@ -457,8 +462,7 @@ export function renderMessage(doc, eventId, emojis, origin, closed = false) {
 			(s) => plain(s.name),
 		);
 	newRow();
-	// No trailing empty row.
-	// No trailing empty row (a list's continuation column has a name of '\u200b' too, but people).
+	// No trailing blank field (a list's continuation column has a name of '\u200b' too, but people).
 	while (fields.length && fields.at(-1).name === '\u200b' && fields.at(-1).value === '\u200b')
 		fields.pop();
 	const web = /^https:\/\//.test(origin || ''),
@@ -482,8 +486,7 @@ export function renderMessage(doc, eventId, emojis, origin, closed = false) {
 				}
 			: {}),
 		title: `⚔️ ${doc.title}`.slice(0, 256),
-		// The guild's crest, top right.
-		...(logo ? { thumbnail: { url: logo } } : {}),
+		// No thumbnail: it narrows the header and the crest already shows in the author and footer.
 		...(web ? { url: `${origin}/raids` } : {}),
 		description: lines.join('\n').slice(0, 4000),
 		color: parseInt((look.color || '#8b1e2d').slice(1), 16),

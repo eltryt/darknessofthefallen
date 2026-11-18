@@ -518,6 +518,8 @@ test('grouped by role: tanks and healers first, DPS on a new row, long lists con
 	const names = fields.map((f) => f.name.replace(/<:\w+:\d+>\s*/g, ''));
 	const blank = '​';
 	assert.deepEqual(names.slice(0, 3), ['Tanque (1)', 'Sanador (1)', blank]);
+	// The first row closes with a full-width blank field, so the two lists get half the width each.
+	assert.equal(fields[2].inline, false);
 	assert.equal(names[3], 'DPS melee (1)');
 	assert.equal(names[4], 'DPS distancia (16)');
 	// Nobody is cut: the ranged list continues in the next column, classes kept together.
