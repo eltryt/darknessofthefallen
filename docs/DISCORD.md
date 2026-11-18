@@ -44,12 +44,19 @@ los instala en Cloudflare junto a las credenciales guardadas en GitHub Secrets.
 | Raid Leader | `1550998186162782218` | `raid_leader` |
 | Oficial | `1550998307801927802` | `officer` |
 | Oficial de botín | `1561887793133658202` | `loot_officer` |
+| Oficial de Reclutamiento | `1572722630736347328` | `recruitment_officer` |
 
 `loot_officer` no hereda permisos por jerarquía: solo registra botín, ve las
 wishlists de la hermandad, consulta el roster y las fichas de la armería y escribe
 notas internas de revisión. No gestiona candidaturas, mensajes, convocatorias,
 asistencia, progreso, configuración, auditoría ni exportaciones. Como se aplica
 el mayor rango, quien tenga este rol no debe tener también el rol Oficial.
+
+`recruitment_officer` tampoco hereda: entra al panel, consulta el roster y gestiona
+las candidaturas (ver, cambiar estado y notas, avisar al candidato y borrar), con el
+permiso `applications.manage`. No ve mensajes ni avisos del GM, casos, convocatorias,
+miembros ni configuración. Si alguien tiene a la vez Oficial de botín y Oficial de
+Reclutamiento, se aplica Reclutamiento (va por encima en la lista de rangos).
 
 Para cambiar la asignación, editar ese mapa y ejecutar **Configure Discord login**.
 Este flujo usa el mapa versionado, no un secreto `DISCORD_ROLE_MAP` de GitHub.

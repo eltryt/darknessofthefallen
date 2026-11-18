@@ -34,6 +34,7 @@ import battlenetSyncSchema from '../migrations/021_battlenet_sync.sql';
 import applicationTrackingSchema from '../migrations/022_application_tracking.sql';
 import gmCasesSchema from '../migrations/023_gm_cases.sql';
 import raidBotSchema from '../migrations/024_raid_bot.sql';
+import recruitmentOfficerSchema from '../migrations/025_recruitment_officer.sql';
 import { botReady, deliverBotRenders, nextBotRenderAt } from './raid-bot.mjs';
 import { deliverRouletteDMs, nextRouletteDMAt } from './roulette.mjs';
 import { deliverPush, nextPushAt, pushReady } from './push-notifications.mjs';
@@ -78,6 +79,7 @@ export class Guild extends DurableObject {
 			applicationTrackingSchema,
 			gmCasesSchema,
 			raidBotSchema,
+			recruitmentOfficerSchema,
 		);
 		repairGMRedirectFailures(this.db);
 		this.usage = { since: Date.now(), alarms: 0, total: 0, keys: new Map() };

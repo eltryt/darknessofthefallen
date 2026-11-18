@@ -935,7 +935,7 @@ export function createApp(db, env, { readAsset = readLocalAsset, discordFetch = 
 				});
 			}
 			if (path === '/api/applications' && method === 'GET') {
-				requirePermission('recruitment.manage');
+				requirePermission('applications.manage');
 				return send(
 					200,
 					db
@@ -953,7 +953,7 @@ export function createApp(db, env, { readAsset = readLocalAsset, discordFetch = 
 				);
 			}
 			if (/^\/api\/applications\/[^/]+$/.test(path) && method === 'DELETE') {
-				requirePermission('recruitment.manage');
+				requirePermission('applications.manage');
 				const id = path.split('/')[3];
 				transaction(db, () => {
 					if (!db.prepare('SELECT id FROM applications WHERE id=?').get(id))
@@ -970,7 +970,7 @@ export function createApp(db, env, { readAsset = readLocalAsset, discordFetch = 
 			}
 			const notice = path.match(/^\/api\/applications\/([^/]+)\/notify$/);
 			if (notice && method === 'POST') {
-				requirePermission('recruitment.manage');
+				requirePermission('applications.manage');
 				const v = await body(req);
 				return send(
 					200,
@@ -984,7 +984,7 @@ export function createApp(db, env, { readAsset = readLocalAsset, discordFetch = 
 				);
 			}
 			if (path.startsWith('/api/applications/') && method === 'PATCH') {
-				requirePermission('recruitment.manage');
+				requirePermission('applications.manage');
 				const id = path.split('/')[3],
 					v = await body(req),
 					status = choice(

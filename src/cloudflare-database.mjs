@@ -28,6 +28,7 @@ export function durableDatabase(
 	applicationTrackingSchema,
 	gmCasesSchema,
 	raidBotSchema,
+	recruitmentOfficerSchema,
 ) {
 	const execute = (sql, parameters = []) => storage.sql.exec(sql, ...parameters);
 	// Rows read so far (Cloudflare bills Durable Objects by rows read): the worker measures
@@ -146,6 +147,11 @@ export function durableDatabase(
 			!db.prepare('SELECT version FROM schema_migrations WHERE version=24').get()
 		)
 			db.exec(raidBotSchema);
+		if (
+			recruitmentOfficerSchema &&
+			!db.prepare('SELECT version FROM schema_migrations WHERE version=25').get()
+		)
+			db.exec(recruitmentOfficerSchema);
 	});
 	return db;
 }

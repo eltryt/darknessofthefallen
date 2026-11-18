@@ -27,7 +27,7 @@ export function createPanelView(context) {
 	async function panel() {
 		const tabs = [
 			['roster.read', 'roster', 'Gestión del roster'],
-			['recruitment.manage', 'applications', 'Candidaturas'],
+			['applications.manage', 'applications', 'Candidaturas'],
 			['recruitment.manage', 'messages', 'Mensajes y avisos'],
 			['attendance.manage', 'raids', 'Convocatorias'],
 			['attendance.manage', 'attendance', 'Asistencia'],

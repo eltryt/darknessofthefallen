@@ -11,6 +11,7 @@ export const ranks = [
 	'raider',
 	'raid_leader',
 	'loot_officer',
+	'recruitment_officer',
 	'officer',
 	'leader',
 ];
@@ -36,6 +37,9 @@ export const permissions = {
 	'loot.manage': 'raid_leader',
 	'progress.manage': 'raid_leader',
 	'recruitment.manage': 'officer',
+	// Applications only (list, status, notes, notify, delete): split from recruitment.manage
+	// so the recruitment officer reviews applications without event or GM-inbox powers.
+	'applications.manage': 'officer',
 	'members.manage': 'officer',
 	'audit.read': 'officer',
 	'settings.manage': 'leader',
@@ -56,6 +60,8 @@ export const scopedRanks = {
 		'armory.read',
 		'armory.review',
 	],
+	// The recruitment officer reviews and answers applications, without guild management.
+	recruitment_officer: ['community.read', 'character.write', 'roster.read', 'applications.manage'],
 };
 export function can(user, permission) {
 	if (!user || !(permission in permissions)) return false;

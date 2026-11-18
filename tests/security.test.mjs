@@ -125,23 +125,20 @@ test('all six roles are checked against server endpoints and direct panel URLs',
 	const f = await fixture();
 	try {
 		for (const rank of ranks) {
-			for (const [path, minimum] of [
-				['/api/roster', 'raid_leader'],
-				['/api/applications', 'officer'],
-				['/api/audit', 'officer'],
-				['/api/export', 'leader'],
+			// can() covers scoped ranks (loot and recruitment officers) as well as the hierarchy.
+			for (const [path, permission] of [
+				['/api/roster', 'roster.read'],
+				['/api/applications', 'applications.manage'],
+				['/api/audit', 'audit.read'],
+				['/api/export', 'backup.export'],
 			]) {
 				const r = await f.request(path, rank);
-				assert.equal(
-					r.status,
-					ranks.indexOf(rank) >= ranks.indexOf(minimum) ? 200 : 403,
-					rank + path,
-				);
+				assert.equal(r.status, can({ rank }, permission) ? 200 : 403, rank + path);
 			}
 			const res = await fetch(`http://127.0.0.1:${f.server.address().port}/panel`, {
 				headers: { Cookie: `session=${f.sessions[rank].raw}` },
 			});
-			assert.equal(res.status, ranks.indexOf(rank) >= 3 ? 200 : 403);
+			assert.equal(res.status, can({ rank }, 'roster.read') ? 200 : 403, rank + '/panel');
 		}
 		assert.equal((await f.request('/api/export')).status, 401);
 	} finally {
@@ -695,6 +692,77 @@ test('loot officer migration rebuilds users and keeps every referencing row', ()
 				)
 				.run('c2', 'ghost', 'X', 'Mago', 'DPS distancia', now),
 		);
+	} finally {
+		db.close();
+	}
+});
+test('recruitment officer manages applications only', async () => {
+	const allowed = ['community.read', 'character.write', 'roster.read', 'applications.manage'];
+	for (const permission of Object.keys(permissions))
+		assert.equal(
+			can({ rank: 'recruitment_officer' }, permission),
+			allowed.includes(permission),
+			permission,
+		);
+	// Officers and the GM keep applications; the loot officer still does not get them.
+	assert.equal(can({ rank: 'officer' }, 'applications.manage'), true);
+	assert.equal(can({ rank: 'leader' }, 'applications.manage'), true);
+	assert.equal(can({ rank: 'loot_officer' }, 'applications.manage'), false);
+	assert.equal(
+		roleFromDiscord('new', ['recluta', 'raider'], {
+			DISCORD_ROLE_MAP: '{"recluta":"recruitment_officer","raider":"raider"}',
+		}),
+		'recruitment_officer',
+	);
+	assert.equal(
+		roleFromDiscord('new', ['recluta', 'ofi'], {
+			DISCORD_ROLE_MAP: '{"recluta":"recruitment_officer","ofi":"officer"}',
+		}),
+		'officer',
+	);
+	const f = await fixture();
+	try {
+		for (const [path, status] of [
+			['/api/applications', 200],
+			['/api/roster', 200],
+			['/api/gm-notifications', 403],
+			['/api/gm-cases', 403],
+			['/api/audit', 403],
+			['/api/export', 403],
+		])
+			assert.equal((await f.request(path, 'recruitment_officer')).status, status, path);
+		assert.equal(
+			(
+				await f.request('/api/applications/missing', 'recruitment_officer', 'PATCH', {
+					status: 'Contactado',
+				})
+			).status,
+			404,
+		);
+		assert.equal((await f.request('/api/settings', 'recruitment_officer', 'PUT', {})).status, 403);
+	} finally {
+		await f.close();
+	}
+});
+test('recruitment officer migration rebuilds users and keeps every referencing row', () => {
+	const db = openDatabase(':memory:');
+	try {
+		const now = new Date().toISOString();
+		db.prepare('INSERT INTO users VALUES(?,?,?,?)').run('u1', 'Colhados', 'raider', now);
+		db.prepare(
+			'INSERT INTO characters(id,user_id,name,class,role,created_at) VALUES(?,?,?,?,?,?)',
+		).run('c1', 'u1', 'Colhados', 'Pícaro', 'DPS melee', now);
+		db.prepare('DELETE FROM schema_migrations WHERE version=25').run();
+		transaction(db, () =>
+			db.exec(
+				readFileSync(new URL('../migrations/025_recruitment_officer.sql', import.meta.url), 'utf8'),
+			),
+		);
+		assert.deepEqual(db.prepare('PRAGMA foreign_key_check').all(), []);
+		assert.equal(db.prepare('SELECT user_id FROM characters WHERE id=?').get('c1').user_id, 'u1');
+		db.prepare("UPDATE users SET rank='recruitment_officer' WHERE id='u1'").run();
+		db.prepare("UPDATE users SET rank='loot_officer' WHERE id='u1'").run();
+		assert.throws(() => db.prepare("UPDATE users SET rank='admin' WHERE id='u1'").run());
 	} finally {
 		db.close();
 	}
