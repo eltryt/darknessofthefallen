@@ -6,7 +6,15 @@ import { openDatabase } from '../src/db.mjs';
 import { createApp } from '../src/app.mjs';
 import { issueSession } from '../src/auth.mjs';
 import { syncRaidEvents } from '../src/raid-sync.mjs';
-import { botIcons, deliverBotRenders, nextBotRenderAt } from '../src/raid-bot.mjs';
+import {
+	applySignup,
+	botIcons,
+	defaultConfig,
+	deliverBotRenders,
+	nextBotRenderAt,
+	renderMessage,
+	settle,
+} from '../src/raid-bot.mjs';
 
 const env = {
 	APP_ORIGIN: 'http://localhost:3011',
@@ -280,7 +288,10 @@ test('an event is published with one sign-up button and sign-ups arrive from Dis
 		assert.equal(await deliverBotRenders(f.db, env, f.transport), 1);
 		const edited = f.discord.messages.get(messageId);
 		assert.match(JSON.stringify(edited.embeds[0].fields), /Merlina/);
-		assert.match(edited.embeds[0].fields[0].name, /<:mage:\d+> Mago \(1\)/);
+		assert.ok(edited.embeds[0].fields.some((x) => /<:mage:\d+> Mago \(1\)/.test(x.name)));
+		// The nine classes always show, three per row: the grid stays square.
+		assert.equal(edited.embeds[0].fields.filter((x) => /\(\d+\)$/.test(x.name)).length, 9);
+		assert.equal(edited.embeds[0].fields.length % 3, 0);
 		assert.equal(await deliverBotRenders(f.db, env, f.transport), 0);
 
 		// «Ausente» needs no menu and answers by updating the message itself.
@@ -476,4 +487,44 @@ test('a publication Discord did not answer is retried without posting twice', as
 	} finally {
 		await f.close();
 	}
+});
+
+test('grouped by role: tanks and healers first, DPS on a new row, long lists continue', () => {
+	const config = defaultConfig();
+	const doc = {
+		title: 'Raid',
+		startTime: 1796850000,
+		classes: config.classes,
+		roles: config.roles,
+		look: { groupBy: 'role' },
+		advancedSettings: { limit: 50 },
+		signUps: [],
+		nextSignup: 1,
+	};
+	const add = (name, className, specName) =>
+		applySignup(doc, { userId: name, name, className, specName });
+	add('Muro', 'Guerrero', 'Protección');
+	add('Luz', 'Sacerdote', 'Sagrado');
+	// 16 ranged DPS: more than one field holds with two custom emojis per line.
+	for (let i = 0; i < 8; i++) add('Mago' + i, 'Mago', 'Escarcha');
+	for (let i = 0; i < 8; i++) add('Cazador' + i, 'Cazador', 'Puntería');
+	add('Furia', 'Guerrero', 'Furia');
+	settle(doc);
+	const emojis = new Proxy(
+		{},
+		{ get: (_, k) => (typeof k === 'string' ? '1572722630736347328' : undefined) },
+	);
+	const { fields } = renderMessage(doc, 'e1', emojis, '').embeds[0];
+	const names = fields.map((f) => f.name.replace(/<:\w+:\d+>\s*/g, ''));
+	const blank = '​';
+	assert.deepEqual(names.slice(0, 3), ['Tanque (1)', 'Sanador (1)', blank]);
+	assert.equal(names[3], 'DPS melee (1)');
+	assert.equal(names[4], 'DPS distancia (16)');
+	// Nobody is cut: the ranged list continues in the next column, classes kept together.
+	const ranged = fields[4].value + '\n' + fields[5].value;
+	assert.equal(names[5], blank);
+	assert.doesNotMatch(ranged, /más/);
+	for (let i = 0; i < 8; i++) assert.match(ranged, new RegExp(`Mago${i}$`, 'm'));
+	assert.ok(ranged.indexOf('Cazador0') < ranged.indexOf('Mago0'), 'template class order');
+	for (const f of fields) assert.ok(f.value.length <= 1024);
 });

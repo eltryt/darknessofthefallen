@@ -380,21 +380,54 @@ export function renderMessage(doc, eventId, emojis, origin, closed = false) {
 	if (closed) lines.push('', '🔒 **Inscripciones cerradas**');
 	lines.push('', '━━━━━━━━━━━━━━━━━━━━');
 	const fields = [];
-	const group = (title, members, line) => {
-		if (members.length && fields.length < 24)
+	// Discord lays inline fields out three per row. The classes (or roles) always show, empty
+	// ones with «—», and every block starts a new row: the grid stays square.
+	// A field holds 1024 characters (about 11 people with two custom emojis each): a long
+	// list continues in the next column instead of ending in «… y N más».
+	const group = (title, members, line, always = false) => {
+		if (!(members.length || always) || fields.length >= 24) return;
+		const name = `${title} (${members.length})`.slice(0, 256);
+		if (!members.length) return void fields.push({ name, value: '—', inline: true });
+		let rest = members.map(line);
+		for (let part = 0; rest.length && fields.length < 24; part++) {
+			let size = 0,
+				take = 0;
+			while (take < rest.length && size + rest[take].length + 1 <= 980)
+				size += rest[take++].length + 1;
+			// The third column, or the last free field, keeps the «… y N más» of clip().
+			const last = part === 2 || fields.length === 23;
 			fields.push({
-				name: `${title} (${members.length})`.slice(0, 256),
-				value: clip(members.map(line)),
+				name: part ? '​' : name,
+				value: last ? clip(rest) : rest.slice(0, Math.max(take, 1)).join('\n'),
 				inline: true,
 			});
+			rest = last ? [] : rest.slice(Math.max(take, 1));
+		}
+	};
+	const newRow = () => {
+		while (fields.length % 3 && fields.length < 25)
+			fields.push({ name: '\u200b', value: '\u200b', inline: true });
 	};
 	if (look.groupBy === 'role') {
-		for (const role of doc.roles)
+		// Inside each role, players of the same class sit together (template order),
+		// then by sign-up order. Tanks and healers share the first row; DPS start a new one.
+		const classRank = new Map(doc.classes.map((c, i) => [c.name, i]));
+		const byClass = (a, b) =>
+			(classRank.get(a.className) ?? 99) - (classRank.get(b.className) ?? 99) ||
+			position.get(a.id).localeCompare(position.get(b.id));
+		let dps = false;
+		for (const role of doc.roles) {
+			if (/^DPS/i.test(role.name) && !dps) {
+				dps = true;
+				newRow();
+			}
 			group(
 				`${icon(role.icon)} ${role.name}`.trim(),
-				active.filter((s) => s.roleName === role.name),
+				active.filter((s) => s.roleName === role.name).sort(byClass),
 				(s) => `${classIcon(s)}${specIcon(s)} \`${position.get(s.id)}\` ${plain(s.name)}`,
+				true,
 			);
+		}
 		group(
 			'Sin rol',
 			active.filter((s) => !doc.roles.some((r) => r.name === s.roleName)),
@@ -406,6 +439,7 @@ export function renderMessage(doc, eventId, emojis, origin, closed = false) {
 				`${icon(cls.icon)} ${cls.name}`.trim(),
 				active.filter((s) => s.className === cls.name),
 				(s) => `${specIcon(s)} \`${position.get(s.id)}\` ${plain(s.name)}`.trim(),
+				true,
 			);
 		group(
 			'Otros',
@@ -413,13 +447,20 @@ export function renderMessage(doc, eventId, emojis, origin, closed = false) {
 			(s) => `\`${position.get(s.id)}\` ${plain(s.name)} · ${plain(s.className)}`,
 		);
 	}
+	newRow();
 	group('⏳ En cola', queued, (s) => `${classIcon(s)}${specIcon(s)} ${plain(s.name)}`.trim());
+	newRow();
 	for (const cls of doc.classes.filter((c) => c.type === 'default'))
 		group(
 			`${icon(cls.icon)} ${cls.name}`.trim(),
 			all.filter((s) => s.className === cls.name),
 			(s) => plain(s.name),
 		);
+	newRow();
+	// No trailing empty row.
+	// No trailing empty row (a list's continuation column has a name of '\u200b' too, but people).
+	while (fields.length && fields.at(-1).name === '\u200b' && fields.at(-1).value === '\u200b')
+		fields.pop();
 	const web = /^https:\/\//.test(origin || ''),
 		logo = web ? `${origin}/assets/app-icon-192.png` : null;
 	// The how-to stays in the footer, small, next to the guild's crest.
@@ -441,6 +482,8 @@ export function renderMessage(doc, eventId, emojis, origin, closed = false) {
 				}
 			: {}),
 		title: `⚔️ ${doc.title}`.slice(0, 256),
+		// The guild's crest, top right.
+		...(logo ? { thumbnail: { url: logo } } : {}),
 		...(web ? { url: `${origin}/raids` } : {}),
 		description: lines.join('\n').slice(0, 4000),
 		color: parseInt((look.color || '#8b1e2d').slice(1), 16),
