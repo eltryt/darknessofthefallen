@@ -1,4 +1,5 @@
 import { recruitmentShowcase } from './guild-showcase.js';
+import { recruitmentFaq, faqHtml } from './recruitment-faq.js';
 import { schedulePlanner } from './schedule-ui.js';
 import { medal, tierNames } from './medals.js';
 import { tutorialButton } from './tutorials.js';
@@ -388,6 +389,7 @@ export function createPublicLayout(context) {
 						</aside>
 					</section>
 					${recruitmentShowcase(s, esc, document.body.dataset.applicationUrl || '')}
+					${faqHtml(recruitmentFaq(s), esc)}
 					<section class="section">
 						<h2>El camino para entrar</h2>
 						<ol class="application-steps">

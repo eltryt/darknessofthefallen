@@ -42,6 +42,7 @@ for (const file of [
 	'assets/partners/restedxp-leaderboard.webp',
 
 	'guild-showcase.js',
+	'recruitment-faq.js',
 	'boot-state.js',
 	'manual-roster-ui.js',
 	'analytics.js',

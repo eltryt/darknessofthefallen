@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { seoPages, seoHtml, sitemap } from '../src/seo.mjs';
+import { seoPages, seoHtml, sitemap, announce, INDEXNOW_KEY } from '../src/seo.mjs';
 const source = readFileSync(new URL('../public/index.html', import.meta.url), 'utf8');
 test('server SEO provides unique public metadata and indexable text without private data', () => {
 	const titles = new Set();
@@ -58,4 +58,80 @@ test('structured data describes the guild on the home page and breadcrumbs elsew
 		assert.ok(title.length <= 62, `${path} title too long`);
 		assert.ok(description.length <= 160, `${path} description too long`);
 	}
+});
+
+test('recruitment page carries the open places and the FAQ for search engines', () => {
+	const settings = {
+		recruitmentOpen: true,
+		faction: 'Alianza',
+		region: 'Europa',
+		ruleset: 'PvP',
+		raidDays: ['Martes', 'Jueves'],
+		raidStart: '23:00',
+		raidEnd: '01:00',
+		lootMethod: 'Loot Council',
+		classPriorities: { Cazador: 'cerrada' },
+		specPriorities: {
+			'Paladín:holy': 'alta',
+			'Mago:fire': 'alta',
+			'Mago:frost': 'alta',
+			...Object.fromEntries(
+				[
+					'Guerrero:arms',
+					'Guerrero:fury',
+					'Guerrero:protection',
+					'Paladín:protection',
+					'Paladín:retribution',
+					'Pícaro:subtlety',
+					'Pícaro:assassination',
+					'Pícaro:combat',
+					'Sacerdote:discipline',
+					'Sacerdote:holy',
+					'Sacerdote:shadow',
+					'Chamán:elemental',
+					'Chamán:enhancement',
+					'Chamán:restore',
+					'Mago:arcane',
+					'Brujo:affliction',
+					'Brujo:demonology',
+					'Brujo:destruction',
+					'Druida:balance',
+					'Druida:feral',
+					'Druida:restore',
+					'Druida:guardian',
+				].map((k) => [k, 'cerrada']),
+			),
+		},
+	};
+	const html = seoHtml(source, '/reclutamiento', 'https://guild.example', settings);
+	assert.match(html, /Buscamos Paladín Sagrado y Mago Fuego y Escarcha\./);
+	assert.match(html, /Preguntas frecuentes/);
+	assert.match(html, /Martes y Jueves, de 23:00 a 01:00/);
+	const ld = JSON.parse(html.match(/<script type="application\/ld\+json">(.*?)<\/script>/s)[1]);
+	const faq = ld['@graph'].find((n) => n['@type'] === 'FAQPage');
+	assert.ok(faq.mainEntity.length >= 5);
+	assert.equal(faq.mainEntity[0].acceptedAnswer['@type'], 'Answer');
+	// Closed recruitment says so instead of listing places.
+	assert.match(
+		seoHtml(source, '/reclutamiento', 'https://guild.example', { recruitmentOpen: false }),
+		/el reclutamiento está cerrado/,
+	);
+	// Only the recruitment page gets the FAQ.
+	assert.doesNotMatch(seoHtml(source, '/raids', 'https://guild.example', settings), /FAQPage/);
+});
+
+test('sitemap dates the pages that show the settings, and IndexNow only runs in production', async () => {
+	const map = sitemap('https://guild.example', { updatedAt: '2026-11-19T10:00:00.000Z' });
+	assert.match(map, /reclutamiento<\/loc><lastmod>2026-11-19<\/lastmod>/);
+	assert.doesNotMatch(map, /raids<\/loc><lastmod>/);
+	assert.doesNotMatch(sitemap('https://guild.example', {}), /lastmod/);
+	const sent = [];
+	await announce('http://localhost:3000', ['/'], (...a) => sent.push(a));
+	assert.equal(sent.length, 0);
+	await announce('https://guild.example', ['/reclutamiento'], async (url, init) =>
+		sent.push([url, init]),
+	);
+	const body = JSON.parse(sent[0][1].body);
+	assert.equal(body.key, INDEXNOW_KEY);
+	assert.deepEqual(body.urlList, ['https://guild.example/reclutamiento']);
 });

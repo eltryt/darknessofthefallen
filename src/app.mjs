@@ -1,5 +1,5 @@
 import { manualRosterApi } from './manual-roster.mjs';
-import { seoPages, seoHtml, sitemap } from './seo.mjs';
+import { seoPages, seoHtml, sitemap, INDEXNOW_KEY, announce } from './seo.mjs';
 import { iconAssets } from '../public/icon-assets.js';
 import { mobileArt } from '../public/art-variants.js';
 import { slotIconSources, catalogGroups } from '../public/armory-catalog.js';
@@ -223,6 +223,7 @@ const files = {
 	'/theme.css': ['theme.css', 'text/css'],
 	'/assets/night-sanctum.svg': ['assets/night-sanctum.svg', 'image/svg+xml'],
 	'/guild-showcase.js': ['guild-showcase.js', 'text/javascript'],
+	'/recruitment-faq.js': ['recruitment-faq.js', 'text/javascript'],
 	'/boot-state.js': ['boot-state.js', 'text/javascript'],
 	'/app.js': ['app.js', 'text/javascript'],
 };
@@ -372,15 +373,22 @@ export function createApp(db, env, { readAsset = readLocalAsset, discordFetch = 
 				res.writeHead(308, { ...headers, Location: path.slice(0, -1) + url.search });
 				return res.end();
 			}
-			if (['GET', 'HEAD'].includes(method) && ['/robots.txt', '/sitemap.xml'].includes(path)) {
+			if (
+				['GET', 'HEAD'].includes(method) &&
+				['/robots.txt', '/sitemap.xml', `/${INDEXNOW_KEY}.txt`].includes(path)
+			) {
 				const content =
 					path === '/robots.txt'
 						? `User-agent: *\nAllow: /\nDisallow: /api/\nAllow: /api/public$\nDisallow: /auth/\nSitemap: ${env.APP_ORIGIN}/sitemap.xml\n`
-						: sitemap(env.APP_ORIGIN);
+						: path === '/sitemap.xml'
+							? sitemap(env.APP_ORIGIN, settings(db))
+							: INDEXNOW_KEY;
 				res.writeHead(200, {
 					...headers,
 					'Content-Type':
-						path === '/robots.txt' ? 'text/plain; charset=utf-8' : 'application/xml; charset=utf-8',
+						path === '/sitemap.xml'
+							? 'application/xml; charset=utf-8'
+							: 'text/plain; charset=utf-8',
 				});
 				return res.end(method === 'HEAD' ? '' : content);
 			}
@@ -1114,10 +1122,13 @@ export function createApp(db, env, { readAsset = readLocalAsset, discordFetch = 
 						['Loot Council', 'Roll', 'Soft Reserve', 'DKP', 'Híbrido'],
 						'loot',
 					);
+				// The public pages show these settings: search engines are told they changed.
+				next.updatedAt = new Date().toISOString();
 				transaction(db, () => {
 					db.prepare('UPDATE settings SET data=? WHERE id=1').run(JSON.stringify(next));
 					audit(db, user.id, 'settings.updated', 'guild', { before: s, after: next });
 				});
+				announce(env.APP_ORIGIN, ['/', '/reclutamiento']);
 				return send(200, next);
 			}
 			if (path === '/api/audit' && method === 'GET') {
