@@ -168,20 +168,53 @@ export const classKeys = {
 export function publicCharacter(c) {
 	return { name: [c.name, c.surname].filter(Boolean).join(' '), class: c.class, role: c.role };
 }
-export function attendanceMetrics(rows) {
-	const result = { raids: rows.length, attended: 0, absent: 0, reserve: 0, late: 0 };
+// Loot rule (Normas de raid, 22/11/2026): at least 75 % attendance per month in 20 and
+// 40 raids. Absences an officer marks as excused (holidays, work, notice) do not count.
+export const ATTENDANCE_MINIMUM = 75;
+const monthKey = new Intl.DateTimeFormat('en-CA', {
+	timeZone: 'Europe/Madrid',
+	year: 'numeric',
+	month: '2-digit',
+});
+const isExcused = (r) => r.status === 'Ausente' && Boolean(r.excused);
+function tally(rows) {
+	const result = { raids: rows.length, attended: 0, absent: 0, excused: 0, reserve: 0, late: 0 };
 	for (const r of rows) {
 		if (r.status === 'Asistió') result.attended++;
 		if (r.status === 'Ausente') result.absent++;
+		if (isExcused(r)) result.excused++;
 		if (r.status === 'Reserva') result.reserve++;
 		if (r.status === 'Llegó tarde') result.late++;
 	}
-	result.percentage = result.raids
-		? Math.round(((result.attended + result.late) / result.raids) * 100)
-		: 0;
+	const counted = result.raids - result.excused;
+	result.percentage = counted ? Math.round(((result.attended + result.late) / counted) * 100) : 0;
+	return result;
+}
+export function attendanceMetrics(rows) {
+	// Month by month and member by member, newest month first.
+	const groups = new Map();
+	for (const r of rows) {
+		const date = Date.parse(r.starts_at);
+		if (!Number.isFinite(date)) continue;
+		const month = monthKey.format(new Date(date)).slice(0, 7),
+			key = month + '|' + r.user_id;
+		if (!groups.has(key))
+			groups.set(key, { month, userId: r.user_id, name: r.display_name || '', rows: [] });
+		groups.get(key).rows.push(r);
+	}
+	const monthly = [...groups.values()]
+		.map(({ rows: list, ...rest }) => {
+			const t = tally(list);
+			const counted = t.raids - t.excused;
+			return { ...rest, ...t, eligible: counted ? t.percentage >= ATTENDANCE_MINIMUM : null };
+		})
+		.sort((a, b) => b.month.localeCompare(a.month) || a.name.localeCompare(b.name, 'es'));
 	return {
-		...result,
-		formula: '(Asistió + Llegó tarde) / registros',
-		policy: 'Indicador descriptivo; no determina prioridad de loot.',
+		...tally(rows),
+		minimum: ATTENDANCE_MINIMUM,
+		monthly,
+		formula: '(Asistió + Llegó tarde) / (registros − ausencias justificadas)',
+		policy:
+			'Para recibir botín en las raids de 20 y 40 hace falta al menos un 75 % de asistencia al mes. Las ausencias justificadas no cuentan.',
 	};
 }

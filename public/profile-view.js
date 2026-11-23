@@ -188,6 +188,13 @@ export function createProfileView(context) {
 	function render() {
 		const main = selectedCharacter();
 		const metrics = attendance.metrics;
+		// Loot rule: monthly attendance, excused absences left out. Only the current month.
+		const monthNow = new Date()
+			.toLocaleDateString('en-CA', { timeZone: 'Europe/Madrid' })
+			.slice(0, 7);
+		const thisMonth = (metrics.monthly || []).find(
+			(m) => m.month === monthNow && m.eligible !== null,
+		);
 		const rank = rankLabels[me.user.rank] || me.user.rank;
 		const corners = ['tl', 'tr', 'bl', 'br']
 			.map((k) => `<span class="frame-corner corner-${k}"></span>`)
@@ -238,7 +245,9 @@ export function createProfileView(context) {
 						></span>
 						<dt>Asistencia</dt>
 						<dd>${metrics.percentage}%</dd>
-						<small>${metrics.raids ? metrics.raids + ' registros' : 'Sin registros'}</small>
+						<small
+							>${metrics.raids ? metrics.raids + ' registros' : 'Sin registros'}${thisMonth ? ` · este mes ${thisMonth.percentage}% (mínimo ${metrics.minimum}%)` : ''}</small
+						>
 					</div>
 					<div>
 						${svg('personajes')}

@@ -155,6 +155,10 @@ test('schema 5 snapshots remain restorable after notification migration', () => 
 			'attendance_archive',
 			'raid_bot_config',
 			'raid_bot_events',
+			'wishlist_windows',
+			'wishlist_changes',
+			'wishlist_requests',
+			'attendance_excuses',
 		])
 			delete snapshot[table];
 		resign(snapshot);
@@ -212,6 +216,10 @@ test('schema 6 snapshots restore characters without armory columns and keep seed
 			'attendance_archive',
 			'raid_bot_config',
 			'raid_bot_events',
+			'wishlist_windows',
+			'wishlist_changes',
+			'wishlist_requests',
+			'attendance_excuses',
 		])
 			delete snapshot[table];
 		for (const row of snapshot.characters)

@@ -45,6 +45,17 @@ export const recoveryTables = [
 	'roulette_players',
 	'roulette_spins',
 	'roulette_chat',
+	'wishlist_windows',
+	'wishlist_changes',
+	'wishlist_requests',
+	'attendance_excuses',
+];
+// Raid rules of migration 026: wishlist deadline, history, requests and excused absences.
+const rulesTables = [
+	'wishlist_windows',
+	'wishlist_changes',
+	'wishlist_requests',
+	'attendance_excuses',
 ];
 const armoryTables = [
 	'character_equipment',
@@ -96,7 +107,8 @@ const tablesFor = (version) =>
 			(version >= 20 || t !== 'roulette_chat') &&
 			(version >= 22 || t !== 'application_tracking') &&
 			(version >= 23 || !(t.startsWith('gm_case') || t === 'attendance_archive')) &&
-			(version >= 24 || !t.startsWith('raid_bot_')),
+			(version >= 24 || !t.startsWith('raid_bot_')) &&
+			(version >= 26 || !rulesTables.includes(t)),
 	);
 const digest = (value) => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const content = (s) => ({
@@ -110,7 +122,7 @@ export function exportRecovery(db) {
 	return transaction(db, () => {
 		const snapshot = {
 			schemaVersion: 2,
-			databaseVersion: 24,
+			databaseVersion: 26,
 			exportedAt: new Date().toISOString(),
 			settings: JSON.parse(db.prepare('SELECT data FROM settings WHERE id=1').get().data),
 		};
@@ -124,7 +136,9 @@ export function validateRecovery(snapshot) {
 	if (
 		!snapshot ||
 		snapshot.schemaVersion !== 2 ||
-		![5, 6, 7, 8, 9, 10, 11, 15, 16, 17, 18, 19, 20, 22, 23, 24].includes(snapshot.databaseVersion)
+		![5, 6, 7, 8, 9, 10, 11, 15, 16, 17, 18, 19, 20, 22, 23, 24, 26].includes(
+			snapshot.databaseVersion,
+		)
 	)
 		throw new Error('Formato no compatible: descarga una nueva exportación JSON desde el panel.');
 	if (

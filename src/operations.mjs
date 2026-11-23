@@ -26,6 +26,8 @@ const progressStates = ['No intentado', 'En progreso', 'Derrotado'];
 const wishStates = ['BiS', 'Me interesa', 'Pasar'];
 const wishStatus = (value) => choice(value, wishStates, 'estado');
 const methods = ['Loot Council', 'Roll', 'Soft Reserve', 'DKP', 'Híbrido'];
+// Wishlist deadline, change history and loot request types (Normas de raid, 22/11/2026).
+import { assertWishlistEditable, recordWishChange, requestTypes } from './loot-rules.mjs';
 
 export function publicProgress(db) {
 	return db
@@ -90,7 +92,7 @@ function attendance(db, user, url) {
 	}
 	const rows = db
 		.prepare(
-			`SELECT a.*,r.title AS raid_title,r.starts_at,c.name AS character_name,u.display_name FROM attendance a JOIN raids r ON r.id=a.raid_id JOIN users u ON u.id=a.user_id LEFT JOIN characters c ON c.id=a.character_id ${where.length ? 'WHERE ' + where.join(' AND ') : ''} ORDER BY r.starts_at DESC,u.display_name`,
+			`SELECT a.*,r.title AS raid_title,r.starts_at,c.name AS character_name,u.display_name,e.attendance_id IS NOT NULL AS excused,e.reason AS excuse_reason FROM attendance a JOIN raids r ON r.id=a.raid_id JOIN users u ON u.id=a.user_id LEFT JOIN characters c ON c.id=a.character_id LEFT JOIN attendance_excuses e ON e.attendance_id=a.id ${where.length ? 'WHERE ' + where.join(' AND ') : ''} ORDER BY r.starts_at DESC,u.display_name`,
 		)
 		.all(...params);
 	return { rows, metrics: attendanceMetrics(rows) };
@@ -327,6 +329,7 @@ export async function operations(ctx) {
 				c = activeCharacter(text(v.characterId, 'personaje', 80));
 			if (c.user_id !== user.id)
 				throw new HttpError(403, 'Solo puedes editar la wishlist de tus personajes.');
+			assertWishlistEditable(db);
 			const priority = Number(v.priority);
 			if (!Number.isInteger(priority) || priority < 1 || priority > 5)
 				throw new HttpError(400, 'La prioridad debe estar entre 1 y 5.');
@@ -350,6 +353,13 @@ export async function operations(ctx) {
 					JSON.stringify(item),
 				);
 				log('wishlist.created', id, null, item);
+				recordWishChange(db, {
+					actorId: user.id,
+					entryId: id,
+					ownerId: user.id,
+					before: null,
+					after: item,
+				});
 			});
 			send(201, { id });
 			return true;
@@ -365,6 +375,7 @@ export async function operations(ctx) {
 			v = await body(),
 			old = JSON.parse(previous.data),
 			next = { ...old };
+		assertWishlistEditable(db, v);
 		if ('status' in v) next.status = wishStatus(v.status);
 		if ('obtained' in v) next.obtained = v.obtained === true;
 		if ('notes' in v) next.notes = text(v.notes ?? '', 'notas', 1000, false);
@@ -378,6 +389,13 @@ export async function operations(ctx) {
 		transaction(db, () => {
 			db.prepare('UPDATE wishlists SET data=? WHERE id=?').run(JSON.stringify(next), id);
 			log('wishlist.updated', id, old, next);
+			recordWishChange(db, {
+				actorId: user.id,
+				entryId: id,
+				ownerId: user.id,
+				before: old,
+				after: next,
+			});
 		});
 		send(200, { ...next, id });
 		return true;
@@ -391,6 +409,13 @@ export async function operations(ctx) {
 		transaction(db, () => {
 			db.prepare('DELETE FROM wishlists WHERE id=?').run(id);
 			log('wishlist.deleted', id, JSON.parse(previous.data), null);
+			recordWishChange(db, {
+				actorId: user.id,
+				entryId: id,
+				ownerId: user.id,
+				before: JSON.parse(previous.data),
+				after: null,
+			});
 		});
 		send(200, { ok: true });
 		return true;
@@ -414,6 +439,7 @@ export async function operations(ctx) {
 						reason: r.data.reason,
 						date: r.data.date,
 						method: r.data.method,
+						requestType: r.data.requestType || '',
 						status: r.data.status,
 						candidates: r.data.candidates.map((c) => ({ name: c.name })),
 						council: r.data.council.map((c) => ({ name: c.name })),
@@ -465,6 +491,8 @@ export async function operations(ctx) {
 				reason: text(v.reason, 'motivo', 1000),
 				notes: text(v.notes ?? '', 'observaciones internas', 2000, false),
 				method: methodName,
+				// What the winner asked for, in priority order (empty on older records).
+				requestType: v.requestType ? choice(v.requestType, requestTypes, 'tipo de petición') : '',
 				candidates,
 				council,
 				status: 'Asignado',

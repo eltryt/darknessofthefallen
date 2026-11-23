@@ -3,6 +3,7 @@ import { loadItemNames, itemLink, loadTooltips } from './wowhead.js';
 import { tutorialButton } from './tutorials.js';
 import { rosterCards } from './roster-ui.js';
 import { mountAttendanceSheet } from './attendance-sheet.js';
+import { mountWishlistAdmin } from './wishlist-rules-ui.js';
 const rankLabel = (rank) =>
 	({
 		visitor: 'Visitante',
@@ -16,6 +17,10 @@ const rankLabel = (rank) =>
 	})[rank] || rank;
 const states = ['No intentado', 'En progreso', 'Derrotado'];
 const lootMethods = ['Loot Council', 'Roll', 'Soft Reserve', 'DKP', 'Híbrido'];
+// What the winner asked for (RCLootCouncil), in priority order.
+const requestTypes = ['BiS', 'Mejora mayor', 'Mejora menor', 'Offspec'];
+const monthName = (month) =>
+	new Date(month + '-15T12:00:00Z').toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
 const localDate = (value) => {
 	const d = new Date(value || Date.now());
 	return new Date(d - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
@@ -219,8 +224,9 @@ export async function operationTab(tab, el, ctx) {
 		const [raids, roster] = await Promise.all([api('/api/raids'), api('/api/roster')]);
 		el.innerHTML = /* HTML */ `<h2>Asistencia</h2>
 			<p>
-				Un registro por miembro y raid. Las reservas y las tardanzas quedan diferenciadas; el
-				porcentaje es descriptivo y no decide prioridad de loot.
+				Un registro por miembro y raid. Las reservas y las tardanzas quedan diferenciadas. Para
+				recibir botín en las raids de 20 y 40 hace falta un 75 % de asistencia al mes; una ausencia
+				justificada (vacaciones, trabajo, avisada con antelación) no cuenta.
 			</p>
 			<form id="attendance-filter" class="filters">
 				<label
@@ -305,11 +311,30 @@ export async function operationTab(tab, el, ctx) {
 					);
 			}
 			const a = await api('/api/attendance?' + q);
+			const month = a.metrics.monthly[0]?.month;
+			const monthRows = a.metrics.monthly.filter((m) => m.month === month);
 			el.querySelector('#attendance-summary').innerHTML = /* HTML */ `<p class="notice">
-				${a.metrics.raids} registros · ${a.metrics.attended} asistencias · ${a.metrics.absent}
-				ausencias · ${a.metrics.reserve} reservas · ${a.metrics.late} tardanzas ·
-				${a.metrics.percentage}%
-			</p>`;
+					${a.metrics.raids} registros · ${a.metrics.attended} asistencias · ${a.metrics.absent}
+					ausencias${a.metrics.excused ? ` (${a.metrics.excused} justificadas)` : ''} ·
+					${a.metrics.reserve} reservas · ${a.metrics.late} tardanzas · ${a.metrics.percentage}%
+				</p>
+				${
+					monthRows.length
+						? `<details class="section" open><summary>Asistencia de ${esc(monthName(month))} por miembro</summary>${table(
+								[
+									'Miembro',
+									'Registros',
+									'Justificadas',
+									'Asistencia',
+									`Mínimo ${a.metrics.minimum}%`,
+								],
+								monthRows.map(
+									(m) =>
+										`<tr><td>${esc(m.name)}</td><td>${m.raids}</td><td>${m.excused}</td><td>${m.percentage}%</td><td>${m.eligible === null ? '—' : m.eligible ? 'Cumple' : '<span class="error">No llega</span>'}</td></tr>`,
+								),
+							)}</details>`
+						: ''
+				}`;
 			paginated(
 				el.querySelector('#attendance-list'),
 				['Raid', 'Miembro', 'Personaje', 'Estado', ''],
@@ -321,8 +346,11 @@ export async function operationTab(tab, el, ctx) {
 						</td>
 						<td>${esc(r.display_name)}</td>
 						<td>${esc(r.character_name || '—')}</td>
-						<td>${esc(r.status)}</td>
 						<td>
+							${esc(r.status)}${r.excused ? `<small class="cell-detail">Justificada · ${esc(r.excuse_reason)}</small>` : ''}
+						</td>
+						<td>
+							${r.status === 'Ausente' ? (r.excused ? `<button class="secondary" data-unexcuse="${esc(r.id)}">Quitar justificación</button>` : `<button class="secondary" data-excuse="${esc(r.id)}">Justificar</button>`) : ''}
 							<button class="secondary danger" data-remove-attendance="${esc(r.id)}">
 								Retirar
 							</button>
@@ -347,6 +375,27 @@ export async function operationTab(tab, el, ctx) {
 			}
 		};
 		el.querySelector('#attendance-list').onclick = async (e) => {
+			const excuse = e.target.closest('[data-excuse],[data-unexcuse]');
+			if (excuse) {
+				const id = excuse.dataset.excuse || excuse.dataset.unexcuse;
+				const reason = excuse.dataset.excuse
+					? prompt(
+							'Motivo de la ausencia justificada (vacaciones, trabajo, avisó con antelación…):',
+						)
+					: '';
+				if (reason === null || (excuse.dataset.excuse && !reason.trim())) return;
+				try {
+					await api('/api/attendance/' + encodeURIComponent(id) + '/excuse', 'PUT', {
+						excused: Boolean(excuse.dataset.excuse),
+						reason,
+					});
+					toast(excuse.dataset.excuse ? 'Ausencia justificada' : 'Justificación retirada');
+					await load(filters);
+				} catch (error) {
+					toast(error.message);
+				}
+				return;
+			}
 			const b = e.target.closest('[data-remove-attendance]');
 			if (b && confirm('¿Retirar este registro de asistencia? La acción quedará auditada.'))
 				try {
@@ -417,7 +466,9 @@ export async function operationTab(tab, el, ctx) {
 						</details>
 					</td>
 					<td>
-						${esc(r.data.method)}<small class="cell-detail">${esc(r.data.reason)}</small
+						${esc(r.data.method)}${r.data.requestType ? ' · ' + esc(r.data.requestType) : ''}<small
+							class="cell-detail"
+							>${esc(r.data.reason)}</small
 						>${r.data.notes ? `<details><summary>Notas internas</summary>${esc(r.data.notes)}</details>` : ''}
 					</td>
 					<td>${r.data.council.map((c) => esc(c.name)).join(', ') || 'No aplica'}</td>
@@ -488,7 +539,12 @@ export async function operationTab(tab, el, ctx) {
 						'Ganador',
 						'recipientCharacterId',
 						roster.map((c) => ({ id: c.id, label: c.name + ' · ' + c.display_name })),
-					)}${select('Método', 'method', lootMethods)}${field('Fecha (hora local del dispositivo)', 'date', 'datetime-local', localDate())}${area('Motivo de asignación', 'reason')}${area('Observaciones internas', 'notes', false)}
+					)}${select('Método', 'method', lootMethods)}<label
+						>Tipo de petición<select name="requestType">
+							<option value="">Sin indicar</option>
+							${requestTypes.map((t) => option(t, t)).join('')}
+						</select></label
+					>${field('Fecha (hora local del dispositivo)', 'date', 'datetime-local', localDate())}${area('Motivo de asignación', 'reason')}${area('Observaciones internas', 'notes', false)}
 					<fieldset class="wide">
 						<legend>Otros candidatos (el ganador se incluye automáticamente)</legend>
 						<div class="check-grid">
@@ -661,7 +717,8 @@ export async function operationTab(tab, el, ctx) {
 	if (tab === 'wishlists') {
 		const rows = await api('/api/wishlists?all=true');
 		el.innerHTML =
-			'<h2>Wishlists de la hermandad</h2><p>Estado que marca cada jugador (BiS, Me interesa o Pasar) y prioridad del 1 (más alta) al 5. No implican una asignación automática.</p><div id="wishlist-table"></div>';
+			'<h2>Wishlists de la hermandad</h2><div id="wishlist-admin"></div><h3>Wishlists actuales</h3><p>Estado que marca cada jugador (BiS, Me interesa o Pasar) y prioridad del 1 (más alta) al 5. No implican una asignación automática.</p><div id="wishlist-table"></div>';
+		await mountWishlistAdmin(el.querySelector('#wishlist-admin'), ctx, refresh);
 		paginated(
 			el.querySelector('#wishlist-table'),
 			['Personaje', 'Objeto', 'Raid / boss', 'Estado', 'Prioridad', 'Notas'],

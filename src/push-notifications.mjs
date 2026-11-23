@@ -47,6 +47,32 @@ export function pushMessage(db, job) {
 			url: '/panel?tab=applications&record=' + encodeURIComponent(job.target_id),
 		};
 	}
+	if (job.kind === 'wishlist-alert') {
+		const row = db
+			.prepare('SELECT character_name,alert FROM wishlist_changes WHERE id=?')
+			.get(job.target_id);
+		return {
+			title: 'Aviso de wishlist' + (row ? ': ' + row.character_name : ''),
+			body: clip(row?.alert, 140) || 'Revisa el historial de wishlists.',
+			url: '/panel?tab=wishlists',
+		};
+	}
+	if (job.kind === 'wishlist-request') {
+		const row = db
+			.prepare('SELECT character_name,kind,payload FROM wishlist_requests WHERE id=?')
+			.get(job.target_id);
+		const item = row ? JSON.parse(row.payload).item : '';
+		return {
+			title: 'Petición de cambio de wishlist',
+			body: row
+				? clip(
+						`${row.character_name} pide ${row.kind === 'add' ? 'añadir' : 'cambiar'}${item ? ' «' + item + '»' : ' un objeto'}.`,
+						140,
+					)
+				: 'Revisa el panel.',
+			url: '/panel?tab=wishlists',
+		};
+	}
 	if (job.kind === 'test')
 		return {
 			title: 'Avisos activados',

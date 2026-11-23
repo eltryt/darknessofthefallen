@@ -8,6 +8,7 @@ import { gmCasesApi } from './gm-cases.mjs';
 import { exportRecovery } from './recovery.mjs';
 import { backupApi } from './backup-api.mjs';
 import { pushApi, pushReady, enqueuePush } from './push-notifications.mjs';
+import { lootRulesApi } from './loot-rules.mjs';
 import { randomUUID, createHash } from 'node:crypto';
 import { Buffer } from 'node:buffer';
 import { settings, transaction, audit } from './database-core.mjs';
@@ -173,6 +174,7 @@ const files = {
 	'/gm-ui.js': ['gm-ui.js', 'text/javascript'],
 	'/roster-ui.js': ['roster-ui.js', 'text/javascript'],
 	'/wishlist-ui.js': ['wishlist-ui.js', 'text/javascript'],
+	'/wishlist-rules-ui.js': ['wishlist-rules-ui.js', 'text/javascript'],
 	'/sheet-parts.js': ['sheet-parts.js', 'text/javascript'],
 	'/my-callups.js': ['my-callups.js', 'text/javascript'],
 	'/journey-board.js': ['journey-board.js', 'text/javascript'],
@@ -520,6 +522,19 @@ export function createApp(db, env, { readAsset = readLocalAsset, discordFetch = 
 					env,
 					requirePermission,
 					requireUser,
+				})
+			)
+				return;
+			if (
+				await lootRulesApi({
+					db,
+					user,
+					path,
+					method,
+					url,
+					body: () => body(req),
+					send,
+					requirePermission,
 				})
 			)
 				return;

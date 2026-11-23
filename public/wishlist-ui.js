@@ -1,5 +1,6 @@
 import { slotLabels, gameVersions } from './armory-catalog.js';
 import { loadItemNames, itemLink, loadTooltips } from './wowhead.js';
+import { windowNotice, ownRequests } from './wishlist-rules-ui.js';
 
 // One wishlist per character, organised raid → boss → loot. Known loot comes only
 // from the guild's own data: registered progress, the player's entries and the
@@ -32,11 +33,15 @@ export async function mountWishlist(host, character, refresh, ctx) {
 			'<div class="hub-empty"><h2>Elige o registra un personaje</h2><p>La wishlist se guarda por personaje.</p><a class="button" href="#personajes">Añadir personaje</a></div>';
 		return;
 	}
-	const [allWishes, loot, itemIds] = await Promise.all([
+	const [allWishes, loot, itemIds, win, requests] = await Promise.all([
 		api('/api/wishlists'),
 		api('/api/loot').catch(() => []),
 		loadItemNames(),
+		api('/api/wishlist-window').catch(() => ({ state: 'free' })),
+		api('/api/wishlist-requests').catch(() => []),
 	]);
+	// After the tier deadline only removals are direct; anything else becomes a request.
+	const locked = win.state === 'closed';
 	if (!host.isConnected) return;
 	const wishes = allWishes.filter((w) => w.data.characterId === character.id);
 	const progress = data.progress || [];
@@ -170,7 +175,7 @@ export async function mountWishlist(host, character, refresh, ctx) {
 						>
 						<label class="wide">Notas para el consejo<input name="notes" maxlength="1000" /></label>
 					</div>
-					<button type="submit">Añadir</button>
+					<button type="submit">${locked ? 'Pedir que lo añadan' : 'Añadir'}</button>
 				</form>
 			</details>
 		</article>`;
@@ -200,6 +205,7 @@ export async function mountWishlist(host, character, refresh, ctx) {
 					</div>
 				</dl>
 			</div>
+			${windowNotice(win, esc)}${ownRequests(requests, character, esc)}
 			${
 				raids.length
 					? `<div class="raid-tabs" role="tablist" aria-label="Raids">${raids
@@ -243,7 +249,7 @@ export async function mountWishlist(host, character, refresh, ctx) {
 							</select></label
 						>
 					</div>
-					<button type="submit">Añadir</button>
+					<button type="submit">${locked ? 'Pedir que lo añadan' : 'Añadir'}</button>
 				</form>
 			</details>
 			<details class="catalog-note">
@@ -258,12 +264,20 @@ export async function mountWishlist(host, character, refresh, ctx) {
 		loadTooltips();
 	}
 
-	const create = (value) =>
-		api('/api/wishlists', 'POST', {
-			characterId: character.id,
-			priority: value.status === 'BiS' ? 1 : 3,
-			...value,
-		});
+	// Outside the deadline the change goes to the loot officers with a short reason.
+	const requestMessage = 'Petición enviada: la revisará un oficial de loot';
+	const ask = async (value) => {
+		const reason = prompt(
+			'El plazo de la wishlist está cerrado. Cuéntale al oficial de loot por qué necesitas este cambio:',
+		);
+		if (reason === null) return;
+		await api('/api/wishlist-requests', 'POST', { ...value, reason });
+		toast(requestMessage);
+	};
+	const create = (value) => {
+		const entry = { characterId: character.id, priority: value.status === 'BiS' ? 1 : 3, ...value };
+		return locked ? ask({ kind: 'add', ...entry }) : api('/api/wishlists', 'POST', entry);
+	};
 	async function run(task, message) {
 		try {
 			await task();
@@ -299,7 +313,11 @@ export async function mountWishlist(host, character, refresh, ctx) {
 					b.closest('.wish-states')
 						.querySelectorAll('button')
 						.forEach((x) => (x.disabled = true));
-					if (b.dataset.wish)
+					if (b.dataset.wish && locked)
+						void run(() =>
+							ask({ kind: 'change', wishlistId: b.dataset.wish, status: b.dataset.state }),
+						);
+					else if (b.dataset.wish)
 						void run(() =>
 							api('/api/wishlists/' + encodeURIComponent(b.dataset.wish), 'PATCH', {
 								status: b.dataset.state,
@@ -316,6 +334,23 @@ export async function mountWishlist(host, character, refresh, ctx) {
 						);
 				}),
 		);
+		host
+			.querySelectorAll('[data-cancel-request]')
+			.forEach(
+				(b) =>
+					(b.onclick = () =>
+						void run(
+							() =>
+								api(
+									'/api/wishlist-requests/' +
+										encodeURIComponent(b.dataset.cancelRequest) +
+										'/cancel',
+									'POST',
+									{},
+								),
+							'Petición cancelada',
+						)),
+			);
 		host.querySelectorAll('[data-obtained]').forEach(
 			(c) =>
 				(c.onchange = () =>
@@ -348,7 +383,7 @@ export async function mountWishlist(host, character, refresh, ctx) {
 								raid: state.raid,
 								boss: f.dataset.addBoss,
 							}),
-						'Añadido a tu wishlist',
+						locked ? '' : 'Añadido a tu wishlist',
 					);
 				}),
 		);
@@ -362,7 +397,7 @@ export async function mountWishlist(host, character, refresh, ctx) {
 			} catch {
 				/* storage unavailable */
 			}
-			void run(() => create(v), 'Añadido a tu wishlist');
+			void run(() => create(v), locked ? '' : 'Añadido a tu wishlist');
 		};
 	}
 	render();
