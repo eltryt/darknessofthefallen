@@ -584,6 +584,17 @@ export async function syncBattlenet(db, env, fetcher = fetch) {
 				get(`${found.path}/statistics`, token),
 			]);
 			const stats = st.ok ? readStats(await st.json().catch(() => null)) : null;
+			// Probe: does Forever's profile API answer the PvP summary (honor rank)? One
+			// character per refresh; what it answered goes to the audit, nothing is stored.
+			if (!result.pvp) {
+				const v = await get(`${found.path}/pvp-summary`, token).catch(() => null);
+				const data = v?.ok ? await v.json().catch(() => null) : null;
+				result.pvp = {
+					status: v ? v.status : 'error',
+					keys: data ? Object.keys(data) : [],
+					sample: data ? JSON.stringify(data).slice(0, 1500) : '',
+				};
+			}
 			const gear = g.ok ? readEquipment(await g.json().catch(() => null)) : null;
 			const avatar = m.ok ? readAvatar(await m.json().catch(() => null)) : '';
 			const next = {

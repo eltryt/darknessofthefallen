@@ -328,6 +328,7 @@ test('every hour the web refreshes level and professions with its own token', as
 		gear: 2,
 		icons: 1,
 		answers: { 200: 1, 404: 1, other: 1 },
+		pvp: { status: 404, keys: [], sample: '' },
 	});
 	assert.ok(
 		calls.filter((c) => !c.startsWith('/token')).every((c) => c.endsWith('Bearer app-token')),
