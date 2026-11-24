@@ -122,7 +122,7 @@ export function exportRecovery(db) {
 	return transaction(db, () => {
 		const snapshot = {
 			schemaVersion: 2,
-			databaseVersion: 26,
+			databaseVersion: 27,
 			exportedAt: new Date().toISOString(),
 			settings: JSON.parse(db.prepare('SELECT data FROM settings WHERE id=1').get().data),
 		};
@@ -136,7 +136,7 @@ export function validateRecovery(snapshot) {
 	if (
 		!snapshot ||
 		snapshot.schemaVersion !== 2 ||
-		![5, 6, 7, 8, 9, 10, 11, 15, 16, 17, 18, 19, 20, 22, 23, 24, 26].includes(
+		![5, 6, 7, 8, 9, 10, 11, 15, 16, 17, 18, 19, 20, 22, 23, 24, 26, 27].includes(
 			snapshot.databaseVersion,
 		)
 	)
@@ -190,10 +190,16 @@ export function restoreRecovery(db, snapshot) {
 			for (const stored of snapshot[table] || []) {
 				const original =
 					table === 'characters' &&
-					snapshot.databaseVersion < 8 &&
+					snapshot.databaseVersion < 27 &&
 					stored &&
 					typeof stored === 'object'
-						? { ...characterDefaults, ...stored }
+						? {
+								...(snapshot.databaseVersion < 8 ? characterDefaults : {}),
+								// Migration 027: the PvP summary arrives with the next refresh.
+								pvp_rank: null,
+								honorable_kills: null,
+								...stored,
+							}
 						: // Before migration 024 every event was published by Raid-Helper.
 							table === 'raid_events' &&
 							  snapshot.databaseVersion < 24 &&

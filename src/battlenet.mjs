@@ -375,6 +375,13 @@ export function readStats(data) {
 	if (Object.keys(stats).length && /^[\p{L} ]{2,20}$/u.test(power)) stats.power_name = power;
 	return Object.keys(stats).length ? stats : null;
 }
+// Honor rank (0 = none yet, 1-14) and honorable kills from /pvp-summary, only when valid.
+export function readPvp(data) {
+	const rank = data?.pvp_rank,
+		kills = data?.honorable_kills;
+	if (!Number.isInteger(rank) || rank < 0 || rank > 14) return null;
+	return { rank, kills: Number.isInteger(kills) && kills >= 0 && kills < 1e8 ? kills : null };
+}
 // The character's image on Blizzard's render host, only in its known shape.
 export function readAvatar(data) {
 	const assets = data?.assets || [];
@@ -511,7 +518,7 @@ export async function syncBattlenet(db, env, fetcher = fetch) {
 	const cutoff = new Date(Date.now() - SYNC_EVERY_MS + SYNC_GATHER_MS).toISOString();
 	const due = db
 		.prepare(
-			'SELECT b.character_id AS id,b.realm_id,c.name,c.surname,c.external_id,c.level,c.professions,c.avatar_url,c.stats FROM battlenet_characters b JOIN characters c ON c.id=b.character_id WHERE c.archived_at IS NULL AND (b.checked_at IS NULL OR b.checked_at<?) ORDER BY b.checked_at IS NOT NULL, b.checked_at LIMIT ?',
+			'SELECT b.character_id AS id,b.realm_id,c.name,c.surname,c.external_id,c.level,c.professions,c.avatar_url,c.stats,c.pvp_rank,c.honorable_kills FROM battlenet_characters b JOIN characters c ON c.id=b.character_id WHERE c.archived_at IS NULL AND (b.checked_at IS NULL OR b.checked_at<?) ORDER BY b.checked_at IS NOT NULL, b.checked_at LIMIT ?',
 		)
 		.all(cutoff, SYNC_BATCH);
 	if (!due.length) return null;
@@ -584,17 +591,8 @@ export async function syncBattlenet(db, env, fetcher = fetch) {
 				get(`${found.path}/statistics`, token),
 			]);
 			const stats = st.ok ? readStats(await st.json().catch(() => null)) : null;
-			// Probe: does Forever's profile API answer the PvP summary (honor rank)? One
-			// character per refresh; what it answered goes to the audit, nothing is stored.
-			if (!result.pvp) {
-				const v = await get(`${found.path}/pvp-summary`, token).catch(() => null);
-				const data = v?.ok ? await v.json().catch(() => null) : null;
-				result.pvp = {
-					status: v ? v.status : 'error',
-					keys: data ? Object.keys(data) : [],
-					sample: data ? JSON.stringify(data).slice(0, 1500) : '',
-				};
-			}
+			const v = await get(`${found.path}/pvp-summary`, token);
+			const pvp = v.ok ? readPvp(await v.json().catch(() => null)) : null;
 			const gear = g.ok ? readEquipment(await g.json().catch(() => null)) : null;
 			const avatar = m.ok ? readAvatar(await m.json().catch(() => null)) : '';
 			const next = {
@@ -602,6 +600,8 @@ export async function syncBattlenet(db, env, fetcher = fetch) {
 				professions: professions || c.professions,
 				avatar: avatar || c.avatar_url,
 				stats: stats ? JSON.stringify(stats) : c.stats,
+				pvpRank: pvp ? pvp.rank : c.pvp_rank,
+				kills: pvp ? pvp.kills : c.honorable_kills,
 			};
 			transaction(db, () => {
 				if (gear?.size) result.gear += saveEquipment(db, c.id, gear, now);
@@ -609,11 +609,23 @@ export async function syncBattlenet(db, env, fetcher = fetch) {
 					next.level !== c.level ||
 					next.professions !== c.professions ||
 					next.avatar !== c.avatar_url ||
-					next.stats !== c.stats
+					next.stats !== c.stats ||
+					next.pvpRank !== c.pvp_rank ||
+					next.kills !== c.honorable_kills
 				) {
 					db.prepare(
-						'UPDATE characters SET level=?,professions=?,avatar_url=?,stats=?,synced_at=?,updated_at=? WHERE id=?',
-					).run(next.level, next.professions, next.avatar, next.stats, now, now, c.id);
+						'UPDATE characters SET level=?,professions=?,avatar_url=?,stats=?,pvp_rank=?,honorable_kills=?,synced_at=?,updated_at=? WHERE id=?',
+					).run(
+						next.level,
+						next.professions,
+						next.avatar,
+						next.stats,
+						next.pvpRank,
+						next.kills,
+						now,
+						now,
+						c.id,
+					);
 					result.updated++;
 				} else db.prepare('UPDATE characters SET synced_at=? WHERE id=?').run(now, c.id);
 			});
@@ -622,6 +634,7 @@ export async function syncBattlenet(db, env, fetcher = fetch) {
 				!g.ok && `equipment ${g.status}`,
 				!m.ok && `media ${m.status}`,
 				!st.ok && `statistics ${st.status}`,
+				!v.ok && `pvp ${v.status}`,
 			].filter(Boolean);
 			mark.run(now, missingParts.length ? `ok, ${missingParts.join(', ')}` : 'ok', c.id);
 		}

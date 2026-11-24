@@ -310,6 +310,8 @@ test('every hour the web refreshes level and professions with its own token', as
 					},
 				],
 			});
+		if (url.pathname === '/profile/wow/character/reino-oculto/tryt/pvp-summary')
+			return Response.json({ honorable_kills: 93, pvp_rank: 3, character: { id: 11 } });
 		// Someone else with the same name on that realm.
 		if (url.pathname === '/profile/wow/character/reino-oculto/otro')
 			return Response.json({ id: 99, level: 60 });
@@ -328,16 +330,22 @@ test('every hour the web refreshes level and professions with its own token', as
 		gear: 2,
 		icons: 1,
 		answers: { 200: 1, 404: 1, other: 1 },
-		pvp: { status: 404, keys: [], sample: '' },
 	});
 	assert.ok(
 		calls.filter((c) => !c.startsWith('/token')).every((c) => c.endsWith('Bearer app-token')),
 	);
 	const rows = chars(db);
-	const tryt = db.prepare("SELECT level,professions FROM characters WHERE name='Tryt'").get();
+	const tryt = db
+		.prepare("SELECT level,professions,pvp_rank,honorable_kills FROM characters WHERE name='Tryt'")
+		.get();
 	assert.deepEqual(
 		{ ...tryt },
-		{ level: 23, professions: 'Sastrería 120, Encantamiento 95, Cocina 60' },
+		{
+			level: 23,
+			professions: 'Sastrería 120, Encantamiento 95, Cocina 60',
+			pvp_rank: 3,
+			honorable_kills: 93,
+		},
 	);
 	assert.deepEqual(
 		db
@@ -454,4 +462,12 @@ test('an item icon is read from Forever media only', async () => {
 		'https://render.worldofwarcraft.com/eu/icons/56/135020.jpg',
 	);
 	assert.equal(foreverIconFallback('inv_sword_04'), '');
+});
+
+test('readPvp keeps only a valid honor rank and kill count', async () => {
+	const { readPvp } = await import('../src/battlenet.mjs');
+	assert.deepEqual(readPvp({ pvp_rank: 0, honorable_kills: 145 }), { rank: 0, kills: 145 });
+	assert.deepEqual(readPvp({ pvp_rank: 14, honorable_kills: -1 }), { rank: 14, kills: null });
+	assert.equal(readPvp({ pvp_rank: 15 }), null);
+	assert.equal(readPvp(null), null);
 });

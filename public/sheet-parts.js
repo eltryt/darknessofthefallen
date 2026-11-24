@@ -1,5 +1,5 @@
 import { getSpecsForClass, normalizeSpecValue } from './specs.js';
-import { classKey } from './roster-ui.js';
+import { classKey, pvpRankText } from './roster-ui.js';
 import {
 	gameVersions,
 	slotLabels,
@@ -52,6 +52,11 @@ export function sheetFacts(c, esc) {
 		['Especialización secundaria', specName(c.class, c.secondary_spec)],
 		['Rol de combate', c.role],
 		['Nivel', c.level],
+		['Rango PvP', pvpRankText(c)],
+		[
+			'Muertes con honor',
+			c.honorable_kills == null ? '' : c.honorable_kills.toLocaleString('es-ES'),
+		],
 		['Profesiones', c.professions],
 		['Tipo', c.is_main ? 'Main (personaje principal)' : 'Alter (personaje secundario)'],
 		['Origen de los datos', c.synced_at ? 'Proveedor externo' : 'Introducidos manualmente'],
