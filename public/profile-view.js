@@ -4,12 +4,13 @@ import { operationTab } from './operations-ui.js';
 import { mountWishlist } from './wishlist-ui.js';
 import { mountMyCallups } from './my-callups.js';
 import { mountJourney } from './journey-board.js';
+import { mountPvp } from './pvp-board.js';
 import { mountRoulette } from './roulette.js';
 import { contactForm } from './gm-ui.js';
 import { startProfileTour } from './profile-tour.js';
 import { medal, tierNames, progressOf } from './medals.js';
 import { ClassIcon } from './components.js';
-import { classKey } from './roster-ui.js';
+import { classKey, pvpRankText } from './roster-ui.js';
 import { paperdoll } from './paperdoll.js';
 import { fillCatalogIcons } from './item-catalog.js';
 import { loadTooltips } from './wowhead.js';
@@ -33,6 +34,7 @@ const icons = {
 		'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
 	camino:
 		'<path d="M4 20c0-4 3-5 6-5s4-2 4-4-2-3-4-3-3 1-3 2"/><circle cx="18" cy="5" r="2"/><path d="M18 7v4"/>',
+	pvp: '<path d="M4 4l9 9M4 4h4M4 4v4M20 4l-9 9M20 4h-4M20 4v4M7 14l-3 3 3 3 3-3M17 14l3 3-3 3-3-3"/>',
 	ruleta:
 		'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M12 3v6M12 15v6M3 12h6M15 12h6"/><circle cx="17.5" cy="6.5" r="1.3"/>',
 	logros:
@@ -46,6 +48,7 @@ const sections = [
 	['convocatorias', 'Convocatorias'],
 	['logros', 'Logros'],
 	['camino', 'Camino al 60'],
+	['pvp', 'Senda del honor'],
 	['ruleta', 'Ruleta'],
 ];
 const categoryNames = {
@@ -254,6 +257,16 @@ export function createProfileView(context) {
 						<dt>Personajes</dt>
 						<dd>${rows.length}</dd>
 					</div>
+					<div>
+						${svg('pvp')}
+						<dt>Muertes con honor</dt>
+						<dd>
+							${main?.honorable_kills != null ? Number(main.honorable_kills).toLocaleString('es-ES') : '—'}
+						</dd>
+						<small
+							>${main?.pvp_rank != null ? pvpRankText(main) : main ? 'Sin datos de Battle.net' : ''}</small
+						>
+					</div>
 				</dl>
 				<button type="button" id="logout" class="hub-logout" aria-label="Cerrar sesión">
 					<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -333,6 +346,10 @@ export function createProfileView(context) {
 			if (id === 'camino') {
 				if (!me.permissions.includes('community.read')) return locked(host);
 				await mountJourney(host, context);
+			}
+			if (id === 'pvp') {
+				if (!me.permissions.includes('community.read')) return locked(host);
+				await mountPvp(host, context);
 			}
 			if (id === 'ruleta') {
 				if (!me.permissions.includes('community.read')) return locked(host);

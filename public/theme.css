@@ -10097,3 +10097,103 @@ button.gm-note-x:hover {
 	outline: 1px dashed #f2c45a;
 	outline-offset: 2px;
 }
+/* Senda del honor: a staircase of honor ranks, from no rank to 14. Step height comes from
+   --p (set from data-bar by motion.js, since CSP forbids style attributes). */
+.pvp-scroll {
+	overflow-x: auto;
+	overflow-y: hidden;
+	padding: 18px 14px 12px;
+	border: 1px solid var(--line);
+	border-radius: 12px;
+	background:
+		radial-gradient(ellipse at 85% 0%, #8f1d1d33, transparent 60%),
+		linear-gradient(180deg, #1a1215, #0d0b0e);
+}
+.pvp-stairs {
+	display: grid;
+	grid-template-columns: repeat(15, minmax(52px, 1fr));
+	align-items: end;
+	gap: 6px;
+	min-width: 820px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.pvp-step {
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
+	gap: 6px;
+	min-height: 260px;
+}
+.pvp-tokens {
+	display: flex;
+	flex-wrap: wrap-reverse;
+	justify-content: center;
+	gap: 4px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.pvp-token {
+	display: grid;
+	place-items: center;
+	width: 22px;
+	height: 22px;
+	border: 2px solid #0d0b0e;
+	border-radius: 50%;
+	background: var(--class-color, #888);
+	color: #0d0b0e;
+	font-size: 0.72rem;
+	font-weight: 700;
+}
+.pvp-token.is-me {
+	border-color: #fff;
+	box-shadow: 0 0 10px #ffffffaa;
+}
+.pvp-token.is-more {
+	width: auto;
+	padding: 0 6px;
+	border-radius: 11px;
+	background: #ffffff22;
+	color: var(--ink);
+}
+.pvp-block {
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+	align-items: center;
+	gap: 2px;
+	box-sizing: border-box;
+	height: calc(54px + var(--p, 0) * 1.5px);
+	padding-top: 6px;
+	border: 1px solid #c4473a66;
+	border-bottom: 0;
+	border-radius: 6px 6px 0 0;
+	background: linear-gradient(180deg, #7a1f1f, #2a1214);
+	transition: height 0.6s ease;
+}
+.pvp-step.is-empty .pvp-block {
+	opacity: 0.45;
+}
+.pvp-step.is-mine .pvp-block {
+	border-color: #fff;
+}
+.pvp-block b {
+	color: #f3dcae;
+	font-family: Georgia, serif;
+	font-size: 1.1rem;
+}
+.pvp-block small {
+	color: #f3dcaecc;
+	font-size: 0.66rem;
+	text-align: center;
+}
+.pvp-ranking li {
+	grid-template-columns: 14px minmax(90px, 1fr) minmax(0, 1.2fr) minmax(80px, 2fr) 64px;
+}
+@media (max-width: 600px) {
+	.pvp-ranking li {
+		grid-template-columns: 14px 1fr 64px;
+	}
+}

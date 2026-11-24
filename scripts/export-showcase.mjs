@@ -74,6 +74,7 @@ for (const file of [
 	'sheet-parts.js',
 	'my-callups.js',
 	'journey-board.js',
+	'pvp-board.js',
 	'roulette.js',
 	'roulette-sound.js',
 	'item-catalog.js',

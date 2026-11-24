@@ -30,6 +30,7 @@ import { isValidSpecForClass } from '../public/specs.js';
 import { armoryApi } from './armory.mjs';
 import { achievementsApi, publicGuildAchievements } from './achievements.mjs';
 import { journeyApi } from './journey.mjs';
+import { pvpBoardApi } from './pvp-board.mjs';
 import { rouletteApi } from './roulette.mjs';
 import { battlenetReady, startBattlenet, finishBattlenet } from './battlenet.mjs';
 import { raidLineupApi } from './raid-lineup.mjs';
@@ -178,6 +179,7 @@ const files = {
 	'/sheet-parts.js': ['sheet-parts.js', 'text/javascript'],
 	'/my-callups.js': ['my-callups.js', 'text/javascript'],
 	'/journey-board.js': ['journey-board.js', 'text/javascript'],
+	'/pvp-board.js': ['pvp-board.js', 'text/javascript'],
 	'/roulette.js': ['roulette.js', 'text/javascript'],
 	'/roulette-sound.js': ['roulette-sound.js', 'text/javascript'],
 	'/item-catalog.js': ['item-catalog.js', 'text/javascript'],
@@ -743,6 +745,7 @@ export function createApp(db, env, { readAsset = readLocalAsset, discordFetch = 
 			}
 			if (await achievementsApi({ db, user, path, method, send, requirePermission })) return;
 			if (await journeyApi({ db, user, path, method, send, requirePermission })) return;
+			if (await pvpBoardApi({ db, user, path, method, send, requirePermission })) return;
 			if (
 				await rouletteApi({
 					db,
