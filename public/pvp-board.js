@@ -1,6 +1,6 @@
 // "Senda del honor": the members' main characters on a staircase of honor ranks (from no
 // rank to 14), the podium of honorable kills and the full list. Data from Battle.net.
-import { classKey } from './roster-ui.js';
+import { classKey, characterHref, characterLink } from './roster-ui.js';
 
 const TOKENS_PER_STEP = 6;
 const rankName = (rank) => (rank ? `Rango ${rank}` : 'Sin rango');
@@ -16,7 +16,7 @@ export async function mountPvp(host, ctx) {
 	const maxKills = Math.max(1, ...known.map((p) => p.kills || 0));
 
 	const token = (p) =>
-		`<li class="pvp-token class-${classKey(p.class)}${p.me ? ' is-me' : ''}" title="${esc(p.name)} · ${esc(p.class)} · ${esc(rankName(p.rank))} · ${number(p.kills)} muertes con honor"><span aria-hidden="true">${esc(p.name.slice(0, 1).toUpperCase())}</span><span class="visually-hidden">${esc(p.name)}</span></li>`;
+		`<li class="pvp-token class-${classKey(p.class)}${p.me ? ' is-me' : ''}" title="${esc(p.name)} · ${esc(p.class)} · ${esc(rankName(p.rank))} · ${number(p.kills)} muertes con honor"><a href="${characterHref(p.id)}"><span aria-hidden="true">${esc(p.name.slice(0, 1).toUpperCase())}</span><span class="visually-hidden">${esc(p.name)}</span></a></li>`;
 	const steps = data.ranks
 		.map((ids, rank) => {
 			const list = ids.map((id) => byId.get(id)).sort((a, b) => Number(b.me) - Number(a.me));
@@ -39,13 +39,13 @@ export async function mountPvp(host, ctx) {
 	const podium = Array.from({ length: data.places }, (_, i) => {
 		const place = data.podium[i] && byId.get(data.podium[i].id);
 		return place
-			? `<li class="journey-place tier-${3 - i}${place.me ? ' is-me' : ''}"><b>${i + 1}.º</b><span class="journey-dot class-${classKey(place.class)}" aria-hidden="true"></span><strong>${esc(place.name)}</strong><small>${number(place.kills)} muertes · ${medals[i]}</small></li>`
+			? `<li class="journey-place tier-${3 - i}${place.me ? ' is-me' : ''}"><b>${i + 1}.º</b><span class="journey-dot class-${classKey(place.class)}" aria-hidden="true"></span><strong>${characterLink(place.id, esc(place.name))}</strong><small>${number(place.kills)} muertes · ${medals[i]}</small></li>`
 			: `<li class="journey-place is-open tier-${3 - i}"><b>${i + 1}.º</b><strong>¿Quién será?</strong><small>${medals[i]}</small></li>`;
 	}).join('');
 	const ranking = known
 		.map(
 			(p) =>
-				`<li class="${p.me ? 'is-me' : ''}"><span class="journey-dot class-${classKey(p.class)}" aria-hidden="true"></span><strong>${esc(p.name)}</strong><small>${esc(p.class)} · ${esc(rankName(p.rank))}</small><span class="journey-bar class-${classKey(p.class)}" data-bar="${Math.round(((p.kills || 0) / maxKills) * 100)}" aria-hidden="true"></span><b>${number(p.kills)}</b></li>`,
+				`<li class="${p.me ? 'is-me' : ''}"><span class="journey-dot class-${classKey(p.class)}" aria-hidden="true"></span><strong>${characterLink(p.id, esc(p.name))}</strong><small>${esc(p.class)} · ${esc(rankName(p.rank))}</small><span class="journey-bar class-${classKey(p.class)}" data-bar="${Math.round(((p.kills || 0) / maxKills) * 100)}" aria-hidden="true"></span><b>${number(p.kills)}</b></li>`,
 		)
 		.join('');
 	const notice = !mine
@@ -95,7 +95,7 @@ export async function mountPvp(host, ctx) {
 			</ol>
 		</section>
 		${ranking ? `<ol class="journey-ranking pvp-ranking" aria-label="Clasificación por muertes con honor">${ranking}</ol>` : '<p class="journey-ready">Todavía no hay datos de PvP de nadie.</p>'}
-		${unknown.length ? `<p class="journey-unknown"><strong>Sin datos de Battle.net:</strong> ${unknown.map((p) => esc(p.name)).join(', ')}.</p>` : ''}
+		${unknown.length ? `<p class="journey-unknown"><strong>Sin datos de Battle.net:</strong> ${unknown.map((p) => characterLink(p.id, esc(p.name))).join(', ')}.</p>` : ''}
 		<p class="privacy-note">
 			Solo para miembros. Los datos salen de Blizzard para los personajes importados desde
 			Battle.net y se actualizan solos más o menos cada hora.

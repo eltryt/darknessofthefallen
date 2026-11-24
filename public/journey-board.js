@@ -1,7 +1,7 @@
 // "Camino al 60": a goose-game spiral from level 1 (outside) to 60 (the guild emblem
 // in the centre). Each member's main character is a token in its class colour on its
 // level. Tokens walk to their square when the board opens; iconic squares tell a joke.
-import { classKey } from './roster-ui.js';
+import { classKey, characterLink } from './roster-ui.js';
 
 const SIZE = 1000,
 	CENTER = SIZE / 2,
@@ -291,13 +291,13 @@ export async function mountJourney(host, ctx) {
 	const podiumHtml = Array.from({ length: data.places }, (_, i) => {
 		const place = data.podium[i];
 		return place
-			? `<li class="journey-place tier-${place.tier}${place.me ? ' is-me' : ''}"><b>${place.place}.º</b><span class="journey-dot class-${classKey(place.class)}" aria-hidden="true"></span><strong>${esc(place.name)}</strong><small>${medals[place.tier]}</small></li>`
+			? `<li class="journey-place tier-${place.tier}${place.me ? ' is-me' : ''}"><b>${place.place}.º</b><span class="journey-dot class-${classKey(place.class)}" aria-hidden="true"></span><strong>${characterLink(place.id, esc(place.name))}</strong><small>${medals[place.tier]}</small></li>`
 			: `<li class="journey-place is-open tier-${[3, 2, 2, 1, 1][i] || 1}"><b>${i + 1}.º</b><strong>¿Quién será?</strong><small>${medals[[3, 2, 2, 1, 1][i] || 1]}</small></li>`;
 	}).join('');
 	const ranking = leveled
 		.map(
 			(p) =>
-				`<li class="${p.me ? 'is-me' : ''}"><span class="journey-dot class-${classKey(p.class)}" aria-hidden="true"></span><strong>${esc(p.name)}</strong><small>${esc(p.class)} · ${esc(p.role)}</small><span class="journey-bar class-${classKey(p.class)}" data-bar="${Math.round((p.level / data.maxLevel) * 100)}" aria-hidden="true"></span><b>${p.level}</b>${capStatus(p)}</li>`,
+				`<li class="${p.me ? 'is-me' : ''}"><span class="journey-dot class-${classKey(p.class)}" aria-hidden="true"></span><strong>${characterLink(p.id, esc(p.name))}</strong><small>${esc(p.class)} · ${esc(p.role)}</small><span class="journey-bar class-${classKey(p.class)}" data-bar="${Math.round((p.level / data.maxLevel) * 100)}" aria-hidden="true"></span><b>${p.level}</b>${capStatus(p)}</li>`,
 		)
 		.join('');
 	const notice =
@@ -367,7 +367,7 @@ export async function mountJourney(host, ctx) {
 			${ready ? `<strong>Listos para raid:</strong> ${esc(ready)}.` : 'Nadie ha llegado todavía al nivel máximo.'}
 		</p>
 		${ranking ? `<ol class="journey-ranking" aria-label="Clasificación por nivel">${ranking}</ol>` : ''}
-		${unknown.length ? `<p class="journey-unknown"><strong>Sin nivel indicado:</strong> ${unknown.map((p) => esc(p.name)).join(', ')}.</p>` : ''}
+		${unknown.length ? `<p class="journey-unknown"><strong>Sin nivel indicado:</strong> ${unknown.map((p) => characterLink(p.id, esc(p.name))).join(', ')}.</p>` : ''}
 		<p class="privacy-note">
 			Solo para miembros. El nivel sale de la ficha de cada personaje en la Armería; cuando
 			conectemos la API de Blizzard se actualizará solo. Las frases son guiños a Classic: WoW

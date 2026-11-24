@@ -99,11 +99,11 @@ test('migration 007 keeps existing characters and applies empty armory defaults'
 	}
 });
 
-test('sheets are visible to their owner and armory readers only; reviews stay with officers', async () => {
+test('any account sees a sheet read-only; private fields and reviews stay with officers', async () => {
 	const f = await fixture();
 	try {
-		const own = await f.character('member'),
-			other = await f.character('raider');
+		const own = await f.character('member', { availability: 'Lunes y jueves' }),
+			other = await f.character('raider', { availability: 'Fines de semana' });
 		assert.equal((await f.request(`/api/armory/characters/${own}`, undefined)).status, 401);
 		const mine = await f.request(`/api/armory/characters/${own}`, 'member');
 		assert.equal(mine.status, 200);
@@ -112,20 +112,25 @@ test('sheets are visible to their owner and armory readers only; reviews stay wi
 		assert.equal('notes' in mine.body, false);
 		assert.deepEqual(mine.body.equipment, []);
 		assert.deepEqual(mine.body.lists, []);
-		// Another member's id answers 404, not 403, so ids cannot be probed.
-		assert.equal((await f.request(`/api/armory/characters/${other}`, 'member')).status, 404);
+		assert.equal(mine.body.character.availability, 'Lunes y jueves');
+		// Another member's sheet opens read-only, without the private fields.
+		const theirs = await f.request(`/api/armory/characters/${other}`, 'member');
+		assert.equal(theirs.status, 200);
+		assert.equal(theirs.body.canEdit, false);
+		assert.equal(theirs.body.character.availability, '');
+		assert.equal(theirs.body.character.external_id, null);
+		assert.equal('reviews' in theirs.body, false);
+		assert.equal((await f.request('/api/armory/characters/nope', 'member')).status, 404);
 		const leaderView = await f.request(`/api/armory/characters/${own}`, 'raid_leader');
 		assert.equal(leaderView.status, 200);
+		assert.equal(leaderView.body.character.availability, 'Lunes y jueves');
 		assert.equal(leaderView.body.canEdit, false);
 		assert.equal('reviews' in leaderView.body, false);
 		const officerView = await f.request(`/api/armory/characters/${own}`, 'officer');
 		assert.deepEqual(officerView.body.reviews, []);
 		assert.deepEqual(officerView.body.notes, []);
 		const guild = await f.request('/api/armory/characters?scope=guild', 'member');
-		assert.deepEqual(
-			guild.body.map((c) => c.id),
-			[own],
-		);
+		assert.equal(guild.body.length, 2);
 		assert.equal((await f.request('/api/armory/characters?scope=guild', 'officer')).body.length, 2);
 	} finally {
 		await f.close();

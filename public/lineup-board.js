@@ -1,3 +1,4 @@
+import { characterLink } from './roster-ui.js';
 import { ClassIcon } from './components.js';
 import { tutorialButton } from './tutorials.js';
 import { buffCoverage, buffSource } from './raid-buffs.js';
@@ -138,7 +139,7 @@ export async function mountLineup(target, eventId, { api, esc, toast, data }, on
 		return `<article class="lineup-card class-${key}" data-card="${esc(s.id)}" tabindex="-1">
 			<span class="lineup-handle" data-handle aria-hidden="true">⠿</span>
 			${spanishClass[key] ? ClassIcon({ className: spanishClass[key], size: 'small' }) : '<span class="lineup-noicon" title="Clase sin identificar: especialización compartida por varias clases">?</span>'}
-			<span class="lineup-who"><strong>${esc(s.name)}</strong><small>${esc([s.specName, spanishClass[key] || s.className].filter(Boolean).join(' · '))}</small></span>
+			<span class="lineup-who"><strong>${characterLink(s.characterId, esc(s.name))}</strong><small>${esc([s.specName, spanishClass[key] || s.className].filter(Boolean).join(' · '))}</small></span>
 			<span class="lineup-flags"><span class="lineup-role role-${roleKind(s)}" title="${esc([s.role, s.className].filter(Boolean).join(' · ') || 'Sin rol')}">${roleLabels[roleKind(s)]}</span>${s.status !== 'Confirmado' ? `<span class="lineup-flag">${esc(s.status)}</span>` : ''}
 			${s.registered ? '' : '<span class="lineup-flag is-muted" title="Inscrito en Discord sin cuenta en la web: no cuenta para la asistencia">Sin cuenta</span>'}
 			${callup && callup.slot !== 'removed' ? `<span class="lineup-dm dm-${esc(callup.dm_status)}" title="${esc(callup.dm_error || (callup.dm_status === 'skipped' ? 'Bot de Discord sin configurar: no se envió mensaje privado' : dmLabels[callup.dm_status]))}">${esc(dmLabels[callup.dm_status])}</span>` : ''}</span>

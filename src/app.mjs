@@ -427,10 +427,11 @@ export function createApp(db, env, { readAsset = readLocalAsset, discordFetch = 
 					settings: s,
 					characters: db
 						.prepare(
-							'SELECT name,surname,class,role FROM characters WHERE archived_at IS NULL ORDER BY name',
+							'SELECT id,name,surname,class,role FROM characters WHERE archived_at IS NULL ORDER BY name',
 						)
 						.all()
-						.map(publicCharacter),
+						// The id links to the armory sheet, which asks to sign in first.
+						.map((c) => ({ id: c.id, ...publicCharacter(c) })),
 					progress: publicProgress(db),
 					guildAchievements: publicGuildAchievements(db),
 					raids: db

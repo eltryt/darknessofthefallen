@@ -145,7 +145,7 @@ test('all six roles are checked against server endpoints and direct panel URLs',
 		await f.close();
 	}
 });
-test('public roster contains exactly name class and role; never internal metadata', async () => {
+test('public roster contains exactly id name class and role; never internal metadata', async () => {
 	const f = await fixture();
 	try {
 		await f.request('/api/characters', 'member', 'POST', {
@@ -156,7 +156,8 @@ test('public roster contains exactly name class and role; never internal metadat
 			notes: 'SECRET',
 		});
 		const r = await f.request('/api/public');
-		assert.deepEqual(Object.keys(r.body.characters[0]).sort(), ['class', 'name', 'role']);
+		// The id only links to the armory sheet, which needs a signed-in account.
+		assert.deepEqual(Object.keys(r.body.characters[0]).sort(), ['class', 'id', 'name', 'role']);
 		assert.ok(!JSON.stringify(r.body).includes('SECRET'));
 	} finally {
 		await f.close();

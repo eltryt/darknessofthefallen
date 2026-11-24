@@ -1,3 +1,4 @@
+import { characterLink } from './roster-ui.js';
 import { ClassIcon } from './components.js';
 import { spanishClass } from './lineup-board.js';
 
@@ -58,7 +59,7 @@ export async function mountAttendanceSheet(target, raidId, { api, esc, toast }, 
 		>
 			${r.class ? ClassIcon({ className: r.class, size: 'small' }) : '<span class="lineup-noicon">?</span>'}
 			<span class="att-who"
-				><strong>${esc(r.characterName || r.name)}</strong
+				><strong>${characterLink(r.characterId, esc(r.characterName || r.name))}</strong
 				><small
 					>${esc([r.characterName ? r.name : '', r.role].filter(Boolean).join(' · '))}</small
 				></span

@@ -1,3 +1,4 @@
+import { characterLink } from './roster-ui.js';
 import { slotLabels } from './armory-catalog.js';
 
 // Wishlist deadline per tier (Normas de raid, 22/11/2026): the notice on each player's
@@ -96,7 +97,11 @@ export async function mountWishlistAdmin(host, ctx, refresh) {
 				(h) =>
 					/* HTML */ `<tr class="${h.alert ? 'has-alert' : ''}">
 						<td>${esc(when(h.created_at))}</td>
-						<td>${esc(h.character_name)}<small class="cell-detail">${esc(h.owner_name)}</small></td>
+						<td>
+							${characterLink(h.character_id, esc(h.character_name))}<small class="cell-detail"
+								>${esc(h.owner_name)}</small
+							>
+						</td>
 						<td>
 							${actions[h.action]}${h.action === 'changed' && h.before && h.after ? `<small class="cell-detail">${esc(changeDetail(h.before, h.after))}</small>` : ''}
 						</td>
@@ -137,7 +142,8 @@ export async function mountWishlistAdmin(host, ctx, refresh) {
 									(r) =>
 										/* HTML */ `<tr class="${r.alert ? 'has-alert' : ''}">
 											<td>
-												${esc(r.character_name)}<small class="cell-detail"
+												${characterLink(r.character_id, esc(r.character_name))}<small
+													class="cell-detail"
 													>${esc(r.user_name)} · ${esc(when(r.created_at))}</small
 												>
 											</td>
@@ -168,7 +174,7 @@ export async function mountWishlistAdmin(host, ctx, refresh) {
 						? `<ul class="wish-alerts">${alerts
 								.map(
 									(a) =>
-										`<li><span><strong>${esc(a.character_name)}</strong> · ${esc(when(a.created_at))}<br>${esc(a.alert)}</span><button type="button" class="secondary" data-seen="${esc(a.id)}">Revisado</button></li>`,
+										`<li><span><strong>${characterLink(a.character_id, esc(a.character_name))}</strong> · ${esc(when(a.created_at))}<br>${esc(a.alert)}</span><button type="button" class="secondary" data-seen="${esc(a.id)}">Revisado</button></li>`,
 								)
 								.join('')}</ul>`
 						: '<p class="muted">No hay avisos sin revisar.</p>'

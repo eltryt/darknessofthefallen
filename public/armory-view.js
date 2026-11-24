@@ -36,7 +36,7 @@ export function createArmoryView(context) {
 	async function armory() {
 		const id = params.get('personaje');
 		const mine = await api('/api/armory/characters');
-		if (!id || mine.some((c) => c.id === id) || !me.permissions.includes('armory.read')) {
+		if (!id || mine.some((c) => c.id === id)) {
 			location.replace(
 				id && mine.some((c) => c.id === id)
 					? `/perfil?personaje=${encodeURIComponent(id)}#armeria`

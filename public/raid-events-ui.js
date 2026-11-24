@@ -1,3 +1,4 @@
+import { characterLink } from './roster-ui.js';
 import { tutorialButton } from './tutorials.js';
 const jobLabel = (status) =>
 	({
@@ -397,7 +398,8 @@ export async function mountRaidEvents(host, ctx, { manage = false, mine = false 
 									(s) =>
 										/* HTML */ `<tr>
 											<td>
-												${esc(s.characterName || s.name)}<small class="cell-detail"
+												${characterLink(s.characterId, esc(s.characterName || s.name))}<small
+													class="cell-detail"
 													>${s.registeredCharacter ? 'Personaje vinculado en la web' : 'Sin personaje vinculado en la web'}</small
 												>
 											</td>

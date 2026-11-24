@@ -1,7 +1,7 @@
 import { mountManualRoster } from './manual-roster-ui.js';
 import { loadItemNames, itemLink, loadTooltips } from './wowhead.js';
 import { tutorialButton } from './tutorials.js';
-import { rosterCards } from './roster-ui.js';
+import { rosterCards, characterLink } from './roster-ui.js';
 import { mountAttendanceSheet } from './attendance-sheet.js';
 import { mountWishlistAdmin } from './wishlist-rules-ui.js';
 const rankLabel = (rank) =>
@@ -345,7 +345,7 @@ export async function operationTab(tab, el, ctx) {
 							${esc(r.raid_title)}<small class="cell-detail">${esc(dateLabel(r.starts_at))}</small>
 						</td>
 						<td>${esc(r.display_name)}</td>
-						<td>${esc(r.character_name || '—')}</td>
+						<td>${characterLink(r.character_id, esc(r.character_name || '—'))}</td>
 						<td>
 							${esc(r.status)}${r.excused ? `<small class="cell-detail">Justificada · ${esc(r.excuse_reason)}</small>` : ''}
 						</td>
@@ -459,7 +459,7 @@ export async function operationTab(tab, el, ctx) {
 						>
 					</td>
 					<td>
-						${esc(r.data.recipientName)}
+						${characterLink(r.data.recipientCharacterId, esc(r.data.recipientName))}
 						<details>
 							<summary>Candidatos</summary>
 							${r.data.candidates.map((c) => esc(c.name)).join(', ')}
@@ -725,7 +725,7 @@ export async function operationTab(tab, el, ctx) {
 			rows,
 			(r) =>
 				/* HTML */ `<tr>
-					<td>${esc(r.data.characterName)}</td>
+					<td>${characterLink(r.data.characterId, esc(r.data.characterName))}</td>
 					<td>${esc(r.data.item)}</td>
 					<td>
 						${esc(r.data.raid || 'Sin raid')}<small class="cell-detail">${esc(r.data.boss)}</small>
@@ -829,7 +829,7 @@ export async function operationTab(tab, el, ctx) {
 				),
 				(r) =>
 					/* HTML */ `<tr>
-						<td>${esc(r.name)} ${esc(r.surname)}</td>
+						<td>${characterLink(r.id, `${esc(r.name)} ${esc(r.surname)}`)}</td>
 						<td>${esc(r.class)}<small class="cell-detail">${esc(r.role)}</small></td>
 						<td>${r.is_main ? 'Main' : 'Alter'}</td>
 						<td>${esc(r.availability || 'Sin indicar')}</td>

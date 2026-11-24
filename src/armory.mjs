@@ -24,13 +24,15 @@ function activeCharacter(db, id) {
 		)
 		.get(id);
 }
-// Owners and armory readers may view a sheet. Others get 404, so ids cannot be probed.
+// Anyone signed in may view a sheet, read-only; what is private stays with the owner and
+// the armory readers (see sheet). An unknown or archived id is a 404.
 function viewable(db, user, id) {
 	const c = activeCharacter(db, id);
-	if (!c || (c.user_id !== user.id && !can(user, 'armory.read')))
-		throw new HttpError(404, 'Personaje no encontrado.');
+	if (!c) throw new HttpError(404, 'Personaje no encontrado.');
 	return c;
 }
+// Fields of a character that only its owner and the armory readers see.
+const privateFields = { availability: '', notes: '', external_id: null, cap_verified_by: null };
 // Only the owner edits a character's BiS lists, whatever the rank.
 function owned(db, user, id) {
 	const c = activeCharacter(db, id);
@@ -135,6 +137,9 @@ export function resolveGuides(db, c, spec) {
 function sheet(db, user, c) {
 	const owner = c.user_id === user.id,
 		review = can(user, 'armory.review');
+	if (!owner && !can(user, 'armory.read')) {
+		c = { ...c, ...privateFields };
+	}
 	const lists = db
 		.prepare('SELECT * FROM bis_lists WHERE character_id=? ORDER BY created_at')
 		.all(c.id)
@@ -222,7 +227,8 @@ export async function armoryApi({
 	requireUser();
 	let m;
 	if (path === '/api/armory/characters' && method === 'GET') {
-		const guild = url.searchParams.get('scope') === 'guild' && can(user, 'armory.read');
+		// Everyone signed in may switch between the guild's sheets.
+		const guild = url.searchParams.get('scope') === 'guild';
 		send(
 			200,
 			db

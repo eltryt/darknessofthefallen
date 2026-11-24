@@ -1,3 +1,4 @@
+import { characterLink } from './roster-ui.js';
 import { ClassIcon } from './components.js';
 import { classOf, roleKind, roleLabels, spanishClass } from './lineup-board.js';
 
@@ -89,7 +90,7 @@ export async function mountMyCallups(host, ctx) {
 
 	function player(p) {
 		const key = classOf(p);
-		return `<li class="callup-player class-${key} ${p.own ? 'is-self' : ''}">${spanishClass[key] ? ClassIcon({ className: spanishClass[key], size: 'small' }) : '<span class="callup-noicon" aria-hidden="true">?</span>'}<span>${esc(p.name)}</span>${p.own ? '<b class="self-tag">Tú</b>' : ''}<small>${esc(roleLabels[roleKind(p)] || '')}</small></li>`;
+		return `<li class="callup-player class-${key} ${p.own ? 'is-self' : ''}">${spanishClass[key] ? ClassIcon({ className: spanishClass[key], size: 'small' }) : '<span class="callup-noicon" aria-hidden="true">?</span>'}<span>${characterLink(p.characterId, esc(p.name))}</span>${p.own ? '<b class="self-tag">Tú</b>' : ''}<small>${esc(roleLabels[roleKind(p)] || '')}</small></li>`;
 	}
 	function composition(e) {
 		if (e.lineup) {

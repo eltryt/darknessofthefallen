@@ -132,7 +132,8 @@ export function projectEvent(db, row, user, env) {
 			status: signupStatus(s, raw),
 			own,
 			userId: manage || own ? s.userId : undefined,
-			characterId: linked && (own || manage) ? link.character_id : null,
+			// Any member may open the linked character's armory sheet (read-only).
+			characterId: linked ? link.character_id : null,
 			characterName: linked ? [link.name, link.surname].filter(Boolean).join(' ') : null,
 			registeredCharacter: Boolean(linked),
 			registeredClass: linked ? link.class : null,
@@ -188,6 +189,7 @@ export function projectEvent(db, row, user, env) {
 						slot: c.slot,
 						className: s?.className || '',
 						specName: s?.specName || '',
+						characterId: s?.characterId || null,
 						characterClass: s?.registeredClass || null,
 						own: c.user_id === user.id,
 					};

@@ -10197,3 +10197,21 @@ button.gm-note-x:hover {
 		grid-template-columns: 14px 1fr 64px;
 	}
 }
+/* Character names link to their armory sheet everywhere; they keep the text colour. */
+.char-link {
+	color: inherit;
+	text-decoration: none;
+}
+.char-link:hover,
+.char-link:focus-visible {
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+.pvp-token > a {
+	display: grid;
+	place-items: center;
+	width: 100%;
+	height: 100%;
+	color: inherit;
+	text-decoration: none;
+}
