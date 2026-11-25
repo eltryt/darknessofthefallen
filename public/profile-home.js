@@ -3,6 +3,23 @@
 // direct access to every section.
 import { isWanted } from './wish-states.js';
 
+// Every section, in the same three groups as the tabs, with what it is for.
+const quickGroups = [
+	['Tu personaje', ['armeria', 'personajes']],
+	['Raid', ['wishlist', 'botin', 'convocatorias']],
+	['Comunidad', ['logros', 'camino', 'pvp', 'ruleta']],
+];
+const hints = {
+	armeria: 'Equipo, objetivos BiS y guías',
+	personajes: 'Main, alters e importar de Battle.net',
+	wishlist: 'El botín que quieres de cada jefe',
+	botin: 'Repartos y consejo de botín',
+	convocatorias: 'Tus raids, tu plaza y tu grupo',
+	logros: 'Medallas y lo que te falta',
+	camino: 'La carrera de la hermandad al 60',
+	pvp: 'Rangos y muertes con honor',
+	ruleta: 'Mesas de ruleta entre miembros',
+};
 const HOUR = 3600 * 1000;
 const madrid = (value, options) =>
 	new Date(value).toLocaleString('es-ES', { timeZone: 'Europe/Madrid', ...options });
@@ -141,9 +158,18 @@ export async function mountProfileHome(
 				: '<p class="pf-ok">✓ Lo tienes todo al día.</p>'
 		}
 		<nav class="pf-quick" aria-label="Accesos rápidos">
-			${sections
-				.filter(([id]) => id !== 'inicio')
-				.map(([id, label]) => `<a href="#${id}">${svg(id)}<span>${esc(label)}</span></a>`)
+			${quickGroups
+				.map(
+					([title, ids]) =>
+						`<section class="pf-group"><h3>${title}</h3>${ids
+							.map((id) => sections.find(([s]) => s === id))
+							.filter(Boolean)
+							.map(
+								([id, label]) =>
+									`<a href="#${id}"><span class="pf-badge">${svg(id)}</span><span class="pf-text"><strong>${esc(label)}</strong><small>${hints[id]}</small></span><b aria-hidden="true">›</b></a>`,
+							)
+							.join('')}</section>`,
+				)
 				.join('')}
 		</nav>
 	</div>`;

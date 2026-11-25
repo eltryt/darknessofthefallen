@@ -11402,37 +11402,94 @@ button.gm-note-x:hover {
 	color: #9fe2b5;
 }
 .pf .pf-quick {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+	gap: 12px;
 	width: 100%;
 	max-width: none;
 	margin: 0;
 	padding: 0;
 	border: 0;
 	background: none;
+}
+.pf-group {
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-	gap: 8px;
+	align-content: start;
+	gap: 6px;
+	padding: 14px;
+	border: 1px solid #ffffff14;
+	border-radius: 16px;
+	background: linear-gradient(170deg, #19161a, #111013);
+}
+.pf-group h3 {
+	margin: 0 0 4px 4px;
+	color: var(--muted);
+	font-family: inherit;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
 }
 .pf-quick a {
-	display: flex;
+	display: grid;
+	grid-template-columns: 40px minmax(0, 1fr) auto;
 	align-items: center;
-	gap: 10px;
-	padding: 12px 14px;
-	border: 1px solid #ffffff14;
+	gap: 12px;
+	padding: 10px;
+	border: 1px solid transparent;
 	border-radius: 12px;
-	background: #141215;
-	color: #d9d1c5;
-	font-size: 14px;
-	font-weight: 600;
+	color: #e9e1d4;
 	text-decoration: none;
+	transition:
+		background 140ms ease,
+		border-color 140ms ease;
 }
-.pf-quick a:hover {
-	border-color: #d6a85a88;
-	color: #fff1d7;
+.pf-quick a:hover,
+.pf-quick a:focus-visible {
+	border-color: #d6a85a55;
+	background: #ffffff08;
 }
-.pf-quick .hub-icon {
+.pf-badge {
+	display: grid;
+	place-items: center;
+	width: 40px;
+	height: 40px;
+	border: 1px solid #d6a85a44;
+	border-radius: 11px;
+	background: radial-gradient(circle at 30% 25%, #3a2a17, #161214);
+	color: var(--gold);
+}
+.pf-badge .hub-icon {
 	width: 20px;
 	height: 20px;
+}
+.pf-text {
+	display: grid;
+	min-width: 0;
+}
+.pf-text strong {
+	overflow: hidden;
+	font-size: 15px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.pf-text small {
+	overflow: hidden;
+	color: var(--muted);
+	font-size: 12px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.pf-quick a > b {
+	color: #6f675f;
+	font-size: 20px;
+	transition:
+		color 140ms ease,
+		translate 140ms ease;
+}
+.pf-quick a:hover > b {
 	color: var(--gold);
+	translate: 3px 0;
 }
 @media (max-width: 700px) {
 	.pf-next {
