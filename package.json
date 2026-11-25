@@ -27,8 +27,8 @@
 		"format:check": "prettier --check \"{public,src,scripts,tests}/**/*.{js,mjs,css,html}\" \"*.json\" \"*.jsonc\" \".github/workflows/*.yml\""
 	},
 	"devDependencies": {
-		"miniflare": "5.20261006.0-alpha",
+		"miniflare": "5.20261110.0-beta",
 		"prettier": "3.9.10",
-		"wrangler": "4.148.0"
+		"wrangler": "4.160.0"
 	}
 }

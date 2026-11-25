@@ -88,18 +88,6 @@ header {
 	margin-top: 5px;
 	color: var(--gold);
 }
-.brand-mark {
-	font-size: 35px;
-	color: var(--gold);
-	position: relative;
-	font-style: italic;
-	border-left: 1px solid var(--gold);
-	padding-left: 8px;
-}
-.brand-mark span {
-	font-size: 23px;
-	margin-left: -10px;
-}
 nav {
 	display: flex;
 	gap: 23px;
@@ -216,22 +204,6 @@ main {
 	inset: 25px;
 	border: 1px solid #b89a6229;
 	transform: rotate(45deg);
-}
-.hero-monogram {
-	font-family: Georgia, serif;
-	font-size: 125px;
-	font-style: italic;
-	color: #d8b982;
-	text-shadow: 0 0 65px #669bd866;
-	letter-spacing: -23px;
-	padding-right: 23px;
-}
-.art-label {
-	position: absolute;
-	bottom: 0;
-	font-size: 9px;
-	letter-spacing: 4px;
-	color: var(--muted);
 }
 .facts {
 	display: grid;
@@ -876,9 +848,6 @@ footer small {
 	.brand-sub {
 		font-size: 8px;
 	}
-	.brand-mark {
-		font-size: 28px;
-	}
 	.login {
 		font-size: 10px;
 		padding: 10px;
@@ -964,9 +933,6 @@ footer small {
 		padding-bottom: 50px;
 	}
 	.login span {
-		display: none;
-	}
-	.brand-mark {
 		display: none;
 	}
 	footer {
@@ -1246,12 +1212,6 @@ header {
 	background: none;
 	transform: none;
 }
-.hero-logo {
-	display: block;
-	width: 100%;
-	height: auto;
-	filter: drop-shadow(0 12px 35px #920e2025);
-}
 .card {
 	background: linear-gradient(140deg, #211c23, #151418);
 }
@@ -1326,10 +1286,6 @@ textarea {
 	.hero .eyebrow {
 		font-size: 10px;
 		letter-spacing: 1.6px;
-	}
-	.hero-logo {
-		max-height: 250px;
-		object-fit: contain;
 	}
 }
 /* Public and member-facing polish: shared visual language, keyboard and mobile. */
@@ -1472,12 +1428,6 @@ button.secondary:hover {
 .link-card p {
 	margin-bottom: 0;
 }
-.week-schedule {
-	display: grid;
-	grid-template-columns: repeat(7, minmax(0, 1fr));
-	gap: 9px;
-	margin-top: 28px;
-}
 .week-day {
 	border: 1px solid var(--line);
 	padding: 20px 10px;
@@ -1550,14 +1500,6 @@ button.secondary:hover {
 .values-list p {
 	font-size: 13px;
 	margin: 0;
-}
-.recruit-intro {
-	display: grid;
-	grid-template-columns: 1.5fr 1fr;
-	gap: 22px;
-}
-.recruitment-state {
-	border-top: 2px solid #b04a63;
 }
 .application-steps {
 	display: grid;
@@ -1927,9 +1869,6 @@ fieldset label {
 	}
 }
 @media (max-width: 1100px) {
-	.week-schedule {
-		grid-template-columns: repeat(4, minmax(0, 1fr));
-	}
 	.about-layout {
 		gap: 30px;
 	}
@@ -2046,10 +1985,6 @@ fieldset label {
 		font-size: 10px;
 		letter-spacing: 1.5px;
 	}
-	.week-schedule {
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 8px;
-	}
 	.week-day {
 		text-align: left;
 		padding: 15px;
@@ -2065,7 +2000,6 @@ fieldset label {
 		font-size: 11px;
 	}
 	.link-grid,
-	.recruit-intro,
 	.contact-layout,
 	.login-layout,
 	.about-layout {
@@ -2084,9 +2018,6 @@ fieldset label {
 	.application-steps {
 		grid-template-columns: 1fr;
 		gap: 24px;
-	}
-	.recruit-intro h2 {
-		font-size: 27px;
 	}
 	.contact-card {
 		padding: 25px;
@@ -2506,81 +2437,6 @@ fieldset label {
 }
 
 /* Colores de especializaciones */
-.spec-arms {
-	--spec-color: #e5b079;
-}
-.spec-fury {
-	--spec-color: #d26667;
-}
-.spec-protection {
-	--spec-color: #c8a180;
-}
-.spec-holy {
-	--spec-color: #f8c6dd;
-}
-.spec-retribution {
-	--spec-color: #e5b27d;
-}
-.spec-beast_mastery {
-	--spec-color: #c3d595;
-}
-.spec-archery {
-	--spec-color: #a0b47a;
-}
-.spec-survival {
-	--spec-color: #6d8d5a;
-}
-.spec-subtlety {
-	--spec-color: #fde280;
-}
-.spec-assassination {
-	--spec-color: #ff9d8c;
-}
-.spec-combat {
-	--spec-color: #e7b365;
-}
-.spec-discipline {
-	--spec-color: #a1a1a1;
-}
-.spec-shadow {
-	--spec-color: #a4a9d1;
-}
-.spec-elemental {
-	--spec-color: #20c2eb;
-}
-.spec-enhancement {
-	--spec-color: #8fc375;
-}
-.spec-restore {
-	--spec-color: #86c074;
-}
-.spec-arcane {
-	--spec-color: #c1d9ff;
-}
-.spec-fire {
-	--spec-color: #ffaa7a;
-}
-.spec-frost {
-	--spec-color: #a8d2e0;
-}
-.spec-affliction {
-	--spec-color: #9e78b2;
-}
-.spec-demonology {
-	--spec-color: #c1a5d7;
-}
-.spec-destruction {
-	--spec-color: #de9369;
-}
-.spec-balance {
-	--spec-color: #a4e0d0;
-}
-.spec-feral {
-	--spec-color: #a9cd7c;
-}
-.spec-guardian {
-	--spec-color: #b9a5a3;
-}
 
 /* Estilo de íconos generales */
 .icon-class,
@@ -2632,12 +2488,6 @@ header {
 	height: auto;
 	background: none;
 	transform: none;
-}
-.hero-logo {
-	display: block;
-	width: 100%;
-	height: auto;
-	filter: drop-shadow(0 12px 35px #920e2025);
 }
 .card {
 	background: linear-gradient(140deg, #211c23, #151418);
@@ -2790,12 +2640,6 @@ button.secondary:hover {
 .link-card p {
 	margin-bottom: 0;
 }
-.week-schedule {
-	display: grid;
-	grid-template-columns: repeat(7, minmax(0, 1fr));
-	gap: 9px;
-	margin-top: 28px;
-}
 .week-day {
 	border: 1px solid var(--line);
 	padding: 20px 10px;
@@ -2868,14 +2712,6 @@ button.secondary:hover {
 .values-list p {
 	font-size: 13px;
 	margin: 0;
-}
-.recruit-intro {
-	display: grid;
-	grid-template-columns: 1.5fr 1fr;
-	gap: 22px;
-}
-.recruitment-state {
-	border-top: 2px solid #b04a63;
 }
 .application-steps {
 	display: grid;
@@ -3308,92 +3144,9 @@ footer small {
 .catalog-note summary {
 	cursor: pointer;
 }
-.wishlist-filters {
-	margin: 24px 0;
-}
-.wishlist-encounter {
-	margin: 18px 0;
-	border: 1px solid var(--line);
-	border-radius: 12px;
-	overflow: hidden;
-	background: #111115;
-}
-.wishlist-encounter > header {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	gap: 12px;
-	padding: 16px 20px;
-	background: #19191f;
-	position: static;
-	min-height: 0;
-}
-.wishlist-encounter h3 {
-	margin: 4px 0 0;
-	font-family: inherit;
-	font-size: 17px;
-}
-.wishlist-encounter ul {
-	list-style: none;
-	padding: 8px;
-	margin: 0;
-}
-.wishlist-item {
-	display: flex;
-	gap: 14px;
-	align-items: center;
-	padding: 16px 12px;
-	border-bottom: 1px solid var(--line);
-}
-.wishlist-item:last-child {
-	border-bottom: 0;
-}
-.wishlist-item > div {
-	flex: 1;
-	min-width: 0;
-	overflow-wrap: anywhere;
-}
-.wishlist-item strong {
-	color: #ddd5ed;
-	font-size: 15px;
-}
-.wishlist-item small {
-	display: block;
-	color: #a7a5b4;
-	margin-top: 4px;
-}
-.wishlist-item p {
-	font-size: 12px;
-	margin: 6px 0 0;
-	white-space: pre-wrap;
-}
-.wish-priority {
-	padding: 8px;
-	border: 1px solid #756439;
-	border-radius: 7px;
-	color: #efd48d;
-	font-weight: 700;
-	font-size: 12px;
-}
-.wishlist-add {
-	margin-top: 24px;
-}
 @media (max-width: 520px) {
 	.wishlist-heading {
 		align-items: flex-start;
-	}
-	.wishlist-item {
-		flex-wrap: wrap;
-		gap: 10px;
-	}
-	.wishlist-item button {
-		margin-left: auto;
-	}
-	.wishlist-item > div {
-		flex-basis: calc(100% - 55px);
-	}
-	.wishlist-encounter > header {
-		padding: 14px;
 	}
 }
 
@@ -3419,8 +3172,7 @@ footer small {
 	height: 32px;
 }
 
-.class-icon-container,
-.spec-icon-container {
+.class-icon-container {
 	display: inline-flex;
 	align-items: center;
 	gap: 4px;
@@ -3435,12 +3187,6 @@ footer small {
 	display: inline-flex;
 	align-items: center;
 	gap: 4px;
-}
-
-.spec-separator {
-	opacity: 0.7;
-	font-size: 1.2em;
-	margin: 0 2px;
 }
 
 /* Estilos responsive para iconos */
@@ -3651,8 +3397,7 @@ body > header .brand-logo {
 
 /* Mantener los pasos de candidatura dentro del ancho móvil. */
 @media (max-width: 700px) {
-	.application-steps,
-	.recruit-intro {
+	.application-steps {
 		grid-template-columns: minmax(0, 1fr);
 	}
 }
@@ -3717,15 +3462,6 @@ body > header .brand-logo {
 	cursor: pointer;
 	font-size: 17px;
 }
-.bot-status {
-	list-style: none;
-	padding: 0;
-	margin: 12px 0;
-	font-size: 13px;
-}
-.bot-status li {
-	padding: 3px 0;
-}
 .bot-ok {
 	color: var(--green);
 }
@@ -3777,12 +3513,6 @@ body > header .brand-logo {
 .bot-check {
 	display: block;
 	margin: 8px 0;
-}
-.bot-classes {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
-	gap: 12px;
-	margin-bottom: 12px;
 }
 .bot-class {
 	border: 1px solid var(--line);
@@ -3840,7 +3570,6 @@ body > header .brand-logo {
 	background: #da373c;
 }
 @media (max-width: 560px) {
-	.bot-classes,
 	.bot-preview-groups {
 		grid-template-columns: 1fr;
 	}

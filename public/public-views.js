@@ -407,7 +407,8 @@ export function createPublicViews(context) {
 								>
 							</p>
 						</section>
-						<section class="grid map-guide">
+						<section class="grid map-guide" aria-labelledby="map-guide-title">
+							<h2 class="visually-hidden" id="map-guide-title">Guía del mapa</h2>
 							<article class="card">
 								<h3>Cómo usarlo</h3>
 								<p>

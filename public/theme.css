@@ -132,9 +132,6 @@ body > header {
 .hero-art {
 	max-width: 420px;
 }
-.hero-logo {
-	filter: drop-shadow(0 15px 45px #0009);
-}
 .button,
 button {
 	font-family: inherit;
@@ -345,27 +342,6 @@ legend {
 .recruit-priority {
 	font-size: 12px;
 	color: var(--class-color);
-}
-.recruit-specs {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 8px;
-	margin-top: 20px;
-}
-.recruit-specs > span {
-	display: inline-flex;
-	align-items: center;
-	gap: 6px;
-	padding: 6px 9px;
-	font-size: 12px;
-	border: 1px solid #ffffff15;
-	border-radius: 20px;
-	background: #0b0e16a0;
-}
-.recruit-specs img {
-	width: 19px;
-	height: 19px;
-	border-radius: 50%;
 }
 .recruit-cta {
 	text-align: center;
@@ -955,9 +931,6 @@ body[data-page='/roster'] .page-title {
 	letter-spacing: normal;
 }
 @media (max-width: 768px) {
-	.week-schedule {
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-	}
 	.week-day {
 		min-width: 0;
 	}
@@ -1368,9 +1341,6 @@ body[data-page] .link-card:hover {
 	border-color: #d5b483;
 	background: #23191c;
 }
-.week-schedule {
-	gap: 10px;
-}
 .week-day {
 	background: linear-gradient(#181719, #111113);
 	border: 1px solid #a68a5b40;
@@ -1427,13 +1397,6 @@ body[data-page] .link-card:hover {
 		#111113 75%
 	);
 	box-shadow: inset 3px 0 var(--class-color);
-}
-.recruit-specs > span {
-	border-radius: 4px;
-	background: #09090c99;
-}
-.recruit-filters button {
-	border-radius: 4px;
 }
 .raid-showcase {
 	border-radius: 4px;
@@ -1800,9 +1763,6 @@ footer > button.secondary {
 	}
 	.class-recruit-card {
 		padding: 18px;
-	}
-	.recruit-specs {
-		margin-top: 14px;
 	}
 	.onyxia-feature img {
 		min-height: 0;
@@ -2604,9 +2564,6 @@ body[data-page='/armeria'] main h3 {
 	font-size: 17px;
 	color: var(--class-color, #f3e6cf) !important;
 }
-.armory-meta {
-	font-size: 15px;
-}
 .armory-owner {
 	display: flex;
 	align-items: center;
@@ -2705,70 +2662,6 @@ body[data-page='/armeria'] main h3 {
 	min-height: 44px;
 }
 /* Equipment and BiS slots share the framed two-column layout. */
-.gear-grid,
-.bis-grid {
-	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 10px;
-	margin-bottom: 20px;
-}
-.gear-slot,
-.bis-slot {
-	border: 1px solid #a68a5b38;
-	border-radius: 4px;
-	background: linear-gradient(110deg, #171416, #101012);
-}
-.gear-slot {
-	display: flex;
-	align-items: center;
-	gap: 14px;
-	min-height: 64px;
-	padding: 10px 14px;
-}
-.gear-slot strong,
-.bis-slot h3 {
-	color: #f3e6cf;
-	font-size: 15px;
-}
-.gear-slot small {
-	display: block;
-	color: #8f877d;
-	font-size: 13px;
-}
-.gear-icon {
-	display: grid;
-	flex: 0 0 40px;
-	place-items: center;
-	width: 40px;
-	height: 40px;
-	border: 1px solid #a68a5b40;
-	border-radius: 4px;
-	background: #0b0b0d;
-}
-.gear-icon svg {
-	width: 20px;
-	height: 20px;
-	fill: none;
-	stroke: #8f877d;
-	stroke-width: 1.5;
-	stroke-linejoin: round;
-}
-.gear-item {
-	display: block;
-	color: #f3e6cf;
-}
-.quality-uncommon .gear-item {
-	color: #4fd06b;
-}
-.quality-rare .gear-item {
-	color: #3d9bff;
-}
-.quality-epic .gear-item {
-	color: #b46cff;
-}
-.quality-legendary .gear-item {
-	color: #ff9a3d;
-}
 .bis-lists {
 	display: flex;
 	flex-wrap: wrap;
@@ -2780,116 +2673,7 @@ body[data-page='/armeria'] main h3 {
 	background: #643345;
 	color: #fff;
 }
-.bis-head {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: end;
-	justify-content: space-between;
-	gap: 12px;
-	margin-bottom: 14px;
-}
-.bis-head h2 {
-	margin: 0;
-}
-.bis-head p {
-	margin: 4px 0 0;
-	font-size: 14px;
-}
-.bis-slot {
-	padding: 12px 14px;
-}
-.bis-slot header {
-	display: flex;
-	align-items: center;
-	gap: 12px;
-}
-.bis-slot h3 {
-	flex: 1;
-	margin: 0;
-	font-family: inherit !important;
-	font-weight: 650 !important;
-}
-.bis-count {
-	font-size: 12px;
-	color: #8f877d;
-}
-.bis-slot ul {
-	display: grid;
-	gap: 8px;
-	margin: 12px 0 0;
-	padding: 0;
-	list-style: none;
-}
-.bis-entry {
-	padding: 10px 12px;
-	border: 1px solid #ffffff10;
-	border-radius: 4px;
-	background: #0d0c0f;
-}
-.bis-entry.is-primary {
-	border-color: #a68a5b70;
-	background: linear-gradient(110deg, #2a1418, #120d10);
-}
-.bis-entry-main {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: 8px;
-}
-.bis-entry-main strong {
-	color: #f3e6cf;
-	font-size: 15px;
-}
-.bis-entry small {
-	display: block;
-	margin-top: 4px;
-	color: #b8b2ad;
-	font-size: 13px;
-}
-.bis-badge {
-	padding: 2px 7px;
-	border-radius: 3px;
-	background: #e1bf8a;
-	color: #1a1214;
-	font-size: 11px;
-	font-weight: 800;
-	letter-spacing: 0.04em;
-}
-.bis-badge.alt {
-	background: #2a2729;
-	color: #cfc7bb;
-}
-.bis-priority {
-	color: #e3c08f;
-	font-size: 12px;
-	font-weight: 700;
-}
-.bis-notes {
-	margin: 6px 0 0;
-	font-size: 13px;
-}
-.bis-notes span {
-	color: #cdb48c;
-}
-.bis-entry .actions {
-	margin-top: 8px;
-	gap: 6px;
-}
-.bis-entry .actions button {
-	min-height: 36px;
-	padding: 6px 12px;
-	font-size: 13px;
-}
-.armory-new-list {
-	margin-top: 20px;
-}
 /* External guides: one framed card per provider, sections as rows. */
-.guide-grid {
-	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
-	gap: 14px;
-	margin: 18px 0;
-}
 .guide-provider {
 	border: 1px solid #a68a5b45;
 	border-radius: 4px;
@@ -2939,36 +2723,6 @@ body[data-page='/armeria'] main h3 {
 .guide-link:hover {
 	background: #6e0f1d;
 }
-.review-layout {
-	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 24px;
-}
-.review-list {
-	display: grid;
-	gap: 10px;
-	margin: 0 0 14px;
-	padding: 0;
-	list-style: none;
-}
-.review-list .card {
-	padding: 14px 16px;
-}
-.review-list p {
-	margin: 8px 0;
-}
-.review-head {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	justify-content: space-between;
-	gap: 8px;
-}
-.review-head small,
-.review-list small {
-	color: #9a948c;
-	font-size: 13px;
-}
 .armory-link {
 	color: #e3c08f;
 	font-size: 13px;
@@ -2990,8 +2744,7 @@ body[data-page='/armeria'] main h3 {
 	color: #9a948c;
 }
 @media (max-width: 900px) {
-	.armory-summary,
-	.review-layout {
+	.armory-summary {
 		grid-template-columns: minmax(0, 1fr);
 	}
 }
@@ -3014,8 +2767,6 @@ body[data-page='/armeria'] main h3 {
 		width: 48px;
 		height: 48px;
 	}
-	.gear-grid,
-	.bis-grid,
 	.armory-facts {
 		grid-template-columns: minmax(0, 1fr);
 	}
@@ -3030,7 +2781,6 @@ body[data-page='/armeria'] main h3 {
 	}
 }
 /* The site-wide header rule must not style card headers inside the armory. */
-.bis-slot > header,
 .guide-provider > header {
 	padding: 0;
 	border-bottom: 0;
@@ -3040,9 +2790,6 @@ body[data-page='/armeria'] main h3 {
 .guide-provider > header {
 	padding: 14px 16px;
 	border-bottom: 1px solid #a68a5b38;
-}
-.bis-grid {
-	align-items: start;
 }
 .armory-tabs button {
 	width: auto;
@@ -3385,73 +3132,6 @@ body[data-page='/perfil'] .hub-body h3 {
 	display: grid;
 	gap: 12px;
 }
-.hub-card {
-	display: grid;
-	gap: 4px;
-	padding: 18px 20px;
-	border: 1px solid #a68a5b45;
-	border-radius: 4px;
-	background: linear-gradient(145deg, #1d1719, #111113);
-	color: #ddd6cb;
-	text-decoration: none;
-	transition:
-		transform 0.2s ease,
-		border-color 0.2s ease,
-		box-shadow 0.2s ease;
-}
-.hub-card:hover {
-	transform: translateY(-3px);
-	border-color: #d5b483;
-	box-shadow: 0 10px 28px #0006;
-}
-.hub-card.is-pending {
-	border-left: 3px solid #c25a60;
-}
-.hub-card-label {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	font-size: 12px;
-	letter-spacing: 0.08em;
-	text-transform: uppercase;
-	color: #cdb48c;
-}
-.hub-card strong {
-	font:
-		400 26px/1.2 Georgia,
-		serif;
-	color: #fff1d7;
-}
-.hub-card > span:not(.hub-card-label):not(.hub-progress) {
-	font-size: 14px;
-	color: #b8b2ad;
-}
-.hub-card em {
-	margin-top: 6px;
-	font-size: 14px;
-	font-style: normal;
-	font-weight: 600;
-	color: #e3c08f;
-}
-.hub-progress {
-	display: block;
-	height: 6px;
-	margin-top: 6px;
-	border-radius: 999px;
-	background: #2a2427;
-	overflow: hidden;
-}
-.hub-progress i {
-	display: block;
-	height: 100%;
-	background: linear-gradient(90deg, #8f1f2d, #e1bf8a);
-	transition: width 0.6s ease;
-}
-.hub-hint {
-	margin: 12px 0 0;
-	font-size: 14px;
-	color: #9a948c;
-}
 .hub-empty {
 	padding: 36px;
 	border: 1px dashed #a68a5b60;
@@ -3602,13 +3282,10 @@ body[data-page='/perfil'] .hub-body h3 {
 		animation: none;
 	}
 	.hub-body,
-	.hub-card,
 	.hub-char-card,
-	.hub-nav a::after,
-	.hub-progress i {
+	.hub-nav a::after {
 		transition: none;
 	}
-	.hub-card:hover,
 	.hub-char-card:hover {
 		transform: none;
 	}
@@ -4597,52 +4274,6 @@ a.doll-slot:hover .doll-icon {
 	min-width: 130px;
 }
 /* Profile: the player's call-ups. */
-.hub-callups {
-	margin-bottom: 28px;
-}
-.hub-callups ul {
-	display: grid;
-	gap: 8px;
-	margin: 0;
-	padding: 0;
-	list-style: none;
-}
-.hub-callup {
-	display: grid;
-	grid-template-columns: 120px minmax(0, 1fr) auto;
-	align-items: center;
-	gap: 14px;
-	padding: 12px 16px;
-	border: 1px solid #a68a5b38;
-	border-radius: 4px;
-	background: #121013;
-}
-.hub-callup.is-upcoming {
-	border-color: #a68a5b80;
-	background: linear-gradient(110deg, #2a1418, #121013 70%);
-	box-shadow: inset 3px 0 #c99a62;
-}
-.hub-callup.is-removed {
-	opacity: 0.7;
-}
-.hub-callup-slot {
-	font:
-		400 19px Georgia,
-		serif;
-	color: #f0d7ae;
-}
-.hub-callup-main {
-	display: grid;
-	min-width: 0;
-}
-.hub-callup-main strong {
-	color: #f3e6cf;
-}
-.hub-callup-main small,
-.hub-callup-state {
-	font-size: 13px;
-	color: #b8b2ad;
-}
 @media (max-width: 1100px) {
 	.lineup-board {
 		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -4661,10 +4292,6 @@ a.doll-slot:hover .doll-icon {
 	}
 	.lineup-groups {
 		grid-row: auto;
-	}
-	.hub-callup {
-		grid-template-columns: minmax(0, 1fr);
-		gap: 4px;
 	}
 }
 @media (prefers-reduced-motion: reduce) {
@@ -5165,9 +4792,6 @@ button.doll-slot:focus-visible {
 	gap: 8px;
 	margin-top: 0;
 }
-.hub-guides .guide-grid {
-	grid-template-columns: 1fr;
-}
 .hub-chars {
 	align-items: center;
 }
@@ -5335,90 +4959,6 @@ button.doll-slot:focus-visible {
 	background: #2a2116;
 	color: #fff1d7;
 }
-.boss-grid {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr));
-	gap: 14px;
-}
-.boss-card {
-	padding: 14px;
-	border: 1px solid #a68a5b40;
-	border-radius: 8px;
-	background: linear-gradient(180deg, #17151a, #111013);
-}
-.boss-card > header {
-	display: flex;
-	align-items: center;
-	gap: 12px;
-	margin: 0 0 10px;
-	padding: 0;
-	border: 0;
-	background: none;
-}
-.boss-card > header img,
-.boss-sigil {
-	flex: 0 0 48px;
-	width: 48px;
-	height: 48px;
-	border: 1px solid #a68a5b70;
-	border-radius: 50%;
-	object-fit: cover;
-}
-.boss-sigil {
-	display: grid;
-	place-items: center;
-	color: var(--gold);
-	font-size: 22px;
-	background: #0b0b0d;
-}
-.boss-card h3 {
-	margin: 0;
-}
-.boss-card header small {
-	color: var(--muted);
-}
-.boss-empty {
-	margin: 4px 0 10px;
-	font-size: 14px;
-}
-.wish-rows {
-	display: grid;
-	gap: 8px;
-	margin: 0 0 10px;
-	padding: 0;
-	list-style: none;
-}
-.wish-row {
-	display: grid;
-	grid-template-columns: minmax(0, 1fr) auto auto;
-	align-items: center;
-	gap: 8px;
-	padding: 8px 10px;
-	border: 1px solid #2c272c;
-	border-left: 3px solid #4a4248;
-	border-radius: 6px;
-	background: #0f0e11;
-}
-.wish-row.is-bis {
-	border-left-color: var(--gold);
-}
-.wish-row.is-me-interesa {
-	border-left-color: var(--blue);
-}
-.wish-row.is-pasar {
-	opacity: 0.72;
-}
-.wish-row.is-obtained .wish-row-main strong {
-	text-decoration: line-through;
-	text-decoration-color: #a68a5b;
-}
-.wish-row-main {
-	display: grid;
-	min-width: 0;
-}
-.wish-row-main strong {
-	overflow-wrap: anywhere;
-}
 /* Item names with a Wowhead tooltip (wowhead.js): the site's colour, a dotted hint. */
 .wowhead-link {
 	color: inherit;
@@ -5427,12 +4967,6 @@ button.doll-slot:focus-visible {
 .wowhead-link:hover,
 .wowhead-link:focus-visible {
 	color: var(--gold);
-}
-.wish-row-main small,
-.wish-row-main p {
-	margin: 0;
-	color: var(--muted);
-	font-size: 13px;
 }
 .wish-states {
 	display: inline-flex;
@@ -5467,41 +5001,7 @@ button.doll-slot:focus-visible {
 .wish-state[aria-pressed='true'][data-state='BiS'] {
 	background: linear-gradient(135deg, #7a5a22, #3d2c12);
 }
-.wish-more {
-	position: relative;
-}
-.wish-more > summary {
-	display: grid;
-	place-items: center;
-	width: 34px;
-	height: 34px;
-	border-radius: 50%;
-	cursor: pointer;
-	list-style: none;
-}
-.wish-more > summary::-webkit-details-marker {
-	display: none;
-}
-.wish-more .hub-menu {
-	right: 0;
-	min-width: 210px;
-}
-.wish-add > summary,
-.wish-new-raid > summary {
-	cursor: pointer;
-	color: var(--gold);
-	font-weight: 600;
-}
-.wish-add form {
-	margin-top: 10px;
-}
-.wish-new-raid {
-	margin-top: 16px;
-}
 @media (max-width: 640px) {
-	.wish-row {
-		grid-template-columns: minmax(0, 1fr) auto;
-	}
 	.wish-states {
 		grid-column: 1 / -1;
 		grid-row: 2;
@@ -5533,24 +5033,10 @@ button.doll-slot:focus-visible {
 }
 
 /* Player call-ups */
-.callup-sync {
-	margin: 0 0 10px;
-	color: var(--muted);
-	font-size: 14px;
-}
-.callup-sync.is-stale {
-	padding: 8px 12px;
-	border: 1px solid #d9a05b80;
-	border-radius: 6px;
-	background: #2a1f12;
-	color: #f2d3a6;
-}
 .callup-help {
 	margin-bottom: 16px;
 }
-.callup-help > summary,
-.callup-comp > summary,
-.callup-past > summary {
+.callup-help > summary {
 	cursor: pointer;
 	color: var(--gold);
 	font-weight: 600;
@@ -5566,10 +5052,6 @@ button.doll-slot:focus-visible {
 .callup-help dd {
 	margin: 0 0 6px;
 	color: var(--muted);
-}
-.callup-list {
-	display: grid;
-	gap: 14px;
 }
 .callup-card {
 	padding: 16px;
@@ -5601,14 +5083,6 @@ button.doll-slot:focus-visible {
 .callup-card h3 {
 	margin: 2px 0;
 }
-.callup-when {
-	margin: 0;
-	color: var(--muted);
-}
-.callup-summary {
-	margin: 12px 0 10px;
-	font-size: 17px;
-}
 .callup-facts {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
@@ -5628,118 +5102,6 @@ button.doll-slot:focus-visible {
 .callup-facts dd {
 	margin: 2px 0 0;
 	font-weight: 700;
-}
-.callup-bosses h4,
-.callup-group h4 {
-	margin: 0 0 6px;
-}
-.callup-bosses small {
-	color: var(--muted);
-	font-weight: 400;
-}
-.callup-bosses ul {
-	display: grid;
-	gap: 4px;
-	margin: 0 0 12px;
-	padding: 0;
-	list-style: none;
-}
-.callup-bosses li {
-	display: grid;
-	grid-template-columns: 26px minmax(0, 1fr) auto;
-	align-items: center;
-	gap: 8px;
-	padding: 6px 10px;
-	border-radius: 6px;
-	background: #0f0e11;
-}
-.boss-state {
-	display: grid;
-	place-items: center;
-	width: 24px;
-	height: 24px;
-	border-radius: 50%;
-	background: #2a262c;
-	font-weight: 700;
-}
-.callup-bosses .is-in .boss-state {
-	background: #1f3a2c;
-	color: var(--green);
-}
-.callup-bosses .is-bench .boss-state {
-	background: #3a2f1c;
-	color: var(--gold);
-}
-.callup-groups {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr));
-	gap: 10px;
-	margin-top: 10px;
-}
-.callup-group {
-	padding: 10px;
-	border: 1px solid #2c272c;
-	border-radius: 6px;
-	background: #0f0e11;
-}
-.callup-group.has-self {
-	border-color: var(--gold);
-}
-.callup-group.is-bench {
-	border-style: dashed;
-}
-.callup-group ul {
-	display: grid;
-	gap: 4px;
-	margin: 0;
-	padding: 0;
-	list-style: none;
-}
-.callup-player {
-	display: grid;
-	grid-template-columns: 22px minmax(0, 1fr) auto;
-	align-items: center;
-	gap: 6px;
-	padding: 3px 6px;
-	border-left: 3px solid var(--class-color, #5d5560);
-	border-radius: 4px;
-	font-size: 14px;
-}
-.callup-player img {
-	width: 20px;
-	height: 20px;
-}
-.callup-player span {
-	overflow: hidden;
-	color: var(--class-color, inherit);
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-.callup-player small {
-	grid-column: 2 / -1;
-	color: var(--muted);
-	font-size: 11px;
-}
-.callup-player.is-self {
-	background: #2a2116;
-	outline: 1px solid var(--gold);
-}
-.self-tag {
-	padding: 1px 6px;
-	border-radius: 999px;
-	background: var(--gold);
-	color: #1b1408;
-	font-size: 11px;
-}
-.callup-source {
-	margin: 8px 0 0;
-	font-size: 13px;
-}
-.callup-past {
-	margin-top: 16px;
-}
-.callup-past .callup-list {
-	margin-top: 10px;
 }
 
 /* Boss planner (organisers) */
@@ -5856,37 +5218,13 @@ button.doll-slot:focus-visible {
 	align-content: start;
 	align-items: start;
 }
-.boss-grid {
-	grid-template-columns: 1fr;
-}
-.wish-row {
-	grid-template-columns: minmax(180px, 1fr) auto auto;
-}
-@media (max-width: 640px) {
-	.wish-row {
-		grid-template-columns: minmax(0, 1fr) auto;
-	}
-}
 .hub-armory-side {
 	grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
-}
-.hub-guides .guide-grid {
-	grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
 }
 @media (max-width: 900px) {
 	.hub-armory-side {
 		grid-template-columns: minmax(0, 1fr);
 	}
-}
-.callup-noicon {
-	display: grid;
-	place-items: center;
-	width: 20px;
-	height: 20px;
-	border: 1px solid #5d5560;
-	border-radius: 4px;
-	color: var(--muted);
-	font-size: 11px;
 }
 
 /* ===== Guided tour of Mi perfil ===== */
