@@ -583,6 +583,8 @@ export async function syncBattlenet(db, env, fetcher = fetch) {
 				continue;
 			}
 			const level = found.body.level;
+			// Which guild Blizzard says the character is in now, to spot who has left it.
+			(result.guilds ||= []).push([c.id, c.name, String(found.body.guild?.name || '')]);
 			const p = await get(`${found.path}/professions`, token);
 			const professions = p.ok ? readProfessions(await p.json().catch(() => null)) : '';
 			const [g, m, st] = await Promise.all([

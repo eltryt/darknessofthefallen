@@ -322,7 +322,11 @@ test('every hour the web refreshes level and professions with its own token', as
 	db.prepare(
 		"INSERT INTO character_equipment(id,character_id,slot,item_name,origin,updated_at) VALUES('hand-ring',?,'finger1','Anillo de la abuela','manual','2026-11-01')",
 	).run(trytId);
-	const result = await syncBattlenet(db, ENV, fetcher);
+	const { guilds, ...result } = await syncBattlenet(db, ENV, fetcher);
+	assert.deepEqual(
+		guilds.map(([, name, guild]) => [name, guild]),
+		[['Tryt', '']],
+	);
 	assert.deepEqual(result, {
 		checked: 3,
 		updated: 1,
