@@ -230,6 +230,21 @@ export async function operationTab(tab, el, ctx) {
 				recibir botín en las raids de 20 y 40 hace falta un 75 % de asistencia al mes; una ausencia
 				justificada (vacaciones, trabajo, avisada con antelación) no cuenta.
 			</p>
+			<section class="section att-pick">
+				<h3>Pasar lista</h3>
+				${
+					raids.length
+						? /* HTML */ `<label
+									>Raid<select id="attendance-raid">
+										<option value="">Elige una raid…</option>
+										${raids.map((r) => option(r.id, r.title + ' · ' + dateLabel(r.starts_at))).join('')}
+									</select></label
+								>
+								<div id="attendance-sheet"></div>`
+						: empty('Todavía no hay raids', 'Crea la convocatoria y aparecerá aquí.')
+				}
+			</section>
+			<h3 class="att-history-title">Historial de asistencia</h3>
 			<form id="attendance-filter" class="filters">
 				<label
 					>Raid<select name="raidId">
@@ -257,20 +272,7 @@ export async function operationTab(tab, el, ctx) {
 			</form>
 			<div id="attendance-summary"></div>
 			<div id="attendance-list"></div>
-			<section class="section att-pick">
-				<h3>Pasar lista</h3>
-				${
-					raids.length
-						? /* HTML */ `<label
-									>Raid<select id="attendance-raid">
-										<option value="">Elige una raid…</option>
-										${raids.map((r) => option(r.id, r.title + ' · ' + dateLabel(r.starts_at))).join('')}
-									</select></label
-								>
-								<div id="attendance-sheet"></div>`
-						: empty('Todavía no hay raids', 'Crea la convocatoria y aparecerá aquí.')
-				}
-			</section>
+
 			<details class="section">
 				<summary>Añadir o corregir a una persona concreta</summary>
 				${
@@ -431,6 +433,28 @@ export async function operationTab(tab, el, ctx) {
 				toast(error.message);
 			}
 		});
+		// Open the raid to take: the one in the link (?raid=, from the panel home), else the
+		// latest of the last two weeks with nothing recorded yet.
+		const raidSelect = el.querySelector('#attendance-raid');
+		if (raidSelect) {
+			const asked = new URLSearchParams(location.search).get('raid');
+			const recorded = new Set(
+				(await api('/api/attendance').catch(() => ({ rows: [] }))).rows.map((r) => r.raid_id),
+			);
+			const due = raids
+				.filter(
+					(r) =>
+						Date.parse(r.starts_at) < Date.now() &&
+						Date.parse(r.starts_at) > Date.now() - 14 * 86400000 &&
+						!recorded.has(r.id),
+				)
+				.sort((a, b) => Date.parse(b.starts_at) - Date.parse(a.starts_at))[0];
+			const pick = raids.find((r) => r.id === asked) || due;
+			if (pick) {
+				raidSelect.value = pick.id;
+				raidSelect.dispatchEvent(new Event('change'));
+			}
+		}
 		handlers.attendance = (v) =>
 			api('/api/raids/' + v.raidId + '/attendance', 'PUT', {
 				entries: [{ characterId: v.characterId, status: v.status }],

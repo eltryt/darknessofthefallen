@@ -37,9 +37,21 @@ export async function mountAttendanceSheet(target, raidId, { api, esc, toast }, 
 		if (status === r.status) draft.delete(r.userId);
 		else draft.set(r.userId, status);
 	};
+	// A raid with nothing saved, listed from its lineup or sign-ups, starts as a draft with
+	// everyone present (the bench as Reserva): only the exceptions need a tap. Nothing is
+	// stored until «Guardar lista».
+	let prefilled = false;
+	const prefill = () => {
+		prefilled = false;
+		if (sheet.source === 'roster' || sheet.rows.some((r) => r.status)) return;
+		for (const r of sheet.rows) mark(r, r.slot === 'bench' ? 'Reserva' : 'Asistió');
+		prefilled = draft.size > 0;
+	};
+	prefill();
 	const reload = async () => {
 		sheet = await api(`${url}/attendance-sheet`);
 		draft.clear();
+		prefilled = false;
 		render();
 		onSaved?.();
 	};
@@ -109,7 +121,7 @@ export async function mountAttendanceSheet(target, raidId, { api, esc, toast }, 
 			${
 				rows.length
 					? `<div class="att-save ${draft.size ? 'is-dirty' : ''}" role="status">
-						<span>${draft.size ? `<strong>${draft.size} ${draft.size === 1 ? 'cambio sin guardar' : 'cambios sin guardar'}</strong>` : saved ? 'Lista guardada.' : 'Marca a cada jugador y guarda la lista.'}</span>
+						<span>${prefilled ? '<strong>Todos marcados como presentes</strong> (el banquillo, como reserva). Toca solo a quien faltó o llegó tarde y guarda.' : draft.size ? `<strong>${draft.size} ${draft.size === 1 ? 'cambio sin guardar' : 'cambios sin guardar'}</strong>` : saved ? 'Lista guardada.' : 'Marca a cada jugador y guarda la lista.'}</span>
 						<button type="button" data-save ${draft.size ? '' : 'disabled'}>Guardar lista</button>
 						<button type="button" class="secondary" data-undo ${draft.size ? '' : 'hidden'}>Deshacer cambios</button>
 						<button type="button" class="secondary danger" data-reset ${saved ? '' : 'hidden'}>Vaciar la lista</button>
@@ -134,6 +146,7 @@ export async function mountAttendanceSheet(target, raidId, { api, esc, toast }, 
 		if (b.dataset.status) {
 			const r = sheet.rows.find((x) => x.userId === b.dataset.user);
 			if (r) mark(r, b.dataset.status);
+			prefilled = false;
 			render();
 		} else if ('all' in b.dataset) {
 			for (const r of sheet.rows) mark(r, 'Asistió');
@@ -141,6 +154,7 @@ export async function mountAttendanceSheet(target, raidId, { api, esc, toast }, 
 			toast('Todos marcados como asistencia. Pulsa «Guardar lista» para guardarlo.');
 		} else if ('undo' in b.dataset) {
 			draft.clear();
+			prefilled = false;
 			render();
 		} else if ('save' in b.dataset) {
 			b.disabled = true;
@@ -172,7 +186,7 @@ export async function mountAttendanceSheet(target, raidId, { api, esc, toast }, 
 	render();
 	return {
 		// Unsaved marks, so changing raid can ask first.
-		dirty: () => draft.size > 0,
+		dirty: () => draft.size > 0 && !prefilled,
 		reload,
 	};
 }

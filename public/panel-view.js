@@ -5,6 +5,7 @@ import { applicationInbox } from './recruitment-ui.js';
 import { guideAdmin } from './armory-admin-ui.js';
 import { recruitmentSpecs } from './guild-showcase.js';
 import { auditTab } from './audit-view.js';
+import { panelAreas, mountPanelHome } from './panel-home.js';
 export function createPanelView(context) {
 	const {
 		$,
@@ -25,52 +26,61 @@ export function createPanelView(context) {
 	} = context;
 	const operationsContext = () => context;
 	async function panel() {
-		const tabs = [
-			['roster.read', 'roster', 'Gestión del roster'],
-			['applications.manage', 'applications', 'Candidaturas'],
-			['recruitment.manage', 'messages', 'Mensajes y avisos'],
-			['attendance.manage', 'raids', 'Convocatorias'],
-			['attendance.manage', 'attendance', 'Asistencia'],
-			['loot.manage', 'loot', 'Registrar botín'],
-			['loot.manage', 'wishlists', 'Wishlists de la hermandad'],
-			['settings.manage', 'council', 'Consejo de botín'],
-			['progress.manage', 'progress', 'Registrar progreso'],
-			['settings.manage', 'settings', 'Configuración'],
-			['armory.configure', 'guides', 'Guías externas'],
-			['audit.read', 'audit', 'Auditoría'],
-			['backup.export', 'export', 'Exportación'],
-		].filter((t) => me.permissions.includes(t[0]));
+		// Sections grouped by area (panel-home.js), with a home of pending work first. The
+		// open section is kept in ?tab= so it can be linked and survives a reload.
+		// «Miembros» appears only in builds that include its section (membersTab below).
+		const hasSection = (id) => id !== 'members' || typeof membersTab === 'function';
+		const areas = panelAreas
+			.map((a) => ({
+				...a,
+				tabs: a.tabs.filter((t) => me.permissions.includes(t[0]) && hasSection(t[1])),
+			}))
+			.filter((a) => a.tabs.length);
+		const tabs = areas.flatMap((a) => a.tabs);
+		if (tabs.length) tabs.unshift(['', 'home', 'Inicio']);
 		$('#content').innerHTML =
 			title(
 				'Centro de mando',
 				'Panel de la hermandad',
 				'Organización, datos y seguimiento. Cada herramienta respeta los permisos de tu rango.',
 			) +
-			/* HTML */ `<div class="panel-tabs" aria-label="Secciones del panel">
-					${tabs.map((t, i) => /* HTML */ `<button data-tab="${t[1]}" aria-pressed="${i === 0}" class="${i === 0 ? 'active' : ''}">${t[2]}</button>`).join('')}
-				</div>
-				<section id="panel-body"></section>`;
-		document.querySelectorAll('[data-tab]').forEach(
-			(b) =>
-				(b.onclick = () => {
-					document.querySelectorAll('[data-tab]').forEach((x) => {
-						x.classList.toggle('active', x === b);
-						x.setAttribute('aria-pressed', String(x === b));
-					});
-					void panelTab(b.dataset.tab);
-				}),
-		);
+			/* HTML */ `<div class="panel-shell">
+				<nav class="panel-nav" aria-label="Secciones del panel">
+					${
+						tabs.length
+							? `<button type="button" data-tab="home" class="panel-home-link"><span aria-hidden="true">⌂</span>Inicio</button>`
+							: ''
+					}
+					${areas
+						.map(
+							(a) =>
+								`<div class="panel-area"><h2><span aria-hidden="true">${a.icon}</span>${esc(a.label)}</h2>${a.tabs
+									.map((t) => `<button type="button" data-tab="${t[1]}">${esc(t[2])}</button>`)
+									.join('')}</div>`,
+						)
+						.join('')}
+				</nav>
+				<section id="panel-body"></section>
+			</div>`;
+		const show = (id, push = true) => {
+			document.querySelectorAll('[data-tab]').forEach((b) => {
+				b.classList.toggle('active', b.dataset.tab === id);
+				b.setAttribute('aria-current', b.dataset.tab === id ? 'page' : 'false');
+			});
+			if (push) {
+				const url = new URL(location.href);
+				url.searchParams.set('tab', id);
+				history.replaceState(history.state, '', url);
+			}
+			void panelTab(id);
+		};
+		document.querySelectorAll('[data-tab]').forEach((b) => (b.onclick = () => show(b.dataset.tab)));
 		const selected = new URLSearchParams(location.search).get('tab');
 		const active = tabs.find((t) => t[1] === selected) || tabs[0];
-		if (active) {
-			document.querySelectorAll('[data-tab]').forEach((b) => {
-				b.classList.toggle('active', b.dataset.tab === active[1]);
-				b.setAttribute('aria-pressed', String(b.dataset.tab === active[1]));
-			});
-			await panelTab(active[1]);
-		}
+		if (active) show(active[1], false);
+		panelOpen = show;
 	}
-
+	let panelOpen = () => {};
 	async function panelTab(tab) {
 		// A new host disconnects the previous tab's polling and isolates late responses.
 		const el = document.createElement('section');
@@ -87,6 +97,10 @@ export function createPanelView(context) {
 		}
 	}
 	async function renderPanelTab(tab, el) {
+		if (tab === 'home') {
+			await mountPanelHome(el, context, (id) => panelOpen(id));
+			return;
+		}
 		if (tab === 'messages') {
 			await gmInbox(el, context);
 			return;

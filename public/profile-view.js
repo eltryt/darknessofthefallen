@@ -3,6 +3,7 @@ import { tutorialButton } from './tutorials.js';
 import { operationTab } from './operations-ui.js';
 import { mountWishlist } from './wishlist-ui.js';
 import { mountMyCallups } from './my-callups.js';
+import { mountProfileHome } from './profile-home.js';
 import { mountJourney } from './journey-board.js';
 import { mountPvp } from './pvp-board.js';
 import { mountRoulette } from './roulette.js';
@@ -25,6 +26,7 @@ import {
 } from './sheet-parts.js';
 
 const icons = {
+	inicio: '<path d="M3 11 12 4l9 7"/><path d="M5 10v10h5v-6h4v6h5V10"/>',
 	armeria: '<path d="M12 3 4 6v6c0 4.5 3.4 8.2 8 9 4.6-.8 8-4.5 8-9V6Z"/><path d="M9 12l2 2 4-4"/>',
 	personajes:
 		'<circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M16 5a3 3 0 0 1 0 6m1 3a5 5 0 0 1 4 5v1"/>',
@@ -40,7 +42,9 @@ const icons = {
 	logros:
 		'<circle cx="12" cy="14" r="6"/><path d="m8 3 4 5 4-5M12 11.5l1 2 2.2.3-1.6 1.5.4 2.2-2-1-2 1 .4-2.2-1.6-1.5 2.2-.3Z"/>',
 };
+// Sections in three groups after «Inicio»: your character, the raid, the community.
 const sections = [
+	['inicio', 'Inicio'],
 	['armeria', 'Armería'],
 	['personajes', 'Personajes'],
 	['wishlist', 'Wishlist / BiS'],
@@ -51,6 +55,9 @@ const sections = [
 	['pvp', 'Senda del honor'],
 	['ruleta', 'Ruleta'],
 ];
+const groupStarts = new Set(['armeria', 'wishlist', 'logros']);
+// The phone dock: four sections at hand and «Más» for the rest.
+const dockSections = ['inicio', 'armeria', 'wishlist', 'convocatorias'];
 const categoryNames = {
 	asistencia: 'Asistencia',
 	progreso: 'Progreso',
@@ -151,7 +158,7 @@ export function createProfileView(context) {
 		renderToken = 0,
 		bnetNotice = battlenetOutcome();
 
-	const current = () => location.hash.slice(1) || 'armeria';
+	const current = () => location.hash.slice(1) || 'inicio';
 	const selectedCharacter = () => rows.find((c) => c.id === selected) || null;
 
 	async function profile() {
@@ -288,9 +295,35 @@ export function createProfileView(context) {
 				${sections
 					.map(
 						([id, label]) =>
-							`<a href="#${id}" data-hub-section="${id}" ${id === current() ? 'aria-current="page"' : ''}>${svg(id)}<span>${label}</span>${id === 'personajes' ? `<b>${rows.length}</b>` : ''}</a>`,
+							`<a href="#${id}" data-hub-section="${id}" class="${groupStarts.has(id) ? 'is-group-start' : ''}" ${id === current() ? 'aria-current="page"' : ''}>${svg(id)}<span>${label}</span>${id === 'personajes' ? `<b>${rows.length}</b>` : ''}</a>`,
 					)
 					.join('')}
+			</nav>
+			<nav class="hub-dock" aria-label="Secciones (móvil)">
+				${dockSections
+					.map((id) => {
+						const label = sections.find(([s]) => s === id)[1];
+						return `<a href="#${id}" data-hub-section="${id}">${svg(id)}<span>${label}</span></a>`;
+					})
+					.join('')}
+				<details class="hub-dock-more">
+					<summary>
+						<svg class="hub-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+							<circle cx="5" cy="12" r="1.6" />
+							<circle cx="12" cy="12" r="1.6" />
+							<circle cx="19" cy="12" r="1.6" /></svg
+						><span>Más</span>
+					</summary>
+					<div class="hub-dock-sheet">
+						${sections
+							.filter(([id]) => !dockSections.includes(id))
+							.map(
+								([id, label]) =>
+									`<a href="#${id}" data-hub-section="${id}">${svg(id)}<span>${label}</span></a>`,
+							)
+							.join('')}
+					</div>
+				</details>
 			</nav>
 			<section id="hub-body" class="hub-body" aria-live="polite"></section>`;
 		// The CSP forbids style attributes; the ring value is set through the DOM.
@@ -312,7 +345,14 @@ export function createProfileView(context) {
 
 	// Each section mounts into a fresh host, so late responses from a previous one are dropped.
 	async function show(id) {
-		if (!sections.some(([s]) => s === id)) id = 'armeria';
+		if (!sections.some(([s]) => s === id)) id = 'inicio';
+		// Outside «Inicio» the header shrinks so the section starts higher.
+		$('.hub-hero')?.classList.toggle('is-compact', id !== 'inicio');
+		const more = $('.hub-dock-more');
+		if (more) {
+			more.open = false;
+			more.classList.toggle('is-current', !dockSections.includes(id));
+		}
 		document
 			.querySelectorAll('[data-hub-section]')
 			.forEach((a) =>
@@ -332,6 +372,15 @@ export function createProfileView(context) {
 			'<div class="hub-skeleton" role="status"><span></span><span></span><span></span><span class="visually-hidden">Cargando…</span></div>';
 		$('#hub-body').replaceWith(host);
 		try {
+			if (id === 'inicio')
+				await mountProfileHome(host, context, {
+					character: selectedCharacter(),
+					rows,
+					attendance,
+					achievements,
+					sections,
+					svg,
+				});
 			if (id === 'armeria') await armory(host);
 			if (id === 'personajes') characters(host);
 			if (id === 'wishlist') {
