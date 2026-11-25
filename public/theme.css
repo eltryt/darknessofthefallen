@@ -10755,3 +10755,213 @@ button.gm-note-x:hover {
 		transition: none;
 	}
 }
+
+/* ===== Quick loot distribution (panel → Botín) ===== */
+.ld {
+	display: grid;
+	gap: 8px;
+	margin-bottom: 18px;
+}
+.ld-top {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: end;
+	justify-content: space-between;
+	gap: 12px 20px;
+}
+.ld-top h3 {
+	margin: 0;
+	font:
+		400 26px Georgia,
+		serif;
+}
+.ld-top p {
+	margin: 4px 0 0;
+	color: var(--muted);
+}
+.ld-top label {
+	display: grid;
+	gap: 4px;
+	min-width: min(100%, 320px);
+	color: var(--muted);
+	font-size: 12px;
+	font-weight: 700;
+}
+.loot-mark.ld-wanted {
+	background: #d6a85a;
+	color: #1d1205;
+}
+.ld-head {
+	display: flex;
+	gap: 12px;
+	align-items: center;
+	margin-bottom: 12px;
+}
+.ld-head strong {
+	display: block;
+	font-size: 15px;
+}
+.ld-head small {
+	color: var(--muted);
+	font-size: 12px;
+}
+.ld-title {
+	margin: 0 0 8px;
+	color: var(--muted);
+	font-size: 12px;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+.ld-cands {
+	display: grid;
+	gap: 6px;
+	margin: 0 0 12px;
+	padding: 0;
+	list-style: none;
+}
+.ld-cand {
+	display: grid;
+	grid-template-columns: 24px minmax(0, 1fr) auto;
+	align-items: center;
+	gap: 4px 10px;
+	width: 100%;
+	min-height: 0;
+	padding: 8px 10px;
+	border: 1px solid #ffffff1a;
+	border-left: 3px solid var(--class-color, #888);
+	border-radius: 10px;
+	background: color-mix(in srgb, var(--class-color, #888) 7%, #151316);
+	box-shadow: none;
+	color: #e9e1d4;
+	font-size: 13px;
+	font-weight: 500;
+	text-align: left;
+}
+.ld-cand::before {
+	display: none;
+}
+.ld-cand:not(:disabled):hover {
+	border-color: #d6a85a88;
+	background: color-mix(in srgb, var(--class-color, #888) 12%, #1a1719);
+	box-shadow: none;
+	transform: none;
+}
+.ld-cand.is-chosen {
+	border-color: var(--gold);
+	box-shadow:
+		0 0 0 1px var(--gold) inset,
+		0 0 14px #d6a85a40;
+}
+.ld-rank {
+	display: grid;
+	place-items: center;
+	width: 24px;
+	height: 24px;
+	border-radius: 50%;
+	background: #ffffff14;
+	font-weight: 800;
+}
+.ld-cand.is-chosen .ld-rank {
+	background: var(--gold);
+	color: #1d1205;
+}
+.ld-who {
+	display: grid;
+	min-width: 0;
+}
+.ld-who strong {
+	overflow: hidden;
+	color: var(--class-color, #eee);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.ld-who small,
+.ld-meta {
+	color: var(--muted);
+	font-size: 11px;
+}
+.ld-meta {
+	grid-column: 2 / -1;
+	line-height: 1.3;
+}
+.ld-meta br {
+	display: none;
+}
+.ld-note {
+	grid-column: 2 / -1;
+	color: #d8cfc1;
+	font-size: 12px;
+	font-style: italic;
+}
+.ld-other {
+	margin-bottom: 12px;
+	font-size: 13px;
+}
+.ld-other select {
+	width: 100%;
+	margin-top: 6px;
+}
+.ld-confirm {
+	display: grid;
+	gap: 10px;
+	padding-top: 12px;
+	border-top: 1px solid #ffffff1a;
+	animation: loot-open 160ms ease-out;
+}
+.ld-confirm label {
+	display: grid;
+	gap: 4px;
+	color: var(--muted);
+	font-size: 12px;
+	font-weight: 700;
+}
+.ld-confirm textarea {
+	resize: vertical;
+}
+.ld-fields {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 8px;
+}
+.ld-fields label:last-child {
+	grid-column: 1 / -1;
+}
+.ld-summary {
+	display: flex;
+	gap: 10px;
+	align-items: center;
+	margin: 0;
+	color: #e9e1d4;
+}
+.loot-icon.is-small {
+	width: 40px;
+	height: 40px;
+	flex: 0 0 auto;
+}
+.ld-council {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px 14px;
+	margin: 0;
+	padding: 8px 10px;
+	border: 1px solid #ffffff1a;
+	border-radius: 10px;
+}
+.ld-council legend {
+	padding: 0 4px;
+	color: var(--muted);
+	font-size: 12px;
+}
+.ld-confirm button[type='submit'] {
+	min-height: 44px;
+}
+.loot-classic > summary {
+	color: var(--gold);
+	cursor: pointer;
+}
+.loot-history-title {
+	margin: 24px 0 4px;
+	font:
+		400 22px Georgia,
+		serif;
+}

@@ -663,6 +663,7 @@ export function createProfileView(context) {
 		});
 		await operationTab('loot', host.querySelector('[data-loot-history]'), {
 			...context,
+			embedded: true,
 			me: {
 				...me,
 				permissions: me.permissions.filter(

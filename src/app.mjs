@@ -177,6 +177,8 @@ const files = {
 	'/roster-ui.js': ['roster-ui.js', 'text/javascript'],
 	'/wishlist-ui.js': ['wishlist-ui.js', 'text/javascript'],
 	'/wish-states.js': ['wish-states.js', 'text/javascript'],
+	'/raid-catalog.js': ['raid-catalog.js', 'text/javascript'],
+	'/loot-distribute.js': ['loot-distribute.js', 'text/javascript'],
 	'/catalog/raids.json': ['catalog/raids.json', 'application/json'],
 	// Boss portraits of the wishlist (scripts/build-raid-loot.mjs).
 	...Object.fromEntries(

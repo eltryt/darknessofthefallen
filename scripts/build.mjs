@@ -118,6 +118,8 @@ try {
 		'roster-ui.js',
 		'wishlist-ui.js',
 		'wish-states.js',
+		'raid-catalog.js',
+		'loot-distribute.js',
 		'boss-portraits.js',
 		'wishlist-rules-ui.js',
 		'sheet-parts.js',

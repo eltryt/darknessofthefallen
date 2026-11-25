@@ -5,6 +5,7 @@ import { tutorialButton } from './tutorials.js';
 import { rosterCards, characterLink } from './roster-ui.js';
 import { mountAttendanceSheet } from './attendance-sheet.js';
 import { mountWishlistAdmin } from './wishlist-rules-ui.js';
+import { mountLootDistribution } from './loot-distribute.js';
 const rankLabel = (rank) =>
 	({
 		visitor: 'Visitante',
@@ -440,14 +441,20 @@ export async function operationTab(tab, el, ctx) {
 	}
 	if (tab === 'loot') {
 		const [rows, itemIds] = await Promise.all([api('/api/loot'), loadItemNames()]);
-		el.innerHTML = /* HTML */ `<h2>Historial de loot</h2>
-			${tutorialButton('botin', 'Ver tutorial')}
-			<p>
+		// Officers first see the quick distribution; the history follows. Embedded in the
+		// member profile («Botín»), the section has its own heading.
+		el.innerHTML = /* HTML */ `${
+				ctx.embedded
+					? ''
+					: `<div class="section-head"><h2>Botín</h2>${tutorialButton('botin', 'Ver tutorial')}</div>`
+			}
+			<div id="loot-form"></div>
+			${ctx.embedded ? '' : '<h3 class="loot-history-title">Historial de botín</h3>'}
+			<p class="muted">
 				Ganadores, candidatos, método y motivo de cada decisión. Las anulaciones conservan su
 				trazabilidad.
 			</p>
-			<div id="loot-list"></div>
-			<div id="loot-form"></div>`;
+			<div id="loot-list"></div>`;
 		paginated(
 			el.querySelector('#loot-list'),
 			['Objeto / encuentro', 'Ganador', 'Decisión', 'Consejo', 'Estado'],
@@ -480,7 +487,7 @@ export async function operationTab(tab, el, ctx) {
 			ctx,
 			[
 				'Aún no hay botín asignado',
-				'Los responsables de loot registran cada asignación a mano. Aún no hay un catálogo verificado de objetos ni de bosses de WoW Forever, así que se escriben manualmente.',
+				'Cada reparto que registren los oficiales de botín aparecerá aquí, con su ganador, los candidatos y el motivo.',
 			],
 		);
 		loadTooltips();
@@ -528,38 +535,39 @@ export async function operationTab(tab, el, ctx) {
 			);
 			return true;
 		}
-		el.querySelector('#loot-form').innerHTML = /* HTML */ `<section class="section">
-			<h3>Registrar asignación</h3>
-			<form id="operation-form" class="card form">
-				<div class="form-grid">
-					${field('Objeto', 'item')}${namedSelect(
-						'Raid',
-						'raidId',
-						raids.map((r) => ({ id: r.id, label: r.title })),
-					)}${field('Boss', 'boss')}${namedSelect(
-						'Ganador',
-						'recipientCharacterId',
-						roster.map((c) => ({ id: c.id, label: c.name + ' · ' + c.display_name })),
-					)}${select('Método', 'method', lootMethods)}<label
-						>Tipo de petición<select name="requestType">
-							<option value="">Sin indicar</option>
-							${requestTypes.map((t) => option(t, t)).join('')}
-						</select></label
-					>${field('Fecha (hora local del dispositivo)', 'date', 'datetime-local', localDate())}${area('Motivo de asignación', 'reason')}${area('Observaciones internas', 'notes', false)}
-					<fieldset class="wide">
-						<legend>Otros candidatos (el ganador se incluye automáticamente)</legend>
-						<div class="check-grid">
-							${roster.map((c) => `<label><input type="checkbox" name="candidateIds" value="${esc(c.id)}">${esc(c.name)}</label>`).join('')}
-						</div>
-					</fieldset>
-					<fieldset class="wide" id="council-participants">
-						<legend>Consejo participante · obligatorio para Loot Council</legend>
-						${council.length ? council.map((c) => /* HTML */ `<label><input type="checkbox" name="councilIds" value="${esc(c.user_id)}" />${esc(c.display_name)}</label>`).join('') : '<p>El Líder debe configurar el consejo antes de registrar una decisión de Loot Council.</p>'}
-					</fieldset>
-				</div>
-				<button type="submit">Registrar reparto</button>
-			</form>
-		</section>`;
+		el.querySelector('#loot-form').innerHTML = /* HTML */ `<div id="loot-quick"></div>
+			<details class="section loot-classic">
+				<summary>Formulario completo · objetos fuera del catálogo o repartos a mano</summary>
+				<form id="operation-form" class="card form">
+					<div class="form-grid">
+						${field('Objeto', 'item')}${namedSelect(
+							'Raid',
+							'raidId',
+							raids.map((r) => ({ id: r.id, label: r.title })),
+						)}${field('Boss', 'boss')}${namedSelect(
+							'Ganador',
+							'recipientCharacterId',
+							roster.map((c) => ({ id: c.id, label: c.name + ' · ' + c.display_name })),
+						)}${select('Método', 'method', lootMethods)}<label
+							>Tipo de petición<select name="requestType">
+								<option value="">Sin indicar</option>
+								${requestTypes.map((t) => option(t, t)).join('')}
+							</select></label
+						>${field('Fecha (hora local del dispositivo)', 'date', 'datetime-local', localDate())}${area('Motivo de asignación', 'reason')}${area('Observaciones internas', 'notes', false)}
+						<fieldset class="wide">
+							<legend>Otros candidatos (el ganador se incluye automáticamente)</legend>
+							<div class="check-grid">
+								${roster.map((c) => `<label><input type="checkbox" name="candidateIds" value="${esc(c.id)}">${esc(c.name)}</label>`).join('')}
+							</div>
+						</fieldset>
+						<fieldset class="wide" id="council-participants">
+							<legend>Consejo participante · obligatorio para Loot Council</legend>
+							${council.length ? council.map((c) => /* HTML */ `<label><input type="checkbox" name="councilIds" value="${esc(c.user_id)}" />${esc(c.display_name)}</label>`).join('') : '<p>El Líder debe configurar el consejo antes de registrar una decisión de Loot Council.</p>'}
+						</fieldset>
+					</div>
+					<button type="submit">Registrar reparto</button>
+				</form>
+			</details>`;
 		const form = el.querySelector('#operation-form');
 		form.elements.method.value = data.settings.lootMethod;
 		const showCouncil = () => {
@@ -568,6 +576,16 @@ export async function operationTab(tab, el, ctx) {
 		};
 		form.elements.method.onchange = showCouncil;
 		showCouncil();
+		await mountLootDistribution(el.querySelector('#loot-quick'), ctx, {
+			raids,
+			roster,
+			council,
+			methods: lootMethods,
+			defaultMethod: data.settings.lootMethod,
+			onDone: refresh,
+		}).catch((error) => {
+			el.querySelector('#loot-quick').innerHTML = `<p class="notice">${esc(error.message)}</p>`;
+		});
 		handlers.loot = (v, f) => {
 			const fd = new FormData(f);
 			return api('/api/loot', 'POST', {
@@ -740,7 +758,7 @@ export async function operationTab(tab, el, ctx) {
 			ctx,
 			[
 				'Nadie ha añadido objetos todavía',
-				'Cada miembro prepara su wishlist desde su perfil. Aún no hay un catálogo verificado de objetos de WoW Forever, así que se escriben a mano.',
+				'Cada miembro prepara su wishlist desde su perfil, eligiendo el botín de cada jefe.',
 			],
 		);
 		return true;
@@ -884,34 +902,4 @@ export async function operationTab(tab, el, ctx) {
 		return true;
 	}
 	return false;
-}
-
-// Member loot history and current council, without management permissions.
-export async function mountMemberLoot(host, ctx) {
-	const { me, toast } = ctx;
-	host.innerHTML = `<div class="hub-segment" role="group" aria-label="Botín"><button type="button" data-member-tab="loot" aria-pressed="true">Historial de loot</button><button type="button" data-member-tab="council" aria-pressed="false">Consejo actual</button></div><div data-member-loot></div>`;
-	const target = host.querySelector('[data-member-loot]');
-	const memberCtx = {
-		...ctx,
-		me: {
-			...me,
-			permissions: me.permissions.filter(
-				(p) => !['loot.manage', 'loot.delete', 'settings.manage'].includes(p),
-			),
-		},
-	};
-	host.querySelectorAll('[data-member-tab]').forEach(
-		(b) =>
-			(b.onclick = async () => {
-				host
-					.querySelectorAll('[data-member-tab]')
-					.forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
-				try {
-					await operationTab(b.dataset.memberTab, target, memberCtx);
-				} catch (error) {
-					toast(error.message);
-				}
-			}),
-	);
-	await operationTab('loot', target, memberCtx);
 }

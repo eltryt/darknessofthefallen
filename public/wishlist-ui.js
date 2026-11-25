@@ -1,6 +1,11 @@
 import { loadItemNames, itemKey, itemLink, wowheadItemUrl, loadTooltips } from './wowhead.js';
 import { windowNotice, ownRequests } from './wishlist-rules-ui.js';
 import { wishMarks, wishLabel, isWanted, wishClass } from './wish-states.js';
+import {
+	loadRaidCatalog,
+	itemIconUrl as iconUrl,
+	bossPortrait as portrait,
+} from './raid-catalog.js';
 
 // One wishlist per character. Every raid of the game, its bosses as portraits and, for
 // the boss you open, its loot as a grid of icons: click one to mark it as BiS, Mejora
@@ -13,26 +18,6 @@ const filters = [
 	['BiS', 'Solo BiS'],
 ];
 const PRIORITIES = [1, 2, 3, 4, 5];
-const iconUrl = (icon) =>
-	`https://wow.zamimg.com/images/wow/icons/large/${encodeURIComponent(icon || 'inv_misc_questionmark')}.jpg`;
-const portrait = (boss, esc) =>
-	boss.portrait
-		? `<img src="/assets/bosses/${boss.npc}.webp" alt="" width="96" height="96" loading="lazy" decoding="async">`
-		: `<span class="boss-initial" aria-hidden="true">${esc(boss.name.replace(/^(Sum[ao] Sacerdot\w+|Los|El|La)\s+/i, '').slice(0, 1))}</span>`;
-
-let catalogRequest;
-function loadRaidCatalog() {
-	catalogRequest ??= fetch('/catalog/raids.json')
-		.then((r) => {
-			if (!r.ok) throw new Error('No se pudo cargar el botín de las raids.');
-			return r.json();
-		})
-		.catch((error) => {
-			catalogRequest = undefined;
-			throw error;
-		});
-	return catalogRequest;
-}
 // Which raid, boss and item were open: saving reloads the section, and it reopens here.
 const memory = { raid: null, boss: null, item: null };
 function savedRaid() {
