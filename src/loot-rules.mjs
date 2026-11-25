@@ -9,7 +9,10 @@ import { HttpError, text, choice, can } from './domain.mjs';
 
 // What a player asks for when an item drops (RCLootCouncil), in priority order.
 export const requestTypes = ['BiS', 'Mejora mayor', 'Mejora menor', 'Offspec'];
-const wishStates = ['BiS', 'Me interesa', 'Pasar'];
+// Wishlist marks: the same request types as the loot council. «Me interesa» and «Pasar»
+// are the old marks, still accepted for rows saved before; the page shows «Me interesa»
+// as «Mejora menor» and hides «Pasar».
+const wishStates = ['BiS', 'Mejora mayor', 'Mejora menor', 'Me interesa', 'Pasar'];
 const now = () => new Date().toISOString();
 const norm = (value) =>
 	String(value || '')
@@ -183,7 +186,7 @@ function newEntry(v, character) {
 		boss: text(v.boss ?? '', 'boss', 120, false),
 		slot: text(v.slot ?? '', 'hueco', 40, false),
 		priority: priorityOf(v.priority ?? 3),
-		status: choice(v.status ?? 'Me interesa', wishStates, 'estado'),
+		status: choice(v.status ?? 'Mejora menor', wishStates, 'estado'),
 		obtained: false,
 		notes: text(v.notes ?? '', 'notas', 1000, false),
 	};

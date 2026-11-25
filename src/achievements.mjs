@@ -113,7 +113,7 @@ export const playerCatalog = [
 		icon: 'gem',
 		name: 'Wishlist preparada',
 		single: 1,
-		help: 'Cinco objetos marcados como BiS o Me interesa.',
+		help: 'Cinco objetos marcados como BiS o mejora.',
 	},
 	{
 		id: 'family',

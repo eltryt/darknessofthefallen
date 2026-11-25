@@ -1,6 +1,7 @@
 import { manualRosterApi } from './manual-roster.mjs';
 import { seoPages, seoHtml, sitemap, INDEXNOW_KEY, announce } from './seo.mjs';
 import { iconAssets } from '../public/icon-assets.js';
+import { bossPortraits } from '../public/boss-portraits.js';
 import { mobileArt } from '../public/art-variants.js';
 import { slotIconSources, catalogGroups } from '../public/armory-catalog.js';
 import { gmApi, enqueueGM, gmReady } from './gm-notifications.mjs';
@@ -175,6 +176,15 @@ const files = {
 	'/gm-ui.js': ['gm-ui.js', 'text/javascript'],
 	'/roster-ui.js': ['roster-ui.js', 'text/javascript'],
 	'/wishlist-ui.js': ['wishlist-ui.js', 'text/javascript'],
+	'/wish-states.js': ['wish-states.js', 'text/javascript'],
+	'/catalog/raids.json': ['catalog/raids.json', 'application/json'],
+	// Boss portraits of the wishlist (scripts/build-raid-loot.mjs).
+	...Object.fromEntries(
+		bossPortraits.map((npc) => [
+			`/assets/bosses/${npc}.webp`,
+			[`assets/bosses/${npc}.webp`, 'image/webp'],
+		]),
+	),
 	'/wishlist-rules-ui.js': ['wishlist-rules-ui.js', 'text/javascript'],
 	'/sheet-parts.js': ['sheet-parts.js', 'text/javascript'],
 	'/my-callups.js': ['my-callups.js', 'text/javascript'],

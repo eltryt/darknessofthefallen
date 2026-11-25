@@ -55,22 +55,21 @@ const steps = [
 	},
 	{
 		section: 'wishlist',
-		target: '.raid-tabs, .wishlist-heading',
+		target: '.raid-picker, .wishlist-heading',
 		title: 'Wishlist por raid',
-		text: 'Elige la raid y verás sus jefes con el botín conocido por la hermandad.',
+		text: 'Elige la raid y verás todos sus jefes.',
 	},
 	{
 		section: 'wishlist',
-		target: '.wish-states, .boss-card',
-		closest: '.wish-row, .boss-card',
-		title: 'BiS, Me interesa o Pasar',
-		text: 'Marca cada objeto con un toque. Es tu prioridad personal: ayuda al consejo, pero no asigna el botín.',
+		target: '.boss-roster',
+		title: 'Jefes y botín',
+		text: 'Haz clic en un jefe para ver su botín y en un objeto para marcarlo como BiS, Mejora mayor o Mejora menor, con prioridad y notas para los oficiales. Ayuda al consejo, pero no asigna el botín.',
 	},
 	{
 		section: 'wishlist',
 		target: '.wish-filters',
 		title: 'Filtros rápidos',
-		text: 'Muestra solo lo que has seleccionado, solo tus BiS o lo que has decidido pasar.',
+		text: 'Muestra solo lo que has marcado o solo tus BiS.',
 	},
 	{
 		section: 'botin',

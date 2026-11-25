@@ -117,6 +117,8 @@ try {
 		'assets/tutorials/ruleta.webp',
 		'roster-ui.js',
 		'wishlist-ui.js',
+		'wish-states.js',
+		'boss-portraits.js',
 		'wishlist-rules-ui.js',
 		'sheet-parts.js',
 		'my-callups.js',

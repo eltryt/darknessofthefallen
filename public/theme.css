@@ -10267,3 +10267,540 @@ button.gm-note-x:hover {
 .wowhead-link:hover {
 	color: var(--gold);
 }
+
+/* ===== Wishlist: raids → boss portraits → loot icons with an editor beside them ===== */
+.raid-picker {
+	display: grid;
+	grid-auto-flow: column;
+	grid-auto-columns: minmax(168px, 1fr);
+	gap: 10px;
+	margin: 16px 0 12px;
+	padding-bottom: 6px;
+	overflow-x: auto;
+	scroll-snap-type: x proximity;
+}
+.raid-pick {
+	position: relative;
+	display: grid;
+	gap: 2px;
+	justify-items: start;
+	min-height: 64px;
+	padding: 12px 14px;
+	border: 1px solid #a68a5b38;
+	border-radius: 12px;
+	background: linear-gradient(160deg, #1d1a1f, #121113);
+	box-shadow: none;
+	color: #cfc7bb;
+	text-align: left;
+	scroll-snap-align: start;
+}
+.raid-pick::before {
+	display: none;
+}
+.raid-pick strong {
+	padding-right: 26px;
+	color: #fff1d7;
+	font-size: 15px;
+}
+.raid-pick small {
+	color: var(--muted);
+	font-size: 12px;
+	font-weight: 500;
+}
+.raid-pick:not(:disabled):hover {
+	border-color: #d6a85a88;
+	background: linear-gradient(160deg, #241e1b, #151315);
+	box-shadow: none;
+	transform: translateY(-1px);
+}
+.raid-pick[aria-selected='true'] {
+	border-color: var(--gold);
+	background: linear-gradient(160deg, #3a2716, #1a1412);
+	box-shadow:
+		0 0 0 1px #d6a85a55 inset,
+		0 8px 22px #0006;
+}
+.raid-pick-count {
+	position: absolute;
+	top: 8px;
+	right: 10px;
+	min-width: 22px;
+	padding: 1px 7px;
+	border-radius: 999px;
+	background: #d6a85a;
+	color: #1d1205;
+	font-size: 12px;
+	font-weight: 800;
+	text-align: center;
+}
+.boss-roster {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+	gap: 12px;
+	margin: 6px 0 16px;
+	padding: 0;
+	list-style: none;
+}
+.boss-pick {
+	display: grid;
+	justify-items: center;
+	gap: 6px;
+	width: 100%;
+	min-height: 0;
+	padding: 12px 8px;
+	border: 1px solid transparent;
+	border-radius: 14px;
+	background: transparent;
+	box-shadow: none;
+	color: #e9e1d4;
+	text-align: center;
+}
+.boss-pick::before {
+	display: none;
+}
+.boss-pick strong {
+	font-size: 13px;
+	line-height: 1.25;
+}
+.boss-pick small {
+	color: var(--muted);
+	font-size: 11px;
+	font-weight: 500;
+}
+.boss-pick:not(:disabled):hover {
+	border-color: #a68a5b40;
+	background: #1a171b;
+	box-shadow: none;
+	transform: translateY(-2px);
+}
+.boss-pick.is-open {
+	border-color: var(--gold);
+	background: linear-gradient(180deg, #2c2016, #161214);
+}
+.boss-portrait {
+	position: relative;
+	display: grid;
+	place-items: center;
+	width: 76px;
+	height: 76px;
+	border: 2px solid #a68a5b80;
+	border-radius: 50%;
+	background: radial-gradient(circle at 50% 35%, #3b2a2e, #121113);
+	box-shadow: 0 6px 16px #0008;
+}
+.boss-portrait img {
+	width: 100%;
+	height: 100%;
+	border-radius: 50%;
+	object-fit: cover;
+}
+.boss-pick.is-open .boss-portrait,
+.boss-pick:hover .boss-portrait {
+	border-color: var(--gold);
+	box-shadow:
+		0 0 18px #d6a85a40,
+		0 6px 16px #0008;
+}
+.boss-portrait.is-small {
+	flex: 0 0 auto;
+	width: 52px;
+	height: 52px;
+}
+.boss-initial {
+	color: var(--gold);
+	font:
+		700 30px Georgia,
+		serif;
+}
+.boss-portrait.is-small .boss-initial {
+	font-size: 22px;
+}
+.boss-marks {
+	position: absolute;
+	right: -4px;
+	bottom: -2px;
+	min-width: 24px;
+	padding: 2px 6px;
+	border: 2px solid #121113;
+	border-radius: 999px;
+	background: #d6a85a;
+	color: #1d1205;
+	font-size: 12px;
+	font-weight: 800;
+	line-height: 1.2;
+}
+.loot-panel {
+	margin: 0 0 18px;
+	padding: 18px;
+	border: 1px solid #d6a85a55;
+	border-radius: 16px;
+	background: linear-gradient(170deg, #1c1719, #111013);
+	box-shadow: 0 14px 34px #0007;
+	animation: loot-open 180ms ease-out;
+}
+@keyframes loot-open {
+	from {
+		opacity: 0;
+		transform: translateY(-6px);
+	}
+}
+.loot-panel > header {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	margin-bottom: 14px;
+}
+.loot-panel > header div {
+	flex: 1;
+}
+.loot-panel > header h3 {
+	margin: 0;
+	font:
+		400 24px Georgia,
+		serif;
+}
+.loot-panel > header small {
+	color: var(--muted);
+}
+.loot-close {
+	width: 36px;
+	min-height: 36px;
+	padding: 0;
+	border: 1px solid #ffffff24;
+	border-radius: 50%;
+	background: transparent;
+	box-shadow: none;
+	color: var(--muted);
+}
+.loot-close::before {
+	display: none;
+}
+.loot-layout {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+	gap: 18px;
+	align-items: start;
+}
+.loot-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+	gap: 10px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.loot-item {
+	display: grid;
+	justify-items: center;
+	gap: 6px;
+	padding: 10px 4px 8px;
+	border: 1px solid transparent;
+	border-radius: 10px;
+	color: #e2dbd0;
+	text-align: center;
+	cursor: pointer;
+	transition:
+		background 140ms ease,
+		border-color 140ms ease,
+		transform 140ms ease;
+}
+.loot-item:hover {
+	background: #ffffff08;
+	transform: translateY(-2px);
+}
+.loot-item.is-selected {
+	border-color: var(--gold);
+	background: #d6a85a14;
+}
+.loot-icon {
+	position: relative;
+	display: block;
+	width: 56px;
+	height: 56px;
+	border: 2px solid #ffffff30;
+	border-radius: 9px;
+	background: #0b0a0c;
+	box-shadow: 0 4px 10px #0009;
+}
+.loot-icon img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	border-radius: 7px;
+}
+.quality-uncommon .loot-icon {
+	border-color: #4fd06bbb;
+}
+.quality-rare .loot-icon {
+	border-color: #3d9bffbb;
+}
+.quality-epic .loot-icon {
+	border-color: #b46cffcc;
+}
+.quality-legendary .loot-icon {
+	border-color: #ff9a3dcc;
+}
+.loot-item.is-selected .loot-icon {
+	box-shadow:
+		0 0 0 2px var(--gold),
+		0 0 16px #d6a85a66;
+}
+.loot-item.is-obtained .loot-icon img {
+	filter: grayscale(0.8) brightness(0.7);
+}
+.loot-name {
+	display: -webkit-box;
+	max-width: 100%;
+	overflow: hidden;
+	font-size: 11px;
+	line-height: 1.25;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
+}
+.quality-rare .loot-name {
+	color: #8cc4ff;
+}
+.quality-epic .loot-name {
+	color: #d6b0ff;
+}
+.quality-legendary .loot-name {
+	color: #ffb979;
+}
+.loot-mark,
+.loot-prio {
+	position: absolute;
+	display: grid;
+	place-items: center;
+	min-width: 20px;
+	height: 20px;
+	padding: 0 4px;
+	border: 2px solid #0b0a0c;
+	border-radius: 999px;
+	font-size: 11px;
+	font-weight: 800;
+	line-height: 1;
+}
+.loot-mark {
+	top: -8px;
+	right: -8px;
+	background: #9fb6d8;
+	color: #0e1420;
+}
+.loot-prio {
+	bottom: -8px;
+	left: -8px;
+	background: #2a2326;
+	color: #fff1d7;
+}
+.is-bis .loot-mark {
+	background: #f1c75b;
+	color: #2a1900;
+}
+.is-mejora-mayor .loot-mark {
+	background: #7fd39a;
+	color: #0b2414;
+}
+.loot-editor {
+	position: sticky;
+	top: 90px;
+	padding: 16px;
+	border: 1px solid #a68a5b40;
+	border-radius: 14px;
+	background: #151316;
+}
+.loot-editor-empty {
+	display: flex;
+	gap: 14px;
+	align-items: center;
+	color: var(--muted);
+	font-size: 14px;
+}
+.loot-editor-empty p {
+	margin: 0;
+}
+.loot-editor-empty strong {
+	display: block;
+	color: #fff1d7;
+}
+.loot-editor-form {
+	display: grid;
+	gap: 14px;
+}
+.loot-editor-head {
+	display: flex;
+	gap: 12px;
+	align-items: center;
+}
+.loot-editor-head strong {
+	display: block;
+	font-size: 15px;
+	line-height: 1.3;
+}
+.loot-editor-head small {
+	color: var(--muted);
+	font-size: 12px;
+}
+.loot-editor-head .pill {
+	margin-top: 4px;
+}
+.loot-icon.is-big {
+	flex: 0 0 auto;
+}
+.mark-pick,
+.prio-pick {
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+.mark-pick legend,
+.prio-pick legend,
+.loot-notes {
+	margin-bottom: 6px;
+	color: #e9e1d4;
+	font-size: 13px;
+	font-weight: 650;
+}
+.prio-pick legend small {
+	color: var(--muted);
+	font-weight: 400;
+}
+.mark-pick > div {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 6px;
+}
+.prio-pick > div {
+	display: grid;
+	grid-template-columns: repeat(5, 1fr);
+	gap: 6px;
+}
+.mark-pick button,
+.prio-pick button {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 2px;
+	min-height: 0;
+	padding: 8px 4px;
+	border: 1px solid #ffffff22;
+	border-radius: 10px;
+	background: #1d1a1e;
+	box-shadow: none;
+	color: #d9d1c5;
+	font-size: 12px;
+	font-weight: 650;
+	line-height: 1.15;
+}
+.mark-pick button::before,
+.prio-pick button::before {
+	display: none;
+}
+.mark-pick button span {
+	font-size: 16px;
+}
+.prio-pick button {
+	font-size: 15px;
+}
+.mark-pick button:not(:disabled):hover,
+.prio-pick button:not(:disabled):hover {
+	border-color: #d6a85a88;
+	background: #241f1f;
+	box-shadow: none;
+	transform: none;
+}
+.mark-pick button[aria-pressed='true'],
+.prio-pick button[aria-pressed='true'] {
+	border-color: var(--gold);
+	background: #3a2a17;
+	color: #fff1d7;
+}
+.mark-pick button.is-bis[aria-pressed='true'] {
+	border-color: #f1c75b;
+	background: #4a3810;
+}
+.mark-pick button.is-mejora-mayor[aria-pressed='true'] {
+	border-color: #7fd39a;
+	background: #183522;
+}
+.mark-pick button.is-mejora-menor[aria-pressed='true'] {
+	border-color: #9fb6d8;
+	background: #1a2433;
+}
+.loot-notes {
+	display: grid;
+	gap: 6px;
+	margin: 0;
+}
+.loot-notes textarea {
+	width: 100%;
+	min-height: 74px;
+	resize: vertical;
+	font-size: 13px;
+}
+.loot-editor-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+.loot-editor-actions button {
+	flex: 1;
+	min-height: 42px;
+	padding: 8px 14px;
+}
+.loot-hint {
+	margin: -6px 0 0;
+	font-size: 12px;
+}
+.wish-none {
+	padding: 14px 0;
+}
+.wish-others ul {
+	display: grid;
+	gap: 8px;
+	margin: 10px 0 0;
+	padding: 0;
+	list-style: none;
+}
+.wish-others li {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px 12px;
+}
+.wish-others li small {
+	color: var(--muted);
+}
+.wish-others li button {
+	min-height: 32px;
+	margin-left: auto;
+	padding: 4px 12px;
+	font-size: 12px;
+}
+@media (max-width: 760px) {
+	.loot-layout {
+		grid-template-columns: 1fr;
+	}
+	.loot-editor {
+		position: static;
+	}
+	.loot-panel {
+		padding: 14px 12px;
+	}
+	.boss-roster {
+		grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+		gap: 6px;
+	}
+	.boss-portrait {
+		width: 64px;
+		height: 64px;
+	}
+	.loot-grid {
+		grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.loot-panel {
+		animation: none;
+	}
+}

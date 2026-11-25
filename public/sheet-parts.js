@@ -1,5 +1,6 @@
 import { getSpecsForClass, normalizeSpecValue } from './specs.js';
 import { classKey, pvpRankText } from './roster-ui.js';
+import { wishLabel } from './wish-states.js';
 import {
 	gameVersions,
 	slotLabels,
@@ -375,7 +376,7 @@ export function openSlotDialog({ slot, sheet, wishes = [], canEdit, ctx, onSaved
 		</section>
 		${
 			goals.length
-				? `<section class="slot-goals"><h3>Objetivo en la wishlist</h3><ul>${goals.map((g) => `<li><strong>${esc(g.data.item)}</strong> <span class="pill ${g.data.status === 'BiS' ? 'gold' : ''}">${esc(g.data.status || 'Me interesa')}</span>${g.data.obtained ? ' <span class="pill">Conseguido</span>' : ''}${g.data.boss ? `<small>${esc(g.data.boss)}${g.data.raid ? ' · ' + esc(g.data.raid) : ''}</small>` : ''}</li>`).join('')}</ul></section>`
+				? `<section class="slot-goals"><h3>Objetivo en la wishlist</h3><ul>${goals.map((g) => `<li><strong>${esc(g.data.item)}</strong> <span class="pill ${g.data.status === 'BiS' ? 'gold' : ''}">${esc(wishLabel(g.data.status))}</span>${g.data.obtained ? ' <span class="pill">Conseguido</span>' : ''}${g.data.boss ? `<small>${esc(g.data.boss)}${g.data.raid ? ' · ' + esc(g.data.raid) : ''}</small>` : ''}</li>`).join('')}</ul></section>`
 				: ''
 		}
 		${

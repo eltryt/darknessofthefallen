@@ -23,7 +23,8 @@ const list = (value, max, label) => {
 	return value;
 };
 const progressStates = ['No intentado', 'En progreso', 'Derrotado'];
-const wishStates = ['BiS', 'Me interesa', 'Pasar'];
+// Same marks as src/loot-rules.mjs (old «Me interesa» and «Pasar» still accepted).
+const wishStates = ['BiS', 'Mejora mayor', 'Mejora menor', 'Me interesa', 'Pasar'];
 const wishStatus = (value) => choice(value, wishStates, 'estado');
 const methods = ['Loot Council', 'Roll', 'Soft Reserve', 'DKP', 'Híbrido'];
 // Wishlist deadline, change history and loot request types (Normas de raid, 22/11/2026).
@@ -341,7 +342,7 @@ export async function operations(ctx) {
 				boss: text(v.boss ?? '', 'boss', 120, false),
 				slot: text(v.slot ?? '', 'hueco', 40, false),
 				priority,
-				status: wishStatus(v.status ?? 'Me interesa'),
+				status: wishStatus(v.status ?? 'Mejora menor'),
 				obtained: v.obtained === true,
 				notes: text(v.notes ?? '', 'notas', 1000, false),
 			};

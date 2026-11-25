@@ -1,30 +1,54 @@
-import { slotLabels, gameVersions } from './armory-catalog.js';
-import { loadItemNames, itemLink, loadTooltips } from './wowhead.js';
+import { loadItemNames, itemKey, itemLink, wowheadItemUrl, loadTooltips } from './wowhead.js';
 import { windowNotice, ownRequests } from './wishlist-rules-ui.js';
+import { wishMarks, wishLabel, isWanted, wishClass } from './wish-states.js';
 
-// One wishlist per character, organised raid → boss → loot. Known loot comes only
-// from the guild's own data: registered progress, the player's entries and the
-// loot history. There is no verified WoW Forever loot catalogue to invent from.
-export const wishStates = [
-	['BiS', 'BiS', '★'],
-	['Me interesa', 'Me interesa', '◆'],
-	['Pasar', 'Pasar', '–'],
-];
+// One wishlist per character. Every raid of the game, its bosses as portraits and, for
+// the boss you open, its loot as a grid of icons: click one to mark it as BiS, Mejora
+// mayor or Mejora menor with a priority and notes for the officers. The loot tables
+// come from public/catalog/raids.json (scripts/build-raid-loot.mjs): Classic loot,
+// orientative for WoW Forever.
 const filters = [
 	['all', 'Todo'],
-	['selected', 'Seleccionados'],
+	['marked', 'Marcados'],
 	['BiS', 'Solo BiS'],
-	['Pasar', 'Pasados'],
 ];
-const NO_RAID = '';
-const norm = (value) =>
-	String(value || '')
-		.trim()
-		.toLocaleLowerCase('es');
-const bossIcon = (name, raid) =>
-	/onyxia|onixya|onixia/i.test(name + ' ' + raid)
-		? '<img class="fade-in" src="/assets/icons/onyxia.webp" alt="" width="48" height="48" loading="lazy" decoding="async">'
-		: '<span class="boss-sigil" aria-hidden="true">◇</span>';
+const PRIORITIES = [1, 2, 3, 4, 5];
+const iconUrl = (icon) =>
+	`https://wow.zamimg.com/images/wow/icons/large/${encodeURIComponent(icon || 'inv_misc_questionmark')}.jpg`;
+const portrait = (boss, esc) =>
+	boss.portrait
+		? `<img src="/assets/bosses/${boss.npc}.webp" alt="" width="96" height="96" loading="lazy" decoding="async">`
+		: `<span class="boss-initial" aria-hidden="true">${esc(boss.name.replace(/^(Sum[ao] Sacerdot\w+|Los|El|La)\s+/i, '').slice(0, 1))}</span>`;
+
+let catalogRequest;
+function loadRaidCatalog() {
+	catalogRequest ??= fetch('/catalog/raids.json')
+		.then((r) => {
+			if (!r.ok) throw new Error('No se pudo cargar el botín de las raids.');
+			return r.json();
+		})
+		.catch((error) => {
+			catalogRequest = undefined;
+			throw error;
+		});
+	return catalogRequest;
+}
+// Which raid, boss and item were open: saving reloads the section, and it reopens here.
+const memory = { raid: null, boss: null, item: null };
+function savedRaid() {
+	try {
+		return localStorage.getItem('wishlist-raid-id');
+	} catch {
+		return null;
+	}
+}
+function rememberRaid(id) {
+	try {
+		localStorage.setItem('wishlist-raid-id', id);
+	} catch {
+		/* storage unavailable */
+	}
+}
 
 export async function mountWishlist(host, character, refresh, ctx) {
 	const { api, esc, toast, data } = ctx;
@@ -33,165 +57,172 @@ export async function mountWishlist(host, character, refresh, ctx) {
 			'<div class="hub-empty"><h2>Elige o registra un personaje</h2><p>La wishlist se guarda por personaje.</p><a class="button" href="#personajes">Añadir personaje</a></div>';
 		return;
 	}
-	const [allWishes, loot, itemIds, win, requests] = await Promise.all([
+	const [catalog, allWishes, itemIds, win, requests] = await Promise.all([
+		loadRaidCatalog(),
 		api('/api/wishlists'),
-		api('/api/loot').catch(() => []),
 		loadItemNames(),
 		api('/api/wishlist-window').catch(() => ({ state: 'free' })),
 		api('/api/wishlist-requests').catch(() => []),
 	]);
-	// After the tier deadline only removals are direct; anything else becomes a request.
-	const locked = win.state === 'closed';
 	if (!host.isConnected) return;
-	const wishes = allWishes.filter((w) => w.data.characterId === character.id);
-	const progress = data.progress || [];
-	// Raids: registered progress first, then any raid the player typed.
-	const raids = [];
-	const addRaid = (name) => {
-		if (!raids.some((r) => norm(r.name) === norm(name))) raids.push({ name, bosses: [] });
-		return raids.find((r) => norm(r.name) === norm(name));
-	};
-	for (const p of progress) {
-		const raid = addRaid(p.name);
-		for (const b of p.bosses)
-			if (!raid.bosses.some((x) => norm(x) === norm(b.name))) raid.bosses.push(b.name);
-	}
+	// After the tier deadline only removals and notes are direct; the rest is a request.
+	const locked = win.state === 'closed';
+	const raids = catalog.raids;
+	const wishes = allWishes.filter(
+		(w) => w.data.characterId === character.id && isWanted(w.data.status),
+	);
+
+	// Each wish finds its item in the catalogue by name; the boss it was saved under wins
+	// when an item drops from several bosses. Wishes for items outside the catalogue are
+	// listed apart.
+	const bossesByItem = new Map();
+	for (const raid of raids)
+		for (const boss of raid.bosses)
+			for (const item of boss.items) {
+				const key = itemKey(item.name);
+				if (!bossesByItem.has(key)) bossesByItem.set(key, []);
+				bossesByItem.get(key).push({ raid, boss, item });
+			}
+	const wishByItem = new Map();
+	const others = [];
 	for (const w of wishes) {
-		const raid = addRaid(w.data.raid || NO_RAID);
-		const boss = w.data.boss || '';
-		if (!raid.bosses.some((x) => norm(x) === norm(boss))) raid.bosses.push(boss);
+		const key = itemKey(w.data.item);
+		if (bossesByItem.has(key)) wishByItem.set(key, w);
+		else others.push(w);
 	}
-	const lootRows = Array.isArray(loot) ? loot : loot.rows || [];
-	const state = {
-		raid: (() => {
-			try {
-				const saved = localStorage.getItem('wishlist-raid');
-				if (raids.some((r) => r.name === saved)) return saved;
-			} catch {
-				/* storage unavailable */
-			}
-			return raids[0]?.name ?? NO_RAID;
-		})(),
-		filter: 'all',
+	const wishOf = (item) => wishByItem.get(itemKey(item.name));
+	const homeOf = (w) => {
+		const places = bossesByItem.get(itemKey(w.data.item)) || [];
+		return places.find((p) => itemKey(p.boss.name) === itemKey(w.data.boss)) || places[0];
 	};
+	const markedIn = (boss) => boss.items.filter((i) => wishOf(i)).length;
+	const raidMarks = (raid) =>
+		wishes.filter((w) => wishByItem.has(itemKey(w.data.item)) && homeOf(w)?.raid === raid).length;
 
-	function knownItems(raid, boss) {
-		const own = wishes.filter(
-			(w) => norm(w.data.raid) === norm(raid) && norm(w.data.boss) === norm(boss),
-		);
-		const seen = new Set(own.map((w) => norm(w.data.item)));
-		const history = [];
-		if (boss)
-			for (const r of lootRows) {
-				const d = r.data || {};
-				if (norm(d.boss) !== norm(boss) || !d.item || seen.has(norm(d.item))) continue;
-				seen.add(norm(d.item));
-				history.push({ item: d.item, date: d.date });
-			}
-		return { own, history };
-	}
-	const visible = (status) =>
-		state.filter === 'all' ||
-		(state.filter === 'selected' && ['BiS', 'Me interesa'].includes(status)) ||
-		state.filter === status;
-
-	function itemRow({ entry, item, fromHistory }) {
-		const d = entry?.data,
-			status = d ? d.status || 'Me interesa' : null,
-			name = d ? d.item : item;
-		return /* HTML */ `<li
-			class="wish-row ${status ? 'is-' + norm(status).replace(/\s+/g, '-') : 'is-unmarked'} ${d?.obtained ? 'is-obtained' : ''}"
-		>
-			<div class="wish-row-main">
-				<strong>${itemLink(name, itemIds, esc)}</strong>
-				<small>
-					${d?.slot ? esc(slotLabels[d.slot] || d.slot) + ' · ' : ''}${fromHistory ? 'Visto en el historial de botín' : `Prioridad ${Number(d.priority)}`}${d?.obtained ? ' · <b>Conseguido</b>' : ''}
-				</small>
-				${d?.notes ? `<p>${esc(d.notes)}</p>` : ''}
-			</div>
-			<div class="wish-states" role="group" aria-label="Estado de ${esc(name)}">
-				${wishStates
-					.map(
-						([value, label, mark]) =>
-							`<button type="button" class="wish-state" data-state="${esc(value)}" ${entry ? `data-wish="${esc(entry.id)}"` : `data-new-item="${esc(name)}"`} aria-pressed="${status === value}"><span aria-hidden="true">${mark}</span>${label}</button>`,
-					)
-					.join('')}
-			</div>
-			${
-				entry
-					? `<details class="wish-more"><summary aria-label="Más opciones de ${esc(name)}">⋯</summary><div class="hub-menu"><label class="armory-check"><input type="checkbox" data-obtained="${esc(entry.id)}" ${d.obtained ? 'checked' : ''}>Ya lo tengo</label><button type="button" class="is-danger" data-remove-wish="${esc(entry.id)}">Quitar de la wishlist</button></div></details>`
-					: ''
-			}
-		</li>`;
+	// Open the raid you were on, else the raid the guild is progressing, else the first.
+	const progressRaid = raids.find((r) =>
+		(data.progress || []).some((p) =>
+			p.bosses?.some((b) => r.bosses.some((x) => itemKey(x.name) === itemKey(b.name))),
+		),
+	);
+	const state = {
+		raid:
+			[memory.raid, savedRaid()].find((id) => raids.some((r) => r.id === id)) ||
+			progressRaid?.id ||
+			raids[0].id,
+		boss: memory.boss,
+		item: memory.item,
+		filter: 'all',
+		draft: null,
+	};
+	const currentRaid = () => raids.find((r) => r.id === state.raid);
+	const currentBoss = () => currentRaid().bosses.find((b) => b.id === state.boss);
+	const currentItem = () => currentBoss()?.items.find((i) => i.id === state.item);
+	const shows = (item) => {
+		const w = wishOf(item);
+		if (state.filter === 'marked') return Boolean(w);
+		if (state.filter === 'BiS') return w?.data.status === 'BiS';
+		return true;
+	};
+	function newDraft(item) {
+		const w = item && wishOf(item);
+		return w
+			? {
+					status: wishLabel(w.data.status),
+					priority: Number(w.data.priority) || 3,
+					notes: w.data.notes || '',
+				}
+			: { status: '', priority: 3, notes: '' };
 	}
 
-	function bossCard(raid, boss) {
-		const { own, history } = knownItems(raid, boss);
-		const rows = [
-			...own.filter((w) => visible(w.data.status || 'Me interesa')).map((entry) => ({ entry })),
-			...(state.filter === 'all' ? history.map((h) => ({ item: h.item, fromHistory: true })) : []),
-		];
-		const marked = own.filter((w) => w.data.status !== 'Pasar').length;
-		if (state.filter !== 'all' && !rows.length) return '';
-		const slots = gameVersions[character.game_version || 'forever']?.slots || [];
-		return /* HTML */ `<article class="boss-card">
-			<header>
-				${bossIcon(boss, raid)}
-				<div>
-					<h3>${esc(boss || 'Jefe sin indicar')}</h3>
-					<small
-						>${marked ? `${marked} marcados` : 'Nada marcado'} · ${own.length + history.length}
-						conocidos</small
-					>
-				</div>
-			</header>
-			${
-				rows.length
-					? `<ul class="wish-rows">${rows.map(itemRow).join('')}</ul>`
-					: '<p class="muted boss-empty">Todavía no hay botín conocido de este jefe: ni en tu wishlist ni en el historial de la hermandad.</p>'
-			}
-			<details class="wish-add">
-				<summary>Añadir objeto</summary>
-				<form class="form" data-add-boss="${esc(boss)}">
-					<div class="form-grid">
-						<label class="wide"
-							>Nombre del objeto<input name="item" required maxlength="160"
-						/></label>
-						<label
-							>Hueco<select name="slot">
-								<option value="">Sin indicar</option>
-								${slots.map((s) => `<option value="${s}">${esc(slotLabels[s] || s)}</option>`).join('')}
-							</select></label
-						>
-						<label
-							>Estado<select name="status">
-								${wishStates.map(([v, l]) => `<option value="${esc(v)}">${l}</option>`).join('')}
-							</select></label
-						>
-						<label
-							>Prioridad<select name="priority">
-								${[1, 2, 3, 4, 5].map((n) => `<option ${n === 3 ? 'selected' : ''}>${n}</option>`).join('')}
-							</select></label
-						>
-						<label class="wide">Notas para el consejo<input name="notes" maxlength="1000" /></label>
-					</div>
-					<button type="submit">${locked ? 'Pedir que lo añadan' : 'Añadir'}</button>
-				</form>
-			</details>
-		</article>`;
+	function raidPicker() {
+		return `<div class="raid-picker" role="tablist" aria-label="Raids">${raids
+			.map((r) => {
+				const marks = raidMarks(r);
+				return `<button type="button" role="tab" class="raid-pick" data-raid="${esc(r.id)}" aria-selected="${r.id === state.raid}"><strong>${esc(r.name)}</strong><small>${r.size} jugadores · ${r.bosses.length} ${r.bosses.length === 1 ? 'jefe' : 'jefes'}</small>${marks ? `<span class="raid-pick-count" title="Objetos marcados">${marks}</span>` : ''}</button>`;
+			})
+			.join('')}</div>`;
+	}
+
+	function bossRoster(raid) {
+		const bosses = raid.bosses.filter((b) => state.filter === 'all' || b.items.some(shows));
+		if (!bosses.length)
+			return '<p class="muted wish-none">Nada marcado en esta raid con este filtro.</p>';
+		return `<ol class="boss-roster">${bosses
+			.map((b) => {
+				const marks = markedIn(b);
+				const open = b.id === state.boss;
+				return `<li><button type="button" class="boss-pick${open ? ' is-open' : ''}${marks ? ' has-marks' : ''}" data-boss="${esc(b.id)}" aria-expanded="${open}" aria-controls="loot-panel"><span class="boss-portrait">${portrait(b, esc)}${marks ? `<span class="boss-marks" title="${marks} marcados">${marks}</span>` : ''}</span><strong>${esc(b.name)}</strong><small>${b.items.length} objetos</small></button></li>`;
+			})
+			.join('')}</ol>`;
+	}
+
+	function itemTile(item) {
+		const w = wishOf(item);
+		const selected = item.id === state.item;
+		const mark = w && wishMarks.find(([v]) => v === wishLabel(w.data.status));
+		return `<li><a href="${wowheadItemUrl(item.id)}" class="loot-item quality-${esc(item.quality)}${w ? ' is-marked ' + wishClass(w.data.status) : ''}${selected ? ' is-selected' : ''}${w?.data.obtained ? ' is-obtained' : ''}" data-item="${item.id}" role="button" aria-pressed="${selected}"><span class="loot-icon"><img src="${iconUrl(item.icon)}" alt="" width="56" height="56" loading="lazy" decoding="async">${mark ? `<span class="loot-mark" title="${esc(mark[1])}">${mark[2]}</span>` : ''}${w ? `<span class="loot-prio" title="Prioridad ${Number(w.data.priority)}">${Number(w.data.priority)}</span>` : ''}</span><span class="loot-name">${esc(item.name)}</span></a></li>`;
+	}
+
+	function editor(boss) {
+		const item = currentItem();
+		if (!item)
+			return `<div class="loot-editor-empty"><span class="boss-portrait is-small">${portrait(boss, esc)}</span><p><strong>Elige un objeto</strong>Haz clic en un icono para marcarlo como BiS o mejora, darle prioridad y dejar una nota a los oficiales.</p></div>`;
+		const w = wishOf(item);
+		const d = state.draft;
+		return `<form class="loot-editor-form" data-editor>
+			<div class="loot-editor-head quality-${esc(item.quality)}"><span class="loot-icon is-big"><img src="${iconUrl(item.icon)}" alt="" width="56" height="56"></span><div><strong>${itemLink(item.name, new Map([[itemKey(item.name), item.id]]), esc)}</strong><small>${esc(item.type || 'Ficha u objeto de misión')}</small>${w?.data.obtained ? '<span class="pill">Conseguido</span>' : ''}</div></div>
+			<fieldset class="mark-pick"><legend>¿Qué es para ti?</legend><div>${wishMarks
+				.map(
+					([value, label, sign]) =>
+						`<button type="button" class="${wishClass(value)}" data-mark="${esc(value)}" aria-pressed="${d.status === value}"><span aria-hidden="true">${sign}</span>${label}</button>`,
+				)
+				.join('')}</div></fieldset>
+			<fieldset class="prio-pick"><legend>Prioridad <small>1 es lo que más quieres</small></legend><div>${PRIORITIES.map(
+				(n) =>
+					`<button type="button" data-prio="${n}" aria-pressed="${d.priority === n}" aria-label="Prioridad ${n}">${n}</button>`,
+			).join('')}</div></fieldset>
+			<label class="loot-notes">Notas para los oficiales<textarea name="notes" maxlength="1000" rows="3" placeholder="Por qué lo necesitas, qué te sustituye, si es para otra especialización…">${esc(d.notes)}</textarea></label>
+			${w ? `<label class="armory-check"><input type="checkbox" data-obtained ${w.data.obtained ? 'checked' : ''}>Ya lo tengo</label>` : ''}
+			<div class="loot-editor-actions"><button type="submit" ${d.status ? '' : 'disabled'}>${w ? (locked ? 'Pedir el cambio' : 'Guardar cambios') : locked ? 'Pedir que lo añadan' : 'Añadir a mi wishlist'}</button>${w ? '<button type="button" class="secondary" data-remove>Quitar</button>' : ''}</div>
+			${d.status ? '' : '<p class="muted loot-hint">Elige BiS, Mejora mayor o Mejora menor para guardarlo.</p>'}
+		</form>`;
+	}
+
+	function lootPanel(raid) {
+		const boss = currentBoss();
+		if (!boss) return '';
+		const items = boss.items.filter(shows);
+		return `<section class="loot-panel" id="loot-panel" aria-label="Botín de ${esc(boss.name)}">
+			<header><span class="boss-portrait is-small">${portrait(boss, esc)}</span><div><h3>${esc(boss.name)}</h3><small>${esc(raid.name)} · ${boss.items.length} objetos · ${markedIn(boss)} marcados</small></div><button type="button" class="loot-close" data-close aria-label="Cerrar el botín de ${esc(boss.name)}">✕</button></header>
+			<div class="loot-layout">
+				${items.length ? `<ul class="loot-grid">${items.map(itemTile).join('')}</ul>` : '<p class="muted wish-none">Nada de este jefe con este filtro.</p>'}
+				<aside class="loot-editor">${editor(boss)}</aside>
+			</div>
+		</section>`;
+	}
+
+	function othersList() {
+		if (!others.length) return '';
+		return `<section class="card wish-others"><h3>Otros objetos de tu wishlist</h3><p class="muted">No están en las tablas de botín de las raids.</p><ul>${others
+			.map(
+				(w) =>
+					`<li><strong>${itemLink(w.data.item, itemIds, esc)}</strong><small>${esc([w.data.boss, w.data.raid].filter(Boolean).join(' · '))}</small><span class="pill ${wishClass(w.data.status)}">${esc(wishLabel(w.data.status))} · ${Number(w.data.priority)}</span><button type="button" class="secondary" data-remove-other="${esc(w.id)}">Quitar</button></li>`,
+			)
+			.join('')}</ul></section>`;
 	}
 
 	function render() {
-		const raid = raids.find((r) => r.name === state.raid);
-		const total = wishes.filter((w) => w.data.status !== 'Pasar').length,
-			bis = wishes.filter((w) => w.data.status === 'BiS').length;
+		const raid = currentRaid();
+		const bis = wishes.filter((w) => w.data.status === 'BiS').length;
+		const upgrades = wishes.length - bis;
 		host.innerHTML = /* HTML */ `<div class="wishlist-heading">
 				<div>
 					<span class="eyebrow">Wishlist y BiS de ${esc(character.name)}</span>
 					<h2>¿Qué quieres de cada jefe?</h2>
 					<p>
-						Marca cada objeto como BiS, Me interesa o Pasar. Es tu prioridad personal, no una
-						asignación de botín.
+						Elige una raid, abre un jefe y haz clic en el botín que quieras. Es tu prioridad
+						personal para el consejo, no una asignación de botín.
 					</p>
 				</div>
 				<dl class="wish-counts">
@@ -200,22 +231,12 @@ export async function mountWishlist(host, character, refresh, ctx) {
 						<dd>${bis}</dd>
 					</div>
 					<div>
-						<dt>Marcados</dt>
-						<dd>${total}</dd>
+						<dt>Mejoras</dt>
+						<dd>${upgrades}</dd>
 					</div>
 				</dl>
 			</div>
-			${windowNotice(win, esc)}${ownRequests(requests, character, esc)}
-			${
-				raids.length
-					? `<div class="raid-tabs" role="tablist" aria-label="Raids">${raids
-							.map(
-								(r) =>
-									`<button type="button" role="tab" data-raid="${esc(r.name)}" aria-selected="${r.name === state.raid}">${esc(r.name || 'Sin raid indicada')}</button>`,
-							)
-							.join('')}</div>`
-					: ''
-			}
+			${windowNotice(win, esc)}${ownRequests(requests, character, esc)} ${raidPicker()}
 			<div class="wish-filters" role="group" aria-label="Filtrar objetos">
 				${filters
 					.map(
@@ -224,79 +245,136 @@ export async function mountWishlist(host, character, refresh, ctx) {
 					)
 					.join('')}
 			</div>
-			<div class="boss-grid">
-				${raid ? raid.bosses.map((b) => bossCard(raid.name, b)).join('') || '<p class="muted">Ningún objeto coincide con el filtro.</p>' : ''}
-				${
-					!raids.length
-						? '<div class="empty-note" role="status"><strong>Aún no hay raids registradas</strong><p>Cuando la hermandad registre su progreso aparecerán aquí sus jefes. Mientras, puedes añadir una raid y un jefe a mano.</p></div>'
-						: ''
-				}
-			</div>
-			<details class="card wish-new-raid">
-				<summary>Otra raid o jefe</summary>
-				<form class="form" data-add-free>
-					<div class="form-grid">
-						<label
-							>Raid<input name="raid" maxlength="120" value="${esc(state.raid || '')}"
-						/></label>
-						<label>Jefe<input name="boss" maxlength="120" /></label>
-						<label class="wide"
-							>Nombre del objeto<input name="item" required maxlength="160"
-						/></label>
-						<label
-							>Estado<select name="status">
-								${wishStates.map(([v, l]) => `<option value="${esc(v)}">${l}</option>`).join('')}
-							</select></label
-						>
-					</div>
-					<button type="submit">${locked ? 'Pedir que lo añadan' : 'Añadir'}</button>
-				</form>
-			</details>
+			${bossRoster(raid)} ${lootPanel(raid)} ${othersList()}
 			<details class="catalog-note">
 				<summary>¿De dónde sale el botín de cada jefe?</summary>
 				<p>
-					No existe todavía un catálogo verificado de botín de WoW Forever. Los jefes salen del
-					progreso registrado por la hermandad y los objetos, de tu propia wishlist y del historial
-					de botín repartido. Nada se rellena con datos de otras versiones del juego.
+					De las tablas de botín de WoW Classic (AtlasLoot Classic), contrastadas con Wowhead
+					Classic, con los nombres del cliente en español. WoW Forever parte de Classic, así que es
+					orientativo: si algo cambia en Forever, avisa a un oficial.
 				</p>
 			</details>`;
 		bind();
 		loadTooltips();
 	}
 
+	function renderEditor() {
+		const aside = host.querySelector('.loot-editor');
+		const boss = currentBoss();
+		if (!aside || !boss) return render();
+		aside.innerHTML = editor(boss);
+		bindEditor();
+	}
+	function select(patch) {
+		Object.assign(state, patch);
+		Object.assign(memory, { raid: state.raid, boss: state.boss, item: state.item });
+	}
+
 	// Outside the deadline the change goes to the loot officers with a short reason.
-	const requestMessage = 'Petición enviada: la revisará un oficial de loot';
 	const ask = async (value) => {
 		const reason = prompt(
 			'El plazo de la wishlist está cerrado. Cuéntale al oficial de loot por qué necesitas este cambio:',
 		);
-		if (reason === null) return;
+		if (reason === null) return false;
 		await api('/api/wishlist-requests', 'POST', { ...value, reason });
-		toast(requestMessage);
-	};
-	const create = (value) => {
-		const entry = { characterId: character.id, priority: value.status === 'BiS' ? 1 : 3, ...value };
-		return locked ? ask({ kind: 'add', ...entry }) : api('/api/wishlists', 'POST', entry);
+		toast('Petición enviada: la revisará un oficial de loot');
+		return true;
 	};
 	async function run(task, message) {
 		try {
-			await task();
+			const done = await task();
+			if (done === false) return;
 			if (message) toast(message);
 			await refresh();
 		} catch (error) {
 			toast(error.message);
 		}
 	}
+	async function save() {
+		const item = currentItem(),
+			boss = currentBoss(),
+			raid = currentRaid(),
+			d = state.draft;
+		const w = wishOf(item);
+		if (!w) {
+			const entry = {
+				characterId: character.id,
+				item: item.name,
+				raid: raid.name,
+				boss: boss.name,
+				slot: item.slot || '',
+				status: d.status,
+				priority: d.priority,
+				notes: d.notes,
+			};
+			return locked
+				? ask({ kind: 'add', ...entry })
+				: api('/api/wishlists', 'POST', entry).then(() => toast('Añadido a tu wishlist'));
+		}
+		const path = '/api/wishlists/' + encodeURIComponent(w.id);
+		const changes = {};
+		if (d.status !== w.data.status) changes.status = d.status;
+		if (d.priority !== Number(w.data.priority)) changes.priority = d.priority;
+		if (d.notes !== (w.data.notes || '')) await api(path, 'PATCH', { notes: d.notes });
+		if (!Object.keys(changes).length) return toast('Guardado');
+		if (locked) return ask({ kind: 'change', wishlistId: w.id, ...changes });
+		await api(path, 'PATCH', changes);
+		toast('Guardado');
+	}
+
+	function bindEditor() {
+		const form = host.querySelector('[data-editor]');
+		if (!form) return;
+		const keepNotes = () => (state.draft.notes = form.elements.notes.value);
+		form.querySelectorAll('[data-mark]').forEach(
+			(b) =>
+				(b.onclick = () => {
+					keepNotes();
+					state.draft.status = b.dataset.mark;
+					if (b.dataset.mark === 'BiS' && !wishOf(currentItem())) state.draft.priority = 1;
+					renderEditor();
+				}),
+		);
+		form.querySelectorAll('[data-prio]').forEach(
+			(b) =>
+				(b.onclick = () => {
+					keepNotes();
+					state.draft.priority = Number(b.dataset.prio);
+					renderEditor();
+				}),
+		);
+		form.onsubmit = (e) => {
+			e.preventDefault();
+			keepNotes();
+			form.querySelector('[type=submit]').disabled = true;
+			void run(save);
+		};
+		const w = wishOf(currentItem());
+		const obtained = form.querySelector('[data-obtained]');
+		if (obtained && w)
+			obtained.onchange = () =>
+				void run(() =>
+					api('/api/wishlists/' + encodeURIComponent(w.id), 'PATCH', {
+						obtained: obtained.checked,
+					}),
+				);
+		const remove = form.querySelector('[data-remove]');
+		if (remove && w)
+			remove.onclick = () => {
+				if (confirm('¿Quitar este objeto de tu wishlist?'))
+					void run(
+						() => api('/api/wishlists/' + encodeURIComponent(w.id), 'DELETE', {}),
+						'Objeto quitado',
+					);
+			};
+	}
+
 	function bind() {
 		host.querySelectorAll('[data-raid]').forEach(
 			(b) =>
 				(b.onclick = () => {
-					state.raid = b.dataset.raid;
-					try {
-						localStorage.setItem('wishlist-raid', state.raid);
-					} catch {
-						/* storage unavailable */
-					}
+					select({ raid: b.dataset.raid, boss: null, item: null });
+					rememberRaid(state.raid);
 					render();
 				}),
 		);
@@ -307,98 +385,59 @@ export async function mountWishlist(host, character, refresh, ctx) {
 					render();
 				}),
 		);
-		host.querySelectorAll('.wish-state').forEach(
+		host.querySelectorAll('[data-boss]').forEach(
 			(b) =>
 				(b.onclick = () => {
-					b.closest('.wish-states')
-						.querySelectorAll('button')
-						.forEach((x) => (x.disabled = true));
-					if (b.dataset.wish && locked)
-						void run(() =>
-							ask({ kind: 'change', wishlistId: b.dataset.wish, status: b.dataset.state }),
-						);
-					else if (b.dataset.wish)
-						void run(() =>
-							api('/api/wishlists/' + encodeURIComponent(b.dataset.wish), 'PATCH', {
-								status: b.dataset.state,
-							}),
-						);
-					else
-						void run(() =>
-							create({
-								item: b.dataset.newItem,
-								raid: state.raid,
-								boss: b.closest('.boss-card').querySelector('[data-add-boss]').dataset.addBoss,
-								status: b.dataset.state,
-							}),
-						);
+					const closing = state.boss === b.dataset.boss;
+					select({ boss: closing ? null : b.dataset.boss, item: null });
+					state.draft = null;
+					render();
+					if (!closing)
+						host
+							.querySelector('#loot-panel')
+							?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 				}),
 		);
-		host
-			.querySelectorAll('[data-cancel-request]')
-			.forEach(
-				(b) =>
-					(b.onclick = () =>
-						void run(
-							() =>
-								api(
-									'/api/wishlist-requests/' +
-										encodeURIComponent(b.dataset.cancelRequest) +
-										'/cancel',
-									'POST',
-									{},
-								),
-							'Petición cancelada',
-						)),
-			);
-		host.querySelectorAll('[data-obtained]').forEach(
-			(c) =>
-				(c.onchange = () =>
-					void run(() =>
-						api('/api/wishlists/' + encodeURIComponent(c.dataset.obtained), 'PATCH', {
-							obtained: c.checked,
-						}),
-					)),
+		const close = host.querySelector('[data-close]');
+		if (close)
+			close.onclick = () => {
+				select({ boss: null, item: null });
+				render();
+			};
+		host.querySelectorAll('[data-item]').forEach(
+			(a) =>
+				(a.onclick = (e) => {
+					e.preventDefault();
+					const id = Number(a.dataset.item);
+					select({ item: state.item === id ? null : id });
+					state.draft = newDraft(currentItem());
+					host.querySelectorAll('[data-item]').forEach((x) => {
+						const on = Number(x.dataset.item) === state.item;
+						x.classList.toggle('is-selected', on);
+						x.setAttribute('aria-pressed', String(on));
+					});
+					renderEditor();
+					if (matchMedia('(max-width: 760px)').matches && state.item)
+						host
+							.querySelector('.loot-editor')
+							?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+				}),
 		);
-		host.querySelectorAll('[data-remove-wish]').forEach(
+		host.querySelectorAll('[data-remove-other]').forEach(
 			(b) =>
 				(b.onclick = () => {
 					if (confirm('¿Quitar este objeto de tu wishlist?'))
 						void run(
-							() => api('/api/wishlists/' + encodeURIComponent(b.dataset.removeWish), 'DELETE', {}),
+							() =>
+								api('/api/wishlists/' + encodeURIComponent(b.dataset.removeOther), 'DELETE', {}),
 							'Objeto quitado',
 						);
 				}),
 		);
-		host.querySelectorAll('[data-add-boss]').forEach(
-			(f) =>
-				(f.onsubmit = (e) => {
-					e.preventDefault();
-					const v = Object.fromEntries(new FormData(f));
-					void run(
-						() =>
-							create({
-								...v,
-								priority: Number(v.priority),
-								raid: state.raid,
-								boss: f.dataset.addBoss,
-							}),
-						locked ? '' : 'Añadido a tu wishlist',
-					);
-				}),
-		);
-		const free = host.querySelector('[data-add-free]');
-		free.onsubmit = (e) => {
-			e.preventDefault();
-			const v = Object.fromEntries(new FormData(free));
-			state.raid = v.raid;
-			try {
-				localStorage.setItem('wishlist-raid', v.raid);
-			} catch {
-				/* storage unavailable */
-			}
-			void run(() => create(v), locked ? '' : 'Añadido a tu wishlist');
-		};
+		bindEditor();
 	}
+
+	if (!currentBoss()) select({ boss: null, item: null });
+	state.draft = newDraft(currentItem());
 	render();
 }
