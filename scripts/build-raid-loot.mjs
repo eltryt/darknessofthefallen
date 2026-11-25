@@ -8,6 +8,8 @@
 // Writes public/catalog/raids.json, public/boss-portraits.js and public/assets/bosses/.
 import { mkdir, writeFile } from 'node:fs/promises';
 import sharp from 'sharp';
+import { format, resolveConfig } from 'prettier';
+import { pathToFileURL, fileURLToPath } from 'node:url';
 
 const ATLAS =
 	'https://raw.githubusercontent.com/Hoizame/AtlasLootClassic/master/AtlasLootClassic_DungeonsAndRaids/data.lua';
@@ -202,11 +204,15 @@ async function main() {
 		raids: out,
 	};
 	await writeFile(new URL('catalog/raids.json', OUT), JSON.stringify(catalog));
+	// Written already formatted: CI checks the style of every file in public/.
+	const portraitsFile = new URL('boss-portraits.js', OUT);
+	const code = `// Bosses with a portrait in /assets/bosses/<npc>.webp (scripts/build-raid-loot.mjs).\nexport const bossPortraits = ${JSON.stringify(portraits.sort((a, b) => a - b))};\n`;
 	await writeFile(
-		new URL('boss-portraits.js', OUT),
-		`// Bosses with a portrait in /assets/bosses/<npc>.webp (scripts/build-raid-loot.mjs).\nexport const bossPortraits = ${JSON.stringify(portraits.sort((a, b) => a - b))};\n`,
+		portraitsFile,
+		await format(code, {
+			...(await resolveConfig(fileURLToPath(portraitsFile))),
+			filepath: fileURLToPath(portraitsFile),
+		}),
 	);
 }
-
-import { pathToFileURL, fileURLToPath } from 'node:url';
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) await main();
