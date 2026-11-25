@@ -1,4 +1,9 @@
 const statuses = ['Nuevo', 'Contactado', 'Prueba', 'Aceptado', 'Rechazado'];
+// Accepted and rejected applications leave the working list for «Archivadas».
+export const closedStatuses = ['Aceptado', 'Rechazado'];
+const isClosed = (row) => closedStatuses.includes(row.status);
+const statusOrder = (row) => statuses.indexOf(row.status);
+const statusClass = (status) => 'app-' + status.toLowerCase();
 const labels = {
 	name: 'Nombre o alias',
 	discord: 'Usuario de Discord',
@@ -99,6 +104,10 @@ export async function applicationInbox(el, { api, esc, toast }) {
 			Solicitudes guardadas en la web, visibles únicamente para el Líder y los Oficiales. Fechas en
 			hora de Madrid.
 		</p>
+		<div class="hub-segment app-views" role="group" aria-label="Qué candidaturas ver">
+			<button type="button" data-app-view="open" aria-pressed="true"></button>
+			<button type="button" data-app-view="closed" aria-pressed="false"></button>
+		</div>
 		<div class="filters">
 			<label
 				>Buscar candidato<input
@@ -108,7 +117,6 @@ export async function applicationInbox(el, { api, esc, toast }) {
 			><label
 				>Estado<select id="application-status">
 					<option value="">Todos los estados</option>
-					${statuses.map((s) => `<option>${s}</option>`).join('')}
 				</select></label
 			>
 		</div>
@@ -116,30 +124,61 @@ export async function applicationInbox(el, { api, esc, toast }) {
 		<div id="application-list"></div>
 	</section>`;
 	const list = el.querySelector('#application-list');
+	// Pending first (new on top), or the archive of accepted and rejected ones.
+	let view = new URLSearchParams(location.search).get('ver') === 'archivadas' ? 'closed' : 'open';
+	const statusSelect = el.querySelector('#application-status');
+	function setView(next) {
+		view = next;
+		statusSelect.innerHTML =
+			'<option value="">Todos los estados</option>' +
+			statuses
+				.filter((s) => closedStatuses.includes(s) === (view === 'closed'))
+				.map((s) => `<option>${s}</option>`)
+				.join('');
+		render();
+	}
 	const date = (value) => new Date(value).toLocaleString('es-ES', { timeZone: 'Europe/Madrid' });
 	function render() {
 		const query = el.querySelector('#application-search').value.trim().toLocaleLowerCase('es');
 		const status = el.querySelector('#application-status').value;
-		const visible = rows.filter(
-			(row) =>
-				(!status || row.status === status) &&
-				[row.id, row.data.name, row.data.discord, row.data.character].some((v) =>
-					String(v).toLocaleLowerCase('es').includes(query),
-				),
+		const open = rows.filter((r) => !isClosed(r)),
+			closed = rows.filter(isClosed);
+		el.querySelector('[data-app-view="open"]').innerHTML =
+			`Pendientes <b>${open.length}</b>${rows.some((r) => r.status === 'Nuevo') ? ` <small>${rows.filter((r) => r.status === 'Nuevo').length} sin tratar</small>` : ''}`;
+		el.querySelector('[data-app-view="closed"]').innerHTML = `Archivadas <b>${closed.length}</b>`;
+		el.querySelectorAll('[data-app-view]').forEach((b) =>
+			b.setAttribute('aria-pressed', String(b.dataset.appView === view)),
 		);
+		const visible = (view === 'closed' ? closed : open)
+			.filter(
+				(row) =>
+					(!status || row.status === status) &&
+					[row.id, row.data.name, row.data.discord, row.data.character].some((v) =>
+						String(v).toLocaleLowerCase('es').includes(query),
+					),
+			)
+			.sort((a, b) =>
+				view === 'open'
+					? statusOrder(a) - statusOrder(b) || b.created_at.localeCompare(a.created_at)
+					: String(b.updated_at || b.created_at).localeCompare(
+							String(a.updated_at || a.created_at),
+						),
+			);
 		el.querySelector('#application-count').textContent =
-			`${visible.length} de ${rows.length} candidaturas · ${rows.filter((r) => r.status === 'Nuevo').length} nuevas${rows.length === 500 ? ' · Se muestran las 500 más recientes' : ''}`;
+			`${visible.length} ${view === 'closed' ? 'archivadas' : 'pendientes'} · ${rows.length} en total${rows.length === 500 ? ' · Se muestran las 500 más recientes' : ''}`;
 		list.innerHTML = visible.length
 			? visible
 					.map(
 						(row) =>
-							/* HTML */ `<article class="card application-card">
+							/* HTML */ `<article class="card application-card ${statusClass(row.status)}">
 								<div class="application-heading">
 									<div>
 										<h3>${esc(row.data.name)}</h3>
 										<p>${esc(row.data.class)} · ${esc(row.data.role)}</p>
 									</div>
-									<span class="pill">${esc(row.status)}</span>
+									<span class="pill app-status ${statusClass(row.status)}"
+										>${row.status === 'Nuevo' ? 'Nuevo · sin tratar' : esc(row.status)}</span
+									>
 								</div>
 								<p>
 									Recibida:
@@ -198,9 +237,11 @@ ${esc(row.notes)}</textarea>
 					)
 					.join('')
 			: /* HTML */ `<div class="empty">
-					<h3>${rows.length ? 'No hay coincidencias' : 'Todavía no hay candidaturas'}</h3>
+					<h3>
+						${!rows.length ? 'Todavía no hay candidaturas' : status || el.querySelector('#application-search').value.trim() ? 'No hay coincidencias' : view === 'closed' ? 'No hay candidaturas archivadas' : 'Ninguna pendiente'}
+					</h3>
 					<p>
-						${rows.length ? 'Prueba otro nombre o estado.' : 'Las solicitudes enviadas desde Reclutamiento aparecerán aquí.'}
+						${!rows.length ? 'Las solicitudes enviadas desde Reclutamiento aparecerán aquí.' : status || el.querySelector('#application-search').value.trim() ? 'Prueba otro nombre o estado.' : view === 'closed' ? 'Al marcar una candidatura como Aceptado o Rechazado pasa aquí.' : 'Están todas aceptadas o rechazadas: las tienes en Archivadas.'}
 					</p>
 				</div>`;
 
@@ -274,12 +315,17 @@ ${esc(row.notes)}</textarea>
 				try {
 					const values = Object.fromEntries(new FormData(form));
 					await api('/api/applications/' + form.dataset.applicationId, 'PATCH', values);
-					Object.assign(
-						rows.find((row) => row.id === form.dataset.applicationId),
-						values,
-					);
+					const row = rows.find((r) => r.id === form.dataset.applicationId);
+					const wasClosed = isClosed(row);
+					Object.assign(row, values, { updated_at: new Date().toISOString() });
 					render();
-					toast('Revisión guardada');
+					toast(
+						isClosed(row) && !wasClosed
+							? `Revisión guardada · ${row.data.name} pasa a Archivadas`
+							: !isClosed(row) && wasClosed
+								? `Revisión guardada · ${row.data.name} vuelve a Pendientes`
+								: 'Revisión guardada',
+					);
 				} catch (error) {
 					feedback.textContent = error.message;
 					feedback.setAttribute('role', 'alert');
@@ -289,6 +335,12 @@ ${esc(row.notes)}</textarea>
 			});
 	}
 	el.querySelector('#application-search').addEventListener('input', render);
-	el.querySelector('#application-status').addEventListener('change', render);
-	render();
+	statusSelect.addEventListener('change', render);
+	el.querySelectorAll('[data-app-view]').forEach((b) =>
+		b.addEventListener('click', () => {
+			el.querySelector('#application-search').value = '';
+			setView(b.dataset.appView);
+		}),
+	);
+	setView(view);
 }

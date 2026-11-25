@@ -46,6 +46,16 @@ export const panelAreas = [
 ];
 
 const DAY = 86400000;
+const appOrder = ['Nuevo', 'Contactado', 'Prueba'];
+const appLabel = { Nuevo: 'Sin tratar', Contactado: 'Contactado', Prueba: 'En prueba' };
+const shortDate = (value) =>
+	new Date(value).toLocaleString('es-ES', {
+		timeZone: 'Europe/Madrid',
+		day: 'numeric',
+		month: 'short',
+		hour: '2-digit',
+		minute: '2-digit',
+	});
 const when = (value) =>
 	new Date(value).toLocaleString('es-ES', {
 		timeZone: 'Europe/Madrid',
@@ -71,11 +81,21 @@ export async function mountPanelHome(el, { api, esc, me, data }, open) {
 	]);
 	if (!el.isConnected) return;
 	const cards = [];
+	// Applications still open (accepted and rejected ones live in «Archivadas»).
+	const openApps = (applications || [])
+		.filter((a) => !['Aceptado', 'Rechazado'].includes(a.status))
+		.sort(
+			(a, b) =>
+				appOrder.indexOf(a.status) - appOrder.indexOf(b.status) ||
+				b.created_at.localeCompare(a.created_at),
+		);
 	if (applications) {
 		const n = applications.filter((a) => a.status === 'Nuevo').length;
+		const going = openApps.length - n;
 		cards.push({
 			n,
-			label: n === 1 ? 'candidatura nueva' : 'candidaturas nuevas',
+			label: n === 1 ? 'candidatura sin tratar' : 'candidaturas sin tratar',
+			detail: going ? `${going} en curso (contactado o en prueba)` : '',
 			tab: 'applications',
 			go: 'Revisar candidaturas',
 			urgent: n > 0,
@@ -151,6 +171,19 @@ export async function mountPanelHome(el, { api, esc, me, data }, open) {
 				)
 				.join('')}
 		</ul>
+		${
+			openApps.length
+				? `<section class="ph-panel ph-apps"><header><small>Candidaturas pendientes · ${openApps.length}</small><button type="button" class="secondary" data-open-tab="applications">Ver todas →</button></header><ul>${openApps
+						.slice(0, 6)
+						.map(
+							(a) =>
+								`<li class="app-${a.status.toLowerCase()}"><button type="button" data-open-tab="applications"><span class="ph-app-who"><strong>${esc(a.data.name)}</strong><small>${esc([a.data.class, a.data.role].filter(Boolean).join(' · '))} · ${esc(shortDate(a.created_at))}</small></span><span class="pill app-status app-${a.status.toLowerCase()}">${esc(appLabel[a.status] || a.status)}</span></button></li>`,
+						)
+						.join(
+							'',
+						)}</ul>${openApps.length > 6 ? `<p class="muted">Y ${openApps.length - 6} más.</p>` : ''}</section>`
+				: ''
+		}
 		<div class="ph-row">
 			${
 				next

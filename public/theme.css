@@ -11819,3 +11819,116 @@ input[type='datetime-local']::-webkit-calendar-picker-indicator {
 		display: none;
 	}
 }
+
+/* ===== Applications: pending vs archived, state colours, panel home list ===== */
+.app-views {
+	margin: 4px 0 14px;
+}
+.app-views button b {
+	margin-left: 4px;
+	padding: 0 8px;
+	border-radius: 999px;
+	background: #ffffff14;
+	font-size: 12px;
+}
+.app-views button small {
+	margin-left: 6px;
+	color: var(--gold);
+	font-size: 11px;
+}
+.app-status.app-nuevo {
+	border-color: #d6a85a;
+	background: #d6a85a26;
+	color: var(--gold);
+}
+.app-status.app-contactado {
+	border-color: #9fb6d8;
+	background: #9fb6d81f;
+	color: #c4d4ec;
+}
+.app-status.app-prueba {
+	border-color: #c792ea;
+	background: #c792ea1f;
+	color: #dcc0f2;
+}
+.app-status.app-aceptado {
+	border-color: #7fd39a;
+	background: #7fd39a1f;
+	color: #9fe2b5;
+}
+.app-status.app-rechazado {
+	border-color: #e8a5ae;
+	background: #e8a5ae1f;
+	color: #f2c3ca;
+}
+.application-card.app-nuevo {
+	border-color: #d6a85a77;
+	box-shadow: inset 3px 0 0 var(--gold);
+}
+.ph-apps {
+	gap: 10px;
+}
+.ph-apps > header {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+.ph-apps > header button {
+	margin: 0;
+}
+.ph-apps ul {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+	gap: 8px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.ph-apps li button {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+	width: 100%;
+	min-height: 0;
+	margin: 0;
+	padding: 10px 12px;
+	border: 1px solid #ffffff14;
+	border-radius: 12px;
+	background: #141215;
+	box-shadow: none;
+	color: #e9e1d4;
+	text-align: left;
+}
+.ph-apps li button::before {
+	display: none;
+}
+.ph-apps li button:not(:disabled):hover {
+	border-color: #d6a85a88;
+	background: #1b1719;
+	box-shadow: none;
+	transform: none;
+}
+.ph-apps li.app-nuevo button {
+	border-color: #d6a85a66;
+	box-shadow: inset 3px 0 0 var(--gold);
+}
+.ph-app-who {
+	display: grid;
+	min-width: 0;
+}
+.ph-app-who strong {
+	font-size: 15px;
+}
+.ph-app-who small {
+	overflow: hidden;
+	color: var(--muted);
+	font-size: 12px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.ph-apps .pill {
+	flex: 0 0 auto;
+}
