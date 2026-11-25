@@ -369,6 +369,8 @@ export async function operationTab(tab, el, ctx) {
 						],
 			);
 		};
+		// Filters apply as soon as one changes; «Filtrar» stays for keyboards.
+		el.querySelector('#attendance-filter').onchange = (e) => e.currentTarget.requestSubmit();
 		el.querySelector('#attendance-filter').onsubmit = async (e) => {
 			e.preventDefault();
 			try {
@@ -525,13 +527,13 @@ export async function operationTab(tab, el, ctx) {
 					const row = rows.find((r) => r.id === del.dataset.deleteLoot);
 					if (
 						!confirm(
-							`¿Borrar «${row.data.item}» del historial de loot? No se puede deshacer desde el panel. Quedará constancia en Auditoría.`,
+							`¿Borrar «${row.data.item}» del historial de botín? No se puede deshacer desde el panel. Quedará constancia en Auditoría.`,
 						)
 					)
 						return;
 					button.disabled = true;
 					await api('/api/loot/' + del.dataset.deleteLoot, 'DELETE', {});
-					toast('Registro de loot borrado');
+					toast('Reparto borrado');
 				} else {
 					const reason = prompt(
 						'Motivo de anulación. La asignación original seguirá en el historial:',
@@ -624,7 +626,7 @@ export async function operationTab(tab, el, ctx) {
 	}
 	if (tab === 'council') {
 		const rows = await api('/api/council');
-		el.innerHTML = /* HTML */ `<h2>Consejo de loot</h2>
+		el.innerHTML = /* HTML */ `<h2>Consejo de botín</h2>
 			<p>
 				El consejo actual es visible para los miembros. Cada reparto conserva una copia de los
 				participantes de aquella decisión.

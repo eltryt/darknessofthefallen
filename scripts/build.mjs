@@ -122,6 +122,7 @@ try {
 		'loot-distribute.js',
 		'panel-home.js',
 		'profile-home.js',
+		'quick-search.js',
 		'boss-portraits.js',
 		'wishlist-rules-ui.js',
 		'sheet-parts.js',

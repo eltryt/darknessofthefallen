@@ -5,6 +5,7 @@ import { createProfileView } from './profile-view.js';
 import { createPanelView } from './panel-view.js';
 import { createArmoryView } from './armory-view.js';
 import { initMotion, pageReady } from './motion.js';
+import { initQuickSearch } from './quick-search.js';
 
 // Contexto compartido por las herramientas del panel.
 function operationsContext() {
@@ -171,6 +172,7 @@ async function boot() {
 				);
 		}
 		if (path === '/panel') $('#navigation a[href="/panel"]')?.setAttribute('aria-current', 'page');
+		initQuickSearch({ api, esc, me });
 		const context = { ...operationsContext(), $, title, roles, classes, opts, recruitmentChoices };
 		// Member areas share the public visual layer, which is keyed on data-page.
 		if (['/perfil', '/panel', '/armeria'].includes(path)) document.body.dataset.page = path;

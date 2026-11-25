@@ -771,7 +771,6 @@ export function createProfileView(context) {
 				me.permissions.includes('character.write')
 					? /* HTML */ `<details class="card hub-new" ${rows.length ? '' : 'open'}>
 							<summary>Añadir personaje</summary>
-							<h3>Añadir personaje</h3>
 							<form id="character" class="form">
 								<div class="form-grid">
 									${field('Nombre', 'name')}${field('Apellido', 'surname', 'text', '', false)}${select('Clase', 'class', classes)}${select('Rol', 'role', roles)}${field('Especialización', 'spec', 'text', '', false)}${field('Profesiones', 'professions', 'text', '', false)}${area('Disponibilidad', 'availability', false)}${area('Notas personales', 'notes', false)}
