@@ -2533,7 +2533,7 @@ body[data-page='/armeria'] main h3 {
 	text-decoration: none;
 }
 .armory-back:hover {
-	text-decoration: underline;
+	text-decoration: none;
 }
 .armory-switch {
 	display: grid;
@@ -5422,8 +5422,7 @@ button.doll-slot:focus-visible {
 /* Item names with a Wowhead tooltip (wowhead.js): the site's colour, a dotted hint. */
 .wowhead-link {
 	color: inherit;
-	text-decoration: underline dotted var(--gold);
-	text-underline-offset: 3px;
+	text-decoration: none;
 }
 .wowhead-link:hover,
 .wowhead-link:focus-visible {
@@ -5811,7 +5810,7 @@ button.doll-slot:focus-visible {
 	box-shadow: none;
 	color: var(--gold);
 	font-size: 12px;
-	text-decoration: underline;
+	text-decoration: none;
 }
 .boss-col-actions .link::before {
 	display: none;
@@ -6084,7 +6083,7 @@ button.doll-slot:focus-visible {
 	background: transparent;
 	box-shadow: none;
 	color: var(--muted);
-	text-decoration: underline;
+	text-decoration: none;
 }
 .tour-skip::before {
 	display: none;
@@ -7936,7 +7935,7 @@ body[data-page='/'] .hero {
 	background: none;
 	color: var(--gold);
 	font: inherit;
-	text-decoration: underline;
+	text-decoration: none;
 	cursor: pointer;
 }
 
@@ -8084,7 +8083,7 @@ body[data-page='/'] .hero {
 }
 .tutorial-link:hover,
 .tutorial-link:focus-visible {
-	text-decoration: underline;
+	text-decoration: none;
 }
 .hub-tour-start + .hub-tour-start {
 	margin-left: 8px;
@@ -8684,7 +8683,7 @@ details[data-create] > .tutorial-open,
 	box-shadow: none;
 	color: var(--gold);
 	font: inherit;
-	text-decoration: underline;
+	text-decoration: none;
 	cursor: pointer;
 }
 .roulette-debts {
@@ -10204,8 +10203,7 @@ button.gm-note-x:hover {
 }
 .char-link:hover,
 .char-link:focus-visible {
-	text-decoration: underline;
-	text-underline-offset: 3px;
+	text-decoration: none;
 }
 .pvp-token > a {
 	display: grid;
@@ -10214,4 +10212,58 @@ button.gm-note-x:hover {
 	height: 100%;
 	color: inherit;
 	text-decoration: none;
+}
+
+/* Small text actions («Verificar», «Quitar», «Cancelar mesa», «Según grupos», «Saltar
+   sección»): a compact gold-outlined chip instead of underlined text. Nothing on the site
+   is underlined. */
+.journey-cap .link-button,
+.roulette .link-button,
+.boss-col-actions .link,
+.tour-skip {
+	min-height: 0;
+	padding: 3px 10px;
+	border: 1px solid #d6a85a66;
+	border-radius: 999px;
+	background: #d6a85a14;
+	box-shadow: none;
+	color: var(--gold);
+	font-size: 12px;
+	font-weight: 650;
+	line-height: 1.4;
+	text-decoration: none;
+	cursor: pointer;
+}
+.journey-cap .link-button::before,
+.roulette .link-button::before,
+.boss-col-actions .link::before,
+.tour-skip::before {
+	display: none;
+}
+.journey-cap .link-button:hover,
+.roulette .link-button:hover,
+.boss-col-actions .link:hover,
+.tour-skip:hover {
+	border-color: var(--gold);
+	background: #d6a85a2e;
+	box-shadow: none;
+	transform: none;
+}
+.tour-skip {
+	border-color: #ffffff2e;
+	background: transparent;
+	color: var(--muted);
+}
+.roulette .link-button.is-danger {
+	border-color: #e8a5ae66;
+	background: #e8a5ae14;
+}
+.char-link:hover,
+.char-link:focus-visible,
+.footer-links a:hover,
+.armory-back:hover,
+.tutorial-link:hover,
+.tutorial-link:focus-visible,
+.wowhead-link:hover {
+	color: var(--gold);
 }

@@ -435,8 +435,7 @@ main {
 		animation: none;
 	}
 	.title-word.pact-glitching {
-		text-decoration: underline dotted color-mix(in srgb, var(--gold) 60%, transparent);
-		text-underline-offset: 0.12em;
+		text-decoration: none;
 	}
 }
 .launch-countdown {
@@ -835,7 +834,7 @@ footer small {
 }
 .link {
 	color: var(--gold);
-	text-decoration: underline;
+	text-decoration: none;
 }
 .schedule {
 	font:
@@ -1785,7 +1784,7 @@ footer {
 	padding: 10px 0;
 }
 .footer-links a:hover {
-	text-decoration: underline;
+	text-decoration: none;
 }
 .install-app {
 	padding: 6px 14px;
