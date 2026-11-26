@@ -429,7 +429,10 @@ export function renderMessage(doc, eventId, emojis, origin, closed = false) {
 			group(
 				`${icon(role.icon)} ${role.name}`.trim(),
 				active.filter((s) => s.roleName === role.name).sort(byClass),
-				(s) => `${classIcon(s)}${specIcon(s)} \`${position.get(s.id)}\` ${plain(s.name)}`,
+				// One icon per line (the spec says the class too): lines stay short, so a role
+				// of up to ~20 people fits one field and two lists share the row at half width
+				// instead of spilling into a narrow third column where names wrap.
+				(s) => `${specIcon(s) || classIcon(s)} \`${position.get(s.id)}\` ${plain(s.name)}`,
 				true,
 			);
 		}

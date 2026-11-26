@@ -522,9 +522,11 @@ test('grouped by role: tanks and healers first, DPS on a new row, long lists con
 	assert.equal(fields[2].inline, false);
 	assert.equal(names[3], 'DPS melee (1)');
 	assert.equal(names[4], 'DPS distancia (16)');
-	// Nobody is cut: the ranged list continues in the next column, classes kept together.
-	const ranged = fields[4].value + '\n' + fields[5].value;
-	assert.equal(names[5], blank);
+	// One icon per line: the 16 ranged fit one field, so melee and ranged share the row at
+	// half width (closed by a full-width blank) instead of wrapping in three narrow columns.
+	const ranged = fields[4].value;
+	assert.equal(fields.length, 5, 'no continuation column');
+	for (const line of ranged.split('\n')) assert.equal(line.match(/<:\w+:\d+>/g).length, 1);
 	assert.doesNotMatch(ranged, /más/);
 	for (let i = 0; i < 8; i++) assert.match(ranged, new RegExp(`Mago${i}$`, 'm'));
 	assert.ok(ranged.indexOf('Cazador0') < ranged.indexOf('Mago0'), 'template class order');
