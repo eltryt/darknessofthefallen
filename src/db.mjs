@@ -142,5 +142,11 @@ export function openDatabase(path = 'data/guild.sqlite') {
 		transaction(db, () =>
 			db.exec(readFileSync(new URL('../migrations/027_pvp_rank.sql', import.meta.url), 'utf8')),
 		);
+	if (!db.prepare('SELECT version FROM schema_migrations WHERE version=28').get())
+		transaction(db, () =>
+			db.exec(
+				readFileSync(new URL('../migrations/028_raid_reminders.sql', import.meta.url), 'utf8'),
+			),
+		);
 	return db;
 }

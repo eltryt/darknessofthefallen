@@ -17,7 +17,7 @@ const signup = (id, userId, name, roleName) => ({
 	status: 'primary',
 });
 
-async function fixture(extraEnv = {}) {
+async function fixture(extraEnv = {}, appOptions = {}) {
 	const db = openDatabase(':memory:'),
 		sessions = {};
 	for (const [id, rank] of [
@@ -46,7 +46,7 @@ async function fixture(extraEnv = {}) {
 		"INSERT INTO raids(id,title,starts_at,source) VALUES('e1','Guarida de prueba','2030-01-01T22:00:00Z','raid-helper')",
 	).run();
 	const env = { APP_ORIGIN: 'http://localhost:3000', ...extraEnv };
-	const server = createServer(createApp(db, env));
+	const server = createServer(createApp(db, env, appOptions));
 	await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
 	const request = async (path, who, method = 'GET', value) => {
 		const session = sessions[who];
@@ -307,6 +307,69 @@ test('per-boss plans are managed by organisers; unassigned players stay pending'
 			],
 		);
 		assert.equal(plan[0].bench, 1);
+	} finally {
+		await f.close();
+	}
+});
+
+test('raiders without a sign-up get one private reminder, never twice in a day', async () => {
+	const guild = '1'.repeat(18);
+	const members = [
+		{ user: { id: 'm1', username: 'uno' }, roles: ['raider-role'] },
+		{ user: { id: 'r-a', username: 'ana', global_name: 'Ana' }, roles: ['raider-role'] },
+		{ user: { id: 'r-b', username: 'bea' }, nick: 'Bea', roles: ['raider-role', 'x'] },
+		{ user: { id: 'only-member', username: 'mem' }, roles: ['member-role'] },
+		{ user: { id: 'a-bot', username: 'bot', bot: true }, roles: ['raider-role'] },
+	];
+	let listStatus = 200;
+	const lists = [];
+	const discordFetch = async (url) => {
+		lists.push(url);
+		return { ok: listStatus === 200, status: listStatus, json: async () => members };
+	};
+	const env = {
+		...bot,
+		DISCORD_GUILD_ID: guild,
+		DISCORD_ROLE_MAP: JSON.stringify({ 'raider-role': 'raider', 'member-role': 'member' }),
+	};
+	const f = await fixture(env, { discordFetch });
+	try {
+		assert.equal((await f.request('/api/events/e1/reminders', 'm1')).status, 403);
+		const preview = await f.request('/api/events/e1/reminders', 'rl');
+		assert.equal(preview.status, 200);
+		// m1 is signed up; the member without the Raider role and the bot are left out.
+		assert.deepEqual(
+			preview.body.missing.map((r) => r.name),
+			['Ana', 'Bea'],
+		);
+		assert.ok(lists[0].endsWith(`/guilds/${guild}/members?limit=1000&after=0`));
+		const sent = await f.request('/api/events/e1/reminders', 'rl', 'POST', {});
+		assert.equal(sent.body.queued, 2);
+		const twice = await f.request('/api/events/e1/reminders', 'rl', 'POST', {});
+		assert.deepEqual([twice.body.queued, twice.body.skipped], [0, 2]);
+		const discord = fakeDiscord([]);
+		await deliverCallups(f.db, f.env, discord.transport);
+		const messages = discord.calls.filter((c) => c.url.endsWith('/messages'));
+		assert.equal(messages.length, 2);
+		assert.match(messages[0].body.content, /rango \*\*Raider\*\*/);
+		assert.match(messages[0].body.content, /Guarida de prueba del 1 de enero/);
+		assert.match(messages[0].body.content, /localhost:3000\/raids\n— Usuario rl$/);
+		assert.deepEqual(messages[0].body.allowed_mentions, { parse: [] });
+		assert.deepEqual(
+			f.db
+				.prepare('SELECT DISTINCT dm_status FROM raid_reminders')
+				.all()
+				.map((r) => r.dm_status),
+			['sent'],
+		);
+		// Already reminded today: pressing again sends nothing.
+		const after = await f.request('/api/events/e1/reminders', 'rl', 'POST', {});
+		assert.deepEqual([after.body.queued, after.body.skipped], [0, 2]);
+		// Without the members intent Discord answers 403: the officer gets the reason.
+		listStatus = 403;
+		const refused = await f.request('/api/events/e1/reminders', 'rl');
+		assert.equal(refused.status, 502);
+		assert.match(refused.body.error, /Server Members Intent/);
 	} finally {
 		await f.close();
 	}

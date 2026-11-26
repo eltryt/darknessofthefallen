@@ -383,6 +383,146 @@ export function callupMessage(callup, event, origin) {
 			: `⚔️ **Darkness of the Fallen · Convocatoria**\n**${event.title}**\n${when} (hora de Madrid)\nTu puesto: **${slotLabel(callup.slot)}**\nDetalles: ${link}`;
 	return { content: content.slice(0, 1900), allowed_mentions: { parse: [] } };
 }
+const dayMonth = new Intl.DateTimeFormat('es-ES', {
+	timeZone: 'Europe/Madrid',
+	day: 'numeric',
+	month: 'long',
+});
+// Where the reminder sends people: the event message in Discord, or the raids page.
+const eventLink = (event, env) =>
+	event.external_id && event.channel_id && env.DISCORD_GUILD_ID
+		? `https://discord.com/channels/${env.DISCORD_GUILD_ID}/${event.channel_id}/${event.external_id}`
+		: `${env.APP_ORIGIN || ''}/raids`;
+export function reminderMessage(db, reminder, event, env) {
+	const sender =
+		db.prepare('SELECT display_name FROM users WHERE id=?').get(reminder.created_by)
+			?.display_name || 'los oficiales';
+	const content =
+		`👋 ¡Buenas! Tienes rango **Raider** pero aún no estás apuntado en la **${event.title} del ${dayMonth.format(new Date(event.starts_at))}**. ` +
+		`Apúntate en la convocatoria para que pueda contar contigo al montar los grupos. ` +
+		`Si no vas a poder, márcate como **Ausente**, que también me sirve.\n` +
+		`👉 ${eventLink(event, env)}\n— ${sender}`;
+	return { content: content.slice(0, 1900), allowed_mentions: { parse: [] } };
+}
+// Discord role ids that give the raider rank (from the same map that sets web ranks).
+export function raiderRoleIds(env) {
+	try {
+		return Object.entries(JSON.parse(env.DISCORD_ROLE_MAP || '{}'))
+			.filter(([, rank]) => rank === 'raider')
+			.map(([id]) => id);
+	} catch {
+		return [];
+	}
+}
+// Members of the server with a Raider role, read page by page from Discord.
+export async function discordRaiders(env, transport = fetch) {
+	const roles = new Set(raiderRoleIds(env));
+	if (!roles.size)
+		throw new HttpError(503, 'No hay ningún rol de Discord asociado al rango Raider.');
+	if (!/^\d{17,20}$/.test(env.DISCORD_GUILD_ID || ''))
+		throw new HttpError(503, 'Falta el servidor de Discord en la configuración.');
+	const raiders = [];
+	let after = '0';
+	for (let page = 0; page < 20; page++) {
+		const response = await transport(
+			`${DISCORD_API}/guilds/${env.DISCORD_GUILD_ID}/members?limit=1000&after=${after}`,
+			{
+				headers: {
+					Authorization: `Bot ${env.DISCORD_BOT_TOKEN}`,
+					'User-Agent': 'DarknessOfTheFallen (https://darknessofthefallen.com, 1)',
+				},
+				redirect: 'manual',
+			},
+		);
+		if (!response.ok)
+			throw new HttpError(
+				502,
+				response.status === 403
+					? 'Discord no deja al bot leer la lista de miembros: activa «Server Members Intent» en el portal de desarrolladores.'
+					: `Discord no devolvió la lista de miembros (HTTP ${response.status}).`,
+			);
+		const members = await response.json();
+		for (const m of members)
+			if (!m.user?.bot && (m.roles || []).some((r) => roles.has(r)))
+				raiders.push({
+					userId: m.user.id,
+					name: m.nick || m.user.global_name || m.user.username,
+				});
+		if (members.length < 1000) break;
+		after = members.at(-1).user.id;
+	}
+	return raiders;
+}
+// Raiders who have not answered the event at all (any sign-up, absence included, counts).
+function unsignedRaiders(row, raiders) {
+	const signed = new Set(
+		(eventRaw(row).signUps || []).filter((s) => s.userId).map((s) => String(s.userId)),
+	);
+	return raiders
+		.filter((r) => !signed.has(r.userId))
+		.sort((a, b) => a.name.localeCompare(b.name, 'es'));
+}
+const reminderRows = (db, eventId) =>
+	db
+		.prepare(
+			'SELECT user_id,name,dm_status,dm_error,sent_at,updated_at FROM raid_reminders WHERE event_id=? ORDER BY name',
+		)
+		.all(eventId);
+// A reminder already sent is not repeated within this window, so a double click
+// or two officers pressing at once never spam anyone.
+const REMIND_AGAIN_MS = 20 * 3600000;
+export async function raidRemindersApi(
+	{ db, user, path, method, send, env, requireUser },
+	transport = fetch,
+) {
+	const m = path.match(/^\/api\/events\/([^/]+)\/reminders$/);
+	if (!m) return false;
+	requireUser();
+	const row = managedEvent(db, user, m[1]);
+	if (!['GET', 'POST'].includes(method)) throw new HttpError(405, 'Método no permitido.');
+	if (!dmReady(env)) throw new HttpError(503, 'El bot de Discord todavía no está configurado.');
+	if (Date.parse(row.starts_at) <= Date.now())
+		throw new HttpError(409, 'La convocatoria ya ha empezado.');
+	const missing = unsignedRaiders(row, await discordRaiders(env, transport));
+	if (method === 'GET') {
+		send(200, { missing, reminders: reminderRows(db, row.id) });
+		return true;
+	}
+	const counts = transaction(db, () => {
+		const previous = new Map(
+			db
+				.prepare('SELECT * FROM raid_reminders WHERE event_id=?')
+				.all(row.id)
+				.map((r) => [r.user_id, r]),
+		);
+		const counts = { queued: 0, skipped: 0 };
+		for (const r of missing) {
+			const before = previous.get(r.userId);
+			if (
+				before &&
+				(['pending', 'sending'].includes(before.dm_status) ||
+					(before.dm_status === 'sent' &&
+						Date.now() - Date.parse(before.sent_at) < REMIND_AGAIN_MS))
+			) {
+				counts.skipped++;
+				continue;
+			}
+			counts.queued++;
+			if (before)
+				db.prepare(
+					"UPDATE raid_reminders SET name=?,dm_status='pending',dm_error='',attempts=0,next_at=0,created_by=?,updated_at=? WHERE id=?",
+				).run(r.name, user.id, now(), before.id);
+			else
+				db.prepare(
+					'INSERT INTO raid_reminders(id,event_id,user_id,name,created_by,created_at,updated_at) VALUES(?,?,?,?,?,?,?)',
+				).run(randomUUID(), row.id, r.userId, r.name, user.id, now(), now());
+		}
+		audit(db, user.id, 'raid.reminders.sent', row.id, counts);
+		return counts;
+	});
+	send(200, { ...counts, missing, reminders: reminderRows(db, row.id) });
+	return true;
+}
 export async function discord(transport, env, path, payload) {
 	const response = await transport(DISCORD_API + path, {
 		method: 'POST',
@@ -403,27 +543,48 @@ export async function discord(transport, env, path, payload) {
 	return { status: response.status, data };
 }
 const busy = new WeakSet();
-// Sends pending call-ups one by one. A failure after Discord may have received the
-// message is marked uncertain and never replayed automatically.
+// Sends pending call-ups, then pending sign-up reminders, one by one. A failure after
+// Discord may have received the message is marked uncertain and never replayed automatically.
 export async function deliverCallups(db, env, transport = fetch, limit = 10) {
 	if (!dmReady(env) || busy.has(db)) return 0;
 	busy.add(db);
-	let delivered = 0;
 	try {
+		const callups = await deliverQueue(db, env, transport, limit, 'raid_callups', (c, e) =>
+			callupMessage(c, e, env.APP_ORIGIN),
+		);
+		if (callups.stopped || callups.delivered >= limit) return callups.delivered;
+		const reminders = await deliverQueue(
+			db,
+			env,
+			transport,
+			limit - callups.delivered,
+			'raid_reminders',
+			(r, e) => reminderMessage(db, r, e, env),
+		);
+		return callups.delivered + reminders.delivered;
+	} finally {
+		busy.delete(db);
+	}
+}
+// `table` is one of the two queues above (never user input).
+async function deliverQueue(db, env, transport, limit, table, compose) {
+	let delivered = 0,
+		stopped = false;
+	{
 		db.prepare(
-			"UPDATE raid_callups SET dm_status='uncertain',dm_error='Envío interrumpido: comprueba con el jugador antes de reintentar.' WHERE dm_status='sending' AND next_at<=?",
+			`UPDATE ${table} SET dm_status='uncertain',dm_error='Envío interrumpido: comprueba con el jugador antes de reintentar.' WHERE dm_status='sending' AND next_at<=?`,
 		).run(Date.now());
 		for (let i = 0; i < limit; i++) {
 			const callup = db
 				.prepare(
-					"SELECT * FROM raid_callups WHERE dm_status='pending' AND next_at<=? ORDER BY updated_at LIMIT 1",
+					`SELECT * FROM ${table} WHERE dm_status='pending' AND next_at<=? ORDER BY updated_at LIMIT 1`,
 				)
 				.get(Date.now());
 			if (!callup) break;
 			const event = db.prepare('SELECT * FROM raid_events WHERE id=?').get(callup.event_id);
 			if (!event || event.state === 'Eliminada') {
 				db.prepare(
-					"UPDATE raid_callups SET dm_status='failed',dm_error='La convocatoria ya no existe.' WHERE id=?",
+					`UPDATE ${table} SET dm_status='failed',dm_error='La convocatoria ya no existe.' WHERE id=?`,
 				).run(callup.id);
 				continue;
 			}
@@ -431,7 +592,7 @@ export async function deliverCallups(db, env, transport = fetch, limit = 10) {
 				const attempts = callup.attempts + 1;
 				const retry = retryIn !== undefined && attempts < MAX_ATTEMPTS;
 				db.prepare(
-					'UPDATE raid_callups SET dm_status=?,dm_error=?,attempts=?,next_at=?,updated_at=? WHERE id=?',
+					`UPDATE ${table} SET dm_status=?,dm_error=?,attempts=?,next_at=?,updated_at=? WHERE id=?`,
 				).run(
 					retry ? 'pending' : 'failed',
 					error,
@@ -442,7 +603,7 @@ export async function deliverCallups(db, env, transport = fetch, limit = 10) {
 				);
 			};
 			// The lease also marks the row so a crash mid-send is detected next run.
-			db.prepare("UPDATE raid_callups SET dm_status='sending',next_at=? WHERE id=?").run(
+			db.prepare(`UPDATE ${table} SET dm_status='sending',next_at=? WHERE id=?`).run(
 				Date.now() + 120000,
 				callup.id,
 			);
@@ -460,6 +621,7 @@ export async function deliverCallups(db, env, transport = fetch, limit = 10) {
 					'Límite de Discord: se reintentará.',
 					Math.ceil((channel.data.retry_after || 5) * 1000),
 				);
+				stopped = true;
 				break;
 			}
 			if (channel.status >= 500) {
@@ -472,7 +634,10 @@ export async function deliverCallups(db, env, transport = fetch, limit = 10) {
 						? 'El token del bot no es válido.'
 						: 'No se pudo abrir un mensaje privado con este jugador.',
 				);
-				if (channel.status === 401) break;
+				if (channel.status === 401) {
+					stopped = true;
+					break;
+				}
 				continue;
 			}
 			let message;
@@ -481,17 +646,17 @@ export async function deliverCallups(db, env, transport = fetch, limit = 10) {
 					transport,
 					env,
 					`/channels/${channel.data.id}/messages`,
-					callupMessage(callup, event, env.APP_ORIGIN),
+					compose(callup, event),
 				);
 			} catch {
 				db.prepare(
-					"UPDATE raid_callups SET dm_status='uncertain',dm_error='Respuesta no confirmada: comprueba con el jugador antes de reintentar.',updated_at=? WHERE id=?",
+					`UPDATE ${table} SET dm_status='uncertain',dm_error='Respuesta no confirmada: comprueba con el jugador antes de reintentar.',updated_at=? WHERE id=?`,
 				).run(now(), callup.id);
 				continue;
 			}
 			if (message.status === 200) {
 				db.prepare(
-					"UPDATE raid_callups SET dm_status='sent',dm_error='',attempts=attempts+1,sent_at=?,updated_at=? WHERE id=?",
+					`UPDATE ${table} SET dm_status='sent',dm_error='',attempts=attempts+1,sent_at=?,updated_at=? WHERE id=?`,
 				).run(now(), now(), callup.id);
 				delivered++;
 			} else if (message.status === 429) {
@@ -499,6 +664,7 @@ export async function deliverCallups(db, env, transport = fetch, limit = 10) {
 					'Límite de Discord: se reintentará.',
 					Math.ceil((message.data.retry_after || 5) * 1000),
 				);
+				stopped = true;
 				break;
 			} else if (message.status >= 500) {
 				fail(`Discord HTTP ${message.status}: se reintentará.`, 60000 * (callup.attempts + 1));
@@ -509,10 +675,12 @@ export async function deliverCallups(db, env, transport = fetch, limit = 10) {
 						: `Discord rechazó el mensaje (HTTP ${message.status}).`,
 				);
 		}
-	} finally {
-		busy.delete(db);
 	}
-	return delivered;
+	return { delivered, stopped };
 }
-export const nextCallupAt = (db) =>
-	db.prepare("SELECT MIN(next_at) due FROM raid_callups WHERE dm_status='pending'").get().due;
+export const nextCallupAt = (db) => {
+	const due = ['raid_callups', 'raid_reminders']
+		.map((t) => db.prepare(`SELECT MIN(next_at) due FROM ${t} WHERE dm_status='pending'`).get().due)
+		.filter((d) => d !== null && d !== undefined);
+	return due.length ? Math.min(...due) : null;
+};

@@ -34,7 +34,7 @@ import { journeyApi } from './journey.mjs';
 import { pvpBoardApi } from './pvp-board.mjs';
 import { rouletteApi } from './roulette.mjs';
 import { battlenetReady, startBattlenet, finishBattlenet } from './battlenet.mjs';
-import { raidLineupApi } from './raid-lineup.mjs';
+import { raidLineupApi, raidRemindersApi } from './raid-lineup.mjs';
 import { attendanceSheetApi } from './attendance-sheet.mjs';
 import {
 	applicantIdentity,
@@ -500,6 +500,8 @@ export function createApp(db, env, { readAsset = readLocalAsset, discordFetch = 
 			)
 				return;
 			if (attendanceSheetApi({ db, path, method, send, requirePermission, user })) return;
+			if (await raidRemindersApi({ db, user, path, method, send, env, requireUser }, discordFetch))
+				return;
 			if (
 				await raidLineupApi({
 					db,

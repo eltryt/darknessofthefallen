@@ -225,6 +225,7 @@ export async function mountLineup(target, eventId, { api, esc, toast, data }, on
 					</button>
 					<button type="button" data-send>Enviar convocatoria</button>
 					${failed && view.dm.ready ? `<button type="button" class="secondary" data-retry>Reintentar ${failed} avisos</button>` : ''}
+					${view.dm.ready && !view.started ? `<button type="button" class="secondary" data-remind title="Manda un privado de Discord a quien tiene el rol Raider y no se ha apuntado">Recordar a raiders sin apuntar</button>` : ''}
 					<button type="button" class="secondary" data-close>Cerrar</button>
 				</div>
 			</div>
@@ -507,6 +508,28 @@ export async function mountLineup(target, eventId, { api, esc, toast, data }, on
 				await load(result.view);
 				toast(
 					`Convocatoria enviada · ${result.dmReady ? result.notified + ' avisos por privado' : result.notified + ' jugadores, sin mensaje privado (bot sin configurar)'}${result.unchanged ? ` · ${result.unchanged} sin cambios` : ''}${result.removed ? ` · ${result.removed} retirados` : ''}`,
+				);
+			}),
+		);
+		on(
+			'[data-remind]',
+			guard(async () => {
+				const reminders = url.replace(/\/lineup$/, '/reminders');
+				const { missing } = await api(reminders);
+				if (!missing.length) return toast('Todos los raiders están apuntados');
+				if (
+					!confirm(
+						`¿Mandar un privado de Discord a ${missing.length} raiders sin apuntar?
+
+${missing.map((r) => r.name).join(', ')}
+
+A quien ya se le recordó hoy no se le repite.`,
+					)
+				)
+					return;
+				const result = await api(reminders, 'POST', {});
+				toast(
+					`${result.queued} recordatorios en camino${result.skipped ? ` · ${result.skipped} ya avisados hoy` : ''}`,
 				);
 			}),
 		);

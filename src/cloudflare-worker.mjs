@@ -37,6 +37,7 @@ import raidBotSchema from '../migrations/024_raid_bot.sql';
 import recruitmentOfficerSchema from '../migrations/025_recruitment_officer.sql';
 import wishlistRulesSchema from '../migrations/026_wishlist_rules.sql';
 import pvpRankSchema from '../migrations/027_pvp_rank.sql';
+import raidRemindersSchema from '../migrations/028_raid_reminders.sql';
 import { botReady, deliverBotRenders, nextBotRenderAt } from './raid-bot.mjs';
 import { deliverRouletteDMs, nextRouletteDMAt } from './roulette.mjs';
 import { deliverPush, nextPushAt, pushReady } from './push-notifications.mjs';
@@ -84,6 +85,7 @@ export class Guild extends DurableObject {
 			recruitmentOfficerSchema,
 			wishlistRulesSchema,
 			pvpRankSchema,
+			raidRemindersSchema,
 		);
 		repairGMRedirectFailures(this.db);
 		this.usage = { since: Date.now(), alarms: 0, total: 0, keys: new Map() };
