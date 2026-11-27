@@ -105,27 +105,77 @@ export function attachRecruitmentFilters(root) {
 	}
 }
 
+// Raid covers: official art for the WoW Forever raids, matched by name.
+const raidCovers = [
+	[/onyxia|onixya|onixia/i, 'onyxia'],
+	[/t[uú]mulo|barrow/i, 'barrow'],
+	[/hyjal/i, 'hyjal'],
+];
+const coverOf = (p) =>
+	raidCovers.find(([re]) => re.test(p.name) || p.bosses.some((b) => re.test(b.name)))?.[1] ||
+	'default';
+const killDate = (value) =>
+	new Date(value).toLocaleDateString('es-ES', {
+		timeZone: 'Europe/Madrid',
+		day: 'numeric',
+		month: 'short',
+		year: 'numeric',
+	});
+
 export function progressShowcase(rows, esc) {
 	if (!rows.length)
 		return `<section class="raid-showcase raid-reference raid-onyxia"><div class="raid-art"><img class="fade-in" decoding="async" src="/assets/icons/onyxia.webp" alt="" width="56" height="56"><span class="eyebrow">Un encuentro con historia</span><h2>Onyxia</h2><p>La próxima historia la escribimos juntos.</p></div><div class="raid-card-body"><span class="pill">Referencia visual · Sin progreso registrado</span><p>Cuando la hermandad registre sus encuentros, aquí verás las victorias, los jefes pendientes y las fechas de cada avance.</p></div></section>`;
-	return `<div class="raid-showcase-grid">${rows
+	const defeated = rows.reduce((n, p) => n + Number(p.defeated), 0),
+		total = rows.reduce((n, p) => n + Number(p.total), 0),
+		cleared = rows.filter((p) => p.total && Number(p.defeated) === Number(p.total)).length;
+	const summary = `<section class="pg-summary" aria-label="Resumen del progreso"><div><strong>${defeated}<span> / ${total}</span></strong><small>Jefes derrotados</small></div><div><strong>${cleared}<span> / ${rows.length}</span></strong><small>Bandas completadas</small></div><div class="pg-summary-bar"><small>Progreso total</small><span class="pg-bar" data-bar="${total ? Math.round((defeated / total) * 100) : 0}"></span><b>${total ? Math.round((defeated / total) * 100) : 0} %</b></div></section>`;
+	const raids = rows
 		.map((p) => {
-			const onyxia =
-				/onyxia|onixya|onixia/i.test(p.name) ||
-				p.bosses.some((b) => /onyxia|onixya|onixia/i.test(b.name));
-			return `<article class="raid-showcase${onyxia ? ' raid-onyxia' : ''}"><div class="raid-art">${onyxia ? '<img class="fade-in" decoding="async" src="/assets/icons/onyxia.webp" alt="" width="56" height="56">' : '<span class="raid-sigil" aria-hidden="true">◇</span>'}<span class="eyebrow">${esc(p.difficulty || 'Progreso de hermandad')}</span><h2>${esc(p.name)}</h2><strong class="raid-score">${Number(p.defeated)}<span> / ${Number(p.total)}</span></strong><p>Encuentros superados</p></div><div class="raid-card-body"><progress value="${Number(p.defeated)}" max="${Number(p.total) || 1}" aria-label="Progreso de ${esc(p.name)}"></progress><ul class="encounter-tiles">${p.bosses.map((b) => `<li class="${b.status === 'Derrotado' ? 'encounter-defeated' : ''}"><span aria-hidden="true">${b.status === 'Derrotado' ? '✓' : '◇'}</span><div><strong>${esc(b.name)}</strong><small>${esc(b.status)}</small>${b.firstKill ? `<small>Primera victoria · ${esc(new Date(b.firstKill).toLocaleDateString('es-ES', { timeZone: 'Europe/Madrid' }))}</small>` : ''}</div></li>`).join('')}</ul>${
-				p.history?.length
-					? `<details><summary>Historial de la banda</summary><ul>${p.history
-							.slice(0, 12)
-							.map(
-								(h) =>
-									`<li>${esc(new Date(h.date).toLocaleDateString('es-ES', { timeZone: 'Europe/Madrid' }))} · ${esc(h.boss)} · ${esc(h.status)}</li>`,
-							)
-							.join('')}</ul></details>`
-					: ''
-			}</div></article>`;
+			const done = Number(p.defeated),
+				all = Number(p.total) || 1,
+				pct = Math.round((done / all) * 100);
+			const state =
+				done >= all
+					? ['Completada', 'is-cleared']
+					: done || p.bosses.some((b) => b.status === 'En progreso')
+						? ['En progreso', 'is-going']
+						: ['Sin empezar', 'is-new'];
+			const tags = String(p.difficulty || 'Progreso de hermandad')
+				.split('·')
+				.map((t) => t.trim())
+				.filter(Boolean);
+			const next = p.bosses.find((b) => b.status !== 'Derrotado');
+			return `<article class="pg-raid pg-cover-${coverOf(p)} ${state[1]}">
+				<header class="pg-cover">
+					<div class="pg-title">
+						<span class="pg-tags">${tags.map((t) => `<span>${esc(t)}</span>`).join('')}<span class="pg-state">${state[0]}</span></span>
+						<h2>${esc(p.name)}</h2>
+						<p>${next ? `Siguiente: <strong>${esc(next.name)}</strong>` : 'Todos los jefes derrotados'}</p>
+					</div>
+					<div class="pg-ring" data-bar="${pct}" role="img" aria-label="${done} de ${Number(p.total)} jefes derrotados">
+						<strong class="raid-score">${done}<span> / ${Number(p.total)}</span></strong>
+						<small>jefes</small>
+					</div>
+				</header>
+				<progress class="pg-progress" value="${done}" max="${Number(p.total) || 1}" aria-label="Progreso de ${esc(p.name)}"></progress>
+				<ol class="pg-bosses">${p.bosses
+					.map(
+						(b, i) =>
+							`<li class="${b.status === 'Derrotado' ? 'is-defeated' : b.status === 'En progreso' ? 'is-going' : ''}"><span class="pg-num">${b.status === 'Derrotado' ? '✓' : i + 1}</span><div><strong>${esc(b.name)}</strong><small>${esc(b.status)}${b.firstKill ? ` · ${esc(killDate(b.firstKill))}` : ''}</small></div></li>`,
+					)
+					.join('')}</ol>${
+					p.history?.length
+						? `<details class="pg-history"><summary>Historial de la banda</summary><ul>${p.history
+								.slice(0, 12)
+								.map(
+									(h) =>
+										`<li>${esc(new Date(h.date).toLocaleDateString('es-ES', { timeZone: 'Europe/Madrid' }))} · ${esc(h.boss)} · ${esc(h.status)}</li>`,
+								)
+								.join('')}</ul></details>`
+						: ''
+				}
+			</article>`;
 		})
-		.join(
-			'',
-		)}</div><p class="progress-source">Progreso registrado por la hermandad · Horario de Madrid</p>`;
+		.join('');
+	return `${summary}<div class="pg-raids">${raids}</div><p class="progress-source">Progreso registrado por la hermandad · Horario de Madrid · Imágenes de Blizzard Entertainment</p>`;
 }

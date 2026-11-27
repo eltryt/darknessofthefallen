@@ -81,6 +81,8 @@ try {
 		'assets/art/guild-army.webp',
 
 		'assets/art/onyxia.webp',
+		'assets/art/raid-barrow-deeps.webp',
+		'assets/art/raid-hyjal-summit.webp',
 		'assets/art/war-room.webp',
 		'assets/art/raid-journey.webp',
 		'assets/art/campfire.webp',

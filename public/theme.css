@@ -11957,3 +11957,285 @@ input[type='datetime-local']::-webkit-calendar-picker-indicator {
 	min-height: 36px;
 	padding: 4px 10px;
 }
+
+/* ===== /progreso: summary, raid covers with official art, numbered bosses ===== */
+.pg-summary {
+	display: grid;
+	grid-template-columns: auto auto minmax(220px, 1fr);
+	gap: 12px;
+	margin: 0 0 22px;
+}
+.pg-summary > div {
+	display: grid;
+	align-content: center;
+	gap: 2px;
+	padding: 16px 22px;
+	border: 1px solid #a68a5b40;
+	border-radius: 16px;
+	background: linear-gradient(160deg, #1b1619, #100e11);
+}
+.pg-summary strong {
+	color: #fff1d7;
+	font:
+		700 34px/1 Georgia,
+		serif;
+}
+.pg-summary strong span {
+	color: var(--muted);
+	font-size: 20px;
+}
+.pg-summary small {
+	color: var(--muted);
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+}
+.pg-summary-bar {
+	grid-template-columns: 1fr auto;
+	align-items: center;
+	column-gap: 14px;
+}
+.pg-summary-bar small {
+	grid-column: 1 / -1;
+}
+.pg-summary-bar b {
+	color: var(--gold);
+	font-size: 18px;
+}
+.pg-bar {
+	height: 10px;
+	border-radius: 999px;
+	background: linear-gradient(90deg, var(--gold) calc(var(--p, 0) * 1%), #ffffff14 0);
+}
+.pg-raids {
+	display: grid;
+	gap: 22px;
+}
+.pg-raid {
+	overflow: hidden;
+	border: 1px solid #a68a5b55;
+	border-radius: 20px;
+	background: #111013;
+	box-shadow: 0 20px 44px #0008;
+}
+.pg-cover {
+	position: relative;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: 18px;
+	min-height: 300px;
+	padding: clamp(22px, 4vw, 40px);
+	background:
+		linear-gradient(90deg, #0d0b0ed9 0%, #0d0b0e70 50%, #0d0b0e00 100%),
+		linear-gradient(0deg, #111013 0%, transparent 55%),
+		var(--pg-art, var(--art-raid-expedition)) center / cover;
+}
+.pg-cover-barrow {
+	--pg-art: url('assets/art/raid-barrow-deeps.webp');
+}
+.pg-cover-hyjal {
+	--pg-art: url('assets/art/raid-hyjal-summit.webp');
+}
+.pg-cover-onyxia .pg-cover {
+	background:
+		linear-gradient(90deg, #120d0bf2 10%, #120d0ba8 45%, #120d0b10 80%),
+		linear-gradient(0deg, #111013 0%, transparent 55%),
+		url('assets/art/onyxia.webp') right 30% / auto 170% no-repeat,
+		#241610;
+}
+.pg-title {
+	display: grid;
+	gap: 8px;
+	max-width: 620px;
+}
+.pg-tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+.pg-tags span {
+	padding: 3px 11px;
+	border: 1px solid #d6a85a55;
+	border-radius: 999px;
+	background: #00000066;
+	color: var(--gold);
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+.pg-tags .pg-state {
+	border-color: #ffffff30;
+	color: #d9d1c5;
+}
+.is-going .pg-tags .pg-state {
+	border-color: #e0a96d;
+	color: #f0c48f;
+}
+.is-cleared .pg-tags .pg-state {
+	border-color: #7fd39a;
+	color: #9fe2b5;
+}
+.pg-title h2 {
+	margin: 0;
+	color: #fff4e2;
+	font:
+		400 clamp(34px, 5vw, 56px) / 1.05 Georgia,
+		serif;
+	text-shadow: 0 2px 20px #000;
+}
+.pg-title p {
+	margin: 0;
+	color: #d8cfc1;
+}
+.pg-title p strong {
+	color: #fff1d7;
+}
+.pg-ring {
+	display: grid;
+	flex: 0 0 auto;
+	place-items: center;
+	align-content: center;
+	width: 132px;
+	height: 132px;
+	border-radius: 50%;
+	background:
+		radial-gradient(closest-side, #0d0b0ef0 78%, transparent 80% 100%),
+		conic-gradient(var(--gold) calc(var(--p, 0) * 1%), #ffffff1f 0);
+	box-shadow: 0 10px 30px #000a;
+}
+.pg-ring .raid-score {
+	color: #fff4e2;
+	font:
+		700 34px/1 Georgia,
+		serif;
+}
+.pg-ring .raid-score span {
+	color: var(--muted);
+	font-size: 18px;
+}
+.pg-ring small {
+	color: var(--muted);
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+}
+.pg-progress {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+}
+.pg-bosses {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+	gap: 8px;
+	margin: 0;
+	padding: 18px clamp(16px, 3vw, 28px) 24px;
+	list-style: none;
+}
+.pg-bosses li {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 10px 12px;
+	border: 1px solid #ffffff12;
+	border-radius: 12px;
+	background: #161417;
+}
+.pg-bosses li div {
+	display: grid;
+	min-width: 0;
+}
+.pg-bosses strong {
+	color: #e9e1d4;
+	font-size: 14px;
+	line-height: 1.25;
+}
+.pg-bosses small {
+	color: var(--muted);
+	font-size: 12px;
+}
+.pg-num {
+	display: grid;
+	flex: 0 0 auto;
+	place-items: center;
+	width: 32px;
+	height: 32px;
+	border: 1px solid #ffffff26;
+	border-radius: 50%;
+	color: #b9b1a7;
+	font-size: 13px;
+	font-weight: 800;
+}
+.pg-bosses li.is-going {
+	border-color: #e0a96d66;
+}
+.pg-bosses li.is-going .pg-num {
+	border-color: #e0a96d;
+	color: #f0c48f;
+}
+.pg-bosses li.is-defeated {
+	border-color: #d6a85a66;
+	background: linear-gradient(90deg, #2c2016, #161417);
+}
+.pg-bosses li.is-defeated .pg-num {
+	border-color: var(--gold);
+	background: var(--gold);
+	color: #1d1205;
+}
+.pg-bosses li.is-defeated strong {
+	color: #fff1d7;
+}
+.pg-history {
+	margin: 0 clamp(16px, 3vw, 28px) 22px;
+}
+.pg-history > summary {
+	color: var(--gold);
+	cursor: pointer;
+}
+@media (max-width: 700px) {
+	.pg-summary {
+		grid-template-columns: 1fr 1fr;
+	}
+	.pg-summary-bar {
+		grid-column: 1 / -1;
+	}
+	.pg-cover {
+		min-height: 260px;
+	}
+	.pg-ring {
+		width: 104px;
+		height: 104px;
+	}
+	.pg-ring .raid-score {
+		font-size: 28px;
+	}
+	.pg-bosses {
+		grid-template-columns: 1fr 1fr;
+		gap: 6px;
+		padding: 14px 12px 18px;
+	}
+	.pg-bosses li {
+		gap: 8px;
+		padding: 8px;
+	}
+	.pg-bosses strong {
+		font-size: 13px;
+	}
+	.pg-num {
+		width: 26px;
+		height: 26px;
+		font-size: 12px;
+	}
+	.pg-cover-onyxia .pg-cover {
+		background:
+			linear-gradient(0deg, #111013 5%, #111013d0 40%, #11101320 80%),
+			url('assets/art/onyxia.webp') center 22% / cover;
+	}
+}
