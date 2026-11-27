@@ -11932,3 +11932,28 @@ input[type='datetime-local']::-webkit-calendar-picker-indicator {
 .ph-apps .pill {
 	flex: 0 0 auto;
 }
+
+/* Progress: edit a raid's name and bosses */
+.progress-edit {
+	margin-top: 14px;
+}
+.progress-edit > summary {
+	color: var(--gold);
+	cursor: pointer;
+}
+.progress-boss-list {
+	display: grid;
+	gap: 6px;
+	margin: 12px 0;
+	padding-left: 22px;
+}
+.progress-boss-list li {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto auto auto;
+	align-items: center;
+	gap: 6px;
+}
+.progress-boss-list button {
+	min-height: 36px;
+	padding: 4px 10px;
+}

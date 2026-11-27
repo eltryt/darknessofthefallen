@@ -144,6 +144,9 @@ export async function operationTab(tab, el, ctx) {
 			</select></label
 		>`;
 	const refresh = () => operationTab(tab, el, ctx);
+	// One boss in «Editar raid»: name, move up/down, and remove when never attempted.
+	const bossEditRow = (b) =>
+		`<li data-id="${esc(b.id)}"><input aria-label="Nombre del jefe" value="${esc(b.name)}" maxlength="100" required><button type="button" class="secondary" data-up aria-label="Subir">↑</button><button type="button" class="secondary" data-down aria-label="Bajar">↓</button>${b.status === 'No intentado' ? '<button type="button" class="secondary danger" data-drop aria-label="Quitar jefe">✕</button>' : `<span class="pill" title="Tiene progreso: no se puede quitar">${esc(b.status)}</span>`}</li>`;
 	const bind = () =>
 		formHandler('#operation-form', async (v, f) => {
 			await handlers[tab](v, f);
@@ -716,6 +719,36 @@ export async function operationTab(tab, el, ctx) {
 										</form>`,
 								)
 								.join('')}
+							<details class="progress-edit">
+								<summary>Editar raid</summary>
+								<form data-edit-progress="${esc(p.id)}" class="form">
+									<div class="form-grid">
+										<label
+											>Nombre de la raid<input
+												name="name"
+												required
+												maxlength="120"
+												value="${esc(p.data.name)}" /></label
+										><label
+											>Dificultad o modalidad<input
+												name="difficulty"
+												maxlength="80"
+												value="${esc(p.data.difficulty || '')}"
+										/></label>
+									</div>
+									<ol class="progress-boss-list">
+										${p.data.bosses.map((b) => bossEditRow(b)).join('')}
+									</ol>
+									<div class="actions">
+										<button type="button" class="secondary" data-add-boss>Añadir jefe</button>
+										<button type="submit">Guardar cambios</button>
+									</div>
+									<p class="muted">
+										Renombrar o reordenar no borra el progreso. Solo se pueden quitar jefes que no
+										se han intentado.
+									</p>
+								</form>
+							</details>
 						</article>`,
 				)
 				.join('')}
@@ -744,6 +777,47 @@ export async function operationTab(tab, el, ctx) {
 				} catch (error) {
 					toast(error.message);
 				} finally {
+					b.disabled = false;
+				}
+			};
+		});
+		el.querySelectorAll('[data-edit-progress]').forEach((form) => {
+			const list = form.querySelector('.progress-boss-list');
+			form.querySelector('[data-add-boss]').onclick = () => {
+				list.insertAdjacentHTML(
+					'beforeend',
+					bossEditRow({ id: '', name: '', status: 'No intentado' }),
+				);
+				list.lastElementChild.querySelector('input').focus();
+			};
+			list.onclick = (e) => {
+				const li = e.target.closest('li');
+				if (!li) return;
+				if (e.target.closest('[data-up]') && li.previousElementSibling)
+					li.previousElementSibling.before(li);
+				if (e.target.closest('[data-down]') && li.nextElementSibling)
+					li.nextElementSibling.after(li);
+				if (e.target.closest('[data-drop]')) li.remove();
+			};
+			form.onsubmit = async (e) => {
+				e.preventDefault();
+				const b = form.querySelector('[type=submit]');
+				b.disabled = true;
+				try {
+					await api('/api/progress/' + encodeURIComponent(form.dataset.editProgress), 'PATCH', {
+						name: form.elements.name.value,
+						difficulty: form.elements.difficulty.value,
+						bosses: [...list.children]
+							.map((li) => ({
+								...(li.dataset.id ? { id: li.dataset.id } : {}),
+								name: li.querySelector('input').value.trim(),
+							}))
+							.filter((x) => x.name),
+					});
+					toast('Raid actualizada');
+					await refresh();
+				} catch (error) {
+					toast(error.message);
 					b.disabled = false;
 				}
 			};

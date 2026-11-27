@@ -32,6 +32,7 @@ import { armoryApi } from './armory.mjs';
 import { achievementsApi, publicGuildAchievements } from './achievements.mjs';
 import { journeyApi } from './journey.mjs';
 import { pvpBoardApi } from './pvp-board.mjs';
+import { progressEditApi } from './progress-edit.mjs';
 import { rouletteApi } from './roulette.mjs';
 import { battlenetReady, startBattlenet, finishBattlenet } from './battlenet.mjs';
 import { raidLineupApi, raidRemindersApi } from './raid-lineup.mjs';
@@ -764,6 +765,18 @@ export function createApp(db, env, { readAsset = readLocalAsset, discordFetch = 
 			if (await achievementsApi({ db, user, path, method, send, requirePermission })) return;
 			if (await journeyApi({ db, user, path, method, send, requirePermission })) return;
 			if (await pvpBoardApi({ db, user, path, method, send, requirePermission })) return;
+			if (
+				await progressEditApi({
+					db,
+					user,
+					path,
+					method,
+					body: () => body(req),
+					send,
+					requirePermission,
+				})
+			)
+				return;
 			if (
 				await rouletteApi({
 					db,
