@@ -366,6 +366,9 @@ export async function raidLineupApi({ db, user, path, method, body, send, env, r
 	throw new HttpError(405, 'Método no permitido.');
 }
 
+// The bot never reads private messages: every one it sends says where to answer instead.
+export const NO_REPLY =
+	'\n-# Mensaje automático: el bot no lee las respuestas. Si tienes dudas, escribe a un oficial o usa el buzón de sugerencias.';
 const madrid = new Intl.DateTimeFormat('es-ES', {
 	timeZone: 'Europe/Madrid',
 	weekday: 'long',
@@ -381,7 +384,7 @@ export function callupMessage(callup, event, origin) {
 		callup.slot === 'removed'
 			? `⚔️ **Darkness of the Fallen · Cambio de convocatoria**\nYa no figuras en la alineación de **${event.title}** (${when}, hora de Madrid).\nDetalles: ${link}`
 			: `⚔️ **Darkness of the Fallen · Convocatoria**\n**${event.title}**\n${when} (hora de Madrid)\nTu puesto: **${slotLabel(callup.slot)}**\nDetalles: ${link}`;
-	return { content: content.slice(0, 1900), allowed_mentions: { parse: [] } };
+	return { content: content.slice(0, 1900) + NO_REPLY, allowed_mentions: { parse: [] } };
 }
 const dayMonth = new Intl.DateTimeFormat('es-ES', {
 	timeZone: 'Europe/Madrid',
@@ -402,7 +405,7 @@ export function reminderMessage(db, reminder, event, env) {
 		`Apúntate en la convocatoria para que pueda contar contigo al montar los grupos. ` +
 		`Si no vas a poder, márcate como **Ausente**, que también me sirve.\n` +
 		`👉 ${eventLink(event, env)}\n— ${sender}`;
-	return { content: content.slice(0, 1900), allowed_mentions: { parse: [] } };
+	return { content: content.slice(0, 1900) + NO_REPLY, allowed_mentions: { parse: [] } };
 }
 // Discord role ids that give the raider rank (from the same map that sets web ranks).
 export function raiderRoleIds(env) {

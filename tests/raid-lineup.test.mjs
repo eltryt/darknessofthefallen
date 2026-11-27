@@ -249,6 +249,10 @@ test('call-up messages describe the place without mentions', () => {
 	const event = { title: 'Raid de 40', starts_at: '2030-01-02T22:00:00Z' };
 	assert.match(callupMessage({ slot: 'group:3' }, event, 'https://x').content, /Grupo 3/);
 	assert.match(callupMessage({ slot: 'bench' }, event, 'https://x').content, /Banquillo/);
+	assert.match(
+		callupMessage({ slot: 'bench' }, event, 'https://x').content,
+		/\n-# Mensaje automático/,
+	);
 	assert.match(callupMessage({ slot: 'removed' }, event, 'https://x').content, /Ya no figuras/);
 	assert.equal(
 		callupMessage({ slot: 'group:1' }, event, 'https://x').content.includes('@everyone'),
@@ -353,7 +357,8 @@ test('raiders without a sign-up get one private reminder, never twice in a day',
 		assert.equal(messages.length, 2);
 		assert.match(messages[0].body.content, /rango \*\*Raider\*\*/);
 		assert.match(messages[0].body.content, /Guarida de prueba del 1 de enero/);
-		assert.match(messages[0].body.content, /localhost:3000\/raids\n— Usuario rl$/);
+		assert.match(messages[0].body.content, /localhost:3000\/raids\n— Usuario rl\n/);
+		assert.match(messages[0].body.content, /el bot no lee las respuestas/);
 		assert.deepEqual(messages[0].body.allowed_mentions, { parse: [] });
 		assert.deepEqual(
 			f.db
