@@ -32,6 +32,7 @@ export function durableDatabase(
 	wishlistRulesSchema,
 	pvpRankSchema,
 	raidRemindersSchema,
+	raidBotLevelsSchema,
 ) {
 	const execute = (sql, parameters = []) => storage.sql.exec(sql, ...parameters);
 	// Rows read so far (Cloudflare bills Durable Objects by rows read): the worker measures
@@ -170,6 +171,11 @@ export function durableDatabase(
 			!db.prepare('SELECT version FROM schema_migrations WHERE version=28').get()
 		)
 			db.exec(raidRemindersSchema);
+		if (
+			raidBotLevelsSchema &&
+			!db.prepare('SELECT version FROM schema_migrations WHERE version=29').get()
+		)
+			db.exec(raidBotLevelsSchema);
 	});
 	return db;
 }

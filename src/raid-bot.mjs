@@ -351,10 +351,14 @@ export function signupLevels(db, doc) {
 			.trim()
 			.split(/\s+/)[0]
 			.toLowerCase();
-		const char =
-			chars.find((c) => c.name.toLowerCase() === first) ||
-			chars.find((c) => c.is_main) ||
-			chars.reduce((a, b) => (b.level > a.level ? b : a));
+		// Several characters can share the name (a level-1 copy from an import): the highest wins.
+		const named = chars.filter((c) => c.name.toLowerCase() === first),
+			pool = named.length
+				? named
+				: chars.filter((c) => c.is_main).length
+					? chars.filter((c) => c.is_main)
+					: chars,
+			char = pool.reduce((a, b) => (b.level > a.level ? b : a));
 		levels.set(s.userId, char.level);
 	}
 	return levels;

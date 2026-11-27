@@ -148,5 +148,11 @@ export function openDatabase(path = 'data/guild.sqlite') {
 				readFileSync(new URL('../migrations/028_raid_reminders.sql', import.meta.url), 'utf8'),
 			),
 		);
+	if (!db.prepare('SELECT version FROM schema_migrations WHERE version=29').get())
+		transaction(db, () =>
+			db.exec(
+				readFileSync(new URL('../migrations/029_raid_bot_levels.sql', import.meta.url), 'utf8'),
+			),
+		);
 	return db;
 }

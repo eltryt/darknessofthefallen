@@ -13,6 +13,7 @@ import {
 	deliverBotRenders,
 	nextBotRenderAt,
 	renderMessage,
+	signupLevels,
 	settle,
 } from '../src/raid-bot.mjs';
 
@@ -547,4 +548,32 @@ test('grouped by role: tanks and healers first, DPS on a new row, long lists con
 	for (let i = 0; i < 8; i++) assert.match(ranged, new RegExp(`Mago${i}$`, 'm'));
 	assert.ok(ranged.indexOf('Cazador0') < ranged.indexOf('Mago0'), 'template class order');
 	for (const f of fields) assert.ok(f.value.length <= 1024);
+});
+
+test('levels: same-name copies lose to the highest, and a level change redraws the call-up', () => {
+	const db = openDatabase(':memory:'),
+		now = new Date().toISOString();
+	db.prepare(
+		"INSERT INTO users(id,display_name,rank,updated_at) VALUES('u1','Zalgo','member',?)",
+	).run(now);
+	const char = db.prepare(
+		"INSERT INTO characters(id,user_id,name,class,role,is_main,level,created_at) VALUES(?,'u1',?,'Sacerdote','Sanador',?,?,?)",
+	);
+	char.run('c1', 'Zalgo', 1, 40, now);
+	char.run('c2', 'Zalgo', 0, 1, now);
+	const doc = { signUps: [{ userId: 'u1', name: 'Zalgo Curas' }] };
+	assert.equal(signupLevels(db, doc).get('u1'), 40);
+	db.prepare(
+		"INSERT INTO raid_events(id,channel_id,organizer_id,title,starts_at,state,updated_at) VALUES('e1','9','u1','Raid',?,'Abierta',?)",
+	).run(now, now);
+	db.prepare(
+		"INSERT INTO raid_bot_events(event_id,message_id,channel_id,data) VALUES('e1','123','9',?)",
+	).run(JSON.stringify(doc));
+	const dirty = () =>
+		db.prepare("SELECT dirty FROM raid_bot_events WHERE event_id='e1'").get().dirty;
+	db.prepare("UPDATE characters SET level=60 WHERE id='c1'").run();
+	assert.equal(dirty(), 1, 'crossing 45 redraws');
+	db.prepare('UPDATE raid_bot_events SET dirty=0').run();
+	db.prepare("UPDATE characters SET level=59 WHERE id='c1'").run();
+	assert.equal(dirty(), 0, 'changes above 45 do not');
 });
