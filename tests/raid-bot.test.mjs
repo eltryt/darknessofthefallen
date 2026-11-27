@@ -528,6 +528,22 @@ test('grouped by role: tanks and healers first, DPS on a new row, long lists con
 	assert.equal(fields.length, 5, 'no continuation column');
 	for (const line of ranged.split('\n')) assert.equal(line.match(/<:\w+:\d+>/g).length, 1);
 	assert.doesNotMatch(ranged, /más/);
+	// Members under level 45 carry a mark with their level, and a legend explains it.
+	const marked = renderMessage(
+		doc,
+		'e1',
+		emojis,
+		'',
+		false,
+		new Map([
+			['Mago0', 38],
+			['Mago1', 60],
+		]),
+	).embeds[0];
+	assert.match(marked.fields[4].value, /Mago0 ⚠️ 38\n/);
+	assert.doesNotMatch(marked.fields[4].value, /Mago1 ⚠️/);
+	assert.match(marked.description, /-# ⚠️ = aún por debajo del nivel 45/);
+	assert.doesNotMatch(renderMessage(doc, 'e1', emojis, '').embeds[0].description, /⚠️/);
 	for (let i = 0; i < 8; i++) assert.match(ranged, new RegExp(`Mago${i}$`, 'm'));
 	assert.ok(ranged.indexOf('Cazador0') < ranged.indexOf('Mago0'), 'template class order');
 	for (const f of fields) assert.ok(f.value.length <= 1024);

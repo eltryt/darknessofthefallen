@@ -334,7 +334,32 @@ function clip(lines) {
 	return kept.join('\n') || '—';
 }
 // The Discord message of an event: embed with the sign-ups and the sign-up buttons.
-export function renderMessage(doc, eventId, emojis, origin, closed = false) {
+// Below this level a raider is marked in the list (with their level) so the leader sees
+// who still has to finish levelling before the raid.
+export const RAID_MIN_LEVEL = 45;
+// Level of each signed-up member, from their character on the web: the one whose name the
+// sign-up starts with, else the main, else the highest. Members without one are not marked.
+export function signupLevels(db, doc) {
+	const levels = new Map(),
+		pick = db.prepare(
+			'SELECT name,level,is_main FROM characters WHERE user_id=? AND archived_at IS NULL AND level IS NOT NULL',
+		);
+	for (const s of doc.signUps || []) {
+		const chars = pick.all(s.userId);
+		if (!chars.length) continue;
+		const first = String(s.name || '')
+			.trim()
+			.split(/\s+/)[0]
+			.toLowerCase();
+		const char =
+			chars.find((c) => c.name.toLowerCase() === first) ||
+			chars.find((c) => c.is_main) ||
+			chars.reduce((a, b) => (b.level > a.level ? b : a));
+		levels.set(s.userId, char.level);
+	}
+	return levels;
+}
+export function renderMessage(doc, eventId, emojis, origin, closed = false, levels = new Map()) {
 	const look = doc.look || {},
 		icon = (value) => emojiText(emojiOf(value, emojis)),
 		all = ordered(doc),
@@ -345,7 +370,9 @@ export function renderMessage(doc, eventId, emojis, origin, closed = false) {
 		position = new Map(active.map((s, i) => [s.id, String(i + 1).padStart(2, '0')]));
 	const specIcon = (s) =>
 			icon(classOf(doc, s.className)?.specs?.find((x) => x.name === s.specName)?.icon),
-		classIcon = (s) => icon(classOf(doc, s.className)?.icon);
+		classIcon = (s) => icon(classOf(doc, s.className)?.icon),
+		low = (s) => levels.get(s.userId) < RAID_MIN_LEVEL,
+		mark = (s) => (low(s) ? ` ⚠️ ${levels.get(s.userId)}` : '');
 	// Header: when, who leads, how full; then a rule and the sign-ups below.
 	const lines = [];
 	const when = Number.isFinite(doc.endTime)
@@ -370,6 +397,8 @@ export function renderMessage(doc, eventId, emojis, origin, closed = false) {
 		})
 		.join('  ·  ');
 	if (roleLine) lines.push(roleLine);
+	if (all.some(low))
+		lines.push(`-# ⚠️ = aún por debajo del nivel ${RAID_MIN_LEVEL} (nivel actual al lado)`);
 	if (doc.description)
 		lines.push(
 			'',
@@ -432,31 +461,34 @@ export function renderMessage(doc, eventId, emojis, origin, closed = false) {
 				// One icon per line (the spec says the class too): lines stay short, so a role
 				// of up to ~20 people fits one field and two lists share the row at half width
 				// instead of spilling into a narrow third column where names wrap.
-				(s) => `${specIcon(s) || classIcon(s)} \`${position.get(s.id)}\` ${plain(s.name)}`,
+				(s) =>
+					`${specIcon(s) || classIcon(s)} \`${position.get(s.id)}\` ${plain(s.name)}${mark(s)}`,
 				true,
 			);
 		}
 		group(
 			'Sin rol',
 			active.filter((s) => !doc.roles.some((r) => r.name === s.roleName)),
-			(s) => `${classIcon(s)} \`${position.get(s.id)}\` ${plain(s.name)}`,
+			(s) => `${classIcon(s)} \`${position.get(s.id)}\` ${plain(s.name)}${mark(s)}`,
 		);
 	} else {
 		for (const cls of doc.classes.filter((c) => c.type !== 'default'))
 			group(
 				`${icon(cls.icon)} ${cls.name}`.trim(),
 				active.filter((s) => s.className === cls.name),
-				(s) => `${specIcon(s)} \`${position.get(s.id)}\` ${plain(s.name)}`.trim(),
+				(s) => `${specIcon(s)} \`${position.get(s.id)}\` ${plain(s.name)}${mark(s)}`.trim(),
 				true,
 			);
 		group(
 			'Otros',
 			active.filter((s) => !classOf(doc, s.className)),
-			(s) => `\`${position.get(s.id)}\` ${plain(s.name)} · ${plain(s.className)}`,
+			(s) => `\`${position.get(s.id)}\` ${plain(s.name)} · ${plain(s.className)}${mark(s)}`,
 		);
 	}
 	newRow();
-	group('⏳ En cola', queued, (s) => `${classIcon(s)}${specIcon(s)} ${plain(s.name)}`.trim());
+	group('⏳ En cola', queued, (s) =>
+		`${classIcon(s)}${specIcon(s)} ${plain(s.name)}${mark(s)}`.trim(),
+	);
 	newRow();
 	for (const cls of doc.classes.filter((c) => c.type === 'default'))
 		group(
@@ -629,7 +661,7 @@ export function botProvider(db, env, transport = fetch) {
 			if (!messageId) {
 				const mention = snowflake(config.mentionRoleId) ? config.mentionRoleId : null;
 				const message = await botRest(env, transport, 'POST', `/channels/${channel}/messages`, {
-					...renderMessage(doc, eventId, emojis, env.APP_ORIGIN),
+					...renderMessage(doc, eventId, emojis, env.APP_ORIGIN, false, signupLevels(db, doc)),
 					...(mention ? { content: `<@&${mention}>` } : {}),
 					allowed_mentions: mention ? { roles: [mention] } : { parse: [] },
 					nonce: eventId.replace(/-/g, '').slice(0, 25),
@@ -737,7 +769,7 @@ export async function deliverBotRenders(db, env, transport = fetch, limit = 5) {
 					transport,
 					'PATCH',
 					`/channels/${row.channel_id}/messages/${row.message_id}`,
-					renderMessage(doc, row.event_id, emojis, env.APP_ORIGIN, closed),
+					renderMessage(doc, row.event_id, emojis, env.APP_ORIGIN, closed, signupLevels(db, doc)),
 				);
 				// A sign-up that arrived meanwhile keeps the message pending.
 				db.prepare(
