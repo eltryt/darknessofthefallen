@@ -185,6 +185,7 @@ const files = {
 	'/panel-home.js': ['panel-home.js', 'text/javascript'],
 	'/profile-home.js': ['profile-home.js', 'text/javascript'],
 	'/quick-search.js': ['quick-search.js', 'text/javascript'],
+	'/roster-board.js': ['roster-board.js', 'text/javascript'],
 	'/catalog/raids.json': ['catalog/raids.json', 'application/json'],
 	// Boss portraits of the wishlist (scripts/build-raid-loot.mjs).
 	...Object.fromEntries(

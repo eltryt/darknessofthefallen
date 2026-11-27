@@ -1,7 +1,7 @@
 import { progressShowcase, attachRecruitmentFilters } from './guild-showcase.js';
+import { mountRosterBoard } from './roster-board.js';
 import { mountHomeEvents, mountLaunchCountdown, mountPactEgg } from './home-events.js';
 import { contactForm } from './gm-ui.js';
-import { rosterTable } from './roster-ui.js';
 import { createPublicLayout } from './public-layout.js';
 import { mountRaidEvents } from './raid-events-ui.js';
 import {
@@ -212,44 +212,8 @@ export function createPublicViews(context) {
 				'La hermandad',
 				'Nuestro roster',
 				'Personajes, clases y roles. Los datos internos de los miembros permanecen privados.',
-			) +
-			/* HTML */ `<div class="filters">
-					<input id="search" aria-label="Buscar personaje" placeholder="Buscar personaje…" /><select
-						id="class"
-						aria-label="Filtrar clase"
-					>
-						<option value="">Todas las clases</option>
-						${opts(classes)}</select
-					><select id="role" aria-label="Filtrar rol">
-						<option value="">Todos los roles</option>
-						${opts(roles)}
-					</select>
-				</div>
-				<div id="roster-result"></div>`
+			) + '<div id="roster-board"></div>'
 		);
-	}
-
-	function renderRoster() {
-		const rows = data.characters.filter(
-			(c) =>
-				(!$('#search').value ||
-					c.name.toLowerCase().includes($('#search').value.trim().toLocaleLowerCase('es'))) &&
-				(!$('#class').value || c.class === $('#class').value) &&
-				(!$('#role').value || c.role === $('#role').value),
-		);
-		$('#roster-count').textContent =
-			`${rows.length} ${rows.length === 1 ? 'personaje' : 'personajes'}`;
-		$('#roster-result').innerHTML = rows.length
-			? rosterTable(rows, esc)
-			: data.characters.length
-				? empty(
-						'No encontramos personajes con esos filtros',
-						'Prueba otra clase o rol, o pulsa Limpiar filtros.',
-					)
-				: empty(
-						'El roster está por abrirse',
-						'Los personajes aparecerán cuando los miembros los registren. Aquí verás su nombre, clase y rol.',
-					);
 	}
 
 	function recruitment() {
@@ -487,13 +451,7 @@ export function createPublicViews(context) {
 			await mountRaidEvents(host, operationsContext());
 		}
 		if (path === '/roster') {
-			renderRoster();
-			$('#clear-roster').onclick = () => {
-				['#search', '#class', '#role'].forEach((id) => ($(id).value = ''));
-				renderRoster();
-				$('#search').focus();
-			};
-			['#search', '#class', '#role'].forEach((s) => $(s).addEventListener('input', renderRoster));
+			mountRosterBoard($('#roster-board'), data.characters, { esc });
 		}
 		prepareApplication($('#application'));
 		mountApplicantIdentity($('#application'), { api, esc });

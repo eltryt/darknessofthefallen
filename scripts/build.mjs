@@ -125,6 +125,7 @@ try {
 		'panel-home.js',
 		'profile-home.js',
 		'quick-search.js',
+		'roster-board.js',
 		'boss-portraits.js',
 		'wishlist-rules-ui.js',
 		'sheet-parts.js',

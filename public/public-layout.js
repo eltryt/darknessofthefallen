@@ -462,10 +462,7 @@ export function createPublicLayout(context) {
 			);
 		if (path === '/roster')
 			return (
-				html.replace(
-					'<div id="roster-result"></div>',
-					'<div class="results-toolbar"><span id="roster-count" role="status"></span><button id="clear-roster" class="secondary" type="button">Limpiar filtros</button></div><div id="roster-result"></div>',
-				) +
+				html +
 				/* HTML */ `<aside class="privacy-note">
 					El roster público muestra únicamente nombre, clase y rol. La información de los miembros
 					permanece en el área privada.

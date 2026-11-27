@@ -1546,15 +1546,6 @@ button.secondary:hover {
 	padding: 0 5px;
 	margin: 8px 0 15px;
 }
-.results-toolbar {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 15px;
-	margin-bottom: 20px;
-	color: var(--muted);
-	font-size: 13px;
-}
 .privacy-note {
 	font-size: 12px;
 	border-left: 2px solid #866573;
@@ -2052,10 +2043,6 @@ fieldset label {
 	}
 	.section-head h2 {
 		font-size: 27px;
-	}
-	.results-toolbar button {
-		font-size: 12px;
-		padding: 9px 12px;
 	}
 	.filters {
 		gap: 12px;
@@ -2757,15 +2744,6 @@ button.secondary:hover {
 	font-size: 14px;
 	padding: 0 5px;
 	margin: 8px 0 15px;
-}
-.results-toolbar {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 15px;
-	margin-bottom: 20px;
-	color: var(--muted);
-	font-size: 13px;
 }
 .privacy-note {
 	font-size: 12px;

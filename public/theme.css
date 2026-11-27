@@ -763,89 +763,8 @@ body[data-page='/roster'] .page-title p {
 	padding: clamp(24px, 4vw, 56px);
 	align-self: center;
 }
-.roster-layout {
-	display: grid;
-	grid-template-columns: minmax(0, 3fr) minmax(240px, 1fr);
-	gap: 24px;
-	align-items: start;
-}
-.roster-table-wrap {
-	min-width: 0;
-	border: 1px solid var(--guild-gold);
-	background: #101013;
-	overflow: auto;
-}
-.guild-roster-table {
-	width: 100%;
-	border-collapse: collapse;
-}
-.guild-roster-table caption {
-	text-align: left;
-	padding: 14px 18px;
-	font-size: 13px;
-	color: var(--muted);
-}
-.guild-roster-table th,
-.guild-roster-table td {
-	padding: 16px 20px;
-	text-align: left;
-	border-bottom: 1px solid #ffffff10;
-}
-.guild-roster-table thead {
-	background: #19171b;
-	color: #d9bf93;
-	font-size: 12px;
-	text-transform: uppercase;
-	letter-spacing: 0.07em;
-}
-.guild-roster-table tbody tr:hover {
-	background: #a68a5b0d;
-}
-.roster-table-name {
-	display: flex;
-	align-items: center;
-	gap: 14px;
-	color: var(--class-color, var(--ink));
-	overflow-wrap: anywhere;
-}
-.roster-table-name img {
-	width: 32px;
-	height: 32px;
-	flex-shrink: 0;
-	border: 1px solid var(--guild-gold);
-	border-radius: 4px;
-}
-.roster-summary {
-	display: grid;
-	gap: 18px;
-}
-.roster-summary .card {
-	padding: 24px;
-}
-.roster-summary h2 {
-	font:
-		48px Georgia,
-		serif;
-	margin: 10px 0;
-}
-.roster-summary dl > div {
-	display: flex;
-	justify-content: space-between;
-	padding: 10px 0;
-	border-bottom: 1px solid var(--line);
-}
-.roster-summary dd {
-	color: #e4c495;
-	font-weight: 700;
-}
 @media (max-width: 1000px) {
 	.adventure-grid {
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-	}
-	.roster-layout {
-		grid-template-columns: minmax(0, 1fr);
-	}
-	.roster-summary {
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
 }
@@ -896,21 +815,6 @@ body[data-page='/roster'] .page-title p {
 	.onyxia-feature img {
 		max-height: 350px;
 	}
-	.roster-summary {
-		grid-template-columns: minmax(0, 1fr);
-	}
-	.guild-roster-table th,
-	.guild-roster-table td {
-		padding: 12px 8px;
-		font-size: 13px;
-	}
-	.roster-table-name {
-		gap: 8px;
-	}
-	.guild-roster-table .pill {
-		font-size: 11px;
-		white-space: normal;
-	}
 }
 @media (prefers-reduced-motion: reduce) {
 	.adventure-card::before {
@@ -923,12 +827,6 @@ body[data-page='/roster'] .page-title p {
 body[data-page='/raids'] .page-title,
 body[data-page='/roster'] .page-title {
 	max-width: none;
-}
-.guild-roster-table tbody th {
-	font-size: 16px;
-	font-weight: 600;
-	text-transform: none;
-	letter-spacing: normal;
 }
 @media (max-width: 768px) {
 	.week-day {
@@ -1740,9 +1638,6 @@ footer > button.secondary {
 	max-width: none;
 	color: var(--muted);
 }
-.guild-roster-table .pill {
-	white-space: nowrap;
-}
 @media (max-width: 900px) {
 	.class-recruit-grid {
 		grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1773,10 +1668,6 @@ footer > button.secondary {
 	}
 	footer {
 		justify-content: flex-start;
-	}
-	.guild-roster-table .pill {
-		white-space: nowrap;
-		padding-inline: 8px;
 	}
 }
 
@@ -12237,5 +12128,279 @@ input[type='datetime-local']::-webkit-calendar-picker-indicator {
 		background:
 			linear-gradient(0deg, #111013 5%, #111013d0 40%, #11101320 80%),
 			url('assets/art/onyxia.webp') center 22% / cover;
+	}
+}
+
+/* ===== Public roster: composition, class filters and character cards by role ===== */
+.rb {
+	display: grid;
+	gap: 18px;
+}
+.rb-stats {
+	display: grid;
+	grid-template-columns: minmax(140px, 0.8fr) repeat(4, minmax(0, 1fr));
+	gap: 10px;
+}
+.rb-total,
+.rb-role {
+	display: grid;
+	align-content: center;
+	justify-items: start;
+	gap: 4px;
+	min-height: 0;
+	padding: 16px 18px;
+	border: 1px solid #a68a5b40;
+	border-radius: 16px;
+	background: linear-gradient(160deg, #1b1619, #100e11);
+	box-shadow: none;
+	color: #e9e1d4;
+	text-align: left;
+}
+.rb-total {
+	background:
+		linear-gradient(160deg, #2c1d14ee, #120f11ee),
+		var(--art-heroes) center / cover;
+	border-color: #d6a85a66;
+}
+.rb-total strong,
+.rb-role strong {
+	color: #fff1d7;
+	font:
+		700 34px/1 Georgia,
+		serif;
+}
+.rb-total small,
+.rb-role small {
+	color: var(--muted);
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+.rb-role {
+	grid-template-columns: minmax(0, 1fr);
+	justify-content: stretch;
+	width: 100%;
+}
+.rb-role::before {
+	display: none;
+}
+.rb-role img {
+	width: 28px;
+	height: 28px;
+}
+.rb-role:not(:disabled):hover {
+	border-color: #d6a85a88;
+	background: linear-gradient(160deg, #241e1b, #151315);
+	box-shadow: none;
+	transform: translateY(-2px);
+}
+.rb-role[aria-pressed='true'] {
+	border-color: var(--gold);
+	background: linear-gradient(160deg, #3a2716, #1a1412);
+}
+.rb-role-bar {
+	width: 100%;
+	height: 5px;
+	margin-top: 4px;
+	border-radius: 999px;
+	background: linear-gradient(90deg, var(--gold) calc(var(--p, 0) * 1%), #ffffff14 0);
+}
+.rb-classes {
+	display: grid;
+	gap: 12px;
+	padding: 16px;
+	border: 1px solid #ffffff14;
+	border-radius: 16px;
+	background: #131114;
+}
+.rb-classbar {
+	display: flex;
+	height: 12px;
+	overflow: hidden;
+	border-radius: 999px;
+	background: #ffffff10;
+}
+.rb-classbar span {
+	width: calc(var(--p, 0) * 1%);
+	background: var(--class-color, #888);
+}
+.rb-classbar span + span {
+	box-shadow: -2px 0 0 #131114;
+}
+.rb-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+.rb-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 36px;
+	padding: 4px 12px 4px 6px;
+	border: 1px solid color-mix(in srgb, var(--class-color, #888) 45%, transparent);
+	border-radius: 999px;
+	background: color-mix(in srgb, var(--class-color, #888) 9%, #141215);
+	box-shadow: none;
+	color: #e9e1d4;
+	font-size: 13px;
+	font-weight: 650;
+}
+.rb-chip::before {
+	display: none;
+}
+.rb-chip img {
+	width: 24px;
+	height: 24px;
+	border-radius: 50%;
+}
+.rb-chip b {
+	padding: 0 7px;
+	border-radius: 999px;
+	background: #00000055;
+	color: var(--class-color, #eee);
+	font-size: 12px;
+}
+.rb-chip:not(:disabled):hover {
+	border-color: var(--class-color, #888);
+	background: color-mix(in srgb, var(--class-color, #888) 16%, #141215);
+	box-shadow: none;
+	transform: none;
+}
+.rb-chip[aria-pressed='true'] {
+	border-color: var(--class-color, #888);
+	background: color-mix(in srgb, var(--class-color, #888) 28%, #141215);
+	color: #fff;
+}
+.rb-tools {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px 16px;
+}
+.rb-search {
+	position: relative;
+	flex: 1 1 280px;
+	max-width: 420px;
+}
+.rb-search svg {
+	position: absolute;
+	top: 50%;
+	left: 14px;
+	width: 18px;
+	height: 18px;
+	fill: none;
+	stroke: var(--muted);
+	stroke-width: 2;
+	translate: 0 -50%;
+}
+.rb-search input {
+	width: 100%;
+	min-height: 44px;
+	padding-left: 42px;
+	border-radius: 999px;
+}
+.rb-count {
+	color: var(--muted);
+	font-size: 14px;
+}
+.rb-tools [data-clear] {
+	min-height: 38px;
+	padding: 6px 14px;
+	border-radius: 999px;
+}
+.rb-group {
+	margin-bottom: 18px;
+}
+.rb-group h3 {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin: 0 0 10px;
+	font:
+		400 22px Georgia,
+		serif;
+}
+.rb-group h3 img {
+	width: 26px;
+	height: 26px;
+}
+.rb-group h3 small {
+	padding: 1px 10px;
+	border-radius: 999px;
+	background: #ffffff12;
+	color: #d9d1c5;
+	font-family: inherit;
+	font-size: 13px;
+	font-weight: 700;
+}
+.rb-cards {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+	gap: 8px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.rb-card {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 10px 12px;
+	border: 1px solid color-mix(in srgb, var(--class-color, #888) 30%, transparent);
+	border-left: 3px solid var(--class-color, #888);
+	border-radius: 12px;
+	background: linear-gradient(
+		100deg,
+		color-mix(in srgb, var(--class-color, #888) 12%, #151316),
+		#121013
+	);
+	color: #e9e1d4;
+	text-decoration: none;
+	transition:
+		transform 140ms ease,
+		border-color 140ms ease;
+}
+.rb-card:hover,
+.rb-card:focus-visible {
+	border-color: var(--class-color, #888);
+	transform: translateY(-2px);
+}
+.rb-card img {
+	flex: 0 0 auto;
+	width: 36px;
+	height: 36px;
+	border-radius: 8px;
+}
+.rb-name {
+	display: grid;
+	min-width: 0;
+}
+.rb-name strong {
+	overflow: hidden;
+	color: var(--class-color, #fff);
+	font-size: 15px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.rb-name small {
+	color: var(--muted);
+	font-size: 12px;
+}
+@media (max-width: 800px) {
+	.rb-stats {
+		grid-template-columns: 1fr 1fr;
+	}
+	.rb-total {
+		grid-column: 1 / -1;
+	}
+	.rb-cards {
+		grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.rb-card {
+		transition: none;
 	}
 }
