@@ -376,7 +376,7 @@ export function renderMessage(doc, eventId, emojis, origin, closed = false, leve
 			icon(classOf(doc, s.className)?.specs?.find((x) => x.name === s.specName)?.icon),
 		classIcon = (s) => icon(classOf(doc, s.className)?.icon),
 		low = (s) => levels.get(s.userId) < RAID_MIN_LEVEL,
-		mark = (s) => (low(s) ? ` ⚠️ ${levels.get(s.userId)}` : '');
+		mark = (s) => (low(s) ? `⚠️${levels.get(s.userId)}` : '');
 	// Header: when, who leads, how full; then a rule and the sign-ups below.
 	const lines = [];
 	const when = Number.isFinite(doc.endTime)

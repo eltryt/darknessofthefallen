@@ -541,8 +541,8 @@ test('grouped by role: tanks and healers first, DPS on a new row, long lists con
 			['Mago1', 60],
 		]),
 	).embeds[0];
-	assert.match(marked.fields[4].value, /Mago0 ⚠️ 38\n/);
-	assert.doesNotMatch(marked.fields[4].value, /Mago1 ⚠️/);
+	assert.match(marked.fields[4].value, /Mago0⚠️38\n/);
+	assert.doesNotMatch(marked.fields[4].value, /Mago1⚠️/);
 	assert.match(marked.description, /-# ⚠️ = aún por debajo del nivel 45/);
 	assert.doesNotMatch(renderMessage(doc, 'e1', emojis, '').embeds[0].description, /⚠️/);
 	for (let i = 0; i < 8; i++) assert.match(ranged, new RegExp(`Mago${i}$`, 'm'));
