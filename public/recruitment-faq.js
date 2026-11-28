@@ -36,11 +36,11 @@ export function recruitmentFaq(s) {
 		['¿Qué clases buscáis ahora?', wantedSentence(s)],
 		[
 			'¿Qué pedís para entrar en el roster de raid?',
-			'Disponibilidad los días de raid, conocer tu personaje, cumplir cuando te apuntas a una raid y ganas de mejorar. No somos una hermandad hardcore, y también hay sitio para jugadores sociales.',
+			'Disponibilidad los días de raid, conectarte a las 22:45 y avisar antes de las 20:00 si vas a faltar, conocer tu personaje y traer el equipo encantado y tus consumibles. Son obligatorios BigWigs o DBM y RCLootCouncil (versión Classic). No somos una hermandad hardcore, y también hay sitio para jugadores sociales.',
 		],
 		[
 			'¿Cómo se reparte el botín?',
-			`Con ${s.lootMethod || 'Loot Council'} y criterios transparentes para todo el roster.`,
+			'En las raids de 20 y 40, con Loot Council: un consejo de tres oficiales de loot vota según tu wishlist, tu rol y tu asistencia (hace falta un 75 % al mes). En las de 10, con Soft Reserve: cada uno reserva 2 objetos. Cada reparto se publica con su motivo.',
 		],
 		[
 			'¿Cómo presento mi candidatura?',

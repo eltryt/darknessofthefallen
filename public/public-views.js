@@ -183,8 +183,8 @@ export function createPublicViews(context) {
 						<span class="card-number">III.</span>
 						<h3>Jugar con transparencia</h3>
 						<p>
-							Un Loot Council de tres personas por grupo, con criterios objetivos que definiremos
-							juntos y normas comunes para todas las raids.
+							Loot Council en las raids de 20 y 40, Soft Reserve en las de 10. Cada objeto se asigna
+							con su motivo, publicado en Discord y en la web.
 						</p>
 					</article>
 				</div>

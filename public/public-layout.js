@@ -8,9 +8,9 @@ export function createPublicLayout(context) {
 	function weekSchedule() {
 		const s = data.settings;
 		const nights = {
-			Martes: ['Continuación', 'Progreso pendiente o contenido alternativo'],
+			Martes: ['Lo pendiente', 'Terminamos lo que haya quedado de la semana'],
 			Miércoles: ['Raid de 20', 'Empieza el progreso semanal'],
-			Jueves: ['Raid de 40', 'Roster conjunto de la hermandad'],
+			Jueves: ['Raid de 40', 'Toda la hermandad junta; después, grupos de 10'],
 		};
 		const today = new Intl.DateTimeFormat('es-ES', { weekday: 'long', timeZone: 'Europe/Madrid' })
 			.format(new Date())
@@ -30,9 +30,10 @@ export function createPublicLayout(context) {
 				${['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'].map(day).join('')}
 			</ul>
 			<p class="schedule-note">
-				Hora peninsular española (Europe/Madrid). Las sesiones de ${esc(s.raidStart)} a
-				${esc(s.raidEnd)} terminan pasada la medianoche, ya en el día siguiente. Cada convocatoria
-				confirma su horario y su roster; las franjas alternativas se coordinan aparte.
+				Hora peninsular española (Europe/Madrid). A las 22:45, conectado y en el grupo de banda. Las
+				sesiones de ${esc(s.raidStart)} a ${esc(s.raidEnd)} terminan pasada la medianoche. Si hace
+				falta un día más, sobre todo las primeras semanas, se votará entre lunes o viernes para
+				dejar libre el fin de semana.
 			</p>
 			${schedulePlanner()}`;
 	}
@@ -68,23 +69,25 @@ export function createPublicLayout(context) {
 				<article class="card">
 					<span class="card-number">40</span>
 					<h3>Una cita para la gran banda</h3>
-					<p>Los jueves de 23:00 a 01:00 reuniremos el roster conjunto de 40.</p>
+					<p>
+						Los jueves de 23:00 a 01:00, toda la hermandad junta. El botín se reparte con Loot
+						Council.
+					</p>
 				</article>
 				<article class="card">
 					<span class="card-number">20</span>
-					<h3>Dos rosters potenciales</h3>
+					<h3>El progreso de la semana</h3>
 					<p>
-						Los miércoles de 23:00 a 01:00 empezaremos el progreso semanal con raids de 20 y dos
-						rosters potenciales. Si hay demanda, podremos valorar otra franja, por ejemplo de 22:00
-						a 00:00. Es una posibilidad, no un segundo horario confirmado.
+						Los miércoles de 23:00 a 01:00 empieza el progreso semanal. Si llegamos a dos grupos de
+						20, cada uno tendrá su propio consejo de loot. De aquí sale el Tier 1, en Cima Hyjal.
 					</p>
 				</article>
 				<article class="card">
 					<span class="card-number">10</span>
-					<h3>Más margen para organizarnos</h3>
+					<h3>Grupos pequeños, Soft Reserve</h3>
 					<p>
-						Las raids de 10 tendrán mayor flexibilidad de horario, coordinando cada convocatoria
-						según la disponibilidad de quienes quieran participar.
+						Después de la de 40 nos repartimos en grupos de 10. Cada grupo lleva un oficial de loot
+						que reparte y hace cumplir las reservas.
 					</p>
 				</article>
 			</div>
@@ -96,9 +99,8 @@ export function createPublicLayout(context) {
 					adicionales para jugar juntos, no una obligación.
 				</p>
 				<p>
-					Los martes de 23:00 a 01:00 continuaremos el progreso pendiente o haremos contenido
-					alternativo. Consulta la convocatoria concreta en la web o en Raid-Helper; se pueden
-					organizar actividades fuera de estos días.
+					Los martes de 23:00 a 01:00 terminamos todo lo que haya quedado pendiente de la semana.
+					Consulta cada convocatoria en la web o en Raid-Helper.
 				</p>
 			</article>
 		</section>`;
@@ -109,38 +111,44 @@ export function createPublicLayout(context) {
 			<div class="section-head">
 				<div>
 					<span class="eyebrow">El progreso se comparte</span>
-					<h2>Loot Council con transparencia.</h2>
+					<h2>Un reparto claro y explicado.</h2>
 				</div>
 			</div>
+			<p>
+				El sistema depende del tamaño de la raid. Cada objeto se asigna con su motivo, que se
+				publica en Discord y en la web.
+			</p>
 			<div class="grid">
 				<article class="card">
-					<h3>Tres personas por grupo</h3>
+					<span class="card-number">10</span>
+					<h3>Soft Reserve</h3>
 					<p>
-						El Loot Council estará formado por tres personas por grupo para evitar empates. No tiene
-						por qué estar compuesto solo por oficiales: la responsabilidad del consejo puede
-						compartirse con otros miembros.
+						Antes de entrar reservas 2 objetos. Cuando cae uno, solo tiran quienes lo reservaron; si
+						ya te has llevado algo, en el resto de la raid tiras con −1, salvo en tus reservas.
 					</p>
 				</article>
 				<article class="card">
-					<h3>Criterios que acordaremos juntos</h3>
+					<span class="card-number">20·40</span>
+					<h3>Loot Council</h3>
 					<p>
-						Queremos decisiones basadas en criterios objetivos y transparentes. Esos criterios
-						todavía están por definir colectivamente; no presentamos como cerradas unas normas que
-						aún debemos acordar.
+						Con RCLootCouncil pides según lo que te supone (BiS, Mejora mayor, Mejora menor u
+						Offspec) y vota un consejo de tres oficiales de loot. Solo cuenta lo que esté en tu
+						wishlist de la web antes de la raid.
 					</p>
 				</article>
 				<article class="card">
-					<h3>Las mismas normas para todos</h3>
+					<span class="card-number">✓</span>
+					<h3>Requisitos para recibir botín</h3>
 					<p>
-						Las normas de loot que acordemos serán comunes para todos los rosters y tipos de raid,
-						sean de 40, 20 o 10. Compartimos hermandad, objetivos y una misma forma de entender el
-						reparto.
+						En las raids de 20 y 40: 75 % de asistencia al mes, avisar antes de las 20:00 si faltas,
+						equipo encantado y consumibles, wishlist al día y sintonizaciones hechas.
 					</p>
 				</article>
 			</div>
 			<p>
-				La idea es progresar como equipo, explicar las decisiones y cuidar la confianza entre
-				compañeros.
+				Orden de prioridad: la mejora más grande para el main, el rol que más lo necesita para
+				progresar, la asistencia y el rendimiento y, a igualdad, quien menos se ha llevado. El main
+				va siempre antes que los alters.
 			</p>
 		</section>`;
 	}
@@ -383,7 +391,13 @@ export function createPublicLayout(context) {
 								<li>Respeto y compañerismo dentro y fuera de la raid.</li>
 								<li>Comunicar tu disponibilidad y coordinarte con el grupo.</li>
 								<li>Aprender los encuentros y progresar en equipo.</li>
-								<li>Loot Council con criterios transparentes que definiremos juntos.</li>
+								<li>
+									Puntualidad: a las 22:45 en el grupo y, si faltas, avisar antes de las 20:00.
+								</li>
+								<li>
+									Loot Council en las de 20 y 40, Soft Reserve en las de 10, y cada reparto
+									explicado.
+								</li>
 							</ul>
 							<p>Las actividades adicionales son oportunidades, no obligaciones.</p>
 						</aside>
@@ -435,7 +449,7 @@ export function createPublicLayout(context) {
 						${faq([
 							[
 								'¿En qué horario jugamos?',
-								`Nuestro horario base es ${esc(days)}, de ${esc(s.raidStart)} a ${esc(s.raidEnd)}, hora peninsular. La raid de 40 está prevista para el jueves. Para las de 20 contemplamos dos rosters y posibles alternativas si hay demanda; las de 10 serán más flexibles. <a class="link" href="/raids">Ver la organización de raids</a>.`,
+								`Nuestro horario base es ${esc(days)}, de ${esc(s.raidStart)} a ${esc(s.raidEnd)}, hora peninsular. El martes terminamos lo pendiente, el miércoles es la raid de 20 y el jueves la de 40; después nos repartimos en grupos de 10. <a class="link" href="/raids">Ver la organización de raids</a>.`,
 							],
 							[
 								'¿Las convocatorias adicionales son obligatorias?',
@@ -443,7 +457,7 @@ export function createPublicLayout(context) {
 							],
 							[
 								'¿Cómo se repartirá el loot?',
-								'Usaremos un Loot Council de tres personas por grupo, no necesariamente solo oficiales. Los criterios objetivos y transparentes se definirán colectivamente, con normas comunes para todos los rosters y tipos de raid.',
+								'En las raids de 20 y 40, Loot Council: pides con RCLootCouncil según lo que te supone el objeto y vota un consejo de tres oficiales de loot, mirando tu wishlist de la web. En las de 10, Soft Reserve con 2 reservas por persona. Cada reparto se publica con su motivo.',
 							],
 							[
 								'¿En qué tipo de servidor estamos?',
