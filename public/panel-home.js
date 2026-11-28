@@ -145,7 +145,10 @@ export async function mountPanelHome(el, { api, esc, me, data }, open) {
 	const next = (events?.events || [])
 		.filter((e) => Date.parse(e.starts_at) > Date.now() - 3 * 3600 * 1000)
 		.sort((a, b) => Date.parse(a.starts_at) - Date.parse(b.starts_at))[0];
-	const mains = roster ? roster.filter((c) => c.is_main) : [];
+	// The raid roster only: mains of raiders and above (visitors and social members left out).
+	const mains = roster
+		? roster.filter((c) => c.is_main && !['visitor', 'member'].includes(c.rank))
+		: [];
 	const targets = data.settings.rosterTargets || {};
 	const roles = [
 		['Tanques', mains.filter((c) => c.role === 'Tanque').length, targets.tanks],
@@ -192,7 +195,7 @@ export async function mountPanelHome(el, { api, esc, me, data }, open) {
 			}
 			${
 				roster
-					? `<section class="ph-panel"><small>Roster · personajes principales</small><ul class="ph-roles">${roles
+					? `<section class="ph-panel"><small>Roster de raid · mains de raiders y oficiales</small><ul class="ph-roles">${roles
 							.map(
 								([label, n, target]) =>
 									`<li><span>${label}</span><strong>${n}${target ? `<small> / ${target}</small>` : ''}</strong><i data-bar="${target ? Math.min(100, Math.round((n / target) * 100)) : 100}"></i></li>`,
